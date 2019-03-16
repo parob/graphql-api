@@ -1,0 +1,140 @@
+import uuid
+from datetime import datetime, timedelta
+from uuid import UUID
+
+from objectql.decorators import query
+from objectql.schema import GraphQLSchemaBuilder
+
+
+class TestCustomTypes:
+
+    def test_uuid_type(self):
+        api = GraphQLSchemaBuilder()
+
+        user_id = uuid.uuid4()
+
+        class Root:
+
+            @query
+            def name(self, id: UUID) -> str:
+                assert isinstance(id, UUID)
+                assert id == user_id
+                return "rob"
+
+            @query
+            def id(self) -> UUID:
+                return user_id
+
+        api.root = Root
+        executor = api.executor()
+
+        test_name_query = f"query GetName {{ name(id: \"{user_id}\") }}"
+
+        result = executor.execute(test_name_query)
+
+        expected = {
+            "name": "rob"
+        }
+        assert not result.errors
+        assert result.data == expected
+
+        test_id_query = "query GetId { id }"
+
+        result = executor.execute(test_id_query)
+
+        expected = {
+            "id": str(user_id)
+        }
+
+        assert not result.errors
+        assert result.data == expected
+
+    def test_datetime_type(self):
+        api = GraphQLSchemaBuilder()
+
+        now = datetime.now()
+
+        class Root:
+
+            @query
+            def add_one_hour(self, time: datetime) -> datetime:
+                return time + timedelta(hours=1)
+
+        api.root = Root
+        executor = api.executor()
+
+        test_time_query = f"query GetTimeInOneHour {{ addOneHour(time: \"{now}\") }}"
+
+        result = executor.execute(test_time_query)
+
+        expected = {
+            "addOneHour": str(now + timedelta(hours=1))
+        }
+        assert not result.errors
+        assert result.data == expected
+
+    def test_json_type(self):
+        api = GraphQLSchemaBuilder()
+
+        class Root:
+
+            @query
+            def adapt_profile(self, profile: dict) -> dict:
+                return {**profile, "location": "london"}
+
+            @query
+            def add_number(self, numbers: list) -> list:
+                return [*numbers, 5]
+
+        api.root = Root
+        executor = api.executor()
+
+        test_profile_query = r'query GetAdaptProfile {' \
+                             r'     adaptProfile(profile: "{ \"name\": \"rob\", \"age\": 26 }") ' \
+                             r'}'
+
+        result = executor.execute(test_profile_query)
+
+        expected = {
+            "adaptProfile": '{"name": "rob", "age": 26, "location": "london"}'
+        }
+        assert not result.errors
+        assert result.data == expected
+
+        test_number_query = r'query GetAddNumber {' \
+                            r'     addNumber(numbers: "[1, 2, 3, 4]") ' \
+                            r'}'
+
+        result = executor.execute(test_number_query)
+
+        expected = {
+            "addNumber": '[1, 2, 3, 4, 5]'
+        }
+        assert not result.errors
+        assert result.data == expected
+
+    def test_bytes_type(self):
+        api = GraphQLSchemaBuilder()
+
+        data_input = b'input_bytes'
+        data_output = b'output_bytes'
+
+        class Root:
+
+            @query
+            def byte_data(self, value: bytes) -> bytes:
+                assert value == data_input
+                return data_output
+
+        api.root = Root
+        executor = api.executor()
+
+        test_bytes_query = f"query GetByteData {{ byteData(value: \"{data_input.decode('utf-8')}\") }}"
+
+        result = executor.execute(test_bytes_query)
+
+        expected = {
+            "byteData": data_output.decode('utf-8')
+        }
+        assert not result.errors
+        assert result.data == expected

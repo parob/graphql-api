@@ -1,0 +1,34 @@
+image: "python:3.7"
+
+stages:
+  - test
+  - deploy
+
+lint:
+  stage: test
+  before_script:
+    - pip install pipenv
+    - pipenv install --dev
+  script:
+    - pipenv run python -m flake8 objectql
+
+unit test:
+  stage: test
+  before_script:
+    - pip install pipenv
+    - pipenv install --dev
+  script:
+    - pipenv run python -m pytest tests --cov=objectql
+
+pages:
+  stage: deploy
+  before_script:
+    - pip install pipenv
+    - pipenv install --dev
+  script:
+    - pipenv run sphinx-build docs ./public -b html
+  artifacts:
+    paths:
+    - public
+  only:
+  - master

@@ -1,0 +1,25 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+graphql-core = "*"
+requests = "*"
+typing-inspect = "*"
+flake8 = "*"
+
+[dev-packages]
+# Testing
+pytest = "*"
+pytest-cov = "*"
+coverage = "*"
+faker = "*"
+# Linting
+flake8 = "*"
+# Documentation
+sphinx = "*"
+sphinxcontrib-fulltoc = "*"
+
+[requires]
+python_version = "3.7"
