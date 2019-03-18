@@ -1,9 +1,9 @@
 # ObjectQL
 Python framework for building a GraphQL execution server from Python Objects
 
-[![coverage report](https://gitlab.com/wepy/objectql/badges/master/coverage.svg)](https://gitlab.com/wepy/pygql/commits/master)
+[![coverage report](https://gitlab.com/kiwi-ninja/objectql/badges/master/coverage.svg)](https://gitlab.com/kiwi-ninja/pygql/commits/master)
 
-[![pipeline status](https://gitlab.com/wepy/objectql/badges/master/pipeline.svg)](https://gitlab.com/wepy/pygql/commits/master)
+[![pipeline status](https://gitlab.com/kiwi-ninja/objectql/badges/master/pipeline.svg)](https://gitlab.com/kiwi-ninja/pygql/commits/master)
 
 ## Installation
 ObjectQL is a Python package, and is compatible with `Python 3` only (for now). It can be installed through `pip`.
@@ -25,7 +25,7 @@ pipenv run python -m pytest tests --cov=objectql
 
 The documentation is public, and is generated using Sphinx.
 
-[ObjectQL Documentation](https://wepy.gitlab.io/objectql)
+[ObjectQL Documentation](https://kiwi-ninja.gitlab.io/objectql)
 
 ##### Build documentation
 To build a local static HTML version of the documentation.
