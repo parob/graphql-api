@@ -185,12 +185,14 @@ class GraphQLMappers:
 class NullResponse(BaseException):
     pass
 
+
 class GraphQLRemoteError(GraphQLError):
 
     def __init__(self, query=None, result=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.query = query
         self.result = result
+
 
 class GraphQLRemoteObject:
 
