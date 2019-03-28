@@ -1,5 +1,6 @@
 import enum
 import uuid
+from dataclasses import dataclass
 from typing import Optional, List
 from uuid import UUID
 
@@ -138,6 +139,42 @@ class TestGraphQLRemote:
         )
 
         assert house.type() == HouseType.bungalow
+
+    def test_remote_query_send_enum(self):
+        api = GraphQLSchemaBuilder()
+
+        class RoomType(enum.Enum):
+            bedroom = "bedroom"
+            kitchen = "kitchen"
+
+        class Room:
+
+            def __init__(self, name: str, type: RoomType):
+                self._name = name
+                self._type = type
+
+            @query
+            def name(self) -> str:
+                return self._name
+
+            @query
+            def type(self) -> RoomType:
+                return self._type
+
+        class House:
+
+            @query
+            def get_room(self) -> Room:
+                return Room(name="robs_room", type=RoomType.bedroom)
+
+        api.root = House
+
+        house: House = GraphQLRemoteObject(
+            executor=api.executor(),
+            python_type=House
+        )
+
+        assert house.get_room().type == RoomType.bedroom
 
     def test_remote_query_uuid(self):
         api = GraphQLSchemaBuilder()
