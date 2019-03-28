@@ -5,6 +5,7 @@ import uuid
 
 from typing import List, Tuple, Dict, Type
 
+from graphql.language import ast
 from requests.exceptions import ConnectionError
 
 from graphql import (
@@ -22,8 +23,8 @@ from graphql.type.definition import (
     GraphQLField,
     GraphQLScalarType,
     GraphQLNonNull,
-    GraphQLList
-)
+    GraphQLList,
+    GraphQLEnumType, GraphQLType)
 
 from objectql.error import GraphQLError
 from objectql.executor import GraphQLBaseExecutor
@@ -306,6 +307,50 @@ class GraphQLRemoteObject:
         if field_values is None:
             raise NullResponse()
 
+        def parse_field(key, value):
+
+            field: GraphQLRemoteField = None
+
+            for _field, _field_dict in fields:
+                if _field.name == key:
+                    field = _field
+                    break
+
+            if not field:
+                raise KeyError(
+                    f"Could not find field for key {key}"
+                )
+
+            field_type = field.graphql_type()
+
+            if not is_scalar(field_type):
+                raise TypeError(
+                    f"Unable to parse non-scalar type {field_type}"
+                )
+
+            ast_value = to_ast_value(value, field_type)
+
+            if hasattr(field_type, 'parse_literal'):
+                return field_type.parse_literal(ast_value)
+
+            raise TypeError(
+                f"Scalar type {field_type} missing 'parse_literal' attribute"
+            )
+
+        if isinstance(field_values, list):
+            field_values = [
+                {
+                    key: parse_field(key, value)
+                    for key, value in field_values_list_item.items()
+                }
+                for field_values_list_item in field_values
+            ]
+        else:
+            field_values = {
+                key: parse_field(key, value)
+                for key, value in field_values.items()
+            }
+
         return field_values
 
     def hash(self, args: Dict):
@@ -518,6 +563,13 @@ class GraphQLRemoteField:
             reverse=True
         )
 
+    def graphql_type(self) -> GraphQLType:
+        graphql_type = self.graphql_field.type
+        while hasattr(graphql_type, 'of_type'):
+            graphql_type = graphql_type.of_type
+
+        return graphql_type
+
     def remap_args_to_kwargs(self, args, kwargs):
         arg_names = list(self.graphql_field.args.keys())
         arg_names_count = len(arg_names)
@@ -701,7 +753,13 @@ def is_scalar(graphql_type):
     while hasattr(graphql_type, 'of_type'):
         graphql_type = graphql_type.of_type
 
-    return isinstance(graphql_type, GraphQLScalarType)
+    if isinstance(graphql_type, GraphQLScalarType):
+        return True
+
+    if isinstance(graphql_type, GraphQLEnumType):
+        return True
+
+    return False
 
 
 def is_nullable(graphql_type):
@@ -726,3 +784,31 @@ def is_static_method(klass, attr, value=None):
                     return True
 
     return False
+
+
+def to_ast_value(value, graphql_type):
+    type_map = {
+        (bool,): ast.BooleanValue,
+        (str,): ast.StringValue,
+        (float,): ast.FloatValue,
+        (int,): ast.IntValue
+    }
+    ast_type = None
+    ast_value = None
+
+    for types, ast_type in type_map.items():
+        if isinstance(value, types):
+            ast_value = ast_type(value=value)
+            break
+
+    if isinstance(graphql_type, GraphQLEnumType):
+        if ast_type == ast.StringValue:
+            ast_value = ast.EnumValue(value)
+
+    if not ast_value:
+        raise TypeError(
+            f"Unable to map Python scalar type {type(value)} "
+            f"to a valid GraphQL ast type"
+        )
+    else:
+        return ast_value
