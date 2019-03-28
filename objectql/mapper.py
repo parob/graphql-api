@@ -108,10 +108,10 @@ class GraphQLTypeMapper:
         return set(self.registry.values())
 
     def map_to_field(
-            self,
-            function_type: Callable,
-            name="",
-            key=""
+        self,
+        function_type: Callable,
+        name="",
+        key=""
     ) -> GraphQLField:
         type_hints = typing.get_type_hints(function_type)
         description = inspect.getdoc(function_type)
@@ -232,8 +232,15 @@ class GraphQLTypeMapper:
             return mapped_type
 
         def resolve_type(value, info):
+            from objectql.remote import GraphQLRemoteObject
+
+            value_type = type(value)
+
+            if isinstance(value, GraphQLRemoteObject):
+                value_type = value.python_type
+
             for arg, mapped_type in union_map.items():
-                if isinstance(value, arg):
+                if issubclass(value_type, arg):
                     return mapped_type
 
         names = [arg.__name__ for arg in union_args]

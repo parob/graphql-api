@@ -174,7 +174,7 @@ class TestGraphQLRemote:
             python_type=House
         )
 
-        assert house.get_room().type == RoomType.bedroom
+        assert house.get_room().type() == RoomType.bedroom
 
     def test_remote_query_uuid(self):
         api = GraphQLSchemaBuilder()
