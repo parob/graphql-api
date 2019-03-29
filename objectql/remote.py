@@ -5,6 +5,8 @@ import uuid
 
 from typing import List, Tuple, Dict, Type
 
+from json.decoder import JSONDecodeError
+
 from graphql.language import ast
 from requests.exceptions import ConnectionError
 
@@ -24,7 +26,9 @@ from graphql.type.definition import (
     GraphQLScalarType,
     GraphQLNonNull,
     GraphQLList,
-    GraphQLEnumType, GraphQLType)
+    GraphQLEnumType, 
+    GraphQLType
+)
 
 from objectql.error import GraphQLError
 from objectql.executor import GraphQLBaseExecutor
@@ -129,17 +133,25 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
             http_headers = {**self.http_headers, **http_headers}
 
         try:
-            json = http_query(url=self.url,
-                              query=query,
-                              variable_values=variable_values,
-                              operation_name=operation_name,
-                              http_method=self.http_method,
-                              http_headers=http_headers,
-                              verify=self.verify)
+            json = http_query(
+                url=self.url,
+                query=query,
+                variable_values=variable_values,
+                operation_name=operation_name,
+                http_method=self.http_method,
+                http_headers=http_headers,
+                verify=self.verify
+            )
         except ConnectionError as e:
             import sys
             err_msg = f"{e}, remote service '{self.name}' is unavailable."
             raise type(e)(err_msg).with_traceback(sys.exc_info()[2])
+
+        except ValueError as e:
+            raise ValueError(
+                f"{e}, from remote service '{self.name}'."
+            )
+            
 
         return ExecutionResult(
             data=json.get('data'),
@@ -787,6 +799,9 @@ def is_static_method(klass, attr, value=None):
 
 
 def to_ast_value(value, graphql_type):
+    if value is None:
+        return None
+    
     type_map = {
         (bool,): ast.BooleanValue,
         (str,): ast.StringValue,

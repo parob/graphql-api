@@ -194,6 +194,16 @@ def http_query(
     else:
         raise AttributeError(f"Invalid HTTP method {http_method}")
 
-    json = r.json()
+    if r.status_code != 200:
+        raise ValueError(
+            f"Invalid response code '{r.status_code}'"
+        )
+
+    try:
+        json = r.json()
+    except JSONDecodeError as e:
+        raise ValueError(
+            f"{e}, unable to decode JSON"
+        )
 
     return json
