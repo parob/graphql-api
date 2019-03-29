@@ -5,8 +5,6 @@ import uuid
 
 from typing import List, Tuple, Dict, Type
 
-from json.decoder import JSONDecodeError
-
 from graphql.language import ast
 from requests.exceptions import ConnectionError
 
@@ -26,7 +24,7 @@ from graphql.type.definition import (
     GraphQLScalarType,
     GraphQLNonNull,
     GraphQLList,
-    GraphQLEnumType, 
+    GraphQLEnumType,
     GraphQLType
 )
 
@@ -151,7 +149,6 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
             raise ValueError(
                 f"{e}, from remote service '{self.name}'."
             )
-            
 
         return ExecutionResult(
             data=json.get('data'),
@@ -801,7 +798,7 @@ def is_static_method(klass, attr, value=None):
 def to_ast_value(value, graphql_type):
     if value is None:
         return None
-    
+
     type_map = {
         (bool,): ast.BooleanValue,
         (str,): ast.StringValue,

@@ -4,6 +4,8 @@ import re
 
 import requests
 
+from json.decoder import JSONDecodeError
+
 from graphql import (
     GraphQLNonNull,
     GraphQLList,
