@@ -548,6 +548,10 @@ class GraphQLRemoteObject:
 
         return field
 
+    def __str__(self):
+        return f"<RemoteObject({self.graphql_query_type.name}) " \
+            f"at {hex(id(self))}>"
+
 
 class GraphQLRemoteField:
 
