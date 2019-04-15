@@ -39,7 +39,6 @@ A **Schema** is used to describe a **GraphQL API**. ObjectQL uses Python classes
 To get started we will create a very simple Python class:
 
 .. code-block:: python
-    :caption: hello.py
     :name: hello-py
 
     class HelloGraphQL:
@@ -82,8 +81,6 @@ What was changed?:
 Now to create a **Schema**, we can pass the adapted ``HelloGraphQL`` class to the ``GraphQLSchemaBuilder``. The ``HelloGraphQL`` class is now known as the **Root type** of the **Schema**:
 
 .. code-block:: python
-    :caption: hello.py
-    :name: hello-py
     :emphasize-lines: 1,10,11
 
     from objectql import query, GraphQLSchemaBuilder
@@ -102,8 +99,6 @@ Now to create a **Schema**, we can pass the adapted ``HelloGraphQL`` class to th
 Finally we use our **Schema** and *Root type* to create a ``GraphQLExecutor``:
 
 .. code-block:: python
-    :caption: hello.py
-    :name: hello-py
     :emphasize-lines: 1,13
 
     from objectql import query, GraphQLSchemaBuilder, GraphQLExecutor
@@ -124,8 +119,6 @@ Finally we use our **Schema** and *Root type* to create a ``GraphQLExecutor``:
 Now we can run a GraphQL query on the ``GraphQLExecutor``:
 
 .. code-block:: python
-    :caption: hello.py
-    :name: hello-py
     :emphasize-lines: 15,16
 
     from objectql import query, GraphQLSchemaBuilder, GraphQLExecutor

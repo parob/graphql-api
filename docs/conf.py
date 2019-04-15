@@ -38,5 +38,13 @@ html_theme_options = {
 }
 html_static_path = ['_static']
 html_favicon = '_static/favicon.ico'
-html_sidebars = {'**': ['sidebarlogo.html', 'sidebarintro.html', 'globaltoc.html', 'relations.html', 'sourcelink.html', 'searchbox.html'], }
+html_sidebars = {
+    '**': [
+        'logo-text.html',
+        'sidebarlogo.html',
+        'globaltoc.html',
+        'localtoc.html',
+        'searchbox.html'
+    ]
+}
 

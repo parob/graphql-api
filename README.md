@@ -25,7 +25,7 @@ pipenv run python -m pytest tests --cov=objectql
 
 The documentation is public, and is generated using Sphinx.
 
-[ObjectQL Documentation](https://kiwi-ninja.gitlab.io/objectql)
+[ObjectQL Documentation](http://www.objectql.com)
 
 ##### Build documentation
 To build a local static HTML version of the documentation.

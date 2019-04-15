@@ -5,7 +5,7 @@
 .. toctree::
     :hidden:
 
-    Introduction <self>
+    overview <self>
     quickstart
     installation
     schemas
@@ -70,8 +70,6 @@ Install ObjectQL::
 Simple Example:
 
 .. code-block:: python
-    :caption: example.py
-    :name: example-py
 
     from objectql import GraphQLSchemaBuilder, query
 
