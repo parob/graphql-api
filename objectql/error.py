@@ -1,7 +1,7 @@
-from graphql import GraphQLError as GraphQLError_
+from graphql import GraphQLError
 
 
-class GraphQLError(GraphQLError_):
+class ObjectQLError(GraphQLError):
 
     def __init__(
         self,
@@ -13,7 +13,7 @@ class GraphQLError(GraphQLError_):
         positions=None,
         locations=None
     ):
-        super(GraphQLError, self).__init__(
+        super(ObjectQLError, self).__init__(
             message=message,
             nodes=nodes,
             stack=stack,

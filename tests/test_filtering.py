@@ -1,12 +1,12 @@
 from objectql.decorators import query, mutation, interface
-from objectql.mapper import GraphQLMetaKey
-from objectql.schema import GraphQLSchemaBuilder
+from objectql.mapper import ObjectQLMetaKey
+from objectql.schema import ObjectQLSchemaBuilder
 
 
 class TestSchemaFiltering:
 
     def test_query_remove_invalid(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Person:
 
@@ -46,7 +46,7 @@ class TestSchemaFiltering:
         Mutation fields by default should return queries
         :return:
         """
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Person:
 
@@ -95,7 +95,7 @@ class TestSchemaFiltering:
         assert result.data == expected
 
     def test_keep_interface(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         @interface
         class Person:
@@ -181,7 +181,7 @@ class TestSchemaFiltering:
         assert result.data == expected_2
 
     def test_remove_interface(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         @interface
         class RenamablePerson:
@@ -252,7 +252,7 @@ class TestSchemaFiltering:
         assert 'Cannot query field "person" on type "PlaceholderQuery".' == result.errors[0].message
 
     def test_mutation_return_mutable_flag(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Person:
 
@@ -268,7 +268,7 @@ class TestSchemaFiltering:
                 self._name = name
                 return self
 
-            @mutation({GraphQLMetaKey.resolve_to_mutable: True})
+            @mutation({ObjectQLMetaKey.resolve_to_mutable: True})
             def update_name_mutable(self, name: str) -> 'Person':
                 self._name = name
                 return self

@@ -4,13 +4,13 @@ from typing import List
 
 from objectql.relay import Node, Connection, Edge, PageInfo
 
-from objectql import query, GraphQLSchemaBuilder
+from objectql import query, ObjectQLSchemaBuilder
 
 
 class TestRelay:
 
     def test_relay_query(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         @dataclass
         class Person(Node):

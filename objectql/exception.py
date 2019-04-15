@@ -1,2 +1,2 @@
-class GraphQLBaseException(BaseException):
+class ObjectQLBaseException(BaseException):
     pass

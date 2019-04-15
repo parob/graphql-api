@@ -1,22 +1,21 @@
 import enum
 import uuid
-from dataclasses import dataclass
 from typing import Optional, List
 from uuid import UUID
 
 import pytest
 
 from objectql.decorators import query, mutation
-from objectql.error import GraphQLError
-from objectql.mapper import GraphQLMetaKey
-from objectql.schema import GraphQLSchemaBuilder
-from objectql.remote import GraphQLRemoteObject
+from objectql.error import ObjectQLError
+from objectql.mapper import ObjectQLMetaKey
+from objectql.schema import ObjectQLSchemaBuilder
+from objectql.remote import ObjectQLRemoteObject
 
 
-class TestGraphQLRemote:
+class TestObjectQLRemote:
 
     def test_remote_query(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class House:
 
@@ -26,7 +25,7 @@ class TestGraphQLRemote:
 
         api.root = House
 
-        house: House = GraphQLRemoteObject(
+        house: House = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=House
         )
@@ -34,7 +33,7 @@ class TestGraphQLRemote:
         assert house.number_of_doors() == 5
 
     def test_remote_query_list(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Door:
 
@@ -58,7 +57,7 @@ class TestGraphQLRemote:
 
         api.root = House
 
-        house: House = GraphQLRemoteObject(
+        house: House = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=House
         )
@@ -76,7 +75,7 @@ class TestGraphQLRemote:
         assert woods_2 == {"oak"}
 
     def test_remote_query_list_nested(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Person:
 
@@ -108,7 +107,7 @@ class TestGraphQLRemote:
 
         api.root = House
 
-        house: House = GraphQLRemoteObject(
+        house: House = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=House
         )
@@ -119,7 +118,7 @@ class TestGraphQLRemote:
             assert {door.owner().name() for door in doors}
 
     def test_remote_query_enum(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class HouseType(enum.Enum):
             bungalow = "bungalow"
@@ -133,7 +132,7 @@ class TestGraphQLRemote:
 
         api.root = House
 
-        house: House = GraphQLRemoteObject(
+        house: House = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=House
         )
@@ -141,7 +140,7 @@ class TestGraphQLRemote:
         assert house.type() == HouseType.bungalow
 
     def test_remote_query_send_enum(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class RoomType(enum.Enum):
             bedroom = "bedroom"
@@ -169,7 +168,7 @@ class TestGraphQLRemote:
 
         api.root = House
 
-        house: House = GraphQLRemoteObject(
+        house: House = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=House
         )
@@ -177,7 +176,7 @@ class TestGraphQLRemote:
         assert house.get_room().type() == RoomType.bedroom
 
     def test_remote_query_uuid(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         person_id = uuid.uuid4()
 
@@ -189,7 +188,7 @@ class TestGraphQLRemote:
 
         api.root = Person
 
-        person: Person = GraphQLRemoteObject(
+        person: Person = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=Person
         )
@@ -197,7 +196,7 @@ class TestGraphQLRemote:
         assert person.id() == person_id
 
     def test_remote_mutation(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Counter:
 
@@ -216,7 +215,7 @@ class TestGraphQLRemote:
 
         api.root = Counter
 
-        counter: Counter = GraphQLRemoteObject(executor=api.executor(), python_type=Counter)
+        counter: Counter = ObjectQLRemoteObject(executor=api.executor(), python_type=Counter)
 
         assert counter.value == 0
         assert counter.increment() == 1
@@ -228,7 +227,7 @@ class TestGraphQLRemote:
         assert counter.value == 11
 
     def test_remote_positional_args(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Multiplier:
 
@@ -238,7 +237,7 @@ class TestGraphQLRemote:
 
         api.root = Multiplier
 
-        multiplier: Multiplier = GraphQLRemoteObject(
+        multiplier: Multiplier = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=Multiplier
         )
@@ -246,7 +245,7 @@ class TestGraphQLRemote:
         assert multiplier.calculate(4, 2) == 8
 
     def test_remote_query_optional(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Person:
 
@@ -270,7 +269,7 @@ class TestGraphQLRemote:
 
         api.root = Bank
 
-        bank: Bank = GraphQLRemoteObject(
+        bank: Bank = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=Bank
         )
@@ -280,7 +279,7 @@ class TestGraphQLRemote:
         assert bank.owner(respond_none=True) is None
 
     def test_remote_mutation_with_input(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Counter:
 
@@ -294,7 +293,7 @@ class TestGraphQLRemote:
 
         api.root = Counter
 
-        counter: Counter = GraphQLRemoteObject(
+        counter: Counter = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=Counter
         )
@@ -303,7 +302,7 @@ class TestGraphQLRemote:
         assert counter.add(value=10) == 15
 
     def test_remote_query_with_input(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Calculator:
 
@@ -313,7 +312,7 @@ class TestGraphQLRemote:
 
         api.root = Calculator
 
-        calculator: Calculator = GraphQLRemoteObject(
+        calculator: Calculator = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=Calculator
         )
@@ -321,7 +320,7 @@ class TestGraphQLRemote:
         assert calculator.square(value=5) == 25
 
     def test_remote_query_with_enumerable_input(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Calculator:
 
@@ -336,7 +335,7 @@ class TestGraphQLRemote:
 
         api.root = Calculator
 
-        calculator: Calculator = GraphQLRemoteObject(
+        calculator: Calculator = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=Calculator
         )
@@ -344,7 +343,7 @@ class TestGraphQLRemote:
         assert calculator.add(values=[5, 2, 7]) == 14
 
     def test_remote_input_object(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Garden:
 
@@ -364,14 +363,14 @@ class TestGraphQLRemote:
 
         api.root = House
 
-        house: House = GraphQLRemoteObject(
+        house: House = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=House
         )
         assert house.value(garden=Garden(size=10)) == 90
 
     def test_remote_input_object_nested(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Animal:
 
@@ -414,13 +413,13 @@ class TestGraphQLRemote:
 
         api.root = House
 
-        house: House = GraphQLRemoteObject(
+        house: House = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=House
         )
 
         with pytest.raises(
-            GraphQLError,
+            ObjectQLError,
             match="nested inputs must have matching attribute to field names"
         ):
             assert house.value(
@@ -437,7 +436,7 @@ class TestGraphQLRemote:
         ) == 85
 
     def test_remote_recursive_mutated(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Flopper:
 
@@ -473,14 +472,14 @@ class TestGraphQLRemote:
             def flopper(self) -> Flopper:
                 return global_flopper
 
-            @mutation({GraphQLMetaKey.resolve_to_self: False})
+            @mutation({ObjectQLMetaKey.resolve_to_self: False})
             def flagged_flip(self) -> 'Flipper':
                 self._flip = not self._flip
                 return self
 
         api.root = Flipper
 
-        flipper: Flipper = GraphQLRemoteObject(
+        flipper: Flipper = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=Flipper
         )
@@ -490,7 +489,7 @@ class TestGraphQLRemote:
         assert not flipped_flipper.value()
 
         with pytest.raises(
-            GraphQLError,
+            ObjectQLError,
             match="mutated objects cannot be refetched"
         ):
             flipped_flipper.flagged_flip()
@@ -518,7 +517,7 @@ class TestGraphQLRemote:
         assert mutated_mutated_flopper.value()
 
     def test_remote_nested(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Person:
 
@@ -567,7 +566,7 @@ class TestGraphQLRemote:
 
         api.root = Root
 
-        root: Root = GraphQLRemoteObject(
+        root: Root = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=Root
         )
@@ -590,7 +589,7 @@ class TestGraphQLRemote:
         assert person.name() == "pete"
 
     def test_remote_with_local_property(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Person:
 
@@ -604,13 +603,13 @@ class TestGraphQLRemote:
 
         api.root = Person
 
-        person: Person = GraphQLRemoteObject(executor=api.executor(), python_type=Person)
+        person: Person = ObjectQLRemoteObject(executor=api.executor(), python_type=Person)
 
         assert person.age() == 50
         assert person.height == 183
 
     def test_remote_with_local_method(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Person:
 
@@ -623,7 +622,7 @@ class TestGraphQLRemote:
 
         api.root = Person
 
-        person: Person = GraphQLRemoteObject(
+        person: Person = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=Person
         )
@@ -632,7 +631,7 @@ class TestGraphQLRemote:
         assert person.hello() == "hello"
 
     def test_remote_with_local_static_method(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Person:
 
@@ -646,7 +645,7 @@ class TestGraphQLRemote:
 
         api.root = Person
 
-        person: Person = GraphQLRemoteObject(
+        person: Person = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=Person
         )
@@ -655,7 +654,7 @@ class TestGraphQLRemote:
         assert person.hello() == "hello"
 
     def test_remote_with_local_class_method(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Person:
 
@@ -670,7 +669,7 @@ class TestGraphQLRemote:
 
         api.root = Person
 
-        person: Person = GraphQLRemoteObject(
+        person: Person = ObjectQLRemoteObject(
             executor=api.executor(),
             python_type=Person
         )

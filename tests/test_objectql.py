@@ -9,11 +9,11 @@ from requests.api import request
 from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
 
 from objectql.decorators import query, mutation, interface
-from objectql.error import GraphQLError
-from objectql.context import GraphQLContext
-from objectql.schema import GraphQLSchemaBuilder
+from objectql.error import ObjectQLError
+from objectql.context import ObjectQLContext
+from objectql.schema import ObjectQLSchemaBuilder
 from objectql.reduce import TagFilter
-from objectql.remote import GraphQLRemoteExecutor
+from objectql.remote import ObjectQLRemoteExecutor
 
 
 def available(url, method="GET"):
@@ -28,7 +28,7 @@ def available(url, method="GET"):
 class TestGraphQL:
 
     def test_deep_query(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Math:
 
@@ -64,7 +64,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_query_input(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Person:
 
@@ -95,7 +95,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_custom_query_input(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Person:
 
@@ -141,7 +141,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_runtime_field(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Person:
 
@@ -183,7 +183,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_recursive_query(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Root:
 
@@ -232,8 +232,8 @@ class TestGraphQL:
             def social_security_number(self) -> int:
                 return 56
 
-        api = GraphQLSchemaBuilder(root=Root, filters=[TagFilter(tags=["admin"])]).executor()
-        admin_api = GraphQLSchemaBuilder(root=Root).executor()
+        api = ObjectQLSchemaBuilder(root=Root, filters=[TagFilter(tags=["admin"])]).executor()
+        admin_api = ObjectQLSchemaBuilder(root=Root).executor()
 
         test_query = "query GetName { name }"
         test_admin_query = "query GetSocialSecurityNumber { socialSecurityNumber }"
@@ -253,7 +253,7 @@ class TestGraphQL:
         assert result.errors
 
     def test_property(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Root:
 
@@ -304,7 +304,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_interface(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         @interface
         class Animal:
@@ -385,7 +385,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_multiple_interfaces(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         @interface
         class Animal:
@@ -460,7 +460,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_dataclass(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         @dataclass
         class Root:
@@ -484,7 +484,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_mutation(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Root:
 
@@ -510,7 +510,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_deep_mutation(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Math:
 
@@ -552,7 +552,7 @@ class TestGraphQL:
     def test_print(self):
         from graphql.utils import schema_printer
 
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Math:
 
@@ -603,7 +603,7 @@ class TestGraphQL:
         assert schema_str == expected_schema_str
 
     def test_middleware(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         was_called = []
 
@@ -661,7 +661,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_input(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class TestInputObject:
             """
@@ -703,7 +703,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_enum(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class AnimalType(enum.Enum):
             dog = "dog"
@@ -736,7 +736,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_required(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Root:
             @query
@@ -757,7 +757,7 @@ class TestGraphQL:
         assert result.errors and "is required but not provided" in result.errors[0].message
 
     def test_optional(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Root:
             @query
@@ -782,7 +782,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_union(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Customer:
 
@@ -871,7 +871,7 @@ class TestGraphQL:
         assert none_result.data == none_expected
 
     def test_non_null(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Root:
 
@@ -912,12 +912,12 @@ class TestGraphQL:
         assert null_result.data == expected
 
     def test_context(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Root:
 
             @query
-            def has_context(self, context: GraphQLContext) -> bool:
+            def has_context(self, context: ObjectQLContext) -> bool:
                 return bool(context)
 
         api.root = Root
@@ -943,14 +943,14 @@ class TestGraphQL:
     @pytest.mark.skipif(not available(location_api_url),
                         reason=f"The location API '{location_api_url}' is unavailable")
     def test_remote_get(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
-        RemoteAPI = GraphQLRemoteExecutor(url=self.location_api_url)
+        RemoteAPI = ObjectQLRemoteExecutor(url=self.location_api_url)
 
         class Root:
 
             @query
-            def graph_loc(self, context: GraphQLContext) -> RemoteAPI:
+            def graph_loc(self, context: ObjectQLContext) -> RemoteAPI:
                 operation = context.request.info.operation.operation
                 query = context.field.query
                 redirected_query = operation + " " + query
@@ -958,7 +958,7 @@ class TestGraphQL:
                 result = RemoteAPI.execute(query=redirected_query)
 
                 if result.errors:
-                    raise GraphQLError(result.errors)
+                    raise ObjectQLError(result.errors)
 
                 return result.data
 
@@ -988,14 +988,14 @@ class TestGraphQL:
     @pytest.mark.skipif(not available(europe_graphql_url),
                         reason=f"The graphql-europe API '{europe_graphql_url}' is unavailable")
     def test_remote_post(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
-        RemoteAPI = GraphQLRemoteExecutor(url=self.europe_graphql_url, http_method="POST")
+        RemoteAPI = ObjectQLRemoteExecutor(url=self.europe_graphql_url, http_method="POST")
 
         class Root:
 
             @query
-            def graphql(self, context: GraphQLContext) -> RemoteAPI:
+            def graphql(self, context: ObjectQLContext) -> RemoteAPI:
                 operation = context.request.info.operation.operation
                 query = context.field.query
                 redirected_query = operation + " " + query
@@ -1003,7 +1003,7 @@ class TestGraphQL:
                 result = RemoteAPI.execute(query=redirected_query)
 
                 if result.errors:
-                    raise GraphQLError(result.errors)
+                    raise ObjectQLError(result.errors)
 
                 return result.data
 
@@ -1026,7 +1026,7 @@ class TestGraphQL:
         assert result.data.get("graphql").get("pokemon").get("types") == ["Electric"]
 
     def test_executor_to_ast(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Root:
 

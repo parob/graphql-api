@@ -7,14 +7,14 @@ from graphql import graphql
 from graphql.execution import ExecutionResult
 from graphql.type.schema import GraphQLSchema
 
-from objectql.context import GraphQLContext
+from objectql.context import ObjectQLContext
 from objectql.middleware import \
     middleware_field_context, \
     middleware_request_context, \
     middleware_local_proxy
 
 
-class GraphQLBaseExecutor:
+class ObjectQLBaseExecutor:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -32,14 +32,14 @@ class GraphQLBaseExecutor:
         pass
 
 
-class GraphQLExecutor(GraphQLBaseExecutor):
+class ObjectQLExecutor(ObjectQLBaseExecutor):
 
     def __init__(
         self,
         schema: GraphQLSchema,
         meta: Dict = None,
         root: Any = None,
-        middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
+        middleware: List[Callable[[Callable, ObjectQLContext], Any]] = None,
         middleware_on_introspection: bool = False
     ):
         super().__init__()
@@ -69,7 +69,7 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         context=None
     ) -> ExecutionResult:
 
-        context = GraphQLContext(
+        context = ObjectQLContext(
             schema=self.schema,
             meta=self.meta,
             executor=self
@@ -98,11 +98,11 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         middleware_on_introspection: bool = False
     ):
 
-        def simplify(_middleware: Callable[[Callable, GraphQLContext], Any]):
+        def simplify(_middleware: Callable[[Callable, ObjectQLContext], Any]):
             def graphql_middleware(next, root, info, **args):
                 kwargs = {}
                 if "context" in inspect.signature(_middleware).parameters:
-                    context: GraphQLContext = info.context
+                    context: ObjectQLContext = info.context
                     kwargs["context"] = context
                     context.resolve_args['root'] = root
                     context.resolve_args['info'] = info

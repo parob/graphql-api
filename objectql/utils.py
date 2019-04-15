@@ -61,7 +61,7 @@ def to_input_value(value):
 
 
 def has_mutable(type, checked_types=None, interfaces_default_mutable=True):
-    from .mapper import GraphQLMutableField, GraphQLTypeMapError
+    from .mapper import ObjectQLMutableField, ObjectQLTypeMapError
 
     while isinstance(type, (GraphQLNonNull, GraphQLList)):
         type = type.of_type
@@ -75,11 +75,11 @@ def has_mutable(type, checked_types=None, interfaces_default_mutable=True):
             checked_types = set()
         try:
             fields = type.fields
-        except (AssertionError, GraphQLTypeMapError):
+        except (AssertionError, ObjectQLTypeMapError):
             return False
 
         for key, field in fields.items():
-            if isinstance(field, GraphQLMutableField):
+            if isinstance(field, ObjectQLMutableField):
                 return True
             if field.type not in checked_types:
                 checked_types.add(field.type)
@@ -94,7 +94,7 @@ def has_mutable(type, checked_types=None, interfaces_default_mutable=True):
 
 
 def iterate_fields(type: GraphQLType, done_fields=None):
-    from .mapper import GraphQLTypeMapError
+    from .mapper import ObjectQLTypeMapError
 
     while isinstance(type, (GraphQLNonNull, GraphQLList)):
         type = type.of_type
@@ -105,7 +105,7 @@ def iterate_fields(type: GraphQLType, done_fields=None):
 
         try:
             type.fields
-        except (AssertionError, GraphQLTypeMapError):
+        except (AssertionError, ObjectQLTypeMapError):
             pass
         else:
             for key, field in type.fields.items():

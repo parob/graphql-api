@@ -3,13 +3,13 @@ from datetime import datetime, timedelta
 from uuid import UUID
 
 from objectql.decorators import query
-from objectql.schema import GraphQLSchemaBuilder
+from objectql.schema import ObjectQLSchemaBuilder
 
 
 class TestCustomTypes:
 
     def test_uuid_type(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         user_id = uuid.uuid4()
 
@@ -50,7 +50,7 @@ class TestCustomTypes:
         assert result.data == expected
 
     def test_datetime_type(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         now = datetime.now()
 
@@ -74,7 +74,7 @@ class TestCustomTypes:
         assert result.data == expected
 
     def test_json_type(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         class Root:
 
@@ -114,7 +114,7 @@ class TestCustomTypes:
         assert result.data == expected
 
     def test_bytes_type(self):
-        api = GraphQLSchemaBuilder()
+        api = ObjectQLSchemaBuilder()
 
         data_input = b'input_bytes'
         data_output = b'output_bytes'
