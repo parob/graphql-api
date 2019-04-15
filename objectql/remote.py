@@ -295,7 +295,7 @@ class ObjectQLRemoteObject:
             mappers=self.mappers,
             mutable=mutable
         )
-        
+
         query = query_builder.build()
 
         result = self.executor.execute(query=query)
