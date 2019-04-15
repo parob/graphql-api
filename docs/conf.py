@@ -43,7 +43,6 @@ html_sidebars = {
         'logo-text.html',
         'sidebarlogo.html',
         'globaltoc.html',
-        'localtoc.html',
         'searchbox.html'
     ]
 }

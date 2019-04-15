@@ -5,7 +5,7 @@
 .. toctree::
     :hidden:
 
-    overview <self>
+    Overview <self>
     quickstart
     installation
     schemas
