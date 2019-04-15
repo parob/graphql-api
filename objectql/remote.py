@@ -213,11 +213,13 @@ class ObjectQLRemoteObject:
         return ObjectQLRemoteObject(executor=executor, python_type=python_type)
 
     # noinspection PyProtectedMember
-    def __init__(self,
-                 executor: ObjectQLBaseExecutor,
-                 python_type: Type,
-                 mappers: GraphQLMappers = None,
-                 call_history: List[Tuple['ObjectQLRemoteField', Dict]] = None):
+    def __init__(
+        self,
+        executor: ObjectQLBaseExecutor,
+        python_type: Type,
+        mappers: GraphQLMappers = None,
+        call_history: List[Tuple['ObjectQLRemoteField', Dict]] = None
+    ):
 
         if not call_history:
             call_history = []
@@ -287,10 +289,13 @@ class ObjectQLRemoteObject:
             field.mutable
             for field, args in self.call_history + fields])
 
-        query_builder = ObjectQLRemoteQueryBuilder(call_stack=self.call_history,
-                                                   fields=fields,
-                                                   mappers=self.mappers,
-                                                   mutable=mutable)
+        query_builder = ObjectQLRemoteQueryBuilder(
+            call_stack=self.call_history,
+            fields=fields,
+            mappers=self.mappers,
+            mutable=mutable
+        )
+        
         query = query_builder.build()
 
         result = self.executor.execute(query=query)
