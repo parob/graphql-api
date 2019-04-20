@@ -37,9 +37,9 @@ pipenv run sphinx-build docs ./public -b html
 
 ## Simple Example
 ``` python
-from objectql import GraphQLSchemaBuilder, query
+from objectql import ObjectQLSchemaBuilder, query
 
-schema = GraphQLSchemaBuilder()
+schema = ObjectQLSchemaBuilder()
 
 
 class Math:

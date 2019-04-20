@@ -22,11 +22,11 @@ ObjectQL: A GraphQL server for Python
 
 **ObjectQL** is a library for creating a GraphQL server with Python.
 
-.. image:: https://gitlab.com/gloopio/grapyhql/badges/master/coverage.svg
-   :target: https://gitlab.com/gloopio/grapyhql/commits/master
+.. image:: https://gitlab.com/kiwi-ninja/objectql/badges/master/coverage.svg
+   :target: https://gitlab.com/kiwi-ninja/objectql/commits/master
 
-.. image:: https://gitlab.com/gloopio/grapyhql/badges/master/pipeline.svg
-    :target: https://gitlab.com/gloopio/grapyhql/commits/master
+.. image:: https://gitlab.com/kiwi-ninja/objectql/badges/master/pipeline.svg
+    :target: https://gitlab.com/kiwi-ninja/objectql/commits/master
 
 
 ObjectQL is only compatible with **Python 3.5** or newer.
@@ -71,9 +71,9 @@ Simple Example:
 
 .. code-block:: python
 
-    from objectql import GraphQLSchemaBuilder, query
+    from objectql import ObjectQLSchemaBuilder, query
 
-    schema = GraphQLSchemaBuilder()
+    schema = ObjectQLSchemaBuilder()
 
 
     class Math:

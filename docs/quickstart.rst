@@ -41,22 +41,22 @@ To get started we will create a very simple Python class:
 .. code-block:: python
     :name: hello-py
 
-    class HelloGraphQL:
+    class HelloObjectQL:
 
         def hello(self, name):
             return "hello " + name + "!"
 
-``HelloGraphQL`` is a typical Python class, and obviously we could use this just like any regular class:
+``HelloObjectQL`` is a typical Python class, and obviously we could use this just like any regular class:
 
 .. code-block:: python
 
-    hello_instance = HelloGraphQL()
+    hello_instance = HelloObjectQL()
 
     print(hello_instance.hello("rob"))
 
     >>> hello rob!
 
-But we need to slightly change ``HelloGraphQL`` to make it suitable for creating a **Schema**:
+But we need to slightly change ``HelloObjectQL`` to make it suitable for creating a **Schema**:
 
 .. code-block:: python
     :caption: hello.py
@@ -65,7 +65,7 @@ But we need to slightly change ``HelloGraphQL`` to make it suitable for creating
 
     from objectql import query
 
-    class HelloGraphQL:
+    class HelloObjectQL:
 
         @query
         def hello(self, name: str) -> str:
@@ -78,62 +78,62 @@ What was changed?:
 - `Typehints <https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html>`_ were added to the ``hello`` method arguments and return type. This tells ObjectQL what types it should expect.
 
 |
-Now to create a **Schema**, we can pass the adapted ``HelloGraphQL`` class to the ``GraphQLSchemaBuilder``. The ``HelloGraphQL`` class is now known as the **Root type** of the **Schema**:
+Now to create a **Schema**, we can pass the adapted ``HelloObjectQL`` class to the ``ObjectQLSchemaBuilder``. The ``HelloObjectQL`` class is now known as the **Root type** of the **Schema**:
 
 .. code-block:: python
     :emphasize-lines: 1,10,11
 
-    from objectql import query, GraphQLSchemaBuilder
+    from objectql import query, ObjectQLSchemaBuilder
 
-    class HelloGraphQL:
+    class HelloObjectQL:
 
         @query
         def hello(self, name: str) -> str:
             return "hello " + name + "!"
 
 
-    schema_builder = GraphQLSchemaBuilder(root=HelloGraphQL)
+    schema_builder = ObjectQLSchemaBuilder(root=HelloObjectQL)
     schema = schema_builder.schema()
 
 |
-Finally we use our **Schema** and *Root type* to create a ``GraphQLExecutor``:
+Finally we use our **Schema** and *Root type* to create a ``ObjectQLExecutor``:
 
 .. code-block:: python
     :emphasize-lines: 1,13
 
-    from objectql import query, GraphQLSchemaBuilder, GraphQLExecutor
+    from objectql import query, ObjectQLSchemaBuilder, ObjectQLExecutor
 
-    class HelloGraphQL:
+    class HelloObjectQL:
 
         @query
         def hello(self, name: str) -> str:
             return "hello " + name + "!"
 
 
-    schema_builder = GraphQLSchemaBuilder(root=HelloGraphQL)
+    schema_builder = ObjectQLSchemaBuilder(root=HelloObjectQL)
     schema, _, _ = schema_builder.schema()
 
-    executor = GraphQLExecutor(schema=schema, root=HelloGraphQL)
+    executor = ObjectQLExecutor(schema=schema, root=HelloObjectQL)
 
 |
-Now we can run a GraphQL query on the ``GraphQLExecutor``:
+Now we can run a GraphQL query on the ``ObjectQLExecutor``:
 
 .. code-block:: python
     :emphasize-lines: 15,16
 
-    from objectql import query, GraphQLSchemaBuilder, GraphQLExecutor
+    from objectql import query, ObjectQLSchemaBuilder, ObjectQLExecutor
 
-        class HelloGraphQL:
+        class HelloObjectQL:
 
             @query
             def hello(self, name: str) -> str:
                 return "hello " + name + "!"
 
 
-    schema_builder = GraphQLSchemaBuilder(root=HelloGraphQL)
+    schema_builder = ObjectQLSchemaBuilder(root=HelloObjectQL)
     schema, _, _ = schema_builder.schema()
 
-    executor = GraphQLExecutor(schema=schema, root=HelloGraphQL)
+    executor = ObjectQLExecutor(schema=schema, root=HelloObjectQL)
 
     test_query = '{ hello(name: "rob") }'
     print(executor.execute(test_query))
@@ -156,7 +156,7 @@ So to recap:
 
 - A Python class gets mapped to the **Root type** of a **Schema**.
 
-- The **Schema** is then used to create a ``GraphQLExecutor``.
+- The **Schema** is then used to create a ``ObjectQLExecutor``.
 
 
 Types
@@ -399,7 +399,7 @@ HTTP
 
 Once you've built your **Schema**, you'll probably want to serve it over the internet.
 
-The ObjectQL library won't actually handle any of this part, but the **Schema** that ObjectQL produces is identical to the **Schema** used in some other Python GraphQL frameworks.
+The ObjectQL library won't actually handle any of this part, but the **Schema** that ObjectQL produces is identical to the **Schema** used in other Python GraphQL frameworks.
 This means that we can use existing HTTP tools with the **Schema** to serve it.
 
 Here are some examples with popular frameworks.
@@ -412,7 +412,7 @@ If you are using ``Flask``, you *could* use `flask-graphql <https://github.com/g
     from flask import Flask
     from flask_graphql import GraphQLView
 
-    from objectql import query, GraphQLSchemaBuilder
+    from objectql import query, ObjectQLSchemaBuilder
 
     app = Flask(__name__)
 
@@ -422,9 +422,12 @@ If you are using ``Flask``, you *could* use `flask-graphql <https://github.com/g
         def hello(self) -> str:
             return "Hello World!"
 
-    schema, _, root_value = GraphQLSchemaBuilder(root=HelloWorld).schema()
+    schema, _, root_value = ObjectQLSchemaBuilder(root=HelloWorld).schema()
 
     app.add_url_rule('/graphql', view_func=GraphQLView.as_view('graphql', schema=schema, root_value=root_value, graphiql=True))
 
     if __name__ == "__main__":
         app.run()
+
+Werkzeug
+````````

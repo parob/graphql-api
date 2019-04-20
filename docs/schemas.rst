@@ -54,14 +54,14 @@ For example:
 
 In the example we have defined two classes, ``Human`` and ``Root``.
 
-Building a schema from classes can be quite complex, so a helper class called the ``GraphQLSchemaBuilder`` manages this process.
+Building a schema from classes can be quite complex, so a helper class called the ``ObjectQLSchemaBuilder`` manages this process.
 
-The **Root type** is passed as the *root* argument to the ``GraphQLSchemaBuilder``, to create a schema builder:
+The **Root type** is passed as the *root* argument to the ``ObjectQLSchemaBuilder``, to create a schema builder:
 
 .. code-block:: python
     :emphasize-lines: 21, 23
 
-    from objectql import query, GraphQLSchemaBuilder
+    from objectql import query, ObjectQLSchemaBuilder
 
     class Human:
 
@@ -81,14 +81,14 @@ The **Root type** is passed as the *root* argument to the ``GraphQLSchemaBuilder
         def a_person(self) -> Human:
             return tom
 
-    schema_builder = GraphQLSchemaBuilder(root=ExampleRoot)
+    schema_builder = ObjectQLSchemaBuilder(root=ExampleRoot)
 
     schema, _, _ = schema_builder.schema()
 
 
 Then the ``.schema()`` method is called to get the ``schema``.
 
-Only one class (the **Root type**) gets passed to the ``GraphQLSchemaBuilder`` because child object types (such as the ``Human`` object type) will be discovered by the ``GraphQLSchemaBuilder`` at runtime.
+Only one class (the **Root type**) gets passed to the ``ObjectQLSchemaBuilder`` because child object types (such as the ``Human`` object type) will be discovered by the ``ObjectQLSchemaBuilder`` at runtime.
 This works as long as all the type hints have been specified.
 
 Root value
@@ -98,11 +98,11 @@ Every GraphQL server has a **Root value** at the top level. The **Root value** i
 
 The **Root value** can be created in two ways:
 
-1. If a Python **class** is passed as the *root* argument to the ``GraphQLSchemaBuilder``:
+1. If a Python **class** is passed as the *root* argument to the ``ObjectQLSchemaBuilder``:
 
     The constructor of the given Python **class** is the **Root type** and will be called with no arguments to create a **Root value**.
 
-2. If a Python **object** is passed as the *root* argument to the ``GraphQLSchemaBuilder``:
+2. If a Python **object** is passed as the *root* argument to the ``ObjectQLSchemaBuilder``:
 
     The Python **object** is the **Root value** and the objects class is the **Root type**.
 
@@ -386,7 +386,7 @@ When built into a schema, these classes will map to a set of **Query** types and
 
     The ``green`` shapes are *types*, the ``blue`` shapes are **query** *fields* and the ``orange`` shapes are **mutable** *fields*
 
-The above example as a GraphQL scheme would look like this:
+The above example as a GraphQL schema would look like this:
 
 .. code-block::
     :linenos:
