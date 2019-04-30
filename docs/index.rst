@@ -29,7 +29,7 @@ ObjectQL: A GraphQL server for Python
     :target: https://gitlab.com/kiwi-ninja/objectql/commits/master
 
 
-ObjectQL is only compatible with **Python 3.5** or newer.
+ObjectQL requires **Python 3.5** or newer.
 
 -------------------
 
@@ -43,17 +43,21 @@ With ObjectQL, the following Python class::
       def add(self, number_one: float, number_two: float) -> float:
           return number_1 + number_2
 
-will get mapped to a GraphQL schema::
+can be automatically mapped into a GraphQL schema that would look something like::
 
     type Calculator {
         add(numberOne: Float!, numberTwo: Float!): Float!
     }
 
-that can be queried, like any normal GraphQL server::
+and like any normal GraphQL server it can be queried::
 
-    query {
-      add(numberOne: 4.3, numberTwo: 7.1)
-    }
+    executor = ObjectQLSchemaBuilder(root=Calculator).executor()
+
+    executor.execute("
+        query {
+            add(numberOne: 4.3, numberTwo: 7.1)
+        }
+    ")
 
     >>> {
         "add": 11.4

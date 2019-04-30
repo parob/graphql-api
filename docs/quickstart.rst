@@ -12,7 +12,7 @@ For a full breakdown of each feature please refer to the **individual docs** (in
 What is ObjectQL
 ----------------
 
-ObjectQL is a framework to help build a GraphQL server with Python, before getting started it's recommended that you have a good understanding of `GraphQL <https://graphql.org/learn/>`_.
+ObjectQL is a framework to help build a GraphQL server with Python. Before getting started it's recommended that you have a good understanding of `GraphQL <https://graphql.org/learn/>`_.
 
 ObjectQL can build a **GraphQL schema** directly from **Python classes**.
 
@@ -152,7 +152,7 @@ So to recap:
 
 - Any instance method on a Python class that is labeled with a ``@query`` (or ``@mutation``) decorator is mapped to a field on the **Schema**.
 
-- The `typehints <https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html>`_ on methods are mapped to field arguments and return types.
+- The `typehints <https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html>`_ on methods are mapped to field arguments and return types in the **Schema**.
 
 - A Python class gets mapped to the **Root type** of a **Schema**.
 
@@ -167,9 +167,9 @@ Type Mapping
 
 ObjectQL maps Python types directly to the equivalent GraphQL types.
 
-This means you **must** specify all the type hints for the methods that are marked with the ``@query`` (or ``@mutation``) decorator.
+This means you **must** specify all the type hints for any methods that are marked with the ``@query`` (or ``@mutation``) decorator. If a type hint is not specified then that argument will be ignored.
 
-Here are *most* of the types that ObjectQL can map:
+Here are *some* of the types that ObjectQL can map:
 
 +-------------------+--------------------+
 | Python Type       | GraphQL Type       |
@@ -264,9 +264,9 @@ Will get mapped to two types in the **Schema**::
     }
 
 
-This might at first seem counter-intuitive or unusual, but you'll soon realise it greatly simplifies building **Schemas**.
+This might at first seem counter-intuitive or unusual, but you'll soon realise it simplifies building **Schemas**.
 
-In order to avoid naming conflicts, notice that the mutable type gets the **Mutable** suffix added to its name.
+In order to avoid any naming conflicts, any mutable types get the **Mutable** suffix added to their name (for example see **ExampleMutable** above).
 
 
 Type Modifiers
@@ -390,24 +390,42 @@ For example here is a set of Python classes that will produce a **Schema** for a
         def comments() -> List[Comments]:
             pass
 
-The ``Controller`` suffix (seen above in the ``MainController`` class), is a good *optional* pattern to adopt,
-and should be used when naming a class that manages other classes.
+The ``Controller`` suffix (seen above in the ``MainController`` class), is a good *optional* convention to adopt. It can be used to identify that a class manages other classes/models.
 
 
 HTTP
 ----
 
-Once you've built your **Schema**, you'll probably want to serve it over the internet.
+Once you've built your **Schema**, you'll probably want to make it accessible over the internet through a webserver.
 
-The ObjectQL library won't actually handle any of this part, but the **Schema** that ObjectQL produces is identical to the **Schema** used in other Python GraphQL frameworks.
-This means that we can use existing HTTP tools with the **Schema** to serve it.
+The ObjectQL library *does not* have a built in webserver, but the **Schema** that ObjectQL produces is identical to the **Schema** used in other Python GraphQL frameworks.
+This means that we can use existing HTTP GraphQL tools with the **Schema** to create a web server.
 
-Here are some examples with popular frameworks.
+Here are some examples with some popular web frameworks.
+
+
+Werkzeug
+````````
+
+One of the simplest ways to serve a **Schema** is with ``Werkzeug`` and `werkzeug-graphql <https://gitlab.com/kiwi-ninja/werkzeug-graphql>`_::
+
+    from werkzeug_graphql import GraphQLAdapter
+
+    class HelloWorld:
+
+        @query
+        def hello(self) -> str:
+            return "Hello World!"
+
+    adapter = GraphQLAdapter.from_root(root=UserController)
+
+    if __name__ == "__main__":
+        adapter.run_app()
 
 Flask
 `````
 
-If you are using ``Flask``, you *could* use `flask-graphql <https://github.com/graphql-python/flask-graphql>`_::
+If you are using ``Flask`` you could use `flask-graphql <https://github.com/graphql-python/flask-graphql>`_::
 
     from flask import Flask
     from flask_graphql import GraphQLView
@@ -428,6 +446,3 @@ If you are using ``Flask``, you *could* use `flask-graphql <https://github.com/g
 
     if __name__ == "__main__":
         app.run()
-
-Werkzeug
-````````

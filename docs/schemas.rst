@@ -6,7 +6,7 @@ Building Schemas
 ================
 
     A GraphQL **schema** defines a set of **types** which completely describe the set of possible data you can query.
-    Then, when queries come in, they are validated and executed against that **schema**.
+    When a GraphQL query comes in, it is validated and executed against that **schema**.
 
 ObjectQL can build an entire GraphQL **schema** from Python classes.
 
@@ -24,13 +24,13 @@ Building a Schema
 
 Root Type
 `````````
-A schema must always have a **Root type** (often called the *Query type*).
-The **Root type** sits at the top level of the schema and acts an an entry point for all queries.
+Any **schema** must always have a **Root type** (often called the *Query type*).
+The **Root type** sits at the top level of the **schema** and acts an an entry point for all queries.
 
 For example:
 
 .. code-block:: python
-    :emphasize-lines: 3, 11
+    :emphasize-lines: 3, 9
 
         from objectql import query
 
@@ -38,9 +38,7 @@ For example:
 
             @query
             def name(self) -> str:
-                "Tom"
-
-        tom = Human(name="Tom")
+                return "Tom"
 
         class Root:
 
@@ -50,7 +48,7 @@ For example:
 
             @query
             def a_person(self) -> Human:
-                return tom
+                return Human()
 
 In the example we have defined two classes, ``Human`` and ``Root``.
 
@@ -59,7 +57,7 @@ Building a schema from classes can be quite complex, so a helper class called th
 The **Root type** is passed as the *root* argument to the ``ObjectQLSchemaBuilder``, to create a schema builder:
 
 .. code-block:: python
-    :emphasize-lines: 21, 23
+    :emphasize-lines: 19, 21
 
     from objectql import query, ObjectQLSchemaBuilder
 
@@ -67,9 +65,7 @@ The **Root type** is passed as the *root* argument to the ``ObjectQLSchemaBuilde
 
         @query
         def name(self) -> str:
-            "Tom"
-
-    tom = Human(name="Tom")
+            return "Tom"
 
     class ExampleRoot:
 
@@ -79,7 +75,7 @@ The **Root type** is passed as the *root* argument to the ``ObjectQLSchemaBuilde
 
         @query
         def a_person(self) -> Human:
-            return tom
+            return Human()
 
     schema_builder = ObjectQLSchemaBuilder(root=ExampleRoot)
 
@@ -247,7 +243,7 @@ For example:
 
         @query
         def age(self) -> int:
-            25
+            return 25
 
     @abstract
     class Human(Animal):

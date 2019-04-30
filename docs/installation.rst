@@ -7,8 +7,6 @@ Installation
 
 ObjectQL requires **Python 3.5** or newer.
 
-As always, its reccomended to use Python inside a virtual env on your local machine.
-
 Install ObjectQL with pip::
 
     pip install objectql
