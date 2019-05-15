@@ -7,15 +7,15 @@ with io.open('README.md', 'rt', encoding='utf8') as f:
 
 setup(
     name='objectql',
-    version='0.1',
+    version='0.2',
     license='MIT',
     packages=find_packages(),
     include_package_data=True,
     author='Robert Parker',
     author_email='rob@parob.com',
-    url = 'https://github.com/user/reponame',
-    download_url = 'https://github.com/user/reponame/archive/v_01.tar.gz',
-    keywords = ['GraphQL', 'ObjectQL', 'Server'], 
+    url='https://gitlab.com/kiwi-ninja/objectql',
+    download_url='https://gitlab.com/kiwi-ninja/objectql/-/archive/v0.2/objectql-v0.2.tar.gz',
+    keywords=['GraphQL', 'ObjectQL', 'Server'],
     description='A framework for building Python GraphQL servers.',
     long_description=readme,
     install_requires=[
