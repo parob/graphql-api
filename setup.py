@@ -13,11 +13,12 @@ setup(
     include_package_data=True,
     author='Robert Parker',
     author_email='rob@parob.com',
-    url='https://gitlab.com/kiwi-ninja/objectql',
+    url='https://objectql.com',
     download_url='https://gitlab.com/kiwi-ninja/objectql/-/archive/v0.2/objectql-v0.2.tar.gz',
     keywords=['GraphQL', 'ObjectQL', 'Server'],
     description='A framework for building Python GraphQL servers.',
     long_description=readme,
+    long_description_content_type='text/markdown',
     install_requires=[
         'graphql-core',
         'requests',
