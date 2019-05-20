@@ -38,7 +38,7 @@ deploy-pypi:
   before_script:
     - pip install twine
   script:
-    - echo CI_COMMIT_REF_NAME > VERSION
+    - echo $CI_COMMIT_REF_NAME > VERSION
     - python setup.py sdist
     - twine upload dist/* -u $PYPI_USERNAME -p $PYPI_PASSWORD
   only:
