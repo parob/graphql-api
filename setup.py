@@ -2,19 +2,24 @@ import io
 
 from setuptools import setup, find_packages
 
-with io.open('README.md', 'rt', encoding='utf8') as f:
-    readme = f.read()
+with io.open('README.md', 'rt', encoding='utf8') as readme_file:
+    readme = readme_file.read()
+
+with io.open('VERSION') as version_file:
+    version = version_file.read().strip().lower()
+    if version.startswith("v"):
+        version = version[1:]
 
 setup(
     name='objectql',
-    version='0.2',
+    version=version,
     license='MIT',
     packages=find_packages(),
     include_package_data=True,
     author='Robert Parker',
     author_email='rob@parob.com',
     url='https://objectql.com',
-    download_url='https://gitlab.com/kiwi-ninja/objectql/-/archive/v0.2/objectql-v0.2.tar.gz',
+    download_url=f'https://gitlab.com/kiwi-ninja/objectql/-/archive/v{version}/objectql-v{version}.tar.gz',
     keywords=['GraphQL', 'ObjectQL', 'Server'],
     description='A framework for building Python GraphQL servers.',
     long_description=readme,
