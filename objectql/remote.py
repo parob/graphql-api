@@ -758,6 +758,18 @@ class ObjectQLRemoteQueryBuilder:
             return input_value
 
 
+def remote_execute(cls, executor, context):
+    operation = context.request.info.operation.operation
+    query = context.field.query
+    redirected_query = operation + " " + query
+
+    result = executor.execute(query=redirected_query)
+
+    if result.errors:
+        raise ObjectQLError(result.errors)
+
+    return result.data
+    
 def is_list(graphql_type):
     while hasattr(graphql_type, 'of_type'):
         if isinstance(graphql_type, GraphQLList):

@@ -13,7 +13,7 @@ from objectql.error import ObjectQLError
 from objectql.context import ObjectQLContext
 from objectql.schema import ObjectQLSchemaBuilder
 from objectql.reduce import TagFilter
-from objectql.remote import ObjectQLRemoteExecutor
+from objectql.remote import ObjectQLRemoteExecutor, remote_execute
 
 
 def available(url, method="GET"):
@@ -1025,6 +1025,37 @@ class TestGraphQL:
         assert not result.errors
         assert result.data.get("graphql").get("pokemon").get("types") == ["Electric"]
 
+    @pytest.mark.skipif(not available(europe_graphql_url),
+                        reason=f"The graphql-europe API '{europe_graphql_url}' is unavailable")
+    def test_remote_post_helper(self):
+        api = ObjectQLSchemaBuilder()
+
+        RemoteAPI = ObjectQLRemoteExecutor(url=self.europe_graphql_url, http_method="POST")
+
+        class Root:
+
+            @query
+            def graphql(self, context: ObjectQLContext) -> RemoteAPI:
+                return remote_execute(RemoteAPI, context)
+
+        api.root = Root
+        executor = api.executor()
+
+        test_query = '''
+            query GetConferences {
+                graphql {
+                    pokemon(name: "Pikachu") {
+                        types
+                    }
+                }
+            }
+        '''
+
+        result = executor.execute(test_query)
+
+        assert not result.errors
+        assert result.data.get("graphql").get("pokemon").get("types") == ["Electric"]
+        
     def test_executor_to_ast(self):
         api = ObjectQLSchemaBuilder()
 
