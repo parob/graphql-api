@@ -73,10 +73,10 @@ class TestRelay:
         executor = api.executor()
 
         test_query = '''
-            query GetPeopleCount {
+            query GetPeopleNextPage {
                 people {
                     pageInfo {
-                        count
+                        hasNextPage
                     }
                 }
             }
@@ -87,7 +87,7 @@ class TestRelay:
         expected = {
             "people": {
                 "pageInfo": {
-                    "count": 3
+                    "hasNextPage": False
                 }
             }
         }
