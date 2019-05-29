@@ -218,22 +218,11 @@ class ObjectQLRemoteObject:
         executor: ObjectQLBaseExecutor,
         python_type: Type,
         mappers: GraphQLMappers = None,
-        call_history: List[Tuple['ObjectQLRemoteField', Dict]] = None
+        call_history: List[Tuple['ObjectQLRemoteField', Dict]] = None,
+        delay_mapping: bool = True
     ):
-
         if not call_history:
             call_history = []
-
-        if not mappers:
-            from objectql.schema import ObjectQLSchemaBuilder
-
-            schema = ObjectQLSchemaBuilder()
-            schema.root = python_type
-            schema.schema()
-            mappers = GraphQLMappers(
-                query_mapper=schema.query_mapper,
-                mutable_mapper=schema.mutation_mapper
-            )
 
         self.executor = executor
         self.python_type = python_type
@@ -241,8 +230,28 @@ class ObjectQLRemoteObject:
         self.call_history = call_history
         self.values = {}
 
-        graphql_types = self.mappers.map(self.python_type)
-        self.graphql_query_type, self.graphql_mutable_type = graphql_types
+        self.mapped_types = False
+        self.graphql_query_type = None
+        self.graphql_mutable_type = None
+
+        if not delay_mapping:
+            self._map()
+
+    def _map(self, force=False):
+        if self.mappers is None:
+            from objectql.schema import ObjectQLSchemaBuilder
+
+            schema = ObjectQLSchemaBuilder()
+            schema.root = self.python_type
+            schema.schema()
+            self.mappers = GraphQLMappers(
+                query_mapper=schema.query_mapper,
+                mutable_mapper=schema.mutation_mapper
+            )
+
+        if not self.mapped_types:
+            graphql_types = self.mappers.map(self.python_type)
+            self.graphql_query_type, self.graphql_mutable_type = graphql_types
 
     def fetch(self, fields: List[Tuple['ObjectQLRemoteField', Dict]] = None):
         if fields is None:
@@ -258,6 +267,7 @@ class ObjectQLRemoteObject:
             self.values[(field, arg_hash)] = field_value
 
     def _fields(self):
+        self._map()
 
         def is_valid_field(field):
             if not is_scalar(field.type):
@@ -282,6 +292,7 @@ class ObjectQLRemoteObject:
         Load all the scalar values for this object into the values dictionary
         :return:
         """
+        self._map()
         if fields is None:
             fields = self._fields()
 
@@ -315,6 +326,9 @@ class ObjectQLRemoteObject:
                 raise ValueError(
                     "GraphQLLists can only contain scalar values."
                 )
+
+            if field_values is None:
+                raise NullResponse()
 
             field_values = field_values.get(camel_name)
 
@@ -380,6 +394,8 @@ class ObjectQLRemoteObject:
         return hash(frozenset(hashable_args.items()))
 
     def get_value(self, field: 'ObjectQLRemoteField', args: Dict):
+        self._map()
+
         try:
             arg_hash = self.hash(args)
         except TypeError:
@@ -464,6 +480,8 @@ class ObjectQLRemoteObject:
         return self.values.get((field, arg_hash), None)
 
     def get_field(self, name):
+        self._map()
+
         camel_name = to_camel_case(name)
         field = None
         mutable = False
@@ -491,6 +509,8 @@ class ObjectQLRemoteObject:
         )
 
     def __getattr__(self, name):
+        self._map()
+
         attribute_type = getattr(self.python_type, name, None)
 
         is_dataclass_field = False
@@ -554,6 +574,8 @@ class ObjectQLRemoteObject:
         return field
 
     def __str__(self):
+        self._map()
+
         return f"<RemoteObject({self.graphql_query_type.name}) " \
             f"at {hex(id(self))}>"
 
