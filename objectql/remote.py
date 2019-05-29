@@ -758,7 +758,7 @@ class ObjectQLRemoteQueryBuilder:
             return input_value
 
 
-def remote_execute(cls, executor, context):
+def remote_execute(executor, context):
     operation = context.request.info.operation.operation
     query = context.field.query
     redirected_query = operation + " " + query

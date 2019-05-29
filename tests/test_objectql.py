@@ -1036,7 +1036,7 @@ class TestGraphQL:
 
             @query
             def graphql(self, context: ObjectQLContext) -> RemoteAPI:
-                return remote_execute(RemoteAPI, context)
+                return remote_execute(executor=RemoteAPI, context=context)
 
         api.root = Root
         executor = api.executor()
