@@ -55,11 +55,12 @@ class TestRelay:
 
             @query
             def page_info(self) -> PageInfo:
-                return PageInfo(start_cursor=self.filtered_cursors[0],
-                                end_cursor=self.filtered_cursors[-1],
-                                has_previous_page=self.has_previous_page,
-                                has_next_page=self.has_next_page,
-                                count=len(self.filtered_cursors))
+                return PageInfo(
+                    start_cursor=self.filtered_cursors[0],
+                    end_cursor=self.filtered_cursors[-1],
+                    has_previous_page=self.has_previous_page,
+                    has_next_page=self.has_next_page
+                )
 
         class Root:
 
@@ -95,7 +96,7 @@ class TestRelay:
         assert result.data == expected
 
         test_query = '''
-            query GetPeopleCount {
+            query GetPeopleNames {
                 people(first: 1, after: "a")  {
                     edges {
                         node {
