@@ -769,7 +769,8 @@ def remote_execute(cls, executor, context):
         raise ObjectQLError(result.errors)
 
     return result.data
-    
+
+
 def is_list(graphql_type):
     while hasattr(graphql_type, 'of_type'):
         if isinstance(graphql_type, GraphQLList):
