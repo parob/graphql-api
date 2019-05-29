@@ -119,7 +119,6 @@ else:
         has_next_page: bool
         start_cursor: str
         end_cursor: str
-        count: int
 
     @dataclass
     class Edge:
@@ -127,7 +126,6 @@ else:
         The `Edge` Object type represents a Relay Edge.
         `https://facebook.github.io/relay/graphql/connections.htm#sec-Edge-Types`
         """
-
         node: Node
         cursor: str
 
@@ -138,11 +136,13 @@ class Connection:
     `https://facebook.github.io/relay/graphql/connections.htm#sec-Connection-Types`
     """
 
-    def __init__(self,
-                 before: str = None,
-                 after: str = None,
-                 first: int = None,
-                 last: int = None, *args, **kwargs):
+    def __init__(
+        self,
+        before: str = None,
+        after: str = None,
+        first: int = None,
+        last: int = None, *args, **kwargs
+    ):
         self._before = before
         self._after = after
         self._first = first
