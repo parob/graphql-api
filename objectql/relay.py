@@ -16,6 +16,7 @@ except ImportError:
         The `Node` Interface type represents a Relay Node.
         `https://facebook.github.io/relay/graphql/objectidentification.htm`
         """
+        id: UUID
 
         def __init__(self, id: UUID = None, *args, **kwargs):
             if id is None:

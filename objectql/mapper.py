@@ -374,9 +374,9 @@ class ObjectQLTypeMapper:
             type_hints = typing.get_type_hints(func)
         except Exception as err:
             raise TypeError(
-                f"Unable to map input type '{name}' for '{class_type}', "
+                f"Unable to build input type '{name}' for '{class_type}', "
                 f"check the '{class_type}.__init__' method or the "
-                f"'{class_type}.graphql_from_input' method. "
+                f"'{class_type}.graphql_from_input' method, {err}."
             )
         type_hints.pop("return", None)
 
