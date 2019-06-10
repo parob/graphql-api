@@ -370,7 +370,14 @@ class ObjectQLTypeMapper:
 
         description = inspect.getdoc(func) or inspect.getdoc(class_type)
 
-        type_hints = typing.get_type_hints(func)
+        try:
+            type_hints = typing.get_type_hints(func)
+        except Exception as err:
+            raise TypeError(
+                f"Unable to map input type '{name}' for '{class_type}', "
+                f"check the '{class_type}.__init__' method or the "
+                f"'{class_type}.graphql_from_input' method. "
+            )
         type_hints.pop("return", None)
 
         signature = inspect.signature(func)
@@ -383,6 +390,7 @@ class ObjectQLTypeMapper:
 
         def local_fields():
 
+            local_name = name
             local_self = self
             local_type_hints = type_hints
             local_default_args = default_args
@@ -401,7 +409,12 @@ class ObjectQLTypeMapper:
                     default_value = local_default_args.get(key, None)
 
                     if default_value is not None:
-                        default_value = to_input_value(default_value)
+                        try:
+                            default_value = to_input_value(default_value)
+                        except ValueError as err:
+                            raise ValueError(
+                                f"Unable to map {local_name}.{key}, {err}."
+                            )
 
                     arguments[to_camel_case(key)] = GraphQLInputObjectField(
                         type=input_arg_type,
