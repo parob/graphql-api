@@ -94,7 +94,8 @@ class ObjectQLTypeMapper:
         as_input=False,
         registry=None,
         reverse_registry=None,
-        suffix=""
+        suffix="",
+        schema=None
     ):
         self.as_mutable = as_mutable
         self.as_input = as_input
@@ -103,6 +104,7 @@ class ObjectQLTypeMapper:
         self.suffix = suffix
         self.meta = {}
         self.input_type_mapper = None
+        self.schema = schema
 
     def types(self) -> Set[GraphQLType]:
         return set(self.registry.values())
@@ -158,7 +160,8 @@ class ObjectQLTypeMapper:
             as_input=True,
             registry=self.registry,
             reverse_registry=self.reverse_registry,
-            suffix=self.suffix
+            suffix=self.suffix,
+            schema=self.schema
         )
         self.input_type_mapper = input_type_mapper
         arguments = {}
@@ -211,7 +214,8 @@ class ObjectQLTypeMapper:
             return function_type(self, **_args)
 
         field_class = GraphQLField
-        if function_type.type == "mutation":
+        func_type = get_value(function_type, self.schema, 'type')
+        if func_type == "mutation":
             field_class = ObjectQLMutableField
 
         return field_class(return_graphql_type,
@@ -317,10 +321,10 @@ class ObjectQLTypeMapper:
         name = class_type.__name__
 
         for subclass in subclasses:
-            if not is_abstract(subclass):
+            if not is_abstract(subclass, self.schema):
                 self.map(subclass)
 
-        class_funcs = get_class_funcs(class_type, self.as_mutable)
+        class_funcs = get_class_funcs(class_type, self.schema, self.as_mutable)
 
         interface_name = f"{name}{self.suffix}Interface"
         description = inspect.getdoc(class_type)
@@ -447,11 +451,11 @@ class ObjectQLTypeMapper:
         name = f"{class_type.__name__}{self.suffix}"
         description = inspect.getdoc(class_type)
 
-        class_funcs = get_class_funcs(class_type, self.as_mutable)
+        class_funcs = get_class_funcs(class_type, self.schema, self.as_mutable)
 
         for key, func in class_funcs:
-            func_meta = getattr(func, 'meta', {})
-            func_meta['type'] = getattr(func, 'type')
+            func_meta = get_value(func, self.schema, 'meta')
+            func_meta['type'] = get_value(func, self.schema, 'type')
 
             self.meta[(name, to_snake_case(key))] = func_meta
 
@@ -464,7 +468,7 @@ class ObjectQLTypeMapper:
                 superclasses = inspect.getmro(local_class_type)[1:]
 
                 for superclass in superclasses:
-                    if is_interface(superclass):
+                    if is_interface(superclass, local_self.schema):
                         _interfaces.append(local_self.map(superclass))
 
                 return _interfaces
@@ -538,7 +542,7 @@ class ObjectQLTypeMapper:
                 if issubclass(type_, enum.Enum):
                     return self.map_to_enum(type_)
 
-                if is_interface(type_):
+                if is_interface(type_, self.schema):
                     return self.map_to_interface(type_)
 
                 if self.as_input:
@@ -603,7 +607,11 @@ class ObjectQLTypeMapper:
         return True
 
 
-def get_class_funcs(class_type, mutable=False) -> List[Tuple[Any, Any]]:
+def get_class_funcs(
+    class_type,
+    schema,
+    mutable=False
+) -> List[Tuple[Any, Any]]:
     members = [(key, member) for key, member in inspect.getmembers(class_type)]
 
     if hasattr(class_type, 'graphql_fields'):
@@ -626,12 +634,13 @@ def get_class_funcs(class_type, mutable=False) -> List[Tuple[Any, Any]]:
             func_members.append((key, member))
 
     def matches_criterion(func):
-        return func.type == "query" or (mutable and func.type == "mutation")
+        func_type = get_value(func, schema, 'type')
+        return func_type == "query" or (mutable and func_type == "mutation")
 
     callable_funcs = []
 
     for key, member in func_members:
-        if is_graphql(member) and matches_criterion(member):
+        if is_graphql(member, schema=schema) and matches_criterion(member):
             if not callable(member):
                 type_hints = typing.get_type_hints(member)
                 return_type = type_hints.pop('return', None)
@@ -644,9 +653,15 @@ def get_class_funcs(class_type, mutable=False) -> List[Tuple[Any, Any]]:
                         return getattr(self, local_key)
 
                     func.graphql = local_member.graphql
-                    func.meta = local_member.meta
-                    func.type = local_member.type
                     func.defined_on = local_member.defined_on
+                    func.schemas = {
+                        schema: {
+                            "meta": local_member.meta,
+                            "type": local_member.type,
+                            "defined_on": local_member.defined_on,
+                            "schema": schema
+                        }
+                    }
 
                     return func
 
@@ -660,25 +675,32 @@ def get_class_funcs(class_type, mutable=False) -> List[Tuple[Any, Any]]:
     return callable_funcs
 
 
-def is_graphql(type):
+def get_value(type, schema, key):
+    if is_graphql(type, schema):
+        return type.schemas.get(schema, type.schemas.get(None)).get(key)
+
+
+def is_graphql(type, schema):
     return hasattr(type, 'graphql') and \
-           hasattr(type, 'meta') and \
-           hasattr(type, 'type') and \
-           hasattr(type, 'defined_on')
+           type.graphql and \
+           hasattr(type, 'schemas') and \
+           (schema in type.schemas.keys() or None in type.schemas.keys())
 
 
-def is_interface(type):
-    if is_graphql(type):
-        return type.graphql and \
-               type.type == "interface" and \
-               type.defined_on == type
+def is_interface(type, schema):
+    if is_graphql(type, schema):
+        type_type = get_value(type, schema, 'type')
+        type_defined_on = get_value(type, schema, 'defined_on')
+
+        return type_type == "interface" and type_defined_on == type
 
 
-def is_abstract(type):
-    if is_graphql(type):
-        return type.graphql and \
-               type.type == "abstract" and \
-               type.defined_on == type
+def is_abstract(type, schema):
+    if is_graphql(type, schema):
+        type_type = get_value(type, schema, 'type')
+        type_defined_on = get_value(type, schema, 'defined_on')
+
+        return type_type == "abstract" and type_defined_on == type
 
 
 def is_scalar(type):

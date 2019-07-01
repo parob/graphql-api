@@ -3,14 +3,13 @@ from dataclasses import dataclass
 from typing import List
 
 from objectql.relay import Node, Connection, Edge, PageInfo
-
-from objectql import query, ObjectQLSchemaBuilder
+from objectql.schema import ObjectQLSchema
 
 
 class TestRelay:
 
     def test_relay_query(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         @dataclass
         class Person(Node):
@@ -49,11 +48,17 @@ class TestRelay:
                 elif self._last is not None:
                     self.filtered_cursors = self.filtered_cursors[-self._last:]
 
-            @query
+            @api.query
             def edges(self) -> List[Edge]:
-                return [Edge(cursor=cursor, node=self.people[cursor]) for cursor in self.filtered_cursors]
+                return [
+                    Edge(
+                        cursor=cursor,
+                        node=self.people[cursor]
+                    )
+                    for cursor in self.filtered_cursors
+                ]
 
-            @query
+            @api.query
             def page_info(self) -> PageInfo:
                 return PageInfo(
                     start_cursor=self.filtered_cursors[0],
@@ -62,15 +67,32 @@ class TestRelay:
                     has_next_page=self.has_next_page
                 )
 
+        @api.root
         class Root:
 
-            @query
-            def people(self, before: str = None, after: str = None, first: int = None, last: int = None) -> Connection:
-                _people = collections.OrderedDict([
-                    ("a", Person(name="rob")), ("b", Person(name="dan")), ("c", Person(name="lily"))])
-                return PersonConnection(_people, before=before, after=after, first=first, last=last)
+            @api.query
+            def people(
+                self,
+                before: str = None,
+                after: str = None,
+                first: int = None,
+                last: int = None
+            ) -> Connection:
 
-        api.root = Root
+                _people = collections.OrderedDict([
+                    ("a", Person(name="rob")),
+                    ("b", Person(name="dan")),
+                    ("c", Person(name="lily"))
+                ])
+
+                return PersonConnection(
+                    _people,
+                    before=before,
+                    after=after,
+                    first=first,
+                    last=last
+                )
+
         executor = api.executor()
 
         test_query = '''

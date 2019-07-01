@@ -26,7 +26,7 @@ class ObjectQLBaseExecutor:
     def execute(
         self,
         query,
-        variable_values=None,
+        variables=None,
         operation_name=None
     ) -> ExecutionResult:
         pass
@@ -77,9 +77,6 @@ class ObjectQLExecutor(ObjectQLBaseExecutor):
 
         if root is None:
             root = self.root
-
-        if context is None:
-            context = self.context
 
         value = graphql(
             self.schema,

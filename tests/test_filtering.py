@@ -1,30 +1,30 @@
 from objectql.decorators import query, mutation, interface
 from objectql.mapper import ObjectQLMetaKey
-from objectql.schema import ObjectQLSchemaBuilder
+from objectql.schema import ObjectQLSchema
 
 
 class TestSchemaFiltering:
 
     def test_query_remove_invalid(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class Person:
 
             def __init__(self):
                 self.name = ""
 
-            @mutation
+            @api.mutation
             def update_name(self, name: str) -> 'Person':
                 self.name = name
                 return self
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def person(self) -> Person:
                 return Person()
 
-        api.root = Root
         executor = api.executor()
 
         test_query = '''
@@ -46,29 +46,29 @@ class TestSchemaFiltering:
         Mutation fields by default should return queries
         :return:
         """
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class Person:
 
             def __init__(self):
                 self._name = ""
 
-            @query
+            @api.query
             def name(self) -> str:
                 return self._name
 
-            @mutation
+            @api.mutation
             def update_name(self, name: str) -> 'Person':
                 self._name = name
                 return self
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def person(self) -> Person:
                 return Person()
 
-        api.root = Root
         executor = api.executor()
 
         test_query = '''
@@ -95,12 +95,12 @@ class TestSchemaFiltering:
         assert result.data == expected
 
     def test_keep_interface(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
-        @interface
+        @api.interface
         class Person:
 
-            @query
+            @api.query
             def name(self) -> str:
                 pass
 
@@ -109,28 +109,28 @@ class TestSchemaFiltering:
             def __init__(self):
                 self._name = "Bob"
 
-            @query
+            @api.query
             def name(self) -> str:
                 return self._name
 
-            @query
+            @api.query
             def department(self) -> str:
                 return "Human Resources"
 
-            @mutation
+            @api.mutation
             def set_name(self, name: str) -> str:
                 self._name = name
                 return name
 
         bob_employee = Employee()
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def person(self) -> Person:
                 return bob_employee
 
-        api.root = Root
         executor = api.executor()
 
         test_query = '''
@@ -181,12 +181,12 @@ class TestSchemaFiltering:
         assert result.data == expected_2
 
     def test_remove_interface(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
-        @interface
+        @api.interface
         class RenamablePerson:
 
-            @mutation
+            @api.mutation
             def set_name(self, name: str) -> str:
                 pass
 
@@ -195,28 +195,28 @@ class TestSchemaFiltering:
             def __init__(self):
                 self.name = "Bob"
 
-            @query
+            @api.query
             def name(self) -> str:
                 return self.name
 
-            @query
+            @api.query
             def department(self) -> str:
                 return "Human Resources"
 
-            @mutation
+            @api.mutation
             def set_name(self, name: str) -> str:
                 self.name = name
                 return name
 
         bob_employee = Employee()
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def person(self) -> RenamablePerson:
                 return bob_employee
 
-        api.root = Root
         executor = api.executor()
 
         test_mutation = '''
@@ -252,34 +252,34 @@ class TestSchemaFiltering:
         assert 'Cannot query field "person" on type "PlaceholderQuery".' == result.errors[0].message
 
     def test_mutation_return_mutable_flag(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class Person:
 
             def __init__(self):
                 self._name = ""
 
-            @query
+            @api.query
             def name(self) -> str:
                 return self._name
 
-            @mutation
+            @api.mutation
             def update_name(self, name: str) -> 'Person':
                 self._name = name
                 return self
 
-            @mutation({ObjectQLMetaKey.resolve_to_mutable: True})
+            @api.mutation({ObjectQLMetaKey.resolve_to_mutable: True})
             def update_name_mutable(self, name: str) -> 'Person':
                 self._name = name
                 return self
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def person(self) -> Person:
                 return Person()
 
-        api.root = Root
         executor = api.executor()
 
         test_query = '''

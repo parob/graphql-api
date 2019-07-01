@@ -2,30 +2,29 @@ import uuid
 from datetime import datetime, timedelta
 from uuid import UUID
 
-from objectql.decorators import query
-from objectql.schema import ObjectQLSchemaBuilder
+from objectql.schema import ObjectQLSchema
 
 
 class TestCustomTypes:
 
     def test_uuid_type(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         user_id = uuid.uuid4()
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def name(self, id: UUID) -> str:
                 assert isinstance(id, UUID)
                 assert id == user_id
                 return "rob"
 
-            @query
+            @api.query
             def id(self) -> UUID:
                 return user_id
 
-        api.root = Root
         executor = api.executor()
 
         test_name_query = f"query GetName {{ name(id: \"{user_id}\") }}"
@@ -50,17 +49,17 @@ class TestCustomTypes:
         assert result.data == expected
 
     def test_datetime_type(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         now = datetime.now()
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def add_one_hour(self, time: datetime) -> datetime:
                 return time + timedelta(hours=1)
 
-        api.root = Root
         executor = api.executor()
 
         test_time_query = f"query GetTimeInOneHour {{ addOneHour(time: \"{now}\") }}"
@@ -74,19 +73,19 @@ class TestCustomTypes:
         assert result.data == expected
 
     def test_json_type(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def adapt_profile(self, profile: dict) -> dict:
                 return {**profile, "location": "london"}
 
-            @query
+            @api.query
             def add_number(self, numbers: list) -> list:
                 return [*numbers, 5]
 
-        api.root = Root
         executor = api.executor()
 
         test_profile_query = r'query GetAdaptProfile {' \
@@ -114,19 +113,19 @@ class TestCustomTypes:
         assert result.data == expected
 
     def test_bytes_type(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         data_input = b'input_bytes'
         data_output = b'output_bytes'
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def byte_data(self, value: bytes) -> bytes:
                 assert value == data_input
                 return data_output
 
-        api.root = Root
         executor = api.executor()
 
         test_bytes_query = f"query GetByteData {{ byteData(value: \"{data_input.decode('utf-8')}\") }}"

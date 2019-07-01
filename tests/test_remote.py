@@ -8,58 +8,56 @@ import pytest
 from objectql.decorators import query, mutation
 from objectql.error import ObjectQLError
 from objectql.mapper import ObjectQLMetaKey
-from objectql.schema import ObjectQLSchemaBuilder
+from objectql.schema import ObjectQLSchema
 from objectql.remote import ObjectQLRemoteObject
 
 
 class TestObjectQLRemote:
 
     def test_remote_query(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class House:
 
-            @query
+            @api.query
             def number_of_doors(self) -> int:
                 return 5
 
-        api.root = House
-
         house: House = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=House
+            schema=api
         )
 
         assert house.number_of_doors() == 5
 
     def test_remote_query_list(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class Door:
 
             def __init__(self, height: int):
                 self._height = height
 
-            @query
+            @api.query
             def height(self) -> int:
                 return self._height
 
             @property
-            @query
+            @api.query
             def wood(self) -> str:
                 return "oak"
 
+        @api.root
         class House:
 
-            @query
+            @api.query
             def doors(self) -> List[Door]:
                 return [Door(height=3), Door(height=5)]
 
-        api.root = House
-
         house: House = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=House
+            schema=api
         )
 
         doors = house.doors()
@@ -75,14 +73,14 @@ class TestObjectQLRemote:
         assert woods_2 == {"oak"}
 
     def test_remote_query_list_nested(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class Person:
 
             def __init__(self, name: str):
                 self._name = name
 
-            @query
+            @api.query
             def name(self) -> str:
                 return self._name
 
@@ -91,25 +89,24 @@ class TestObjectQLRemote:
             def __init__(self, height: int):
                 self._height = height
 
-            @query
+            @api.query
             def height(self) -> int:
                 return self._height
 
-            @query
+            @api.query
             def owner(self) -> Person:
                 return Person(name="Rob")
 
+        @api.root
         class House:
 
-            @query
+            @api.query
             def doors(self) -> List[Door]:
                 return [Door(height=3), Door(height=5)]
 
-        api.root = House
-
         house: House = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=House
+            schema=api
         )
 
         doors = house.doors()
@@ -118,29 +115,28 @@ class TestObjectQLRemote:
             assert {door.owner().name() for door in doors}
 
     def test_remote_query_enum(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class HouseType(enum.Enum):
             bungalow = "bungalow"
             flat = "flat"
 
+        @api.root
         class House:
 
-            @query
+            @api.query
             def type(self) -> HouseType:
                 return HouseType.bungalow
 
-        api.root = House
-
         house: House = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=House
+            schema=api
         )
 
         assert house.type() == HouseType.bungalow
 
     def test_remote_query_send_enum(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class RoomType(enum.Enum):
             bedroom = "bedroom"
@@ -152,70 +148,70 @@ class TestObjectQLRemote:
                 self._name = name
                 self._type = type
 
-            @query
+            @api.query
             def name(self) -> str:
                 return self._name
 
-            @query
+            @api.query
             def type(self) -> RoomType:
                 return self._type
 
+        @api.root
         class House:
 
-            @query
+            @api.query
             def get_room(self) -> Room:
                 return Room(name="robs_room", type=RoomType.bedroom)
 
-        api.root = House
-
         house: House = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=House
+            schema=api
         )
 
         assert house.get_room().type() == RoomType.bedroom
 
     def test_remote_query_uuid(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         person_id = uuid.uuid4()
 
+        @api.root
         class Person:
 
-            @query
+            @api.query
             def id(self) -> UUID:
                 return person_id
 
-        api.root = Person
-
         person: Person = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=Person
+            schema=api
         )
 
         assert person.id() == person_id
 
     def test_remote_mutation(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Counter:
 
             def __init__(self):
                 self._value = 0
 
-            @mutation
+            @api.mutation
             def increment(self) -> int:
                 self._value += 1
                 return self._value
 
             @property
-            @query
+            @api.query
             def value(self) -> int:
                 return self._value
 
-        api.root = Counter
-
-        counter: Counter = ObjectQLRemoteObject(executor=api.executor(), python_type=Counter)
+        counter: Counter = ObjectQLRemoteObject(
+            executor=api.executor(),
+            schema=api
+        )
 
         assert counter.value == 0
         assert counter.increment() == 1
@@ -227,51 +223,49 @@ class TestObjectQLRemote:
         assert counter.value == 11
 
     def test_remote_positional_args(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Multiplier:
 
-            @query
+            @api.query
             def calculate(self, value_one: int = 1, value_two: int = 1) -> int:
                 return value_one * value_two
 
-        api.root = Multiplier
-
         multiplier: Multiplier = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=Multiplier
+            schema=api
         )
 
         assert multiplier.calculate(4, 2) == 8
 
     def test_remote_query_optional(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class Person:
 
             @property
-            @query
+            @api.query
             def age(self) -> int:
                 return 25
 
-            @query
+            @api.query
             def name(self) -> str:
                 return "rob"
 
+        @api.root
         class Bank:
 
-            @query
+            @api.query
             def owner(self, respond_none: bool = False) -> Optional[Person]:
                 if respond_none:
                     return None
 
                 return Person()
 
-        api.root = Bank
-
         bank: Bank = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=Bank
+            schema=api
         )
 
         assert bank.owner().age == 25
@@ -279,52 +273,51 @@ class TestObjectQLRemote:
         assert bank.owner(respond_none=True) is None
 
     def test_remote_mutation_with_input(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Counter:
 
             def __init__(self):
                 self.value = 0
 
-            @mutation
+            @api.mutation
             def add(self, value: int = 0) -> int:
                 self.value += value
                 return self.value
 
-        api.root = Counter
-
         counter: Counter = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=Counter
+            schema=api
         )
 
         assert counter.add(value=5) == 5
         assert counter.add(value=10) == 15
 
     def test_remote_query_with_input(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Calculator:
 
-            @query
+            @api.query
             def square(self, value: int) -> int:
                 return value * value
 
-        api.root = Calculator
-
         calculator: Calculator = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=Calculator
+            schema=api
         )
 
         assert calculator.square(value=5) == 25
 
     def test_remote_query_with_enumerable_input(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Calculator:
 
-            @query
+            @api.query
             def add(self, values: List[int]) -> int:
                 total = 0
 
@@ -333,17 +326,15 @@ class TestObjectQLRemote:
 
                 return total
 
-        api.root = Calculator
-
         calculator: Calculator = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=Calculator
+            schema=api
         )
 
         assert calculator.add(values=[5, 2, 7]) == 14
 
     def test_remote_input_object(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class Garden:
 
@@ -351,26 +342,25 @@ class TestObjectQLRemote:
                 self._size = size
 
             @property
-            @query
+            @api.query
             def size(self) -> int:
                 return self._size
 
+        @api.root
         class House:
 
-            @query
+            @api.query
             def value(self, garden: Garden, rooms: int = 7) -> int:
                 return (garden.size * 2) + (rooms * 10)
 
-        api.root = House
-
         house: House = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=House
+            schema=api
         )
         assert house.value(garden=Garden(size=10)) == 90
 
     def test_remote_input_object_nested(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class Animal:
 
@@ -378,7 +368,7 @@ class TestObjectQLRemote:
                 self._age = age
 
             @property
-            @query
+            @api.query
             def age(self) -> int:
                 return self._age
 
@@ -396,26 +386,25 @@ class TestObjectQLRemote:
                 self._size = size
 
             @property
-            @query
+            @api.query
             def size(self) -> int:
                 return self._size
 
             @property
-            @query
+            @api.query
             def animal_age(self) -> int:
                 return self.animal.age
 
+        @api.root
         class House:
 
-            @query
+            @api.query
             def value(self, garden: Garden, rooms: int = 7) -> int:
                 return ((garden.size * 2) + (rooms * 10)) - garden.animal_age
 
-        api.root = House
-
         house: House = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=House
+            schema=api
         )
 
         with pytest.raises(
@@ -436,52 +425,51 @@ class TestObjectQLRemote:
         ) == 85
 
     def test_remote_recursive_mutated(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class Flopper:
 
             def __init__(self):
                 self._flop = True
 
-            @query
+            @api.query
             def value(self) -> bool:
                 return self._flop
 
-            @mutation
+            @api.mutation
             def flop(self) -> 'Flopper':
                 self._flop = not self._flop
                 return self
 
         global_flopper = Flopper()
 
+        @api.root
         class Flipper:
 
             def __init__(self):
                 self._flip = True
 
-            @query
+            @api.query
             def value(self) -> bool:
                 return self._flip
 
-            @mutation
+            @api.mutation
             def flip(self) -> 'Flipper':
                 self._flip = not self._flip
                 return self
 
-            @query
+            @api.query
             def flopper(self) -> Flopper:
                 return global_flopper
 
-            @mutation({ObjectQLMetaKey.resolve_to_self: False})
+            @api.mutation({ObjectQLMetaKey.resolve_to_self: False})
             def flagged_flip(self) -> 'Flipper':
                 self._flip = not self._flip
                 return self
 
-        api.root = Flipper
-
         flipper: Flipper = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=Flipper
+            schema=api
         )
 
         assert flipper.value()
@@ -517,7 +505,7 @@ class TestObjectQLRemote:
         assert mutated_mutated_flopper.value()
 
     def test_remote_nested(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class Person:
 
@@ -526,20 +514,20 @@ class TestObjectQLRemote:
                 self._age = age
                 self._height = height
 
-            @query
+            @api.query
             def age(self) -> int:
                 return self._age
 
-            @query
+            @api.query
             def name(self) -> str:
                 return self._name
 
             @property
-            @query
+            @api.query
             def height(self) -> float:
                 return self._height
 
-            @mutation
+            @api.mutation
             def update(
                 self,
                 name: str = None,
@@ -554,21 +542,20 @@ class TestObjectQLRemote:
 
                 return self
 
+        @api.root
         class Root:
 
             def __init__(self):
                 self._rob = Person(name="rob", age=10, height=183.0)
                 self._counter = 0
 
-            @query
+            @api.query
             def rob(self) -> Person:
                 return self._rob
 
-        api.root = Root
-
         root: Root = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=Root
+            schema=api
         )
 
         person: Person = root.rob()
@@ -589,11 +576,12 @@ class TestObjectQLRemote:
         assert person.name() == "pete"
 
     def test_remote_with_local_property(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Person:
 
-            @query
+            @api.query
             def age(self) -> int:
                 return 50
 
@@ -601,41 +589,42 @@ class TestObjectQLRemote:
             def height(self):
                 return 183
 
-        api.root = Person
-
-        person: Person = ObjectQLRemoteObject(executor=api.executor(), python_type=Person)
+        person: Person = ObjectQLRemoteObject(
+            executor=api.executor(),
+            schema=api
+        )
 
         assert person.age() == 50
         assert person.height == 183
 
     def test_remote_with_local_method(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Person:
 
-            @query
+            @api.query
             def age(self) -> int:
                 return 50
 
             def hello(self):
                 return "hello"
 
-        api.root = Person
-
         person: Person = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=Person
+            schema=api
         )
 
         assert person.age() == 50
         assert person.hello() == "hello"
 
     def test_remote_with_local_static_method(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Person:
 
-            @query
+            @api.query
             def age(self) -> int:
                 return 50
 
@@ -643,22 +632,21 @@ class TestObjectQLRemote:
             def hello():
                 return "hello"
 
-        api.root = Person
-
         person: Person = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=Person
+            schema=api
         )
 
         assert person.age() == 50
         assert person.hello() == "hello"
 
     def test_remote_with_local_class_method(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Person:
 
-            @query
+            @api.query
             def age(self) -> int:
                 return 50
 
@@ -667,11 +655,9 @@ class TestObjectQLRemote:
                 assert cls == Person
                 return "hello"
 
-        api.root = Person
-
         person: Person = ObjectQLRemoteObject(
             executor=api.executor(),
-            python_type=Person
+            schema=api
         )
 
         assert person.age() == 50

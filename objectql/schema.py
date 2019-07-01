@@ -8,8 +8,11 @@ from graphql import (
     GraphQLField,
     GraphQLString
 )
+from graphql.execution.base import ExecutionResult
 
-from objectql.executor import ObjectQLExecutor
+from objectql.decorators import object_decorator_factory
+
+from objectql.executor import ObjectQLExecutor, ObjectQLBaseExecutor
 from objectql.context import ObjectQLContext
 from objectql.reduce import ObjectQLSchemaReducer, ObjectQLFilter
 from objectql.mapper import ObjectQLTypeMapper
@@ -35,7 +38,12 @@ class ObjectQLRequestContext:
         self.info = info
 
 
-class ObjectQLSchemaBuilder:
+class ObjectQLSchema(ObjectQLBaseExecutor):
+
+    query = object_decorator_factory("query", schema=True)
+    mutation = object_decorator_factory("mutation", schema=True)
+    interface = object_decorator_factory("interface", schema=True)
+    abstract = object_decorator_factory("abstract", schema=True)
 
     def __init__(
         self,
@@ -43,21 +51,26 @@ class ObjectQLSchemaBuilder:
         middleware: List[Callable[[Callable, ObjectQLContext], Any]] = None,
         filters: List[ObjectQLFilter] = None
     ):
+        super().__init__()
         if middleware is None:
             middleware = []
 
-        self.root = root
+        self.root_type = root
         self.middleware = middleware
         self.filters = filters
         self.query_mapper = None
         self.mutation_mapper = None
 
-    def schema(self) -> Tuple[GraphQLSchema, Dict, Any]:
+    def root(self, root_type):
+        self.root_type = root_type
+        return root_type
+
+    def graphql_schema(self) -> Tuple[GraphQLSchema, Dict, Any]:
         schema_args = {}
         meta = {}
 
-        root_class = self.root
-        root_value = self.root
+        root_class = self.root_type
+        root_value = self.root_type
 
         if not inspect.isclass(root_class):
             root_class = type(root_class)
@@ -65,9 +78,9 @@ class ObjectQLSchemaBuilder:
         if root_value and callable(root_value):
             root_value = root_value()
 
-        if self.root:
+        if self.root_type:
             # Create the root query
-            query_mapper = ObjectQLTypeMapper()
+            query_mapper = ObjectQLTypeMapper(schema=self)
             query: GraphQLObjectType = query_mapper.map(root_class)
 
             # Filter the root query
@@ -90,7 +103,8 @@ class ObjectQLSchemaBuilder:
             mutation_mapper = ObjectQLTypeMapper(
                 as_mutable=True,
                 suffix="Mutable",
-                registry=registry
+                registry=registry,
+                schema=self
             )
             mutation: GraphQLObjectType = mutation_mapper.map(root_class)
 
@@ -127,8 +141,20 @@ class ObjectQLSchemaBuilder:
 
         return schema, meta, root_value
 
+    def execute(
+        self,
+        query,
+        variables=None,
+        operation_name=None
+    ) -> ExecutionResult:
+        return self.executor().execute(
+            query=query,
+            variables=variables,
+            operation_name=operation_name
+        )
+
     def executor(self) -> ObjectQLExecutor:
-        schema, meta, root_value = self.schema()
+        schema, meta, root_value = self.graphql_schema()
         return ObjectQLExecutor(
             schema=schema,
             meta=meta,

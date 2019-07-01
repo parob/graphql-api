@@ -31,6 +31,7 @@ from graphql.type.definition import (
 from objectql.error import ObjectQLError
 from objectql.executor import ObjectQLBaseExecutor
 from objectql.mapper import ObjectQLTypeMapper, ObjectQLMetaKey
+from objectql.schema import ObjectQLSchema
 from objectql.utils import to_camel_case, url_to_ast, to_snake_case, http_query
 
 
@@ -207,29 +208,37 @@ class ObjectQLRemoteError(ObjectQLError):
 class ObjectQLRemoteObject:
 
     @classmethod
-    def from_url(cls, url: str, python_type: Type) -> 'ObjectQLRemoteObject':
+    def from_url(
+        cls,
+        url: str,
+        schema: ObjectQLSchema
+    ) -> 'ObjectQLRemoteObject':
         executor = ObjectQLRemoteExecutor(url=url)
 
-        return ObjectQLRemoteObject(executor=executor, python_type=python_type)
+        return ObjectQLRemoteObject(executor=executor, schema=schema)
 
     # noinspection PyProtectedMember
     def __init__(
         self,
         executor: ObjectQLBaseExecutor,
-        python_type: Type,
+        schema: ObjectQLSchema = None,
         mappers: GraphQLMappers = None,
+        python_type: Type = None,
         call_history: List[Tuple['ObjectQLRemoteField', Dict]] = None,
         delay_mapping: bool = True
     ):
         if not call_history:
             call_history = []
 
+        if not python_type:
+            python_type = schema.root_type
+
         self.executor = executor
-        self.python_type = python_type
+        self.schema = schema
         self.mappers = mappers
         self.call_history = call_history
         self.values = {}
-
+        self.python_type = python_type
         self.mapped_types = False
         self.graphql_query_type = None
         self.graphql_mutable_type = None
@@ -239,17 +248,17 @@ class ObjectQLRemoteObject:
 
     def _map(self, force=False):
         if self.mappers is None:
-            from objectql.schema import ObjectQLSchemaBuilder
+            schema = self.schema
 
-            schema = ObjectQLSchemaBuilder()
-            schema.root = self.python_type
-            schema.schema()
+            schema.graphql_schema()
+
             self.mappers = GraphQLMappers(
                 query_mapper=schema.query_mapper,
                 mutable_mapper=schema.mutation_mapper
             )
 
         if not self.mapped_types:
+            self.mapped_types = True
             graphql_types = self.mappers.map(self.python_type)
             self.graphql_query_type, self.graphql_mutable_type = graphql_types
 
@@ -428,6 +437,7 @@ class ObjectQLRemoteObject:
 
                 obj = ObjectQLRemoteObject(
                     executor=self.executor,
+                    schema=self.schema,
                     python_type=python_type,
                     mappers=self.mappers,
                     call_history=[*self.call_history, (field, args)]
@@ -441,6 +451,7 @@ class ObjectQLRemoteObject:
                     for remote_object_data in data:
                         remote_object = ObjectQLRemoteObject(
                             executor=self.executor,
+                            schema=self.schema,
                             python_type=python_type,
                             mappers=self.mappers,
                             call_history=[*self.call_history, (field, args)]
@@ -584,11 +595,11 @@ class ObjectQLRemoteField:
 
     # noinspection PyProtectedMember
     def __init__(
-            self,
-            name: str,
-            mutable: bool,
-            graphql_field: GraphQLField,
-            parent: ObjectQLRemoteObject
+        self,
+        name: str,
+        mutable: bool,
+        graphql_field: GraphQLField,
+        parent: ObjectQLRemoteObject
     ):
         self.name = name
         self.mutable = mutable
@@ -642,11 +653,13 @@ class ObjectQLRemoteField:
 
 class ObjectQLRemoteQueryBuilder:
 
-    def __init__(self,
-                 call_stack: List[Tuple['ObjectQLRemoteField', Dict]],
-                 fields: List[Tuple['ObjectQLRemoteField', Dict]],
-                 mappers: GraphQLMappers,
-                 mutable=False):
+    def __init__(
+        self,
+        call_stack: List[Tuple['ObjectQLRemoteField', Dict]],
+        fields: List[Tuple['ObjectQLRemoteField', Dict]],
+        mappers: GraphQLMappers,
+        mutable=False
+    ):
         self.call_stack = call_stack
         self.fields = fields
         self.mappers = mappers
@@ -695,10 +708,10 @@ class ObjectQLRemoteQueryBuilder:
 
     # noinspection PyMethodMayBeStatic
     def map_to_input_value(
-            self,
-            value,
-            mappers: GraphQLMappers,
-            expected_graphql_type=None
+        self,
+        value,
+        mappers: GraphQLMappers,
+        expected_graphql_type=None
     ):
         from objectql.mapper import is_scalar
 

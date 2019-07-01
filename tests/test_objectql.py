@@ -8,10 +8,9 @@ from objectql.utils import executor_to_ast
 from requests.api import request
 from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
 
-from objectql.decorators import query, mutation, interface
 from objectql.error import ObjectQLError
 from objectql.context import ObjectQLContext
-from objectql.schema import ObjectQLSchemaBuilder
+from objectql.schema import ObjectQLSchema
 from objectql.reduce import TagFilter
 from objectql.remote import ObjectQLRemoteExecutor, remote_execute
 
@@ -27,33 +26,94 @@ def available(url, method="GET"):
 
 class TestGraphQL:
 
-    def test_deep_query(self):
-        api = ObjectQLSchemaBuilder()
+    def test_multiple_apis(self):
+        api_1 = ObjectQLSchema()
+        api_2 = ObjectQLSchema()
 
         class Math:
 
-            @query
+            @api_1.query
             def test_square(self, number: int) -> int:
                 return number * number
 
+            @api_2.query
+            def test_cube(self, number: int) -> int:
+                return number * number * number
+
+        @api_1.root
+        @api_2.root
         class Root:
 
-            @query
+            @api_1.query
+            @api_2.query
             def math(self) -> Math:
                 return Math()
 
-        api.root = Root
-        executor = api.executor()
-
-        test_query = '''
+        result_1 = api_1.execute('''
             query GetTestSquare {
                 math {
                     square: testSquare(number: %d)
                 }
             }
-        ''' % 5
+        ''' % 5)
 
-        result = executor.execute(test_query)
+        expected = {
+            "math": {
+                "square": 25
+            }
+        }
+        assert not result_1.errors
+        assert result_1.data == expected
+
+        result_2 = api_2.execute('''
+            query GetTestCube {
+                math {
+                    square: testCube(number: %d)
+                }
+            }
+        ''' % 5)
+
+        expected = {
+            "math": {
+                "square": 125
+            }
+        }
+        assert not result_2.errors
+        assert result_2.data == expected
+
+        result_3 = api_2.execute('''
+            query GetTestSquare {
+                math {
+                    square: testSquare(number: %d)
+                }
+            }
+        ''' % 5)
+
+        assert result_3.errors
+
+    def test_deep_query(self):
+        api = ObjectQLSchema()
+
+        class Math:
+
+            @api.query
+            def test_square(self, number: int) -> int:
+                return number * number
+
+        @api.root
+        class Root:
+
+            @api.query
+            def math(self) -> Math:
+                return Math()
+
+        result = api.execute('''
+            query GetTestSquare {
+                math {
+                    square: testSquare(number: %d)
+                }
+            }
+        ''' % 5)
 
         expected = {
             "math": {
@@ -63,22 +123,20 @@ class TestGraphQL:
         assert not result.errors
         assert result.data == expected
 
-    def test_query_input(self):
-        api = ObjectQLSchemaBuilder()
+    def test_query_object_input(self):
+        api = ObjectQLSchema()
 
         class Person:
 
             def __init__(self, name: str):
                 self.name = name
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def get_name(self, person: Person) -> str:
                 return person.name
-
-        api.root = Root
-        executor = api.executor()
 
         test_query = '''
             query GetTestSquare {
@@ -86,7 +144,7 @@ class TestGraphQL:
             }
         '''
 
-        result = executor.execute(test_query)
+        result = api.execute(test_query)
 
         expected = {
             "getName": "steve"
@@ -95,7 +153,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_custom_query_input(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class Person:
 
@@ -109,21 +167,21 @@ class TestGraphQL:
                 self.name = name
                 self.age = 20
 
-            @query
+            @api.query
             def name(self) -> str:
                 return self.name
 
-            @query
+            @api.query
             def age(self) -> int:
                 return self.age
 
         class Root:
 
-            @query
+            @api.query
             def person_info(self, person: Person) -> str:
                 return person.name + " is " + str(person.age)
 
-        api.root = Root
+        api.root_type = Root
         executor = api.executor()
 
         test_query = '''
@@ -141,14 +199,14 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_runtime_field(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class Person:
 
             @classmethod
             def graphql_fields(cls):
 
-                @query
+                @api.query
                 def age(self) -> int:
                     return self.hidden_age
 
@@ -159,11 +217,11 @@ class TestGraphQL:
 
         class Root:
 
-            @query
+            @api.query
             def thomas(self) -> Person:
                 return Person(age=2)
 
-        api.root = Root
+        api.root_type = Root
         executor = api.executor()
 
         test_query = '''
@@ -183,19 +241,19 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_recursive_query(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class Root:
 
-            @query
+            @api.query
             def root(self) -> 'Root':
                 return Root()
 
-            @query
+            @api.query
             def value(self) -> int:
                 return 5
 
-        api.root = Root
+        api.root_type = Root
         executor = api.executor()
 
         test_query = '''
@@ -222,57 +280,64 @@ class TestGraphQL:
 
     def test_field_filter(self):
 
+        api = ObjectQLSchema(filters=[TagFilter(tags=["admin"])])
+        admin_api = ObjectQLSchema()
+
+        @api.root
+        @admin_api.root
         class Root:
 
-            @query
+            @api.query
+            @admin_api.query
             def name(self) -> str:
                 return "rob"
 
-            @query({"tags": ["admin"]})
+            @api.query({"tags": ["admin"]})
+            @admin_api.query({"tags": ["admin"]})
             def social_security_number(self) -> int:
                 return 56
 
-        api = ObjectQLSchemaBuilder(root=Root, filters=[TagFilter(tags=["admin"])]).executor()
-        admin_api = ObjectQLSchemaBuilder(root=Root).executor()
+        api_executor = api.executor()
+        admin_api_executor = admin_api.executor()
 
         test_query = "query GetName { name }"
         test_admin_query = "query GetSocialSecurityNumber { socialSecurityNumber }"
 
-        result = api.execute(test_query)
+        result = api_executor.execute(test_query)
 
         assert not result.errors
         assert result.data == {"name": "rob"}
 
-        result = admin_api.execute(test_admin_query)
+        result = admin_api_executor.execute(test_admin_query)
 
         assert not result.errors
         assert result.data == {"socialSecurityNumber": 56}
 
-        result = api.execute(test_admin_query)
+        result = api_executor.execute(test_admin_query)
 
         assert result.errors
 
     def test_property(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Root:
 
             def __init__(self):
                 self._test_property = 5
 
             @property
-            @query
+            @api.query
             def test_property(self) -> int:
                 return self._test_property
 
             # noinspection PyPropertyDefinition
             @test_property.setter
-            @mutation
+            @api.mutation
             def test_property(self, value: int) -> int:
                 self._test_property = value
                 return self._test_property
 
-        api.root = Root
         executor = api.executor()
 
         test_query = '''
@@ -304,44 +369,44 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_interface(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
-        @interface
+        @api.interface
         class Animal:
 
-            @query
+            @api.query
             def planet(self) -> str:
                 return "Earth"
 
-            @query
+            @api.query
             def name(self) -> str:
                 return "GenericAnimalName"
 
         class Dog(Animal):
 
-            @query
+            @api.query
             def name(self) -> str:
                 return "Floppy"
 
         class Human(Animal):
 
-            @query
+            @api.query
             def name(self) -> str:
                 return "John"
 
-            @query
+            @api.query
             def pet(self) -> Dog:
                 return Dog()
 
         class Root:
 
-            @query
+            @api.query
             def best_animal(self, task: str = "bark") -> Animal:
                 if task == "bark":
                     return Dog()
                 return Human()
 
-        api.root = Root
+        api.root_type = Root
         executor = api.executor()
 
         test_query = '''
@@ -385,53 +450,53 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_multiple_interfaces(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
-        @interface
+        @api.interface
         class Animal:
 
-            @query
+            @api.query
             def name(self) -> str:
                 return "GenericAnimalName"
 
-        @interface
+        @api.interface
         class Object:
 
-            @query
+            @api.query
             def weight(self) -> int:
                 return 100
 
-        @interface
+        @api.interface
         class Responds:
 
             # noinspection PyUnusedLocal
-            @query
+            @api.query
             def ask_question(self, text: str) -> str:
                 return "GenericResponse"
 
         class BasicRespondMixin(Responds, Animal):
 
-            @query
+            @api.query
             def ask_question(self, text: str) -> str:
                 return f"Hello, im {self.name()}!"
 
         class Dog(BasicRespondMixin, Animal, Object):
 
-            @query
+            @api.query
             def name(self) -> str:
                 return "Floppy"
 
-            @query
+            @api.query
             def weight(self) -> int:
                 return 20
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def animal(self) -> Animal:
                 return Dog()
 
-        api.root = Root
         executor = api.executor()
 
         test_query = '''
@@ -460,13 +525,13 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_dataclass(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         @dataclass
         class Root:
             hello_world: str = "hello world"
 
-        api.root = Root
         executor = api.executor()
 
         test_query = '''
@@ -484,15 +549,15 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_mutation(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Root:
 
-            @mutation
+            @api.mutation
             def hello_world(self) -> str:
                 return "hello world"
 
-        api.root = Root
         executor = api.executor()
 
         test_query = '''
@@ -510,25 +575,25 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_deep_mutation(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class Math:
 
-            @query
+            @api.query
             def square(self, number: int) -> int:
                 return number * number
 
-            @mutation
+            @api.mutation
             def create_square(self, number: int) -> int:
                 return number * number
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def math(self) -> Math:
                 return Math()
 
-        api.root = Root
         executor = api.executor()
 
         test_query = '''
@@ -552,27 +617,26 @@ class TestGraphQL:
     def test_print(self):
         from graphql.utils import schema_printer
 
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class Math:
 
-            @query
+            @api.query
             def square(self, number: int) -> int:
                 return number * number
 
-            @mutation
+            @api.mutation
             def create_square(self, number: int) -> int:
                 return number * number
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def math(self) -> Math:
                 return Math()
 
-        api.root = Root
-
-        schema, _, _ = api.schema()
+        schema, _, _ = api.graphql_schema()
 
         schema_str = schema_printer.print_schema(schema)
         schema_str = schema_str.strip().replace(" ", "")
@@ -603,12 +667,14 @@ class TestGraphQL:
         assert schema_str == expected_schema_str
 
     def test_middleware(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         was_called = []
 
+        @api.root
         class Root:
-            @query({"test_meta": "hello_meta"})
+
+            @api.query({"test_meta": "hello_meta"})
             def test_query(self, test_string: str = None) -> str:
                 if test_string == "hello":
                     return "world"
@@ -627,7 +693,6 @@ class TestGraphQL:
         api.middleware.append(test_middleware)
         api.middleware.append(test_simple_middleware)
 
-        api.root = Root
         executor = api.executor()
 
         test_mutation = '''
@@ -661,7 +726,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_input(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class TestInputObject:
             """
@@ -672,16 +737,17 @@ class TestGraphQL:
                 super().__init__()
                 self._value = a_value
 
-            @query
+            @api.query
             def value_squared(self) -> int:
                 return self._value * self._value
 
+        @api.root
         class Root:
-            @query
+
+            @api.query
             def square(self, value: TestInputObject) -> TestInputObject:
                 return value
 
-        api.root = Root
         executor = api.executor()
 
         test_input_query = '''
@@ -703,15 +769,16 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_enum(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class AnimalType(enum.Enum):
             dog = "dog"
             cat = "cat"
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def value(self, animal: AnimalType) -> AnimalType:
 
                 assert isinstance(animal, AnimalType)
@@ -721,7 +788,6 @@ class TestGraphQL:
 
                 return AnimalType.dog
 
-        api.root = Root
         executor = api.executor()
 
         test_enum_query = '''
@@ -736,14 +802,14 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_required(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Root:
-            @query
+            @api.query
             def value(self, a_int: int) -> int:
                 return a_int
 
-        api.root = Root
         executor = api.executor()
 
         test_input_query = '''
@@ -757,14 +823,15 @@ class TestGraphQL:
         assert result.errors and "is required but not provided" in result.errors[0].message
 
     def test_optional(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Root:
-            @query
+
+            @api.query
             def value(self, a_int: int = 50) -> int:
                 return a_int
 
-        api.root = Root
         executor = api.executor()
 
         test_input_query = '''
@@ -782,23 +849,24 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_union(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         class Customer:
 
-            @query
+            @api.query
             def id(self) -> int:
                 return 5
 
         class Owner:
 
-            @query
+            @api.query
             def name(self) -> str:
                 return "rob"
 
+        @api.root
         class Bank:
 
-            @query
+            @api.query
             def owner_or_customer(self, owner: bool = True, none: bool = False) -> Optional[Union[Owner, Customer]]:
                 if owner:
                     return Owner()
@@ -807,8 +875,6 @@ class TestGraphQL:
                     return None
 
                 return Customer()
-
-        api.root = Bank
 
         executor = api.executor()
 
@@ -871,20 +937,20 @@ class TestGraphQL:
         assert none_result.data == none_expected
 
     def test_non_null(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def non_nullable(self) -> int:
                 # noinspection PyTypeChecker
                 return None
 
-            @query
+            @api.query
             def nullable(self) -> Optional[int]:
                 return None
 
-        api.root = Root
         executor = api.executor()
 
         test_non_null_query = '''
@@ -912,15 +978,15 @@ class TestGraphQL:
         assert null_result.data == expected
 
     def test_context(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def has_context(self, context: ObjectQLContext) -> bool:
                 return bool(context)
 
-        api.root = Root
         executor = api.executor()
 
         test_query = '''
@@ -943,13 +1009,14 @@ class TestGraphQL:
     @pytest.mark.skipif(not available(location_api_url),
                         reason=f"The location API '{location_api_url}' is unavailable")
     def test_remote_get(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         RemoteAPI = ObjectQLRemoteExecutor(url=self.location_api_url)
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def graph_loc(self, context: ObjectQLContext) -> RemoteAPI:
                 operation = context.request.info.operation.operation
                 query = context.field.query
@@ -962,7 +1029,6 @@ class TestGraphQL:
 
                 return result.data
 
-        api.root = Root
         executor = api.executor()
 
         test_query = '''
@@ -988,13 +1054,14 @@ class TestGraphQL:
     @pytest.mark.skipif(not available(europe_graphql_url),
                         reason=f"The graphql-europe API '{europe_graphql_url}' is unavailable")
     def test_remote_post(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         RemoteAPI = ObjectQLRemoteExecutor(url=self.europe_graphql_url, http_method="POST")
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def graphql(self, context: ObjectQLContext) -> RemoteAPI:
                 operation = context.request.info.operation.operation
                 query = context.field.query
@@ -1007,7 +1074,6 @@ class TestGraphQL:
 
                 return result.data
 
-        api.root = Root
         executor = api.executor()
 
         test_query = '''
@@ -1028,17 +1094,17 @@ class TestGraphQL:
     @pytest.mark.skipif(not available(europe_graphql_url),
                         reason=f"The graphql-europe API '{europe_graphql_url}' is unavailable")
     def test_remote_post_helper(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
         RemoteAPI = ObjectQLRemoteExecutor(url=self.europe_graphql_url, http_method="POST")
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def graphql(self, context: ObjectQLContext) -> RemoteAPI:
                 return remote_execute(executor=RemoteAPI, context=context)
 
-        api.root = Root
         executor = api.executor()
 
         test_query = '''
@@ -1057,15 +1123,15 @@ class TestGraphQL:
         assert result.data.get("graphql").get("pokemon").get("types") == ["Electric"]
         
     def test_executor_to_ast(self):
-        api = ObjectQLSchemaBuilder()
+        api = ObjectQLSchema()
 
+        @api.root
         class Root:
 
-            @query
+            @api.query
             def hello(self) -> str:
                 return "hello world"
 
-        api.root = Root
         executor = api.executor()
 
         schema = executor_to_ast(executor)
