@@ -32,78 +32,43 @@ For example:
 .. code-block:: python
     :emphasize-lines: 3, 9
 
-        from objectql import query
+        from objectql import ObjectQLSchema
+
+        schema = ObjectQLSchema()
 
         class Human:
 
-            @query
+            @schema.query
             def name(self) -> str:
                 return "Tom"
 
+        @schema.root
         class Root:
 
-            @query
+            @schema.query
             def hello_world(self) -> str:
                 return "Hello world!"
 
-            @query
+            @schema.query
             def a_person(self) -> Human:
                 return Human()
 
-In the example we have defined two classes, ``Human`` and ``Root``.
-
-Building a schema from classes can be quite complex, so a helper class called the ``ObjectQLSchemaBuilder`` manages this process.
-
-The **Root type** is passed as the *root* argument to the ``ObjectQLSchemaBuilder``, to create a schema builder:
-
-.. code-block:: python
-    :emphasize-lines: 19, 21
-
-    from objectql import query, ObjectQLSchemaBuilder
-
-    class Human:
-
-        @query
-        def name(self) -> str:
-            return "Tom"
-
-    class ExampleRoot:
-
-        @query
-        def hello_world(self) -> str:
-            return "Hello world!"
-
-        @query
-        def a_person(self) -> Human:
-            return Human()
-
-    schema_builder = ObjectQLSchemaBuilder(root=ExampleRoot)
-
-    schema, _, _ = schema_builder.schema()
+    schema, meta, root_value = schema_builder.graphql_schema()
 
 
-Then the ``.schema()`` method is called to get the ``schema``.
+The ``.graphql_schema()`` method can be called to get the underlying ``GraphQLSchema``.
+Child object types from the root (such as the ``Human`` object type) will be discovered by the ``ObjectQLSchema`` at runtime.
 
-Only one class (the **Root type**) gets passed to the ``ObjectQLSchemaBuilder`` because child object types (such as the ``Human`` object type) will be discovered by the ``ObjectQLSchemaBuilder`` at runtime.
 This works as long as all the type hints have been specified.
 
-Root value
+Root Value
 ``````````
 
-Every GraphQL server has a **Root value** at the top level. The **Root value** is the entry object that all queries will pass through.
+Every GraphQL server has a **Root Value** at the top level. The **Root Value** is the entry object that all queries will pass through.
 
-The **Root value** can be created in two ways:
+By default the **Root Value** is created by calling the constructor of the **Root Type** above.
 
-1. If a Python **class** is passed as the *root* argument to the ``ObjectQLSchemaBuilder``:
-
-    The constructor of the given Python **class** is the **Root type** and will be called with no arguments to create a **Root value**.
-
-2. If a Python **object** is passed as the *root* argument to the ``ObjectQLSchemaBuilder``:
-
-    The Python **object** is the **Root value** and the objects class is the **Root type**.
-
-Although the 2nd option involves an extra step, it gives complete control in constructing the **Root value**.
-This could be used to pass arguments during initialization of the **Root value**.
+A custom **Root Value** can be used by passing one in as an argument to the ``ObjectQLSchema`` constructor.
 
 Method Decorators
 -----------------
@@ -126,11 +91,14 @@ The ``@query`` decorator is used to label a **method** that should be exposed as
     :linenos:
     :emphasize-lines: 5
 
-    from objectql import query
+    from objectql import ObjectQLSchema
 
+    schema = ObjectQLSchema()
+
+    @schema.root
     class ExampleQueryDecorator:
 
-        @query
+        @schema.query
         def hello(self, name: str) -> str:
             return self.hidden_hello(name)
 
@@ -145,13 +113,13 @@ In contrast, the *hidden_hello* **method** wont be exposed on the schema. Althou
 Mutation
 ````````
 
-The ``@mutation`` decorator is almost identical to the ``@query`` decorator, except it labels a **method** that should be exposed as a **mutation** field on the GraphQL schema.
+The ``@schema.mutation`` decorator is almost identical to the ``@schema.query`` decorator, except it labels a **method** that should be exposed as a **mutation** field on the GraphQL schema.
 
-The ``@mutation`` decorator should only be used on **methods** that mutate or modify data.
+The ``@schema.mutation`` decorator should only be used on **methods** that mutate or modify data.
 
 |
 
-    Its **very important** to only use the ``@query`` decorator for **methods** that fetch data and the ``@mutation`` decorator for
+    Its **very important** to only use the ``@schema.query`` decorator for **methods** that fetch data and the ``@schema.mutation`` decorator for
     **methods** that mutate data. The reasons why are explained in the **Schema Filtering** section below.
 
 |
@@ -161,46 +129,48 @@ Class Decorators
 
 There are 2 additional decorators that are used to label classes.
 
-    - ``@interface``
-    - ``@abstract``
+    - ``@schema.interface``
+    - ``@schema.abstract``
 
 Interface
 `````````
 
-The ``@interface`` decorator can be used on a **class** to create a GraphQL interface type (instead of an object type).
+The ``@schema.interface`` decorator can be used on a **class** to create a GraphQL interface type (instead of an object type).
 
 The interface functionality closely mirrors `GraphQL interfaces <http://graphql.github.io/learn/schema/#interfaces>`_.
 
-For example the ``@interface`` decorator is being used here:
+For example the ``@schema.interface`` decorator is being used here:
 
 .. code-block:: python
 
-    from objectql import query, interface
+    from objectql import ObjectQLSchema
 
-    @interface
+    schema = ObjectQLSchema()
+
+    @schema.interface
     class Animal:
 
-        @query
+        @schema.query
         def name(self) -> str:
             return "John Doe"
 
     class Human(Animal):
 
-        @query
+        @schema.query
         def name(self) -> str:
             return "Thomas"
 
-        @query
+        @schema.query
         def social_security_number(self) -> str:
             return "111-11-1111"
 
     class Dog(Animal):
 
-        @query
+        @schema.query
         def name(self, name: str) -> str:
             return "Spot"
 
-        @query
+        @schema.query
         def favourite_toy(self) -> str:
             return "Ball"
 
@@ -227,34 +197,36 @@ then class inheritance would kick in and the ``name`` method on ``Animal`` would
 Abstract
 ````````
 
-The ``@abstract`` decorator can be used to indicate that a **class** should not be mapped by ObjectQL.
+The ``@schema.abstract`` decorator can be used to indicate that a **class** should not be mapped by ObjectQL.
 
 GraphQL does not support type *inheritance* (only `interfaces <http://graphql.github.io/learn/schema/#interfaces>`_)
-so ``@abstract`` allows us to still use class *inheritance* in Python.
+so ``@schema.abstract`` allows us to still use class *inheritance* in Python.
 
 For example:
 
 .. code-block:: python
 
-    from objectql import query, abstract
+    from objectql import ObjectQLSchema
 
-    @abstract
+    schema = ObjectQLSchema()
+
+    @schema.abstract
     class Animal:
 
-        @query
+        @schema.query
         def age(self) -> int:
             return 25
 
-    @abstract
+    @schema.abstract
     class Human(Animal):
 
-        @query
+        @schema.query
         def social_security_number(self) -> str:
             return "111-11-1111"
 
     class Student(Human):
 
-        @query
+        @schema.query
         def college(self) -> str:
             return "Exeter"
 
@@ -276,13 +248,15 @@ Metadata
 The **metadata** is a dictionary that can specify *addition configuration* for the corresponding class or method, for example:
 
 .. code-block:: python
-    :emphasize-lines: 5,6,7,8,9,10
+    :emphasize-lines: 7,8,9,10,11,12
 
-    from objectql import query
+    from objectql import ObjectQLSchema
+
+    schema = ObjectQLSchema()
 
     class Hello:
 
-        @query({
+        @schema.query({
             "custom_dict_key": {
                 "hello": "here is custom metadata",
             },
@@ -306,55 +280,58 @@ A GraphQL service *normally* has two separate schemas with two separate **Root t
 
 This is because **data fetches** can be run in parallel, whereas **data updates** must always run sequentially.
 
-ObjectQL uses just one **Root class**, and the ``@query`` and ``@mutation`` decorators are used to filter the fields into two **Root types**.
+ObjectQL uses just one **Root class**, and the ``@schema.query`` and ``@schema.mutation`` decorators are used to filter the fields into two **Root types**.
 
 Here is an example to see exactly how the **Root class** gets mapped into two **Root types**:
 
 .. code-block:: python
 
-    from objectql import query, mutation
+    from objectql import ObjectQLSchema
+
+    schema = ObjectQLSchema()
 
     class User:
 
-        @query
+        @schema.query
         def name(self) -> str:
             pass
 
-        @query
+        @schema.query
         def update_name(self) -> 'User':
             pass
 
 
     class Post:
 
-        @mutation
+        @schema.mutation
         def like(self) -> Post:
             pass
 
-        @query
+        @schema.query
         def message(self) -> str:
             pass
 
-        @query
+        @schema.query
         def likes(self) -> int:
             pass
 
-        @query
+        @schema.query
         def author(self) -> User:
             pass
 
 
+    @schema.root
     class Root:
 
-        @query
+        @schema.query
         def posts(self) -> List[Post]:
             pass
 
-        @query
+        @schema.query
         def post_count(self) -> int:
             pass
 
-        @query
+        @schema.query
         def me(self) -> User:
             pass
 
@@ -421,16 +398,16 @@ The above example as a GraphQL schema would look like this:
 These rules were followed to create the two types and filter the fields:
 
 1. Each ``Query`` type is duplicated to create a ``Mutable`` type, which is suffixed with ``Mutable``.
-2. All ``@mutable`` fields are removed from all ``Query`` types.
-3. Any ``@query`` fields that never lead to a ``Mutable`` type are removed from the ``Mutable`` types.
+2. All ``@schema.mutable`` fields are removed from all ``Query`` types.
+3. Any ``@schema.query`` fields that never lead to a ``Mutable`` type are removed from the ``Mutable`` types.
 
 After the above rules are applied there are a few things worth noting:
 
-- **Line 18:** Any ``@query`` fields that still remain on a ``Mutable`` type will always return a ``Mutable`` type.
+- **Line 18:** Any ``@schema.query`` fields that still remain on a ``Mutable`` type will always return a ``Mutable`` type.
 
 |
 
-- **Line 23:** ``@mutable`` fields on a ``Mutable`` type will by default return a ``Query`` type (unless otherwise specified, see *Mutation recursion* below).
+- **Line 23:** ``@schema.mutable`` fields on a ``Mutable`` type will by default return a ``Query`` type (unless otherwise specified, see *Mutation recursion* below).
 
 Mutation recursion
 ``````````````````

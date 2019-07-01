@@ -37,9 +37,12 @@ ObjectQL uses Python **classes**, **methods** and **typehints** to create the **
 
 With ObjectQL, the following Python class::
 
+    schema = ObjectQLSchema()
+
+    @schema.root
     class Calculator:
 
-      @query
+      @schema.query
       def add(self, number_one: float, number_two: float) -> float:
           return number_1 + number_2
 
@@ -51,7 +54,7 @@ can be automatically mapped into a GraphQL schema that would look something like
 
 and like any normal GraphQL server it can be queried::
 
-    executor = ObjectQLSchemaBuilder(root=Calculator).executor()
+    executor = schema.executor()
 
     executor.execute("
         query {
@@ -75,19 +78,18 @@ Simple Example:
 
 .. code-block:: python
 
-    from objectql import ObjectQLSchemaBuilder, query
+    from objectql import ObjectQLSchema
 
-    schema = ObjectQLSchemaBuilder()
+    schema = ObjectQLSchema()
 
 
+    @schema.root
     class Math:
 
-        @query
+        @schema.query
         def square_number(self, number: int) -> int:
             return number * number
 
-
-    schema.root = Math
 
     gql_query = '''
         query SquareNumberFive {

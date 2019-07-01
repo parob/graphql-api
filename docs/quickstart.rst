@@ -61,79 +61,63 @@ But we need to slightly change ``HelloObjectQL`` to make it suitable for creatin
 .. code-block:: python
     :caption: hello.py
     :name: hello-py
-    :emphasize-lines: 1,5,6
+    :emphasize-lines: 1,3,5,8
 
-    from objectql import query
+    from objectql import ObjectQLSchema
 
+    schema = ObjectQLSchema()
+
+    @schema.root
     class HelloObjectQL:
 
-        @query
+        @schema.query
         def hello(self, name: str) -> str:
             return "hello " + name + "!"
 
 What was changed?:
 
-- The ``@query`` `decorator <https://realpython.com/primer-on-python-decorators/>`_ was imported and added. This labels the ``hello`` method as queryable via GraphQL.
+- An ``ObjectQLSchema`` object was created.
+
+- The ``@schema.query`` `decorator <https://realpython.com/primer-on-python-decorators/>`_ was imported and added. This labels the ``hello`` method as queryable via GraphQL.
 
 - `Typehints <https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html>`_ were added to the ``hello`` method arguments and return type. This tells ObjectQL what types it should expect.
 
 |
-Now to create a **Schema**, we can pass the adapted ``HelloObjectQL`` class to the ``ObjectQLSchemaBuilder``. The ``HelloObjectQL`` class is now known as the **Root type** of the **Schema**:
 
 .. code-block:: python
-    :emphasize-lines: 1,10,11
+    :emphasize-lines: 12
 
-    from objectql import query, ObjectQLSchemaBuilder
+    from objectql import ObjectQLSchema
 
+    schema = ObjectQLSchema()
+
+    @schema.root
     class HelloObjectQL:
 
-        @query
+        @schema.query
         def hello(self, name: str) -> str:
             return "hello " + name + "!"
 
-
-    schema_builder = ObjectQLSchemaBuilder(root=HelloObjectQL)
-    schema = schema_builder.schema()
-
-|
-Finally we use our **Schema** and *Root type* to create a ``ObjectQLExecutor``:
-
-.. code-block:: python
-    :emphasize-lines: 1,13
-
-    from objectql import query, ObjectQLSchemaBuilder, ObjectQLExecutor
-
-    class HelloObjectQL:
-
-        @query
-        def hello(self, name: str) -> str:
-            return "hello " + name + "!"
-
-
-    schema_builder = ObjectQLSchemaBuilder(root=HelloObjectQL)
-    schema, _, _ = schema_builder.schema()
-
-    executor = ObjectQLExecutor(schema=schema, root=HelloObjectQL)
+    executor = schema.executor()
 
 |
 Now we can run a GraphQL query on the ``ObjectQLExecutor``:
 
 .. code-block:: python
-    :emphasize-lines: 15,16
+    :emphasize-lines: 14, 15
 
-    from objectql import query, ObjectQLSchemaBuilder, ObjectQLExecutor
+    from objectql import ObjectQLSchema
 
-        class HelloObjectQL:
+    schema = ObjectQLSchema()
 
-            @query
-            def hello(self, name: str) -> str:
-                return "hello " + name + "!"
+    @schema.root
+    class HelloObjectQL:
 
+        @schema.query
+        def hello(self, name: str) -> str:
+            return "hello " + name + "!"
 
-    schema_builder = ObjectQLSchemaBuilder(root=HelloObjectQL)
-    schema, _, _ = schema_builder.schema()
-
-    executor = ObjectQLExecutor(schema=schema, root=HelloObjectQL)
+    executor = schema.executor()
 
     test_query = '{ hello(name: "rob") }'
     print(executor.execute(test_query))
@@ -150,7 +134,7 @@ So to recap:
 
 - Python classes are mapped directly to GraphQL types.
 
-- Any instance method on a Python class that is labeled with a ``@query`` (or ``@mutation``) decorator is mapped to a field on the **Schema**.
+- Any instance method on a Python class that is labeled with a ``@schema.query`` (or ``@schema.mutation``) decorator is mapped to a field on the **Schema**.
 
 - The `typehints <https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html>`_ on methods are mapped to field arguments and return types in the **Schema**.
 
@@ -167,7 +151,7 @@ Type Mapping
 
 ObjectQL maps Python types directly to the equivalent GraphQL types.
 
-This means you **must** specify all the type hints for any methods that are marked with the ``@query`` (or ``@mutation``) decorator. If a type hint is not specified then that argument will be ignored.
+This means you **must** specify all the type hints for any methods that are marked with the ``@schema.query`` (or ``@schema.mutation``) decorator. If a type hint is not specified then that argument will be ignored.
 
 Here are *some* of the types that ObjectQL can map:
 
@@ -216,39 +200,22 @@ Queries and Mutations
 
 GraphQL **Queries** and **Mutations** are separate types. This is am important distinction because queries can be run in parallel, whereas mutations must always run sequentially.
 
-You *could* mimic this separation of **Queries** and **Mutations** in ObjectQL using separate classes, for example::
-
-    from objectql import query
-
-    class ExampleQuery:
-
-        @query
-        def example_query_field() -> str:
-            return "query complete"
-
-    class ExampleMutation:
-
-        @mutation
-        def example_mutable_field() -> str:
-            # do something with the database
-            return "mutation complete"
-
-
-But there is a better way...
-
-    ObjectQL can use a single Python class to build both the **Query** and **Mutation** GraphQL types, the fields are separated out when the schema is generated.
+    ObjectQL uses a single Python class to build both the **Query** and **Mutation** GraphQL types, the fields are separated out when the schema is generated.
 
 For example a single class (with both queryable and mutable fields)::
 
-    from objectql import query
+    from objectql import ObjectQLSchema
 
+    schema = ObjectQLSchema()
+
+    @schema.root
     class Example:
 
-        @query
+        @schema.query
         def example_query_field() -> str:
             return "query complete"
 
-        @mutation
+        @schema.mutation
         def example_mutable_field() -> str:
             # do something with the database
             return "mutation complete"
@@ -264,7 +231,6 @@ Will get mapped to two types in the **Schema**::
     }
 
 
-This might at first seem counter-intuitive or unusual, but you'll soon realise it simplifies building **Schemas**.
 
 In order to avoid any naming conflicts, any mutable types get the **Mutable** suffix added to their name (for example see **ExampleMutable** above).
 
@@ -279,17 +245,19 @@ In ObjectQL this is done using `typehints <https://mypy.readthedocs.io/en/latest
 .. code-block:: python
    :emphasize-lines: 6,10
 
-    from objectql import query
+    from objectql import ObjectQLSchema
+
+    schema = ObjectQLSchema()
 
     class ExampleModifiers:
 
-        @query
-        def example_list() -> List[str]:
-            return ["hello", "world"]
+    @schema.query
+    def example_list() -> List[str]:
+        return ["hello", "world"]
 
-        @mutation
-        def example_nullable() -> Optional[str]:
-            return None
+    @schema.mutation
+    def example_nullable() -> Optional[str]:
+        return None
 
 Is mapped to:
 
@@ -324,15 +292,18 @@ Here is an example::
 
     # note: the methods are not implemented here
 
-    from objectql import query
+    from objectql import ObjectQLSchema
 
+    schema = ObjectQLSchema()
+
+    @schema.root
     class Folder:
 
-        @query
+        @schema.query
         def name() -> str:
             pass
 
-        @query
+        @schema.query
         def children(self) -> List[Folder]:
             pass
 
@@ -358,35 +329,38 @@ For example here is a set of Python classes that will produce a **Schema** for a
 
     # note: the methods are not implemented here
 
-    from objectql import query
+    from objectql import ObjectQLSchema
+
+    schema = ObjectQLSchema()
 
     class User:
 
-        @query
+        @schema.query
         def id() -> int:
             pass
 
-        @query
+        @schema.query
         def name() -> str:
             pass
 
     class Comment:
 
-        @query
+        @schema.query
         def message() -> str:
             pass
 
-        @query
+        @schema.query
         def author() -> User:
             pass
 
+    @schema.root
     class MainController:
 
-        @query
+        @schema.query
         def users() -> List[User]:
             pass
 
-        @query
+        @schema,query
         def comments() -> List[Comments]:
             pass
 
@@ -411,13 +385,18 @@ One of the simplest ways to serve a **Schema** is with ``Werkzeug`` and `werkzeu
 
     from werkzeug_graphql import GraphQLAdapter
 
+    from objectql import ObjectQLSchema
+
+    schema = ObjectQLSchema()
+
+    @schema.root
     class HelloWorld:
 
-        @query
+        @schema.query
         def hello(self) -> str:
             return "Hello World!"
 
-    adapter = GraphQLAdapter.from_root(root=UserController)
+    adapter = GraphQLAdapter.from_schema(schema=schema)
 
     if __name__ == "__main__":
         adapter.run_app()
@@ -430,19 +409,20 @@ If you are using ``Flask`` you could use `flask-graphql <https://github.com/grap
     from flask import Flask
     from flask_graphql import GraphQLView
 
-    from objectql import query, ObjectQLSchemaBuilder
+    from objectql import ObjectQLSchema
 
     app = Flask(__name__)
 
     class HelloWorld:
 
-        @query
+        @schema.query
         def hello(self) -> str:
             return "Hello World!"
 
-    schema, _, root_value = ObjectQLSchemaBuilder(root=HelloWorld).schema()
+    graphql_schema, _, root_value = schema.graphql_schema()
+    root_value = HelloWorld()
 
-    app.add_url_rule('/graphql', view_func=GraphQLView.as_view('graphql', schema=schema, root_value=root_value, graphiql=True))
+    app.add_url_rule('/graphql', view_func=GraphQLView.as_view('graphql', schema=graphql_schema, root_value=root_value, graphiql=True))
 
     if __name__ == "__main__":
         app.run()

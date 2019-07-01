@@ -48,6 +48,7 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
     def __init__(
         self,
         root: Type = None,
+        root_value: Any = None,
         middleware: List[Callable[[Callable, ObjectQLContext], Any]] = None,
         filters: List[ObjectQLFilter] = None
     ):
@@ -56,6 +57,7 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
             middleware = []
 
         self.root_type = root
+        self.root_value = root_value
         self.middleware = middleware
         self.filters = filters
         self.query_mapper = None
@@ -68,20 +70,15 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
     def graphql_schema(self) -> Tuple[GraphQLSchema, Dict, Any]:
         schema_args = {}
         meta = {}
+        root_value = self.root_value
 
-        root_class = self.root_type
-        root_value = self.root_type
-
-        if not inspect.isclass(root_class):
-            root_class = type(root_class)
-
-        if root_value and callable(root_value):
-            root_value = root_value()
+        if callable(self.root_type) and self.root_value is None:
+            root_value = self.root_type()
 
         if self.root_type:
             # Create the root query
             query_mapper = ObjectQLTypeMapper(schema=self)
-            query: GraphQLObjectType = query_mapper.map(root_class)
+            query: GraphQLObjectType = query_mapper.map(self.root_type)
 
             # Filter the root query
             filtered_query = ObjectQLSchemaReducer.reduce_query(
@@ -106,7 +103,7 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
                 registry=registry,
                 schema=self
             )
-            mutation: GraphQLObjectType = mutation_mapper.map(root_class)
+            mutation: GraphQLObjectType = mutation_mapper.map(self.root_type)
 
             # Filter the root mutation
             filtered_mutation = ObjectQLSchemaReducer.reduce_mutation(

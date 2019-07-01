@@ -74,14 +74,17 @@ The Python **List** type hint is used to indicate that a field returns a List.
 It can be used to wrap object types, scalars and enums and other modifiers.
 
 .. code-block:: python
-    :emphasize-lines: 7
+    :emphasize-lines: 10
 
     from typing import List
-    from objectql import query
+    from objectql import ObjectQLSchema
 
+    schema = ObjectQLSchema()
+
+    @schema.root
     class RootType:
 
-        @query
+        @schema.query
         def user_names(self) -> List[str]:
           return ["Tom", "Steve"]
 
@@ -93,14 +96,17 @@ The Python **Optional** type hint is used to indicate that a field could return 
 It can be used to wrap object types, scalars and enums and other modifiers.
 
 .. code-block:: python
-    :emphasize-lines: 7
+    :emphasize-lines: 10
 
     from typing import Optional
-    from objectql import query
+    from objectql import ObjectQLSchema
 
+    schema = ObjectQLSchema()
+
+    @schema.root
     class RootType:
 
-        @query
+        @schema.query
         def get_user_id(self, email: str) -> Optional[str]:
           if email == "rob@rob.com":
             return "1234"
@@ -113,14 +119,17 @@ The Python **Union** type hint is used to indicate that a field has a Union modi
 It can be used to wrap multiple object types.
 
 .. code-block:: python
-    :emphasize-lines: 7
+    :emphasize-lines: 10
 
     from typing import Union
-    from objectql import query
+    from objectql import ObjectQLSchema
 
+    schema = ObjectQLSchema()
+
+    @schema.root
     class RootType:
 
-        @query
+        @schema.query
         def get_home(self, name: str) -> Union[Flat, House]:
             if name == "Phil":
                 return House()
