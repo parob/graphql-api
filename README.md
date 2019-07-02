@@ -37,19 +37,18 @@ pipenv run sphinx-build docs ./public -b html
 
 ## Simple Example
 ``` python
-from objectql import ObjectQLSchemaBuilder, query
+from objectql import ObjectQLSchema
 
-schema = ObjectQLSchemaBuilder()
+schema = ObjectQLSchema()
 
 
+@schema.root
 class Math:
 
-    @query
+    @schema.query
     def square_number(self, number: int) -> int:
         return number * number
 
-
-schema.root = Math
 
 gql_query = '''
     query SquareNumberFive {
