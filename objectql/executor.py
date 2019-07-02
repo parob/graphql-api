@@ -38,7 +38,7 @@ class ObjectQLExecutor(ObjectQLBaseExecutor):
         self,
         schema: GraphQLSchema,
         meta: Dict = None,
-        root: Any = None,
+        root_value: Any = None,
         middleware: List[Callable[[Callable, ObjectQLContext], Any]] = None,
         middleware_on_introspection: bool = False
     ):
@@ -57,7 +57,7 @@ class ObjectQLExecutor(ObjectQLBaseExecutor):
         self.meta = meta
         self.schema = schema
         self.middleware = middleware
-        self.root = root
+        self.root_value = root_value
         self.middleware_on_introspection = middleware_on_introspection
 
     def execute(
@@ -65,7 +65,7 @@ class ObjectQLExecutor(ObjectQLBaseExecutor):
         query,
         variables=None,
         operation_name=None,
-        root=None,
+        root_value=None,
         context=None
     ) -> ExecutionResult:
 
@@ -75,8 +75,8 @@ class ObjectQLExecutor(ObjectQLBaseExecutor):
             executor=self
         )
 
-        if root is None:
-            root = self.root
+        if root_value is None:
+            root_value = self.root_value
 
         value = graphql(
             self.schema,
@@ -85,7 +85,7 @@ class ObjectQLExecutor(ObjectQLBaseExecutor):
             variables=variables,
             operation_name=operation_name,
             middleware=self.adapt_middleware(self.middleware),
-            root=root
+            root=root_value
         )
         return value
 

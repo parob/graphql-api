@@ -148,11 +148,21 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
             operation_name=operation_name
         )
 
-    def executor(self) -> ObjectQLExecutor:
-        schema, meta, root_value = self.graphql_schema()
+    def executor(
+        self,
+        root_value: Any = None,
+        middleware: List[Callable[[Callable, ObjectQLContext], Any]] = None,
+        middleware_on_introspection: bool = False
+    ) -> ObjectQLExecutor:
+        schema, meta, _root_value = self.graphql_schema()
+
+        if root_value is None:
+            root_value = _root_value
+
         return ObjectQLExecutor(
             schema=schema,
             meta=meta,
-            middleware=self.middleware,
-            root=root_value
+            root_value=root_value,
+            middleware=middleware,
+            middleware_on_introspection=middleware_on_introspection
         )

@@ -690,10 +690,12 @@ class TestGraphQL:
             was_called.append(True)
             return next()
 
-        api.middleware.append(test_middleware)
-        api.middleware.append(test_simple_middleware)
+        middleware = [
+            test_middleware,
+            test_simple_middleware
+        ]
 
-        executor = api.executor()
+        executor = api.executor(middleware=middleware)
 
         test_mutation = '''
             query TestMiddlewareQuery {
