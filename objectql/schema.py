@@ -1,5 +1,3 @@
-import inspect
-
 from typing import List, Callable, Any, Type, Dict, Tuple
 
 from graphql import (
