@@ -636,7 +636,7 @@ class TestGraphQL:
             def math(self) -> Math:
                 return Math()
 
-        schema, _, _ = api.graphql_schema()
+        schema, _ = api.graphql_schema()
 
         schema_str = schema_printer.print_schema(schema)
         schema_str = schema_str.strip().replace(" ", "")
@@ -1091,14 +1091,22 @@ class TestGraphQL:
         result = executor.execute(test_query)
 
         assert not result.errors
-        assert result.data.get("graphql").get("pokemon").get("types") == ["Electric"]
 
-    @pytest.mark.skipif(not available(europe_graphql_url),
-                        reason=f"The graphql-europe API '{europe_graphql_url}' is unavailable")
+        pokemon = result.data.get("graphql").get("pokemon")
+
+        assert pokemon.get("types") == ["Electric"]
+
+    @pytest.mark.skipif(
+        not available(europe_graphql_url),
+        reason=f"The graphql-europe API '{europe_graphql_url}' is unavailable"
+    )
     def test_remote_post_helper(self):
         api = ObjectQLSchema()
 
-        RemoteAPI = ObjectQLRemoteExecutor(url=self.europe_graphql_url, http_method="POST")
+        RemoteAPI = ObjectQLRemoteExecutor(
+            url=self.europe_graphql_url,
+            http_method="POST"
+        )
 
         @api.root
         class Root:
@@ -1122,7 +1130,10 @@ class TestGraphQL:
         result = executor.execute(test_query)
 
         assert not result.errors
-        assert result.data.get("graphql").get("pokemon").get("types") == ["Electric"]
+
+        pokemon = result.data.get("graphql").get("pokemon")
+
+        assert pokemon.get("types") == ["Electric"]
         
     def test_executor_to_ast(self):
         api = ObjectQLSchema()

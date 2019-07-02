@@ -46,7 +46,6 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
     def __init__(
         self,
         root: Type = None,
-        root_value: Any = None,
         middleware: List[Callable[[Callable, ObjectQLContext], Any]] = None,
         filters: List[ObjectQLFilter] = None
     ):
@@ -55,7 +54,6 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
             middleware = []
 
         self.root_type = root
-        self.root_value = root_value
         self.middleware = middleware
         self.filters = filters
         self.query_mapper = None
@@ -65,13 +63,9 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
         self.root_type = root_type
         return root_type
 
-    def graphql_schema(self) -> Tuple[GraphQLSchema, Dict, Any]:
+    def graphql_schema(self) -> Tuple[GraphQLSchema, Dict]:
         schema_args = {}
         meta = {}
-        root_value = self.root_value
-
-        if callable(self.root_type) and self.root_value is None:
-            root_value = self.root_type()
 
         if self.root_type:
             # Create the root query
@@ -134,7 +128,7 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
 
         schema = GraphQLSchema(**schema_args)
 
-        return schema, meta, root_value
+        return schema, meta
 
     def execute(
         self,
@@ -154,10 +148,10 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
         middleware: List[Callable[[Callable, ObjectQLContext], Any]] = None,
         middleware_on_introspection: bool = False
     ) -> ObjectQLExecutor:
-        schema, meta, _root_value = self.graphql_schema()
+        schema, meta = self.graphql_schema()
 
-        if root_value is None:
-            root_value = _root_value
+        if callable(self.root_type) and root_value is None:
+            root_value = self.root_type()
 
         return ObjectQLExecutor(
             schema=schema,
