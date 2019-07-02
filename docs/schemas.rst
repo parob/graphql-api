@@ -53,7 +53,7 @@ For example:
             def a_person(self) -> Human:
                 return Human()
 
-    schema, meta, root_value = schema_builder.graphql_schema()
+    graphql_schema, meta = schema_builder.graphql_schema()
 
 
 The ``.graphql_schema()`` method can be called to get the underlying ``GraphQLSchema``.
