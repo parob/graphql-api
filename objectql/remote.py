@@ -230,7 +230,10 @@ class ObjectQLRemoteObject:
         if not call_history:
             call_history = []
 
-        if not python_type:
+        if not schema and python_type:
+            schema = ObjectQLSchema(root=python_type)
+
+        elif not python_type:
             python_type = schema.root_type
 
         self.executor = executor
