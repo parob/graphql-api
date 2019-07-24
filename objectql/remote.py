@@ -211,9 +211,10 @@ class ObjectQLRemoteObject:
     def from_url(
         cls,
         url: str,
-        schema: ObjectQLSchema
+        schema: ObjectQLSchema,
+        http_method: str = "GET"
     ) -> 'ObjectQLRemoteObject':
-        executor = ObjectQLRemoteExecutor(url=url)
+        executor = ObjectQLRemoteExecutor(url=url, http_method=http_method)
 
         return ObjectQLRemoteObject(executor=executor, schema=schema)
 
