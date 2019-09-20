@@ -169,7 +169,9 @@ class ObjectQLTypeMapper:
         include_context = False
 
         for key, hint in type_hints.items():
-            if key == 'context' and issubclass(hint, ObjectQLContext):
+            if key == 'context' and \
+                    inspect.isclass(hint) and \
+                    issubclass(hint, ObjectQLContext):
                 include_context = True
                 continue
 
