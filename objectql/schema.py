@@ -118,8 +118,8 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
         # Create a placeholder query (every GraphQL schema must have a query)
         if 'query' not in schema_args:
             placeholder = GraphQLField(
-                type=GraphQLString,
-                resolver=lambda *_: ''
+                type_=GraphQLString,
+                resolve=lambda *_: ''
             )
             schema_args['query'] = GraphQLObjectType(
                 name='PlaceholderQuery',

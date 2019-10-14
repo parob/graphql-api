@@ -4,13 +4,12 @@ import uuid
 
 from typing import Dict
 
-from graphql import GraphQLScalarType
+from graphql import GraphQLScalarType, StringValueNode
 from graphql.language import ast
-from graphql.language.ast import StringValue
 
 
 def parse_uuid_literal(ast):
-    if isinstance(ast, StringValue):
+    if isinstance(ast, StringValueNode):
         try:
             return uuid.UUID(ast.value)
         except ValueError:
@@ -46,7 +45,7 @@ def parse_datetime_value(value):
 
 
 def parse_datetime_literal(node):
-    if isinstance(node, StringValue):
+    if isinstance(node, StringValueNode):
         return parse_datetime_value(node.value)
 
 
@@ -68,7 +67,7 @@ def parse_json_value(value: str) -> Dict:
 
 
 def parse_json_literal(node) -> Dict:
-    if isinstance(node, ast.StringValue):
+    if isinstance(node, ast.StringValueNode):
         return parse_json_value(node.value)
 
 
@@ -91,7 +90,7 @@ def parse_bytes_value(value: str) -> bytes:
 
 
 def parse_bytes_literal(node):
-    if isinstance(node, ast.StringValue):
+    if isinstance(node, ast.StringValueNode):
         return parse_bytes_value(node.value)
 
 

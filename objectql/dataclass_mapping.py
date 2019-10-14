@@ -1,7 +1,7 @@
 from typing import Type, get_type_hints
 
-from graphql.type.definition import GraphQLType, GraphQLObjectType, \
-    define_field_map, GraphQLInputObjectField, GraphQLField
+from graphql.type.definition import GraphQLType, GraphQLObjectType, GraphQLField, GraphQLInputField, resolve_thunk, \
+    is_output_type
 
 from objectql.utils import to_camel_case
 
@@ -62,23 +62,19 @@ def type_from_dataclass(_class: Type, mapper) -> GraphQLType:
                         return getattr(self, local_prop_name)
                     return resolver
 
-                type_: GraphQLType = local_mapper.map(type=field_type)
+                type_: GraphQLType = local_mapper.map(type_=field_type)
 
                 if local_mapper.as_input:
-                    field = GraphQLInputObjectField(type_)
+                    field = GraphQLInputField(type_=type_)
                 else:
-                    field = GraphQLField(type_, resolver=local_resolver())
+                    field = GraphQLField(type_=type_, resolve=local_resolver())
 
                 local_fields[to_camel_case(prop_name)] = field
 
             if local_type_fields:
                 try:
-                    field_map_items = define_field_map(
-                        local_type,
-                        local_type_fields
-                    ).items()
-
-                    for name, field in field_map_items:
+                    fields_ = local_type_fields()
+                    for name, field in fields_:
                         if name not in local_fields:
                             local_fields[name] = field
                 except AssertionError:
@@ -89,3 +85,30 @@ def type_from_dataclass(_class: Type, mapper) -> GraphQLType:
 
     base_type._fields = local_fields_callback()
     return base_type
+
+
+def define_field_map(type_, type_fields):
+
+    try:
+        fields = resolve_thunk(type_._fields)
+    except Exception as error:
+        raise TypeError(f"{type_.name} fields cannot be resolved: {error}")
+
+    if not isinstance(fields, dict) or not all(
+            isinstance(key, str) for key in fields
+    ):
+        raise TypeError(
+            f"{type_.name} fields must be specified"
+            " as a dict with field names as keys."
+        )
+    if not all(
+            isinstance(value, GraphQLField) or is_output_type(value)
+            for value in fields.values()
+    ):
+        raise TypeError(
+            f"{type_.name} fields must be GraphQLField or output type objects."
+        )
+    return {
+        name: value if isinstance(value, GraphQLField) else GraphQLField(value)
+        for name, value in fields.items()
+    }

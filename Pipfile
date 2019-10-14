@@ -4,10 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-graphql-core = "*"
+graphql-core-next = "*"
 requests = "*"
 typing-inspect = "*"
 flake8 = "*"
+pytest = "*"
 
 [dev-packages]
 # Testing

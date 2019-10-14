@@ -2,7 +2,7 @@ import inspect
 
 from typing import Any, List, Dict, Callable
 
-from graphql import graphql
+from graphql import graphql, graphql_sync
 
 from graphql.execution import ExecutionResult
 from graphql.type.schema import GraphQLSchema
@@ -78,14 +78,14 @@ class ObjectQLExecutor(ObjectQLBaseExecutor):
         if root_value is None:
             root_value = self.root_value
 
-        value = graphql(
+        value = graphql_sync(
             self.schema,
             query,
-            context=context,
-            variables=variables,
+            context_value=context,
+            variable_values=variables,
             operation_name=operation_name,
             middleware=self.adapt_middleware(self.middleware),
-            root=root_value
+            root_value=root_value
         )
         return value
 

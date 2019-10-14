@@ -71,7 +71,7 @@ class ObjectQLRemoteExecutor(ObjectQLBaseExecutor, GraphQLObjectType):
         )
 
         def resolver(info=None, context=None, *args, **kwargs):
-            field_ = context.field_asts[0]
+            field_ = context.field_nodes[0]
             if field_.alias:
                 key_ = field_.alias.value
             else:
@@ -153,8 +153,7 @@ class ObjectQLRemoteExecutor(ObjectQLBaseExecutor, GraphQLObjectType):
 
         return ExecutionResult(
             data=json.get('data'),
-            errors=json.get('errors'),
-            invalid=json.get('errors') is not None
+            errors=json.get('errors')
         )
 
 
@@ -849,8 +848,8 @@ def is_static_method(klass, attr, value=None):
     for cls in inspect.getmro(klass):
         if inspect.isroutine(value):
             if attr in cls.__dict__:
-                binded_value = cls.__dict__[attr]
-                if isinstance(binded_value, staticmethod):
+                bound_value = cls.__dict__[attr]
+                if isinstance(bound_value, staticmethod):
                     return True
 
     return False
@@ -861,10 +860,10 @@ def to_ast_value(value, graphql_type):
         return None
 
     type_map = {
-        (bool,): ast.BooleanValue,
-        (str,): ast.StringValue,
-        (float,): ast.FloatValue,
-        (int,): ast.IntValue
+        (bool,): ast.BooleanValueNode,
+        (str,): ast.StringValueNode,
+        (float,): ast.FloatValueNode,
+        (int,): ast.IntValueNode
     }
     ast_type = None
     ast_value = None
@@ -875,8 +874,9 @@ def to_ast_value(value, graphql_type):
             break
 
     if isinstance(graphql_type, GraphQLEnumType):
-        if ast_type == ast.StringValue:
-            ast_value = ast.EnumValue(value)
+        if ast_type == ast.StringValueNode:
+            ast_value = ast.EnumValueNode()
+            ast_value.value = value
 
     if not ast_value:
         raise TypeError(

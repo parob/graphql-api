@@ -112,8 +112,9 @@ def iterate_fields(type: GraphQLType, done_fields=None):
             pass
         else:
             for key, field in type.fields.items():
-                if field not in done_fields:
-                    done_fields.add(field)
+                field_id = type.name + "." + key
+                if field_id not in done_fields:
+                    done_fields.add(field_id)
                     yield type, key, field
                     yield from iterate_fields(field.type, done_fields)
 
