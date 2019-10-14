@@ -809,7 +809,7 @@ class TestGraphQL:
         @api.root
         class Root:
             @api.query
-            def value(self, a_int: int) -> int:
+            def value(self, a_int: int) -> Optional[int]:
                 return a_int
 
         executor = api.executor()

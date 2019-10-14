@@ -4,8 +4,8 @@ from graphql import (
     GraphQLSchema,
     GraphQLObjectType,
     GraphQLField,
-    GraphQLString
-)
+    GraphQLString,
+    is_named_type)
 from graphql.execution.base import ExecutionResult
 
 from objectql.decorators import object_decorator_factory
@@ -110,6 +110,8 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
                 mutation_types = set()
 
             schema_args['types'] = list(query_types | mutation_types)
+            schema_args['types'] = [type_ for type_ in schema_args['types'] if is_named_type(type_)]
+
             meta = {**query_mapper.meta, **mutation_mapper.meta}
 
             self.query_mapper = query_mapper
