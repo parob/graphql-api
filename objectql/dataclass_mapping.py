@@ -4,9 +4,7 @@ from graphql.type.definition import \
     GraphQLType, \
     GraphQLObjectType, \
     GraphQLField, \
-    GraphQLInputField, \
-    resolve_thunk, \
-    is_output_type
+    GraphQLInputField
 
 from objectql.utils import to_camel_case
 
