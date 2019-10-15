@@ -10,6 +10,8 @@ from collections import OrderedDict
 from uuid import UUID
 
 from typing import List, Union, Type, Callable, Tuple, Any, Dict, Set
+
+from graphql.error import InvalidType
 from typing_inspect import get_origin
 from datetime import datetime
 
@@ -20,7 +22,7 @@ from graphql import (
     GraphQLList,
     GraphQLBoolean,
     GraphQLInt,
-    GraphQLFloat)
+    GraphQLFloat, INVALID)
 
 from graphql.type.definition import (
     GraphQLType,
@@ -29,12 +31,11 @@ from graphql.type.definition import (
     GraphQLArgument,
     GraphQLInputObjectType,
     is_input_type,
-    GraphQLInputObjectField,
     GraphQLEnumType,
     GraphQLEnumValue,
     GraphQLScalarType,
-    GraphQLNonNull
-)
+    GraphQLNonNull,
+    GraphQLInputField)
 
 from objectql.context import ObjectQLContext
 from objectql.types import \
@@ -182,8 +183,8 @@ class ObjectQLTypeMapper:
                 arg_type = GraphQLNonNull(arg_type)
 
             arguments[to_camel_case(key)] = GraphQLArgument(
-                type=arg_type,
-                default_value=default_args.get(key, None)
+                type_=arg_type,
+                default_value=default_args.get(key, INVALID)
             )
 
         def resolve(self, info=None, context=None, *args, **kwargs):
@@ -237,7 +238,7 @@ class ObjectQLTypeMapper:
             _, mapped_type = union_map.popitem()
             return mapped_type
 
-        def resolve_type(value, info):
+        def resolve_type(value, info, _type):
             from objectql.remote import ObjectQLRemoteObject
 
             value_type = type(value)
@@ -258,16 +259,16 @@ class ObjectQLTypeMapper:
             resolve_type=resolve_type
         )
 
-    def map_to_list(self, type: List) -> GraphQLList:
-        list_subtype = typing_inspect.get_args(type)[0]
+    def map_to_list(self, type_: List) -> GraphQLList:
+        list_subtype = typing_inspect.get_args(type_)[0]
 
-        list_type = GraphQLList(type=self.map(list_subtype))
+        list_type = GraphQLList(type_=self.map(list_subtype))
 
         return list_type
 
-    def map_to_enum(self, type: enum.Enum) -> GraphQLEnumType:
-        enum_type = type
-        name = f"{type.__name__}Enum"
+    def map_to_enum(self, type_: enum.Enum) -> GraphQLEnumType:
+        enum_type = type_
+        name = f"{type_.__name__}Enum"
         # Enums dont include a suffix as they are immutable
 
         description = inspect.getdoc(enum_type)
@@ -281,11 +282,13 @@ class ObjectQLTypeMapper:
                                     values=values,
                                     description=description)
 
-        def serialize(self, value):
-            if isinstance(value, collections.Hashable):
-                enum_value = self._value_lookup.get(value)
-            if enum_value:
-                return enum_value.name
+        def serialize(self, value) -> Union[str, None, InvalidType]:
+            if value and isinstance(value, collections.Hashable):
+                lookup_value = self._value_lookup.get(value)
+                if lookup_value:
+                    return lookup_value
+                else:
+                    return InvalidType()
 
             return None
 
@@ -334,7 +337,7 @@ class ObjectQLTypeMapper:
         def local_resolve_type():
             local_self = self
 
-            def resolve_type(value, info):
+            def resolve_type(value, info, _type):
                 return local_self.map(type(value))
             return resolve_type
 
@@ -422,8 +425,8 @@ class ObjectQLTypeMapper:
                                 f"Unable to map {local_name}.{key}, {err}."
                             )
 
-                    arguments[to_camel_case(key)] = GraphQLInputObjectField(
-                        type=input_arg_type,
+                    arguments[to_camel_case(key)] = GraphQLInputField(
+                        type_=input_arg_type,
                         default_value=default_value
                     )
                 return arguments
@@ -445,7 +448,7 @@ class ObjectQLTypeMapper:
         return GraphQLInputObjectType(
             name,
             fields=local_fields(),
-            container_type=local_container_type(),
+            out_type=local_container_type(),
             description=description
         )
 
@@ -514,48 +517,48 @@ class ObjectQLTypeMapper:
 
         return self.reverse_registry.get(graphql_type)
 
-    def map(self, type, use_graphql_type=True) -> GraphQLType:
+    def map(self, type_, use_graphql_type=True) -> GraphQLType:
 
-        def _map(type_) -> GraphQLType:
+        def _map(type__) -> GraphQLType:
 
-            if use_graphql_type and inspect.isclass(type_):
-                if issubclass(type_, ObjectQLTypeWrapper):
-                    return type_.graphql_type(mapper=self)
+            if use_graphql_type and inspect.isclass(type__):
+                if issubclass(type__, ObjectQLTypeWrapper):
+                    return type__.graphql_type(mapper=self)
 
-                if type_is_dataclass(type_):
-                    return type_from_dataclass(type_, mapper=self)
+                if type_is_dataclass(type__):
+                    return type_from_dataclass(type__, mapper=self)
 
-            if typing_inspect.is_union_type(type_):
-                return self.map_to_union(type_)
+            if typing_inspect.is_union_type(type__):
+                return self.map_to_union(type__)
 
-            origin_type = get_origin(type_)
+            origin_type = get_origin(type__)
 
             if inspect.isclass(origin_type) and \
-                    issubclass(get_origin(type_), (List, Set)):
-                return self.map_to_list(type_)
+                    issubclass(get_origin(type__), (List, Set)):
+                return self.map_to_list(type__)
 
-            if inspect.isclass(type_):
-                if issubclass(type_, GraphQLType):
-                    return type_()
+            if inspect.isclass(type__):
+                if issubclass(type__, GraphQLType):
+                    return type__()
 
-                if issubclass(type_, tuple(self.scalar_classes())):
-                    return self.map_to_scalar(type_)
+                if issubclass(type__, tuple(self.scalar_classes())):
+                    return self.map_to_scalar(type__)
 
-                if issubclass(type_, enum.Enum):
-                    return self.map_to_enum(type_)
+                if issubclass(type__, enum.Enum):
+                    return self.map_to_enum(type__)
 
-                if is_interface(type_, self.schema):
-                    return self.map_to_interface(type_)
+                if is_interface(type__, self.schema):
+                    return self.map_to_interface(type__)
 
                 if self.as_input:
-                    return self.map_to_input(type_)
+                    return self.map_to_input(type__)
                 else:
-                    return self.map_to_object(type_)
+                    return self.map_to_object(type__)
 
-            if isinstance(type_, GraphQLType):
-                return type_
+            if isinstance(type__, GraphQLType):
+                return type__
 
-        key_hash = abs(hash(str(type))) % (10 ** 8)
+        key_hash = abs(hash(str(type_))) % (10 ** 8)
         suffix = {'|' + self.suffix if self.suffix else ''}
         generic_key = f"Registry({key_hash})" \
                       f"{suffix}|{self.as_input}|{self.as_mutable}"
@@ -565,14 +568,14 @@ class ObjectQLTypeMapper:
         if generic_registry_value:
             return generic_registry_value
 
-        value: GraphQLType = _map(type)
+        value: GraphQLType = _map(type_)
         key = str(value)
 
         registry_value = self.registry.get(key, None)
 
         if not registry_value:
-            self.register(python_type=type, key=key, value=value)
-            self.register(python_type=type, key=generic_key, value=value)
+            self.register(python_type=type_, key=key, value=value)
+            self.register(python_type=type_, key=generic_key, value=value)
             return value
 
         return registry_value
@@ -582,28 +585,28 @@ class ObjectQLTypeMapper:
             self.registry[key] = value
             self.reverse_registry[value] = python_type
 
-    def validate(self, type: GraphQLType, evaluate=False) -> bool:
-        if not type:
+    def validate(self, type_: GraphQLType, evaluate=False) -> bool:
+        if not type_:
             return False
 
-        if not isinstance(type, GraphQLType):
+        if not isinstance(type_, GraphQLType):
             return False
 
-        if isinstance(type, GraphQLNonNull):
-            type = type.of_type
+        if isinstance(type_, GraphQLNonNull):
+            type_ = type_.of_type
 
-        if self.as_input and not is_input_type(type):
+        if self.as_input and not is_input_type(type_):
             return False
 
-        if isinstance(type, GraphQLObjectType):
+        if isinstance(type_, GraphQLObjectType):
             if evaluate:
                 try:
-                    if len(type.fields) == 0:
+                    if len(type_.fields) == 0:
                         return False
                 except AssertionError:
                     return False
 
-            elif not callable(type._fields) and len(type._fields) == 0:
+            elif not callable(type_._fields) and len(type_._fields) == 0:
                 return False
 
         return True
@@ -677,37 +680,37 @@ def get_class_funcs(
     return callable_funcs
 
 
-def get_value(type, schema, key):
-    if is_graphql(type, schema):
-        return type.schemas.get(schema, type.schemas.get(None)).get(key)
+def get_value(type_, schema, key):
+    if is_graphql(type_, schema):
+        return type_.schemas.get(schema, type_.schemas.get(None)).get(key)
 
 
-def is_graphql(type, schema):
-    return hasattr(type, 'graphql') and \
-           type.graphql and \
-           hasattr(type, 'schemas') and \
-           (schema in type.schemas.keys() or None in type.schemas.keys())
+def is_graphql(type_, schema):
+    return hasattr(type_, 'graphql') and \
+           type_.graphql and \
+           hasattr(type_, 'schemas') and \
+           (schema in type_.schemas.keys() or None in type_.schemas.keys())
 
 
-def is_interface(type, schema):
-    if is_graphql(type, schema):
-        type_type = get_value(type, schema, 'type')
-        type_defined_on = get_value(type, schema, 'defined_on')
+def is_interface(type_, schema):
+    if is_graphql(type_, schema):
+        type_type = get_value(type_, schema, 'type')
+        type_defined_on = get_value(type_, schema, 'defined_on')
 
-        return type_type == "interface" and type_defined_on == type
-
-
-def is_abstract(type, schema):
-    if is_graphql(type, schema):
-        type_type = get_value(type, schema, 'type')
-        type_defined_on = get_value(type, schema, 'defined_on')
-
-        return type_type == "abstract" and type_defined_on == type
+        return type_type == "interface" and type_defined_on == type_
 
 
-def is_scalar(type):
+def is_abstract(type_, schema):
+    if is_graphql(type_, schema):
+        type_type = get_value(type_, schema, 'type')
+        type_defined_on = get_value(type_, schema, 'defined_on')
+
+        return type_type == "abstract" and type_defined_on == type_
+
+
+def is_scalar(type_):
     for test_types, graphql_type in ObjectQLTypeMapper.scalar_map:
         for test_type in test_types:
-            if issubclass(type, test_type):
+            if issubclass(type_, test_type):
                 return True
     return False

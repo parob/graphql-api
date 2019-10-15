@@ -4,9 +4,8 @@ from graphql import (
     GraphQLSchema,
     GraphQLObjectType,
     GraphQLField,
-    GraphQLString
-)
-from graphql.execution.base import ExecutionResult
+    GraphQLString,
+    is_named_type, ExecutionResult)
 
 from objectql.decorators import object_decorator_factory
 
@@ -110,6 +109,11 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
                 mutation_types = set()
 
             schema_args['types'] = list(query_types | mutation_types)
+            schema_args['types'] = [
+                type_
+                for type_ in schema_args['types'] if is_named_type(type_)
+            ]
+
             meta = {**query_mapper.meta, **mutation_mapper.meta}
 
             self.query_mapper = query_mapper
@@ -118,8 +122,8 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
         # Create a placeholder query (every GraphQL schema must have a query)
         if 'query' not in schema_args:
             placeholder = GraphQLField(
-                type=GraphQLString,
-                resolver=lambda *_: ''
+                type_=GraphQLString,
+                resolve=lambda *_: ''
             )
             schema_args['query'] = GraphQLObjectType(
                 name='PlaceholderQuery',
