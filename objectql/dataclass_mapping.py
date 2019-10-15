@@ -90,30 +90,3 @@ def type_from_dataclass(_class: Type, mapper) -> GraphQLType:
 
     base_type._fields = local_fields_callback()
     return base_type
-
-
-def define_field_map(type_, type_fields):
-
-    try:
-        fields = resolve_thunk(type_._fields)
-    except Exception as error:
-        raise TypeError(f"{type_.name} fields cannot be resolved: {error}")
-
-    if not isinstance(fields, dict) or not all(
-            isinstance(key, str) for key in fields
-    ):
-        raise TypeError(
-            f"{type_.name} fields must be specified"
-            " as a dict with field names as keys."
-        )
-    if not all(
-            isinstance(value, GraphQLField) or is_output_type(value)
-            for value in fields.values()
-    ):
-        raise TypeError(
-            f"{type_.name} fields must be GraphQLField or output type objects."
-        )
-    return {
-        name: value if isinstance(value, GraphQLField) else GraphQLField(value)
-        for name, value in fields.items()
-    }
