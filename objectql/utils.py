@@ -1,5 +1,4 @@
 import enum
-import os
 import re
 
 import requests
@@ -12,8 +11,8 @@ from graphql import (
     GraphQLObjectType,
     GraphQLSchema,
     GraphQLError,
-    build_client_schema
-)
+    build_client_schema,
+    get_introspection_query)
 
 from graphql.type.definition import GraphQLType, GraphQLInterfaceType
 
@@ -119,25 +118,13 @@ def iterate_fields(type: GraphQLType, done_fields=None):
                     yield from iterate_fields(field.type, done_fields)
 
 
-def introspect_query():
-    introspect_query_file_path = os.path.join(
-        os.path.dirname(__file__),
-        'introspect.graphql'
-    )
-
-    with open(introspect_query_file_path, 'r') as introspect_query_file:
-        _introspect_query = introspect_query_file.read()
-
-    return _introspect_query
-
-
 def url_to_ast(
     url,
     http_method="GET",
     http_headers=None,
     verify=True
 ) -> GraphQLSchema:
-    _introspect_query = introspect_query()
+    _introspect_query = get_introspection_query()
 
     response = http_query(url=url,
                           query=_introspect_query,
@@ -154,7 +141,7 @@ def url_to_ast(
 
 
 def executor_to_ast(executor) -> GraphQLSchema:
-    _introspect_query = introspect_query()
+    _introspect_query = get_introspection_query()
     response = executor.execute(_introspect_query)
     introspect_schema = response.data
 

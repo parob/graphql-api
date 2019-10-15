@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-graphql-core-next = "*"
+graphql-core = "==3.0.0b1"
 requests = "*"
 typing-inspect = "*"
 flake8 = "*"

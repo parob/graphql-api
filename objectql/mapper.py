@@ -22,7 +22,7 @@ from graphql import (
     GraphQLList,
     GraphQLBoolean,
     GraphQLInt,
-    GraphQLFloat)
+    GraphQLFloat, INVALID)
 
 from graphql.type.definition import (
     GraphQLType,
@@ -184,7 +184,7 @@ class ObjectQLTypeMapper:
 
             arguments[to_camel_case(key)] = GraphQLArgument(
                 type_=arg_type,
-                default_value=default_args.get(key, None)
+                default_value=default_args.get(key, INVALID)
             )
 
         def resolve(self, info=None, context=None, *args, **kwargs):

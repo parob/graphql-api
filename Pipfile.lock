@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "f35a7993ef0306e1f679c842379a9c70d8b752e51b9bd4cab73857893de733a3"
+            "sha256": "775445ccc08fc11b5177e3272860627421bb1ed1100e3c04fccdef14e29d27c2"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -25,10 +25,10 @@
         },
         "attrs": {
             "hashes": [
-                "sha256:ec20e7a4825331c1b5ebf261d111e16fa9612c1f7a5e1f884f12bd53a664dfd2",
-                "sha256:f913492e1663d3c36f502e5e9ba6cd13cf19d7fab50aa13239e420fef95e1396"
+                "sha256:08a96c641c3a74e44eb59afb61a24f2cb9f4d7188748e76ba4bb5edfa3cb7d1c",
+                "sha256:f7b7ce16570fe9965acd6d30101a28f62fb4a7f9e926b3bbc9b61f8b04247e72"
             ],
-            "version": "==19.2.0"
+            "version": "==19.3.0"
         },
         "certifi": {
             "hashes": [
@@ -59,13 +59,13 @@
             "index": "pypi",
             "version": "==3.7.8"
         },
-        "graphql-core-next": {
+        "graphql-core": {
             "hashes": [
-                "sha256:254187ad5f5acdfd521429d87fd3c05896dc1b74ddcb30b1fa37905dc1dc7c13",
-                "sha256:76b52e7f654d8fc6abefc8583ebfd869a3939590813110ad27c0c0908b7d0659"
+                "sha256:55d4b60ac1f7932bce4f1e74468c3111b0b4ed95e6f383587218fd54f427d1c1",
+                "sha256:fc8a0d8b0156eac4506190fdb0ad7d6137ce38c3b2f1af77fb2d5148c722094f"
             ],
             "index": "pypi",
-            "version": "==1.1.1"
+            "version": "==3.0.0b1"
         },
         "idna": {
             "hashes": [
@@ -223,10 +223,10 @@
         },
         "attrs": {
             "hashes": [
-                "sha256:ec20e7a4825331c1b5ebf261d111e16fa9612c1f7a5e1f884f12bd53a664dfd2",
-                "sha256:f913492e1663d3c36f502e5e9ba6cd13cf19d7fab50aa13239e420fef95e1396"
+                "sha256:08a96c641c3a74e44eb59afb61a24f2cb9f4d7188748e76ba4bb5edfa3cb7d1c",
+                "sha256:f7b7ce16570fe9965acd6d30101a28f62fb4a7f9e926b3bbc9b61f8b04247e72"
             ],
-            "version": "==19.2.0"
+            "version": "==19.3.0"
         },
         "babel": {
             "hashes": [

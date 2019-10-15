@@ -80,7 +80,7 @@ class ObjectQLRemoteExecutor(ObjectQLBaseExecutor, GraphQLObjectType):
             return info[key_]
 
         # noinspection PyProtectedMember
-        for name, type in ast_schema._type_map.items():
+        for name, type in ast_schema.type_map.items():
             if isinstance(type, GraphQLObjectType) and \
                     not type.name.startswith("__"):
                 for key, field in type.fields.items():
@@ -116,7 +116,7 @@ class ObjectQLRemoteExecutor(ObjectQLBaseExecutor, GraphQLObjectType):
                 )
 
         # noinspection PyProtectedMember
-        return ast_schema._query.fields
+        return ast_schema.query_type.fields
 
     def execute(
         self,
@@ -799,7 +799,7 @@ class ObjectQLRemoteQueryBuilder:
 def remote_execute(executor, context):
     operation = context.request.info.operation.operation
     query = context.field.query
-    redirected_query = operation + " " + query
+    redirected_query = operation.value + " " + query
 
     result = executor.execute(query=redirected_query)
 

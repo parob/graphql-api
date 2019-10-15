@@ -2,7 +2,7 @@ import inspect
 
 from typing import Any, List, Dict, Callable
 
-from graphql import graphql, graphql_sync
+from graphql import graphql_sync
 
 from graphql.execution import ExecutionResult
 from graphql.type.schema import GraphQLSchema

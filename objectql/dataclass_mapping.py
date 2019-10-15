@@ -1,6 +1,11 @@
 from typing import Type, get_type_hints
 
-from graphql.type.definition import GraphQLType, GraphQLObjectType, GraphQLField, GraphQLInputField, resolve_thunk, \
+from graphql.type.definition import \
+    GraphQLType, \
+    GraphQLObjectType, \
+    GraphQLField, \
+    GraphQLInputField, \
+    resolve_thunk, \
     is_output_type
 
 from objectql.utils import to_camel_case
