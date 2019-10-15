@@ -1,7 +1,10 @@
 from typing import Type, get_type_hints
 
-from graphql.type.definition import GraphQLType, GraphQLObjectType, \
-    define_field_map, GraphQLInputObjectField, GraphQLField
+from graphql.type.definition import \
+    GraphQLType, \
+    GraphQLObjectType, \
+    GraphQLField, \
+    GraphQLInputField
 
 from objectql.utils import to_camel_case
 
@@ -62,23 +65,19 @@ def type_from_dataclass(_class: Type, mapper) -> GraphQLType:
                         return getattr(self, local_prop_name)
                     return resolver
 
-                type_: GraphQLType = local_mapper.map(type=field_type)
+                type_: GraphQLType = local_mapper.map(type_=field_type)
 
                 if local_mapper.as_input:
-                    field = GraphQLInputObjectField(type_)
+                    field = GraphQLInputField(type_=type_)
                 else:
-                    field = GraphQLField(type_, resolver=local_resolver())
+                    field = GraphQLField(type_=type_, resolve=local_resolver())
 
                 local_fields[to_camel_case(prop_name)] = field
 
             if local_type_fields:
                 try:
-                    field_map_items = define_field_map(
-                        local_type,
-                        local_type_fields
-                    ).items()
-
-                    for name, field in field_map_items:
+                    fields_ = local_type_fields()
+                    for name, field in fields_:
                         if name not in local_fields:
                             local_fields[name] = field
                 except AssertionError:

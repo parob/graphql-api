@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from typing import Union, Optional
 
 import pytest
+from graphql.utilities import schema_printer
+
 from objectql.utils import executor_to_ast
 from requests.api import request
 from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
@@ -17,11 +19,14 @@ from objectql.remote import ObjectQLRemoteExecutor, remote_execute
 
 def available(url, method="GET"):
     try:
-        request(method, url, timeout=5, verify=False)
+        response = request(method, url, timeout=5, verify=False)
     except (ConnectionError, ConnectTimeout, ReadTimeout):
         return False
 
-    return True
+    if response.status_code == 400:
+        return True
+
+    return False
 
 
 class TestGraphQL:
@@ -615,7 +620,6 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_print(self):
-        from graphql.utils import schema_printer
 
         api = ObjectQLSchema()
 
@@ -809,7 +813,7 @@ class TestGraphQL:
         @api.root
         class Root:
             @api.query
-            def value(self, a_int: int) -> int:
+            def value(self, a_int: int) -> Optional[int]:
                 return a_int
 
         executor = api.executor()
@@ -817,12 +821,13 @@ class TestGraphQL:
         test_input_query = '''
             query TestOptionalQuery {
                 value
+                
             }
         '''
 
         result = executor.execute(test_input_query)
 
-        assert result.errors and "is required but not provided" in result.errors[0].message
+        assert result.errors and "is required, but it was not provided" in result.errors[0].message
 
     def test_optional(self):
         api = ObjectQLSchema()
@@ -1022,7 +1027,7 @@ class TestGraphQL:
             def graph_loc(self, context: ObjectQLContext) -> RemoteAPI:
                 operation = context.request.info.operation.operation
                 query = context.field.query
-                redirected_query = operation + " " + query
+                redirected_query = operation.value + " " + query
 
                 result = RemoteAPI.execute(query=redirected_query)
 
@@ -1067,7 +1072,7 @@ class TestGraphQL:
             def graphql(self, context: ObjectQLContext) -> RemoteAPI:
                 operation = context.request.info.operation.operation
                 query = context.field.query
-                redirected_query = operation + " " + query
+                redirected_query = operation.value + " " + query
 
                 result = RemoteAPI.execute(query=redirected_query)
 
@@ -1150,4 +1155,4 @@ class TestGraphQL:
         schema = executor_to_ast(executor)
 
         # noinspection PyProtectedMember
-        assert schema._type_map.keys() == executor.schema._type_map.keys()
+        assert schema.type_map.keys() == executor.schema.type_map.keys()

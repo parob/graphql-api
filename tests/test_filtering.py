@@ -190,6 +190,7 @@ class TestSchemaFiltering:
             def set_name(self, name: str) -> str:
                 pass
 
+
         class Employee(RenamablePerson):
 
             def __init__(self):
@@ -249,7 +250,7 @@ class TestSchemaFiltering:
 
         result = executor.execute(test_query)
 
-        assert 'Cannot query field "person" on type "PlaceholderQuery".' == result.errors[0].message
+        assert "Cannot query field 'person' on type 'PlaceholderQuery'." == result.errors[0].message
 
     def test_mutation_return_mutable_flag(self):
         api = ObjectQLSchema()
@@ -346,7 +347,7 @@ class TestSchemaFiltering:
 
         result = executor.execute(test_invalid_query)
         assert result.errors
-        assert 'Cannot query field "updateName"' in result.errors[0].message
+        assert "Cannot query field 'updateName'" in result.errors[0].message
 
         test_invalid_mutable_query = '''
                     mutation PersonName {
@@ -360,4 +361,4 @@ class TestSchemaFiltering:
 
         result = executor.execute(test_invalid_mutable_query)
         assert result.errors
-        assert 'Cannot query field "name"' in result.errors[0].message
+        assert "Cannot query field 'name'" in result.errors[0].message
