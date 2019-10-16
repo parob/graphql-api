@@ -1,4 +1,3 @@
-from objectql.decorators import query, mutation, interface
 from objectql.mapper import ObjectQLMetaKey
 from objectql.schema import ObjectQLSchema
 
@@ -13,15 +12,16 @@ class TestSchemaFiltering:
             def __init__(self):
                 self.name = ""
 
-            @api.mutation
+            @api.field.mutation
             def update_name(self, name: str) -> 'Person':
                 self.name = name
                 return self
 
-        @api.root
+        # noinspection PyUnusedLocal
+        @api.root_object
         class Root:
 
-            @api.query
+            @api.field.query
             def person(self) -> Person:
                 return Person()
 
@@ -53,19 +53,20 @@ class TestSchemaFiltering:
             def __init__(self):
                 self._name = ""
 
-            @api.query
+            @api.field.query
             def name(self) -> str:
                 return self._name
 
-            @api.mutation
+            @api.field.mutation
             def update_name(self, name: str) -> 'Person':
                 self._name = name
                 return self
 
-        @api.root
+        # noinspection PyUnusedLocal
+        @api.root_object
         class Root:
 
-            @api.query
+            @api.field.query
             def person(self) -> Person:
                 return Person()
 
@@ -100,7 +101,7 @@ class TestSchemaFiltering:
         @api.interface
         class Person:
 
-            @api.query
+            @api.field.query
             def name(self) -> str:
                 pass
 
@@ -109,25 +110,26 @@ class TestSchemaFiltering:
             def __init__(self):
                 self._name = "Bob"
 
-            @api.query
+            @api.field.query
             def name(self) -> str:
                 return self._name
 
-            @api.query
+            @api.field.query
             def department(self) -> str:
                 return "Human Resources"
 
-            @api.mutation
+            @api.field.mutation
             def set_name(self, name: str) -> str:
                 self._name = name
                 return name
 
         bob_employee = Employee()
 
-        @api.root
+        # noinspection PyUnusedLocal
+        @api.root_object
         class Root:
 
-            @api.query
+            @api.field.query
             def person(self) -> Person:
                 return bob_employee
 
@@ -184,38 +186,39 @@ class TestSchemaFiltering:
         api = ObjectQLSchema()
 
         @api.interface
-        class RenamablePerson:
+        class Person:
 
-            @api.mutation
+            @api.field.mutation
             def set_name(self, name: str) -> str:
                 pass
 
-
-        class Employee(RenamablePerson):
+        @api.object
+        class Employee(Person):
 
             def __init__(self):
                 self.name = "Bob"
 
-            @api.query
+            @api.field.query
             def name(self) -> str:
                 return self.name
 
-            @api.query
+            @api.field.query
             def department(self) -> str:
                 return "Human Resources"
 
-            @api.mutation
+            @api.field.mutation
             def set_name(self, name: str) -> str:
                 self.name = name
                 return name
 
         bob_employee = Employee()
 
-        @api.root
+        # noinspection PyUnusedLocal
+        @api.root_object
         class Root:
 
-            @api.query
-            def person(self) -> RenamablePerson:
+            @api.field.query
+            def person(self) -> Person:
                 return bob_employee
 
         executor = api.executor()
@@ -255,29 +258,31 @@ class TestSchemaFiltering:
     def test_mutation_return_mutable_flag(self):
         api = ObjectQLSchema()
 
+        @api.object
         class Person:
 
             def __init__(self):
                 self._name = ""
 
-            @api.query
+            @api.field.query
             def name(self) -> str:
                 return self._name
 
-            @api.mutation
+            @api.field.mutation
             def update_name(self, name: str) -> 'Person':
                 self._name = name
                 return self
 
-            @api.mutation({ObjectQLMetaKey.resolve_to_mutable: True})
+            @api.field.mutation({ObjectQLMetaKey.resolve_to_mutable: True})
             def update_name_mutable(self, name: str) -> 'Person':
                 self._name = name
                 return self
 
-        @api.root
+        # noinspection PyUnusedLocal
+        @api.root_object
         class Root:
 
-            @api.query
+            @api.field.query
             def person(self) -> Person:
                 return Person()
 

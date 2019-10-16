@@ -1,46 +1,36 @@
-def object_decorator_factory(query_type, schema=False):
+from typing import Callable
 
-    def decorator(schema, meta=None):
-        value = None
 
-        if not meta:
-            meta = {}
+def decorator_factory(type_):
 
-        if callable(meta):
-            value = meta
-            meta = {}
+    def decorator(cls_or_schema, method=None):
+        method = None
 
-        def _decorator(schema, f):
+        def decorator_(schema, f: Callable):
             f.graphql = True
             f.defined_on = f
 
             api = {
                 "defined_on": f,
-                "meta": meta,
-                "type": query_type,
+                "meta": {},
+                "type": type_,
                 "schema": schema
             }
 
             if not hasattr(f, "schemas"):
                 f.schemas = {}
 
-            f.schemas[schema] = api
+            if hasattr(f, "schemas"):
+                f.schemas[schema] = api
+
             return f
 
-        # See if we're being called as @decorator or @decorator().
-        if value:
-            return _decorator(schema, value)
+        # # See if we're being called as @decorator or @decorator().
+        # if func:
+        #     return decorator_(cls_or_schema, func)
 
         # We're called as @decorator without parens.
-        return lambda f: _decorator(schema, f)
+        return lambda f: decorator_(cls_or_schema, method)
 
-    if schema:
-        return decorator
+    return decorator
 
-    return lambda value: decorator(None, value)
-
-
-query = object_decorator_factory("query")
-mutation = object_decorator_factory("mutation")
-interface = object_decorator_factory("interface")
-abstract = object_decorator_factory("abstract")

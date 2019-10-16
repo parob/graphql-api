@@ -22,7 +22,7 @@ from graphql import (
     GraphQLList,
     GraphQLBoolean,
     GraphQLInt,
-    GraphQLFloat, INVALID)
+    GraphQLFloat)
 
 from graphql.type.definition import (
     GraphQLType,

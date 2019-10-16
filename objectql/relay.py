@@ -2,15 +2,15 @@ from typing import List
 
 from uuid import UUID, uuid4
 
-from objectql.decorators import query, interface
-
+from objectql.schema import ObjectQLSchema
 
 try:
+    # noinspection PyUnresolvedReferences
     from dataclasses import dataclass, field
 
 except ImportError:
 
-    @interface
+    @ObjectQLSchema.interface
     class Node:
         """
         The `Node` Interface type represents a Relay Node.
@@ -26,7 +26,7 @@ except ImportError:
             super().__init__(*args, **kwargs)
 
         @property
-        @query
+        @ObjectQLSchema.field.query
         def id(self) -> UUID:
             return self._id
 
@@ -52,27 +52,27 @@ except ImportError:
             self._count = count
 
         @property
-        @query
+        @ObjectQLSchema.field.query
         def has_previous_page(self) -> bool:
             return self._has_previous_page
 
         @property
-        @query
+        @ObjectQLSchema.field.query
         def has_next_page(self) -> bool:
             return self._has_next_page
 
         @property
-        @query
+        @ObjectQLSchema.field.query
         def start_cursor(self) -> str:
             return self._start_cursor
 
         @property
-        @query
+        @ObjectQLSchema.field.query
         def end_cursor(self) -> str:
             return self._end_cursor
 
         @property
-        @query
+        @ObjectQLSchema.field.query
         def count(self) -> int:
             return self._count
 
@@ -89,18 +89,18 @@ except ImportError:
             self._cursor = cursor
 
         @property
-        @query
+        @ObjectQLSchema.field.query
         def node(self) -> Node:
             return self._node
 
         @property
-        @query
+        @ObjectQLSchema.field.query
         def cursor(self) -> str:
             return self._cursor
 
 else:
 
-    @interface
+    @ObjectQLSchema.interface
     @dataclass
     class Node:
         """
@@ -150,14 +150,14 @@ class Connection:
         self._last = last
         super().__init__(*args, **kwargs)
 
-    @query
+    @ObjectQLSchema.field.query
     def edges(self) -> List[Edge]:
         raise NotImplementedError(
             f"{self.__class__.__name__} has not "
             f"implemented 'Connection.edges'"
         )
 
-    @query
+    @ObjectQLSchema.field.query
     def page_info(self) -> PageInfo:
         raise NotImplementedError(
             f"{self.__class__.__name__} has not "
