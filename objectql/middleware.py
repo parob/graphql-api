@@ -1,17 +1,11 @@
 from graphql import GraphQLObjectType, GraphQLNonNull
 
-from promise import Promise
-
 from objectql.context import ObjectQLContext
 from objectql.utils import to_snake_case
 
 
 def middleware_local_proxy(next):
     value = next()
-
-    if isinstance(value, Promise):
-        if value.is_fulfilled or value.is_rejected:
-            value = value.value
 
     # Compatibility with LocalProxy from Werkzeug
     try:
