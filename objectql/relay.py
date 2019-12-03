@@ -38,7 +38,6 @@ class PageInfo:
         has_next_page: bool,
         start_cursor: str,
         end_cursor: str,
-        count: int,
         *args,
         **kwargs
     ):
@@ -49,7 +48,6 @@ class PageInfo:
         self._has_next_page = has_next_page
         self._start_cursor = start_cursor
         self._end_cursor = end_cursor
-        self._count = count
 
     @property
     @ObjectQLSchema.query
