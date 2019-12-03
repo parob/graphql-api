@@ -1,13 +1,17 @@
 from typing import List, Callable, Any, Type, Dict, Tuple
 
+# noinspection PyPackageRequirements
 from graphql import (
     GraphQLSchema,
     GraphQLObjectType,
     GraphQLField,
     GraphQLString,
-    is_named_type, ExecutionResult)
+    is_named_type,
+    ExecutionResult,
+    GraphQLType
+)
 
-from objectql.decorators import object_decorator_factory
+from objectql import ObjectQLError
 
 from objectql.executor import ObjectQLExecutor, ObjectQLBaseExecutor
 from objectql.context import ObjectQLContext
@@ -35,12 +39,75 @@ class ObjectQLRequestContext:
         self.info = info
 
 
+def decorate(
+    func: Callable,
+    _type: str,
+    schema: "ObjectQLSchema" = None,
+    meta: Dict = None
+):
+    func.graphql = True
+    func.defined_on = func
+
+    if not meta:
+        meta = {}
+
+    api = {
+        "defined_on": func,
+        "meta": meta,
+        "type": _type,
+        "schema": schema
+    }
+
+    if not hasattr(func, "schemas"):
+        func.schemas = {}
+
+    if hasattr(func, "schemas"):
+        func.schemas[schema] = api
+
+    return func
+
+
+def decorator(a, b, _type):
+
+    func = a if callable(a) else b if callable(b) else None
+
+    meta = a if isinstance(a, dict) else b if isinstance(b, dict) else None
+
+    schema = a if isinstance(a, ObjectQLSchema) else \
+        b if isinstance(b, ObjectQLSchema) else None
+
+    if func:
+        return decorate(
+            func=func,
+            _type=_type,
+            schema=schema,
+            meta=meta
+        )
+
+    return lambda _func: decorate(
+        func=_func,
+        _type=_type,
+        schema=schema,
+        meta=meta
+    )
+
+
 class ObjectQLSchema(ObjectQLBaseExecutor):
 
-    query = object_decorator_factory("query", schema=True)
-    mutation = object_decorator_factory("mutation", schema=True)
-    interface = object_decorator_factory("interface", schema=True)
-    abstract = object_decorator_factory("abstract", schema=True)
+    def query(self=None, meta=None):
+        return decorator(self, meta, _type="query")
+
+    def mutation(self=None, meta=None):
+        return decorator(self, meta, _type="mutation")
+
+    def object(self=None, meta=None):
+        return decorator(self, meta, _type="object")
+
+    def interface(self=None, meta=None):
+        return decorator(self, meta, _type="interface")
+
+    def abstract(self=None, meta=None):
+        return decorator(self, meta, _type="abstract")
 
     def __init__(
         self,
@@ -58,7 +125,7 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
         self.query_mapper = None
         self.mutation_mapper = None
 
-    def root(self, root_type):
+    def root_object(self, root_type):
         self.root_type = root_type
         return root_type
 
@@ -69,7 +136,12 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
         if self.root_type:
             # Create the root query
             query_mapper = ObjectQLTypeMapper(schema=self)
-            query: GraphQLObjectType = query_mapper.map(self.root_type)
+            query: GraphQLType = query_mapper.map(self.root_type)
+
+            if not isinstance(query, GraphQLObjectType):
+                raise ObjectQLError(
+                    f"Query {query} was not a valid ObjectType."
+                )
 
             # Filter the root query
             filtered_query = ObjectQLSchemaReducer.reduce_query(
@@ -94,7 +166,12 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
                 registry=registry,
                 schema=self
             )
-            mutation: GraphQLObjectType = mutation_mapper.map(self.root_type)
+            mutation: GraphQLType = mutation_mapper.map(self.root_type)
+
+            if not isinstance(mutation, GraphQLObjectType):
+                raise ObjectQLError(
+                    f"Mutation {mutation} was not a valid ObjectType."
+                )
 
             # Filter the root mutation
             filtered_mutation = ObjectQLSchemaReducer.reduce_mutation(

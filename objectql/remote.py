@@ -132,7 +132,7 @@ class ObjectQLRemoteExecutor(ObjectQLBaseExecutor, GraphQLObjectType):
             http_headers = {**self.http_headers, **http_headers}
 
         try:
-            json = http_query(
+            json_ = http_query(
                 url=self.url,
                 query=query,
                 variable_values=variable_values,
@@ -152,8 +152,8 @@ class ObjectQLRemoteExecutor(ObjectQLBaseExecutor, GraphQLObjectType):
             )
 
         return ExecutionResult(
-            data=json.get('data'),
-            errors=json.get('errors')
+            data=json_.get('data'),
+            errors=json_.get('errors')
         )
 
 

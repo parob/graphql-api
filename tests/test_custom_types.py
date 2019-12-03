@@ -12,7 +12,8 @@ class TestCustomTypes:
 
         user_id = uuid.uuid4()
 
-        @api.root
+        # noinspection PyUnusedLocal
+        @api.root_object
         class Root:
 
             @api.query
@@ -53,7 +54,7 @@ class TestCustomTypes:
 
         now = datetime.now()
 
-        @api.root
+        @api.root_object
         class Root:
 
             @api.query
@@ -75,7 +76,7 @@ class TestCustomTypes:
     def test_json_type(self):
         api = ObjectQLSchema()
 
-        @api.root
+        @api.root_object
         class Root:
 
             @api.query
@@ -118,7 +119,7 @@ class TestCustomTypes:
         data_input = b'input_bytes'
         data_output = b'output_bytes'
 
-        @api.root
+        @api.root_object
         class Root:
 
             @api.query

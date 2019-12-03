@@ -5,19 +5,19 @@ from uuid import UUID
 
 import pytest
 
-from objectql.decorators import query, mutation
 from objectql.error import ObjectQLError
 from objectql.mapper import ObjectQLMetaKey
 from objectql.schema import ObjectQLSchema
 from objectql.remote import ObjectQLRemoteObject
 
 
+# noinspection PyTypeChecker
 class TestObjectQLRemote:
 
     def test_remote_query(self):
         api = ObjectQLSchema()
 
-        @api.root
+        @api.root_object
         class House:
 
             @api.query
@@ -48,7 +48,7 @@ class TestObjectQLRemote:
             def wood(self) -> str:
                 return "oak"
 
-        @api.root
+        @api.root_object
         class House:
 
             @api.query
@@ -97,7 +97,7 @@ class TestObjectQLRemote:
             def owner(self) -> Person:
                 return Person(name="Rob")
 
-        @api.root
+        @api.root_object
         class House:
 
             @api.query
@@ -121,7 +121,7 @@ class TestObjectQLRemote:
             bungalow = "bungalow"
             flat = "flat"
 
-        @api.root
+        @api.root_object
         class House:
 
             @api.query
@@ -144,38 +144,38 @@ class TestObjectQLRemote:
 
         class Room:
 
-            def __init__(self, name: str, type: RoomType):
+            def __init__(self, name: str, room_type: RoomType):
                 self._name = name
-                self._type = type
+                self._room_type = room_type
 
             @api.query
             def name(self) -> str:
                 return self._name
 
             @api.query
-            def type(self) -> RoomType:
-                return self._type
+            def room_type(self) -> RoomType:
+                return self._room_type
 
-        @api.root
+        @api.root_object
         class House:
 
             @api.query
             def get_room(self) -> Room:
-                return Room(name="robs_room", type=RoomType.bedroom)
+                return Room(name="robs_room", room_type=RoomType.bedroom)
 
         house: House = ObjectQLRemoteObject(
             executor=api.executor(),
             schema=api
         )
 
-        assert house.get_room().type() == RoomType.bedroom
+        assert house.get_room().room_type() == RoomType.bedroom
 
     def test_remote_query_uuid(self):
         api = ObjectQLSchema()
 
         person_id = uuid.uuid4()
 
-        @api.root
+        @api.root_object
         class Person:
 
             @api.query
@@ -192,7 +192,7 @@ class TestObjectQLRemote:
     def test_remote_mutation(self):
         api = ObjectQLSchema()
 
-        @api.root
+        @api.root_object
         class Counter:
 
             def __init__(self):
@@ -225,7 +225,7 @@ class TestObjectQLRemote:
     def test_remote_positional_args(self):
         api = ObjectQLSchema()
 
-        @api.root
+        @api.root_object
         class Multiplier:
 
             @api.query
@@ -253,7 +253,7 @@ class TestObjectQLRemote:
             def name(self) -> str:
                 return "rob"
 
-        @api.root
+        @api.root_object
         class Bank:
 
             @api.query
@@ -275,7 +275,7 @@ class TestObjectQLRemote:
     def test_remote_mutation_with_input(self):
         api = ObjectQLSchema()
 
-        @api.root
+        @api.root_object
         class Counter:
 
             def __init__(self):
@@ -297,7 +297,7 @@ class TestObjectQLRemote:
     def test_remote_query_with_input(self):
         api = ObjectQLSchema()
 
-        @api.root
+        @api.root_object
         class Calculator:
 
             @api.query
@@ -314,7 +314,7 @@ class TestObjectQLRemote:
     def test_remote_query_with_enumerable_input(self):
         api = ObjectQLSchema()
 
-        @api.root
+        @api.root_object
         class Calculator:
 
             @api.query
@@ -346,7 +346,7 @@ class TestObjectQLRemote:
             def size(self) -> int:
                 return self._size
 
-        @api.root
+        @api.root_object
         class House:
 
             @api.query
@@ -395,7 +395,7 @@ class TestObjectQLRemote:
             def animal_age(self) -> int:
                 return self.animal.age
 
-        @api.root
+        @api.root_object
         class House:
 
             @api.query
@@ -443,7 +443,7 @@ class TestObjectQLRemote:
 
         global_flopper = Flopper()
 
-        @api.root
+        @api.root_object
         class Flipper:
 
             def __init__(self):
@@ -542,7 +542,7 @@ class TestObjectQLRemote:
 
                 return self
 
-        @api.root
+        @api.root_object
         class Root:
 
             def __init__(self):
@@ -578,7 +578,7 @@ class TestObjectQLRemote:
     def test_remote_with_local_property(self):
         api = ObjectQLSchema()
 
-        @api.root
+        @api.root_object
         class Person:
 
             @api.query
@@ -600,13 +600,14 @@ class TestObjectQLRemote:
     def test_remote_with_local_method(self):
         api = ObjectQLSchema()
 
-        @api.root
+        @api.root_object
         class Person:
 
             @api.query
             def age(self) -> int:
                 return 50
 
+            # noinspection PyMethodMayBeStatic
             def hello(self):
                 return "hello"
 
@@ -621,7 +622,7 @@ class TestObjectQLRemote:
     def test_remote_with_local_static_method(self):
         api = ObjectQLSchema()
 
-        @api.root
+        @api.root_object
         class Person:
 
             @api.query
@@ -643,7 +644,7 @@ class TestObjectQLRemote:
     def test_remote_with_local_class_method(self):
         api = ObjectQLSchema()
 
-        @api.root
+        @api.root_object
         class Person:
 
             @api.query

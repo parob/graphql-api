@@ -11,9 +11,16 @@ class TestRelay:
     def test_relay_query(self):
         api = ObjectQLSchema()
 
-        @dataclass
         class Person(Node):
-            name: str = ""
+
+            def __init__(self, name: str = None, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self._name = name
+
+            @property
+            @api.query
+            def name(self) -> str:
+                return self._name
 
         class PersonConnection(Connection):
 
@@ -64,10 +71,12 @@ class TestRelay:
                     start_cursor=self.filtered_cursors[0],
                     end_cursor=self.filtered_cursors[-1],
                     has_previous_page=self.has_previous_page,
-                    has_next_page=self.has_next_page
+                    has_next_page=self.has_next_page,
+                    count=len(self.people)
                 )
 
-        @api.root
+        # noinspection PyUnusedLocal
+        @api.root_object
         class Root:
 
             @api.query

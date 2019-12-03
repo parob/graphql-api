@@ -1,4 +1,3 @@
-from objectql.decorators import query, mutation, interface
 from objectql.mapper import ObjectQLMetaKey
 from objectql.schema import ObjectQLSchema
 
@@ -18,7 +17,8 @@ class TestSchemaFiltering:
                 self.name = name
                 return self
 
-        @api.root
+        # noinspection PyUnusedLocal
+        @api.root_object
         class Root:
 
             @api.query
@@ -62,7 +62,8 @@ class TestSchemaFiltering:
                 self._name = name
                 return self
 
-        @api.root
+        # noinspection PyUnusedLocal
+        @api.root_object
         class Root:
 
             @api.query
@@ -124,7 +125,8 @@ class TestSchemaFiltering:
 
         bob_employee = Employee()
 
-        @api.root
+        # noinspection PyUnusedLocal
+        @api.root_object
         class Root:
 
             @api.query
@@ -180,81 +182,10 @@ class TestSchemaFiltering:
 
         assert result.data == expected_2
 
-    def test_remove_interface(self):
-        api = ObjectQLSchema()
-
-        @api.interface
-        class RenamablePerson:
-
-            @api.mutation
-            def set_name(self, name: str) -> str:
-                pass
-
-
-        class Employee(RenamablePerson):
-
-            def __init__(self):
-                self.name = "Bob"
-
-            @api.query
-            def name(self) -> str:
-                return self.name
-
-            @api.query
-            def department(self) -> str:
-                return "Human Resources"
-
-            @api.mutation
-            def set_name(self, name: str) -> str:
-                self.name = name
-                return name
-
-        bob_employee = Employee()
-
-        @api.root
-        class Root:
-
-            @api.query
-            def person(self) -> RenamablePerson:
-                return bob_employee
-
-        executor = api.executor()
-
-        test_mutation = '''
-            mutation SetPersonName {
-                person {
-                    ... on EmployeeMutable {
-                        setName(name: "Tom")
-                    }
-                }
-            }
-        '''
-
-        result = executor.execute(test_mutation)
-
-        expected = {
-            "person": {
-                "setName": "Tom"
-            }
-        }
-
-        assert result.data == expected
-
-        test_query = '''
-            query PersonName {
-                person {
-                    name
-                }
-            }
-        '''
-
-        result = executor.execute(test_query)
-
-        assert "Cannot query field 'person' on type 'PlaceholderQuery'." == result.errors[0].message
-
     def test_mutation_return_mutable_flag(self):
         api = ObjectQLSchema()
 
+        @api.object
         class Person:
 
             def __init__(self):
@@ -274,7 +205,8 @@ class TestSchemaFiltering:
                 self._name = name
                 return self
 
-        @api.root
+        # noinspection PyUnusedLocal
+        @api.root_object
         class Root:
 
             @api.query
