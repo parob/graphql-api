@@ -276,7 +276,7 @@ class ObjectQLTypeMapper:
         description = inspect.getdoc(enum_type)
 
         values = OrderedDict([
-            (name, GraphQLEnumValue(value))
+            (name, GraphQLEnumValue(value.value))
             for name, value in enum_type.__members__.items()
         ])
 
