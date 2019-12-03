@@ -25,8 +25,8 @@ from graphql.type.definition import (
     GraphQLNonNull,
     GraphQLList,
     GraphQLEnumType,
-    GraphQLType
-)
+    GraphQLType,
+    is_enum_type)
 
 from objectql.error import ObjectQLError
 from objectql.executor import ObjectQLBaseExecutor
@@ -327,7 +327,7 @@ class ObjectQLRemoteObject:
             raise ObjectQLRemoteError(
                 query=query,
                 result=result,
-                message=result.errors[0].get('message')
+                message=result.errors[0].message
             )
 
         field_values = result.data
@@ -371,7 +371,13 @@ class ObjectQLRemoteObject:
             ast_value = to_ast_value(value, field_type)
 
             if hasattr(field_type, 'parse_literal'):
-                return field_type.parse_literal(ast_value)
+                value = field_type.parse_literal(ast_value)
+
+                if is_enum_type(field_type) and hasattr(field_type, 'enum_type'):
+                    enum_type = field_type.enum_type
+                    value = enum_type(value)
+
+                return value
 
             raise TypeError(
                 f"Scalar type {field_type} missing 'parse_literal' attribute"

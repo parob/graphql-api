@@ -800,8 +800,7 @@ class TestGraphQL:
         class Root:
 
             @api.query
-            def value(self, animal: AnimalType) -> AnimalType:
-
+            def opposite(self, animal: AnimalType) -> AnimalType:
                 assert isinstance(animal, AnimalType)
 
                 if animal == AnimalType.dog:
@@ -813,12 +812,12 @@ class TestGraphQL:
 
         test_enum_query = '''
             query TestEnum {
-                value(animal: dog)
+                opposite(animal: dog)
             }
         '''
 
         result = executor.execute(test_enum_query)
-        expected = {"value": "cat"}
+        expected = {"opposite": "cat"}
 
         assert result.data == expected
 

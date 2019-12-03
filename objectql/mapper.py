@@ -143,6 +143,11 @@ class ObjectQLTypeMapper:
                 f"type, was mapped to invalid type {return_graphql_type}."
             )
 
+        enum_return = None
+
+        if isinstance(return_graphql_type, GraphQLEnumType):
+            enum_return = return_type
+
         if not nullable:
             return_graphql_type: GraphQLType = GraphQLNonNull(
                 return_graphql_type
@@ -166,6 +171,7 @@ class ObjectQLTypeMapper:
         )
         self.input_type_mapper = input_type_mapper
         arguments = {}
+        enum_arguments = {}
 
         include_context = False
 
@@ -177,6 +183,9 @@ class ObjectQLTypeMapper:
                 continue
 
             arg_type = input_type_mapper.map(hint)
+
+            if isinstance(arg_type, GraphQLEnumType):
+                enum_arguments[key] = hint
 
             nullable = key in default_args
             if not nullable:
@@ -190,6 +199,14 @@ class ObjectQLTypeMapper:
         def resolve(self, info=None, context=None, *args, **kwargs):
             _args = {to_snake_case(key): arg for key, arg in kwargs.items()}
 
+            if enum_arguments:
+                enum_keys = list(enum_arguments.keys())
+                _args = {
+                    key: enum_arguments[key](arg)
+                    if key in enum_keys else arg
+                    for key, arg in _args.items()
+                }
+
             if include_context:
                 _args['context'] = info.context
 
@@ -197,6 +214,7 @@ class ObjectQLTypeMapper:
             parent_type = self.__class__
             class_attribute = getattr(parent_type, function_name, None)
             is_property = isinstance(class_attribute, property)
+            response = None
 
             if is_property:
                 if _args:
@@ -205,16 +223,23 @@ class ObjectQLTypeMapper:
                             f"{function_name} on type {parent_type} is a"
                             f" property, and cannot have multiple arguments."
                         )
-                    return function_type(self, **_args)
+                    else:
+                        response = function_type(self, **_args)
+                else:
+                    response = getattr(self, function_name, None)
+            else:
+                function_type_override = getattr(self, function_name, None)
 
-                return getattr(self, function_name, None)
+                if function_type_override is not None:
+                    response = function_type_override(**_args)
+                else:
+                    response = function_type(self, **_args)
 
-            function_type_override = getattr(self, function_name, None)
+            if enum_return:
+                if isinstance(response, enum.Enum):
+                    response = response.value
 
-            if function_type_override is not None:
-                return function_type_override(**_args)
-
-            return function_type(self, **_args)
+            return response
 
         field_class = GraphQLField
         func_type = get_value(function_type, self.schema, 'type')
@@ -268,21 +293,20 @@ class ObjectQLTypeMapper:
 
         return list_type
 
-    def map_to_enum(self, type_: enum.Enum) -> GraphQLEnumType:
+    def map_to_enum(self, type_: Type[enum.Enum]) -> GraphQLEnumType:
         enum_type = type_
         name = f"{type_.__name__}Enum"
         # Enums dont include a suffix as they are immutable
 
         description = inspect.getdoc(enum_type)
 
-        values = OrderedDict([
-            (name, GraphQLEnumValue(value.value))
-            for name, value in enum_type.__members__.items()
-        ])
+        enum_type = GraphQLEnumType(
+            name=name,
+            values=enum_type,
+            description=description
+        )
 
-        enum_type = GraphQLEnumType(name=name,
-                                    values=values,
-                                    description=description)
+        enum_type.enum_type = type_
 
         def serialize(self, value) -> Union[str, None, InvalidType]:
             if value and isinstance(value, collections.Hashable):
