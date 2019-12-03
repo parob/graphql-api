@@ -6,7 +6,6 @@ import typing
 import types
 import typing_inspect
 
-from collections import OrderedDict
 from uuid import UUID
 
 from typing import List, Union, Type, Callable, Tuple, Any, Dict, Set
@@ -32,7 +31,6 @@ from graphql.type.definition import (
     GraphQLInputObjectType,
     is_input_type,
     GraphQLEnumType,
-    GraphQLEnumValue,
     GraphQLScalarType,
     GraphQLNonNull,
     GraphQLInputField)

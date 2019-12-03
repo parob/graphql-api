@@ -373,7 +373,8 @@ class ObjectQLRemoteObject:
             if hasattr(field_type, 'parse_literal'):
                 value = field_type.parse_literal(ast_value)
 
-                if is_enum_type(field_type) and hasattr(field_type, 'enum_type'):
+                if is_enum_type(field_type) and \
+                        hasattr(field_type, 'enum_type'):
                     enum_type = field_type.enum_type
                     value = enum_type(value)
 
