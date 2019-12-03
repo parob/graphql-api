@@ -16,13 +16,13 @@ class Node:
         if id is None:
             id = uuid4()
 
-        self._id = id
+        self.id = id
         super().__init__(*args, **kwargs)
 
     @property
     @ObjectQLSchema.query
-    def id(self) -> UUID:
-        return self._id
+    def _id(self) -> UUID:
+        return self.id
 
 
 @ObjectQLSchema.object
