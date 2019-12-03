@@ -16,13 +16,13 @@ class TestCustomTypes:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def name(self, id: UUID) -> str:
                 assert isinstance(id, UUID)
                 assert id == user_id
                 return "rob"
 
-            @api.field.query
+            @api.query
             def id(self) -> UUID:
                 return user_id
 
@@ -57,7 +57,7 @@ class TestCustomTypes:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def add_one_hour(self, time: datetime) -> datetime:
                 return time + timedelta(hours=1)
 
@@ -79,11 +79,11 @@ class TestCustomTypes:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def adapt_profile(self, profile: dict) -> dict:
                 return {**profile, "location": "london"}
 
-            @api.field.query
+            @api.query
             def add_number(self, numbers: list) -> list:
                 return [*numbers, 5]
 
@@ -122,7 +122,7 @@ class TestCustomTypes:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def byte_data(self, value: bytes) -> bytes:
                 assert value == data_input
                 return data_output

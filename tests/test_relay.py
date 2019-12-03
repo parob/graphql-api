@@ -11,9 +11,16 @@ class TestRelay:
     def test_relay_query(self):
         api = ObjectQLSchema()
 
-        @dataclass
         class Person(Node):
-            name: str = ""
+
+            def __init__(self, name: str = None, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self._name = name
+
+            @property
+            @api.query
+            def name(self) -> str:
+                return self._name
 
         class PersonConnection(Connection):
 
@@ -48,7 +55,7 @@ class TestRelay:
                 elif self._last is not None:
                     self.filtered_cursors = self.filtered_cursors[-self._last:]
 
-            @api.field.query
+            @api.query
             def edges(self) -> List[Edge]:
                 return [
                     Edge(
@@ -58,20 +65,21 @@ class TestRelay:
                     for cursor in self.filtered_cursors
                 ]
 
-            @api.field.query
+            @api.query
             def page_info(self) -> PageInfo:
                 return PageInfo(
                     start_cursor=self.filtered_cursors[0],
                     end_cursor=self.filtered_cursors[-1],
                     has_previous_page=self.has_previous_page,
-                    has_next_page=self.has_next_page
+                    has_next_page=self.has_next_page,
+                    count=len(self.people)
                 )
 
         # noinspection PyUnusedLocal
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def people(
                 self,
                 before: str = None,

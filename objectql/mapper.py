@@ -22,7 +22,7 @@ from graphql import (
     GraphQLList,
     GraphQLBoolean,
     GraphQLInt,
-    GraphQLFloat)
+    GraphQLFloat, INVALID)
 
 from graphql.type.definition import (
     GraphQLType,
@@ -221,10 +221,12 @@ class ObjectQLTypeMapper:
         if func_type == "mutation":
             field_class = ObjectQLMutableField
 
-        return field_class(return_graphql_type,
-                           arguments,
-                           resolve,
-                           description=description)
+        return field_class(
+            return_graphql_type,
+            arguments,
+            resolve,
+            description=description
+        )
 
     def map_to_union(self, union_type: Union) -> GraphQLType:
         union_args = typing_inspect.get_args(union_type, evaluate=True)
@@ -686,10 +688,13 @@ def get_value(type_, schema, key):
 
 
 def is_graphql(type_, schema):
-    return hasattr(type_, 'graphql') and \
-           type_.graphql and \
-           hasattr(type_, 'schemas') and \
-           (schema in type_.schemas.keys() or None in type_.schemas.keys())
+    graphql = getattr(type_, 'graphql', None)
+
+    schemas = getattr(type_, 'schemas', {})
+
+    valid_schema = schema in schemas.keys() or None in schemas.keys()
+
+    return graphql and schemas and valid_schema
 
 
 def is_interface(type_, schema):

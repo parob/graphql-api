@@ -39,11 +39,11 @@ class TestGraphQL:
         @api_1.object
         class Math:
 
-            @api_1.field.query
+            @api_1.query
             def test_square(self, number: int) -> int:
                 return number * number
 
-            @api_2.field.query
+            @api_2.query
             def test_cube(self, number: int) -> int:
                 return number * number * number
 
@@ -52,8 +52,8 @@ class TestGraphQL:
         @api_2.root_object
         class Root:
 
-            @api_1.field.query
-            @api_2.field.query
+            @api_1.query
+            @api_2.query
             def math(self) -> Math:
                 return Math()
 
@@ -104,7 +104,7 @@ class TestGraphQL:
 
         class Math:
 
-            @api.field.query
+            @api.query
             def test_square(self, number: int) -> int:
                 return number * number
 
@@ -112,7 +112,7 @@ class TestGraphQL:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def math(self) -> Math:
                 return Math()
 
@@ -144,7 +144,7 @@ class TestGraphQL:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def get_name(self, person: Person) -> str:
                 return person.name
 
@@ -177,17 +177,17 @@ class TestGraphQL:
                 self.name = name
                 self.age = 20
 
-            @api.field.query
+            @api.query
             def name(self) -> str:
                 return self.name
 
-            @api.field.query
+            @api.query
             def age(self) -> int:
                 return self.age
 
         class Root:
 
-            @api.field.query
+            @api.query
             def person_info(self, person: Person) -> str:
                 return person.name + " is " + str(person.age)
 
@@ -216,7 +216,7 @@ class TestGraphQL:
             @classmethod
             def graphql_fields(cls):
 
-                @api.field.query
+                @api.query
                 def age(_self) -> int:
                     return _self.hidden_age
 
@@ -227,7 +227,7 @@ class TestGraphQL:
 
         class Root:
 
-            @api.field.query
+            @api.query
             def thomas(self) -> Person:
                 return Person(age=2)
 
@@ -255,11 +255,11 @@ class TestGraphQL:
 
         class Root:
 
-            @api.field.query
+            @api.query
             def root(self) -> 'Root':
                 return Root()
 
-            @api.field.query
+            @api.query
             def value(self) -> int:
                 return 5
 
@@ -298,13 +298,13 @@ class TestGraphQL:
         @admin_api.root_object
         class Root:
 
-            @api.field.query
-            @admin_api.field.query
+            @api.query
+            @admin_api.query
             def name(self) -> str:
                 return "rob"
 
-            @api.field.query({"tags": ["admin"]})
-            @admin_api.field.query({"tags": ["admin"]})
+            @api.query({"tags": ["admin"]})
+            @admin_api.query({"tags": ["admin"]})
             def social_security_number(self) -> int:
                 return 56
 
@@ -339,13 +339,13 @@ class TestGraphQL:
                 self._test_property = 5
 
             @property
-            @api.field.query
+            @api.query
             def test_property(self) -> int:
                 return self._test_property
 
             # noinspection PyPropertyDefinition
             @test_property.setter
-            @api.field.mutation
+            @api.mutation
             def test_property(self, value: int) -> int:
                 self._test_property = value
                 return self._test_property
@@ -386,33 +386,33 @@ class TestGraphQL:
         @api.interface
         class Animal:
 
-            @api.field.query
+            @api.query
             def planet(self) -> str:
                 return "Earth"
 
-            @api.field.query
+            @api.query
             def name(self) -> str:
                 return "GenericAnimalName"
 
         class Dog(Animal):
 
-            @api.field.query
+            @api.query
             def name(self) -> str:
                 return "Floppy"
 
         class Human(Animal):
 
-            @api.field.query
+            @api.query
             def name(self) -> str:
                 return "John"
 
-            @api.field.query
+            @api.query
             def pet(self) -> Dog:
                 return Dog()
 
         class Root:
 
-            @api.field.query
+            @api.query
             def best_animal(self, task: str = "bark") -> Animal:
                 if task == "bark":
                     return Dog()
@@ -467,14 +467,14 @@ class TestGraphQL:
         @api.interface
         class Animal:
 
-            @api.field.query
+            @api.query
             def name(self) -> str:
                 return "GenericAnimalName"
 
         @api.interface
         class Object:
 
-            @api.field.query
+            @api.query
             def weight(self) -> int:
                 return 100
 
@@ -482,23 +482,23 @@ class TestGraphQL:
         class Responds:
 
             # noinspection PyUnusedLocal
-            @api.field.query
+            @api.query
             def ask_question(self, text: str) -> str:
                 return "GenericResponse"
 
         class BasicRespondMixin(Responds, Animal):
 
-            @api.field.query
+            @api.query
             def ask_question(self, text: str) -> str:
                 return f"Hello, im {self.name()}!"
 
         class Dog(BasicRespondMixin, Animal, Object):
 
-            @api.field.query
+            @api.query
             def name(self) -> str:
                 return "Floppy"
 
-            @api.field.query
+            @api.query
             def weight(self) -> int:
                 return 20
 
@@ -506,7 +506,7 @@ class TestGraphQL:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def animal(self) -> Animal:
                 return Dog()
 
@@ -569,7 +569,7 @@ class TestGraphQL:
         @api.root_object
         class Root:
 
-            @api.field.mutation
+            @api.mutation
             def hello_world(self) -> str:
                 return "hello world"
 
@@ -594,11 +594,11 @@ class TestGraphQL:
 
         class Math:
 
-            @api.field.query
+            @api.query
             def square(self, number: int) -> int:
                 return number * number
 
-            @api.field.mutation
+            @api.mutation
             def create_square(self, number: int) -> int:
                 return number * number
 
@@ -606,7 +606,7 @@ class TestGraphQL:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def math(self) -> Math:
                 return Math()
 
@@ -636,11 +636,11 @@ class TestGraphQL:
 
         class Math:
 
-            @api.field.query
+            @api.query
             def square(self, number: int) -> int:
                 return number * number
 
-            @api.field.mutation
+            @api.mutation
             def create_square(self, number: int) -> int:
                 return number * number
 
@@ -648,7 +648,7 @@ class TestGraphQL:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def math(self) -> Math:
                 return Math()
 
@@ -662,19 +662,19 @@ class TestGraphQL:
                 query: Root
                 mutation: RootMutable
             }
-                
+
             type Math {
                 square(number: Int!): Int!
             }
-            
+
             type MathMutable {
                 createSquare(number: Int!): Int!
             }
-            
+
             type Root {
                 math: Math!
             }
-            
+
             type RootMutable {
                 math: MathMutable!
             }
@@ -691,7 +691,7 @@ class TestGraphQL:
         @api.root_object
         class Root:
 
-            @api.field.query({"test_meta": "hello_meta"})
+            @api.query({"test_meta": "hello_meta"})
             def test_query(self, test_string: str = None) -> str:
                 if test_string == "hello":
                     return "world"
@@ -757,14 +757,14 @@ class TestGraphQL:
                 super().__init__()
                 self._value = a_value
 
-            @api.field.query
+            @api.query
             def value_squared(self) -> int:
                 return self._value * self._value
 
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def square(self, value: TestInputObject) -> TestInputObject:
                 return value
 
@@ -799,7 +799,7 @@ class TestGraphQL:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def value(self, animal: AnimalType) -> AnimalType:
 
                 assert isinstance(animal, AnimalType)
@@ -829,7 +829,7 @@ class TestGraphQL:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def value(self, a_int: int) -> Optional[int]:
                 return a_int
 
@@ -852,7 +852,7 @@ class TestGraphQL:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def value(self, a_int: int = 50) -> int:
                 return a_int
 
@@ -878,20 +878,20 @@ class TestGraphQL:
 
         class Customer:
 
-            @api.field.query
+            @api.query
             def id(self) -> int:
                 return 5
 
         class Owner:
 
-            @api.field.query
+            @api.query
             def name(self) -> str:
                 return "rob"
 
         @api.root_object
         class Bank:
 
-            @api.field.query
+            @api.query
             def owner_or_customer(self, owner: bool = True, none: bool = False) -> Optional[Union[Owner, Customer]]:
                 if owner:
                     return Owner()
@@ -968,12 +968,12 @@ class TestGraphQL:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def non_nullable(self) -> int:
                 # noinspection PyTypeChecker
                 return None
 
-            @api.field.query
+            @api.query
             def nullable(self) -> Optional[int]:
                 return None
 
@@ -1010,7 +1010,7 @@ class TestGraphQL:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def has_context(self, context: ObjectQLContext) -> bool:
                 return bool(context)
 
@@ -1044,7 +1044,7 @@ class TestGraphQL:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def graph_loc(self, context: ObjectQLContext) -> RemoteAPI:
                 operation = context.request.info.operation.operation
                 query = context.field.query
@@ -1090,7 +1090,7 @@ class TestGraphQL:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def graphql(self, context: ObjectQLContext) -> RemoteAPI:
                 operation = context.request.info.operation.operation
                 query = context.field.query
@@ -1139,7 +1139,7 @@ class TestGraphQL:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def graphql(self, context: ObjectQLContext) -> RemoteAPI:
                 return remote_execute(executor=RemoteAPI, context=context)
 
@@ -1170,7 +1170,7 @@ class TestGraphQL:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def hello(self) -> str:
                 return "hello world"
 

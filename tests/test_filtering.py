@@ -12,7 +12,7 @@ class TestSchemaFiltering:
             def __init__(self):
                 self.name = ""
 
-            @api.field.mutation
+            @api.mutation
             def update_name(self, name: str) -> 'Person':
                 self.name = name
                 return self
@@ -21,7 +21,7 @@ class TestSchemaFiltering:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def person(self) -> Person:
                 return Person()
 
@@ -53,11 +53,11 @@ class TestSchemaFiltering:
             def __init__(self):
                 self._name = ""
 
-            @api.field.query
+            @api.query
             def name(self) -> str:
                 return self._name
 
-            @api.field.mutation
+            @api.mutation
             def update_name(self, name: str) -> 'Person':
                 self._name = name
                 return self
@@ -66,7 +66,7 @@ class TestSchemaFiltering:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def person(self) -> Person:
                 return Person()
 
@@ -101,7 +101,7 @@ class TestSchemaFiltering:
         @api.interface
         class Person:
 
-            @api.field.query
+            @api.query
             def name(self) -> str:
                 pass
 
@@ -110,15 +110,15 @@ class TestSchemaFiltering:
             def __init__(self):
                 self._name = "Bob"
 
-            @api.field.query
+            @api.query
             def name(self) -> str:
                 return self._name
 
-            @api.field.query
+            @api.query
             def department(self) -> str:
                 return "Human Resources"
 
-            @api.field.mutation
+            @api.mutation
             def set_name(self, name: str) -> str:
                 self._name = name
                 return name
@@ -129,7 +129,7 @@ class TestSchemaFiltering:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def person(self) -> Person:
                 return bob_employee
 
@@ -182,79 +182,6 @@ class TestSchemaFiltering:
 
         assert result.data == expected_2
 
-    def test_remove_interface(self):
-        api = ObjectQLSchema()
-
-        @api.interface
-        class Person:
-
-            @api.field.mutation
-            def set_name(self, name: str) -> str:
-                pass
-
-        @api.object
-        class Employee(Person):
-
-            def __init__(self):
-                self.name = "Bob"
-
-            @api.field.query
-            def name(self) -> str:
-                return self.name
-
-            @api.field.query
-            def department(self) -> str:
-                return "Human Resources"
-
-            @api.field.mutation
-            def set_name(self, name: str) -> str:
-                self.name = name
-                return name
-
-        bob_employee = Employee()
-
-        # noinspection PyUnusedLocal
-        @api.root_object
-        class Root:
-
-            @api.field.query
-            def person(self) -> Person:
-                return bob_employee
-
-        executor = api.executor()
-
-        test_mutation = '''
-            mutation SetPersonName {
-                person {
-                    ... on EmployeeMutable {
-                        setName(name: "Tom")
-                    }
-                }
-            }
-        '''
-
-        result = executor.execute(test_mutation)
-
-        expected = {
-            "person": {
-                "setName": "Tom"
-            }
-        }
-
-        assert result.data == expected
-
-        test_query = '''
-            query PersonName {
-                person {
-                    name
-                }
-            }
-        '''
-
-        result = executor.execute(test_query)
-
-        assert "Cannot query field 'person' on type 'PlaceholderQuery'." == result.errors[0].message
-
     def test_mutation_return_mutable_flag(self):
         api = ObjectQLSchema()
 
@@ -264,16 +191,16 @@ class TestSchemaFiltering:
             def __init__(self):
                 self._name = ""
 
-            @api.field.query
+            @api.query
             def name(self) -> str:
                 return self._name
 
-            @api.field.mutation
+            @api.mutation
             def update_name(self, name: str) -> 'Person':
                 self._name = name
                 return self
 
-            @api.field.mutation({ObjectQLMetaKey.resolve_to_mutable: True})
+            @api.mutation({ObjectQLMetaKey.resolve_to_mutable: True})
             def update_name_mutable(self, name: str) -> 'Person':
                 self._name = name
                 return self
@@ -282,7 +209,7 @@ class TestSchemaFiltering:
         @api.root_object
         class Root:
 
-            @api.field.query
+            @api.query
             def person(self) -> Person:
                 return Person()
 

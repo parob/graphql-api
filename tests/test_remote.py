@@ -20,7 +20,7 @@ class TestObjectQLRemote:
         @api.root_object
         class House:
 
-            @api.field.query
+            @api.query
             def number_of_doors(self) -> int:
                 return 5
 
@@ -39,19 +39,19 @@ class TestObjectQLRemote:
             def __init__(self, height: int):
                 self._height = height
 
-            @api.field.query
+            @api.query
             def height(self) -> int:
                 return self._height
 
             @property
-            @api.field.query
+            @api.query
             def wood(self) -> str:
                 return "oak"
 
         @api.root_object
         class House:
 
-            @api.field.query
+            @api.query
             def doors(self) -> List[Door]:
                 return [Door(height=3), Door(height=5)]
 
@@ -80,7 +80,7 @@ class TestObjectQLRemote:
             def __init__(self, name: str):
                 self._name = name
 
-            @api.field.query
+            @api.query
             def name(self) -> str:
                 return self._name
 
@@ -89,18 +89,18 @@ class TestObjectQLRemote:
             def __init__(self, height: int):
                 self._height = height
 
-            @api.field.query
+            @api.query
             def height(self) -> int:
                 return self._height
 
-            @api.field.query
+            @api.query
             def owner(self) -> Person:
                 return Person(name="Rob")
 
         @api.root_object
         class House:
 
-            @api.field.query
+            @api.query
             def doors(self) -> List[Door]:
                 return [Door(height=3), Door(height=5)]
 
@@ -124,7 +124,7 @@ class TestObjectQLRemote:
         @api.root_object
         class House:
 
-            @api.field.query
+            @api.query
             def type(self) -> HouseType:
                 return HouseType.bungalow
 
@@ -148,18 +148,18 @@ class TestObjectQLRemote:
                 self._name = name
                 self._room_type = room_type
 
-            @api.field.query
+            @api.query
             def name(self) -> str:
                 return self._name
 
-            @api.field.query
+            @api.query
             def room_type(self) -> RoomType:
                 return self._room_type
 
         @api.root_object
         class House:
 
-            @api.field.query
+            @api.query
             def get_room(self) -> Room:
                 return Room(name="robs_room", room_type=RoomType.bedroom)
 
@@ -178,7 +178,7 @@ class TestObjectQLRemote:
         @api.root_object
         class Person:
 
-            @api.field.query
+            @api.query
             def id(self) -> UUID:
                 return person_id
 
@@ -198,13 +198,13 @@ class TestObjectQLRemote:
             def __init__(self):
                 self._value = 0
 
-            @api.field.mutation
+            @api.mutation
             def increment(self) -> int:
                 self._value += 1
                 return self._value
 
             @property
-            @api.field.query
+            @api.query
             def value(self) -> int:
                 return self._value
 
@@ -228,7 +228,7 @@ class TestObjectQLRemote:
         @api.root_object
         class Multiplier:
 
-            @api.field.query
+            @api.query
             def calculate(self, value_one: int = 1, value_two: int = 1) -> int:
                 return value_one * value_two
 
@@ -245,18 +245,18 @@ class TestObjectQLRemote:
         class Person:
 
             @property
-            @api.field.query
+            @api.query
             def age(self) -> int:
                 return 25
 
-            @api.field.query
+            @api.query
             def name(self) -> str:
                 return "rob"
 
         @api.root_object
         class Bank:
 
-            @api.field.query
+            @api.query
             def owner(self, respond_none: bool = False) -> Optional[Person]:
                 if respond_none:
                     return None
@@ -281,7 +281,7 @@ class TestObjectQLRemote:
             def __init__(self):
                 self.value = 0
 
-            @api.field.mutation
+            @api.mutation
             def add(self, value: int = 0) -> int:
                 self.value += value
                 return self.value
@@ -300,7 +300,7 @@ class TestObjectQLRemote:
         @api.root_object
         class Calculator:
 
-            @api.field.query
+            @api.query
             def square(self, value: int) -> int:
                 return value * value
 
@@ -317,7 +317,7 @@ class TestObjectQLRemote:
         @api.root_object
         class Calculator:
 
-            @api.field.query
+            @api.query
             def add(self, values: List[int]) -> int:
                 total = 0
 
@@ -342,14 +342,14 @@ class TestObjectQLRemote:
                 self._size = size
 
             @property
-            @api.field.query
+            @api.query
             def size(self) -> int:
                 return self._size
 
         @api.root_object
         class House:
 
-            @api.field.query
+            @api.query
             def value(self, garden: Garden, rooms: int = 7) -> int:
                 return (garden.size * 2) + (rooms * 10)
 
@@ -368,7 +368,7 @@ class TestObjectQLRemote:
                 self._age = age
 
             @property
-            @api.field.query
+            @api.query
             def age(self) -> int:
                 return self._age
 
@@ -386,19 +386,19 @@ class TestObjectQLRemote:
                 self._size = size
 
             @property
-            @api.field.query
+            @api.query
             def size(self) -> int:
                 return self._size
 
             @property
-            @api.field.query
+            @api.query
             def animal_age(self) -> int:
                 return self.animal.age
 
         @api.root_object
         class House:
 
-            @api.field.query
+            @api.query
             def value(self, garden: Garden, rooms: int = 7) -> int:
                 return ((garden.size * 2) + (rooms * 10)) - garden.animal_age
 
@@ -432,11 +432,11 @@ class TestObjectQLRemote:
             def __init__(self):
                 self._flop = True
 
-            @api.field.query
+            @api.query
             def value(self) -> bool:
                 return self._flop
 
-            @api.field.mutation
+            @api.mutation
             def flop(self) -> 'Flopper':
                 self._flop = not self._flop
                 return self
@@ -449,20 +449,20 @@ class TestObjectQLRemote:
             def __init__(self):
                 self._flip = True
 
-            @api.field.query
+            @api.query
             def value(self) -> bool:
                 return self._flip
 
-            @api.field.mutation
+            @api.mutation
             def flip(self) -> 'Flipper':
                 self._flip = not self._flip
                 return self
 
-            @api.field.query
+            @api.query
             def flopper(self) -> Flopper:
                 return global_flopper
 
-            @api.field.mutation({ObjectQLMetaKey.resolve_to_self: False})
+            @api.mutation({ObjectQLMetaKey.resolve_to_self: False})
             def flagged_flip(self) -> 'Flipper':
                 self._flip = not self._flip
                 return self
@@ -514,20 +514,20 @@ class TestObjectQLRemote:
                 self._age = age
                 self._height = height
 
-            @api.field.query
+            @api.query
             def age(self) -> int:
                 return self._age
 
-            @api.field.query
+            @api.query
             def name(self) -> str:
                 return self._name
 
             @property
-            @api.field.query
+            @api.query
             def height(self) -> float:
                 return self._height
 
-            @api.field.mutation
+            @api.mutation
             def update(
                 self,
                 name: str = None,
@@ -549,7 +549,7 @@ class TestObjectQLRemote:
                 self._rob = Person(name="rob", age=10, height=183.0)
                 self._counter = 0
 
-            @api.field.query
+            @api.query
             def rob(self) -> Person:
                 return self._rob
 
@@ -581,7 +581,7 @@ class TestObjectQLRemote:
         @api.root_object
         class Person:
 
-            @api.field.query
+            @api.query
             def age(self) -> int:
                 return 50
 
@@ -603,7 +603,7 @@ class TestObjectQLRemote:
         @api.root_object
         class Person:
 
-            @api.field.query
+            @api.query
             def age(self) -> int:
                 return 50
 
@@ -625,7 +625,7 @@ class TestObjectQLRemote:
         @api.root_object
         class Person:
 
-            @api.field.query
+            @api.query
             def age(self) -> int:
                 return 50
 
@@ -647,7 +647,7 @@ class TestObjectQLRemote:
         @api.root_object
         class Person:
 
-            @api.field.query
+            @api.query
             def age(self) -> int:
                 return 50
 
