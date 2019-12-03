@@ -48,8 +48,8 @@ class TestGraphQL:
                 return number * number * number
 
         # noinspection PyUnusedLocal
-        @api_1.root_object
-        @api_2.root_object
+        @api_1.root
+        @api_2.root
         class Root:
 
             @api_1.query
@@ -109,7 +109,7 @@ class TestGraphQL:
                 return number * number
 
         # noinspection PyUnusedLocal
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -141,7 +141,7 @@ class TestGraphQL:
                 self.name = name
 
         # noinspection PyUnusedLocal
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -294,8 +294,8 @@ class TestGraphQL:
         admin_api = ObjectQLSchema()
 
         # noinspection PyUnusedLocal
-        @api.root_object
-        @admin_api.root_object
+        @api.root
+        @admin_api.root
         class Root:
 
             @api.query
@@ -332,7 +332,7 @@ class TestGraphQL:
         api = ObjectQLSchema()
 
         # noinspection PyUnusedLocal
-        @api.root_object
+        @api.root
         class Root:
 
             def __init__(self):
@@ -503,7 +503,7 @@ class TestGraphQL:
                 return 20
 
         # noinspection PyUnusedLocal
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -541,7 +541,7 @@ class TestGraphQL:
         api = ObjectQLSchema()
 
         # noinspection PyUnusedLocal
-        @api.root_object
+        @api.root
         @dataclass
         class Root:
             hello_world: str = "hello world"
@@ -566,7 +566,7 @@ class TestGraphQL:
         api = ObjectQLSchema()
 
         # noinspection PyUnusedLocal
-        @api.root_object
+        @api.root
         class Root:
 
             @api.mutation
@@ -603,7 +603,7 @@ class TestGraphQL:
                 return number * number
 
         # noinspection PyUnusedLocal
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -645,7 +645,7 @@ class TestGraphQL:
                 return number * number
 
         # noinspection PyUnusedLocal
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -688,7 +688,7 @@ class TestGraphQL:
 
         was_called = []
 
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query({"test_meta": "hello_meta"})
@@ -761,7 +761,7 @@ class TestGraphQL:
             def value_squared(self) -> int:
                 return self._value * self._value
 
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -796,7 +796,7 @@ class TestGraphQL:
             dog = "dog"
             cat = "cat"
 
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -825,7 +825,7 @@ class TestGraphQL:
     def test_required(self):
         api = ObjectQLSchema()
 
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -848,7 +848,7 @@ class TestGraphQL:
     def test_optional(self):
         api = ObjectQLSchema()
 
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -887,7 +887,7 @@ class TestGraphQL:
             def name(self) -> str:
                 return "rob"
 
-        @api.root_object
+        @api.root
         class Bank:
 
             @api.query
@@ -964,7 +964,7 @@ class TestGraphQL:
     def test_non_null(self):
         api = ObjectQLSchema()
 
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -1006,7 +1006,7 @@ class TestGraphQL:
     def test_context(self):
         api = ObjectQLSchema()
 
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -1040,7 +1040,7 @@ class TestGraphQL:
 
         RemoteAPI = ObjectQLRemoteExecutor(url=self.location_api_url)
 
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -1086,7 +1086,7 @@ class TestGraphQL:
         RemoteAPI = ObjectQLRemoteExecutor(url=self.europe_graphql_url, http_method="POST")
 
         # noinspection PyUnusedLocal
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -1135,7 +1135,7 @@ class TestGraphQL:
         )
 
         # noinspection PyUnusedLocal
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -1166,7 +1166,7 @@ class TestGraphQL:
     def test_executor_to_ast(self):
         api = ObjectQLSchema()
 
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query

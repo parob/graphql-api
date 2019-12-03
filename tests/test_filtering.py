@@ -18,7 +18,7 @@ class TestSchemaFiltering:
                 return self
 
         # noinspection PyUnusedLocal
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -63,7 +63,7 @@ class TestSchemaFiltering:
                 return self
 
         # noinspection PyUnusedLocal
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -126,7 +126,7 @@ class TestSchemaFiltering:
         bob_employee = Employee()
 
         # noinspection PyUnusedLocal
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
@@ -206,7 +206,7 @@ class TestSchemaFiltering:
                 return self
 
         # noinspection PyUnusedLocal
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query

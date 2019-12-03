@@ -68,11 +68,8 @@ def decorate(
 
 
 def decorator(a, b, _type):
-
     func = a if callable(a) else b if callable(b) else None
-
     meta = a if isinstance(a, dict) else b if isinstance(b, dict) else None
-
     schema = a if isinstance(a, ObjectQLSchema) else \
         b if isinstance(b, ObjectQLSchema) else None
 
@@ -109,6 +106,10 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
     def abstract(self=None, meta=None):
         return decorator(self, meta, _type="abstract")
 
+    def root(self, root_type):
+        self.root_type = root_type
+        return root_type
+
     def __init__(
         self,
         root: Type = None,
@@ -124,10 +125,6 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
         self.filters = filters
         self.query_mapper = None
         self.mutation_mapper = None
-
-    def root_object(self, root_type):
-        self.root_type = root_type
-        return root_type
 
     def graphql_schema(self) -> Tuple[GraphQLSchema, Dict]:
         schema_args = {}

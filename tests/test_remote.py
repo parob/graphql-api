@@ -17,7 +17,7 @@ class TestObjectQLRemote:
     def test_remote_query(self):
         api = ObjectQLSchema()
 
-        @api.root_object
+        @api.root
         class House:
 
             @api.query
@@ -48,7 +48,7 @@ class TestObjectQLRemote:
             def wood(self) -> str:
                 return "oak"
 
-        @api.root_object
+        @api.root
         class House:
 
             @api.query
@@ -97,7 +97,7 @@ class TestObjectQLRemote:
             def owner(self) -> Person:
                 return Person(name="Rob")
 
-        @api.root_object
+        @api.root
         class House:
 
             @api.query
@@ -121,7 +121,7 @@ class TestObjectQLRemote:
             bungalow = "bungalow"
             flat = "flat"
 
-        @api.root_object
+        @api.root
         class House:
 
             @api.query
@@ -156,7 +156,7 @@ class TestObjectQLRemote:
             def room_type(self) -> RoomType:
                 return self._room_type
 
-        @api.root_object
+        @api.root
         class House:
 
             @api.query
@@ -175,7 +175,7 @@ class TestObjectQLRemote:
 
         person_id = uuid.uuid4()
 
-        @api.root_object
+        @api.root
         class Person:
 
             @api.query
@@ -192,7 +192,7 @@ class TestObjectQLRemote:
     def test_remote_mutation(self):
         api = ObjectQLSchema()
 
-        @api.root_object
+        @api.root
         class Counter:
 
             def __init__(self):
@@ -225,7 +225,7 @@ class TestObjectQLRemote:
     def test_remote_positional_args(self):
         api = ObjectQLSchema()
 
-        @api.root_object
+        @api.root
         class Multiplier:
 
             @api.query
@@ -253,7 +253,7 @@ class TestObjectQLRemote:
             def name(self) -> str:
                 return "rob"
 
-        @api.root_object
+        @api.root
         class Bank:
 
             @api.query
@@ -275,7 +275,7 @@ class TestObjectQLRemote:
     def test_remote_mutation_with_input(self):
         api = ObjectQLSchema()
 
-        @api.root_object
+        @api.root
         class Counter:
 
             def __init__(self):
@@ -297,7 +297,7 @@ class TestObjectQLRemote:
     def test_remote_query_with_input(self):
         api = ObjectQLSchema()
 
-        @api.root_object
+        @api.root
         class Calculator:
 
             @api.query
@@ -314,7 +314,7 @@ class TestObjectQLRemote:
     def test_remote_query_with_enumerable_input(self):
         api = ObjectQLSchema()
 
-        @api.root_object
+        @api.root
         class Calculator:
 
             @api.query
@@ -346,7 +346,7 @@ class TestObjectQLRemote:
             def size(self) -> int:
                 return self._size
 
-        @api.root_object
+        @api.root
         class House:
 
             @api.query
@@ -395,7 +395,7 @@ class TestObjectQLRemote:
             def animal_age(self) -> int:
                 return self.animal.age
 
-        @api.root_object
+        @api.root
         class House:
 
             @api.query
@@ -443,7 +443,7 @@ class TestObjectQLRemote:
 
         global_flopper = Flopper()
 
-        @api.root_object
+        @api.root
         class Flipper:
 
             def __init__(self):
@@ -542,7 +542,7 @@ class TestObjectQLRemote:
 
                 return self
 
-        @api.root_object
+        @api.root
         class Root:
 
             def __init__(self):
@@ -578,7 +578,7 @@ class TestObjectQLRemote:
     def test_remote_with_local_property(self):
         api = ObjectQLSchema()
 
-        @api.root_object
+        @api.root
         class Person:
 
             @api.query
@@ -600,7 +600,7 @@ class TestObjectQLRemote:
     def test_remote_with_local_method(self):
         api = ObjectQLSchema()
 
-        @api.root_object
+        @api.root
         class Person:
 
             @api.query
@@ -622,7 +622,7 @@ class TestObjectQLRemote:
     def test_remote_with_local_static_method(self):
         api = ObjectQLSchema()
 
-        @api.root_object
+        @api.root
         class Person:
 
             @api.query
@@ -644,7 +644,7 @@ class TestObjectQLRemote:
     def test_remote_with_local_class_method(self):
         api = ObjectQLSchema()
 
-        @api.root_object
+        @api.root
         class Person:
 
             @api.query

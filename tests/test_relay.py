@@ -75,7 +75,7 @@ class TestRelay:
                 )
 
         # noinspection PyUnusedLocal
-        @api.root_object
+        @api.root
         class Root:
 
             @api.query
