@@ -77,7 +77,7 @@ def type_from_dataclass(_class: Type, mapper) -> GraphQLType:
             if local_type_fields:
                 try:
                     fields_ = local_type_fields()
-                    for name, field in fields_:
+                    for name, field in fields_.items():
                         if name not in local_fields:
                             local_fields[name] = field
                 except AssertionError:
