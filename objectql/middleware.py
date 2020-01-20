@@ -1,3 +1,5 @@
+import enum
+
 from graphql import GraphQLObjectType, GraphQLNonNull
 
 from objectql.context import ObjectQLContext
@@ -20,6 +22,15 @@ def middleware_local_proxy(next):
 
     return value
 
+def middleware_adapt_enum(next):
+    """
+    GraphQL middleware, by default enums return the value
+    """
+    value = next()
+    if isinstance(value, enum.Enum):
+        value = value.value
+
+    return value
 
 def middleware_request_context(next, context: ObjectQLContext):
     from objectql.schema import ObjectQLRequestContext

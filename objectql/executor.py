@@ -11,7 +11,8 @@ from objectql.context import ObjectQLContext
 from objectql.middleware import \
     middleware_field_context, \
     middleware_request_context, \
-    middleware_local_proxy
+    middleware_local_proxy, \
+    middleware_adapt_enum
 
 
 class ObjectQLBaseExecutor:
@@ -53,6 +54,7 @@ class ObjectQLExecutor(ObjectQLBaseExecutor):
         middleware.insert(0, middleware_field_context)
         middleware.insert(0, middleware_request_context)
         middleware.insert(0, middleware_local_proxy)
+        middleware.insert(0, middleware_adapt_enum)
 
         self.meta = meta
         self.schema = schema
