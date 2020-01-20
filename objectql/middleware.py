@@ -22,6 +22,7 @@ def middleware_local_proxy(next):
 
     return value
 
+
 def middleware_adapt_enum(next):
     """
     GraphQL middleware, by default enums return the value
@@ -31,6 +32,7 @@ def middleware_adapt_enum(next):
         value = value.value
 
     return value
+
 
 def middleware_request_context(next, context: ObjectQLContext):
     from objectql.schema import ObjectQLRequestContext
