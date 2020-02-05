@@ -308,6 +308,9 @@ class ObjectQLTypeMapper:
 
         def serialize(self, value) -> Union[str, None, InvalidType]:
             if value and isinstance(value, collections.Hashable):
+                if isinstance(value, enum.Enum):
+                    value = value.value
+
                 lookup_value = self._value_lookup.get(value)
                 if lookup_value:
                     return lookup_value
