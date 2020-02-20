@@ -21,7 +21,7 @@ from graphql import (
     GraphQLList,
     GraphQLBoolean,
     GraphQLInt,
-    GraphQLFloat, 
+    GraphQLFloat,
     INVALID
 )
 
