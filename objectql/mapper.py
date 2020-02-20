@@ -21,7 +21,9 @@ from graphql import (
     GraphQLList,
     GraphQLBoolean,
     GraphQLInt,
-    GraphQLFloat, INVALID)
+    GraphQLFloat, 
+    INVALID
+)
 
 from graphql.type.definition import (
     GraphQLType,
@@ -33,14 +35,17 @@ from graphql.type.definition import (
     GraphQLEnumType,
     GraphQLScalarType,
     GraphQLNonNull,
-    GraphQLInputField)
+    GraphQLInputField
+)
 
 from objectql.context import ObjectQLContext
-from objectql.types import \
-    GraphQLBytes, \
-    GraphQLUUID, \
-    GraphQLDateTime, \
+from objectql.types import (
+    GraphQLBytes,
+    GraphQLUUID,
+    GraphQLDateTime,
     GraphQLJSON
+)
+
 from objectql.utils import to_camel_case, to_snake_case, to_input_value
 from objectql.exception import ObjectQLBaseException
 from objectql.dataclass_mapping import type_is_dataclass, type_from_dataclass
@@ -88,13 +93,13 @@ class ObjectQLMutableField(GraphQLField):
 class ObjectQLTypeMapper:
 
     def __init__(
-            self,
-            as_mutable=False,
-            as_input=False,
-            registry=None,
-            reverse_registry=None,
-            suffix="",
-            schema=None
+        self,
+        as_mutable=False,
+        as_input=False,
+        registry=None,
+        reverse_registry=None,
+        suffix="",
+        schema=None
     ):
         self.as_mutable = as_mutable
         self.as_input = as_input
@@ -109,10 +114,10 @@ class ObjectQLTypeMapper:
         return set(self.registry.values())
 
     def map_to_field(
-            self,
-            function_type: Callable,
-            name="",
-            key=""
+        self,
+        function_type: Callable,
+        name="",
+        key=""
     ) -> GraphQLField:
         type_hints = typing.get_type_hints(function_type)
         description = inspect.getdoc(function_type)
@@ -388,10 +393,12 @@ class ObjectQLTypeMapper:
                 return fields_
             return fields
 
-        return GraphQLInterfaceType(interface_name,
-                                    fields=local_fields(),
-                                    resolve_type=local_resolve_type(),
-                                    description=description)
+        return GraphQLInterfaceType(
+            interface_name,
+            fields=local_fields(),
+            resolve_type=local_resolve_type(),
+            description=description
+        )
 
     def map_to_input(self, class_type: Type) -> GraphQLType:
         name = f"{class_type.__name__}{self.suffix}Input"
@@ -640,9 +647,9 @@ class ObjectQLTypeMapper:
 
 
 def get_class_funcs(
-        class_type,
-        schema,
-        mutable=False
+    class_type,
+    schema,
+    mutable=False
 ) -> List[Tuple[Any, Any]]:
     members = [(key, member) for key, member in inspect.getmembers(class_type)]
 
@@ -714,7 +721,6 @@ def get_value(type_, schema, key):
 
 def is_graphql(type_, schema):
     graphql = getattr(type_, 'graphql', None)
-
     schemas = getattr(type_, 'schemas', {})
 
     valid_schema = schema in schemas.keys() or None in schemas.keys()
