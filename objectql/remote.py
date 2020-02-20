@@ -206,6 +206,9 @@ class ObjectQLRemoteError(ObjectQLError):
 
 class ObjectQLRemoteObject:
 
+    def get_labels(self) -> List[str]:
+        return self.python_type.get_labels()
+
     @classmethod
     def from_url(
         cls,
@@ -327,7 +330,7 @@ class ObjectQLRemoteObject:
             raise ObjectQLRemoteError(
                 query=query,
                 result=result,
-                message=result.errors[0].message
+                message=result.errors[0]['message']
             )
 
         field_values = result.data

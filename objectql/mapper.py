@@ -88,13 +88,13 @@ class ObjectQLMutableField(GraphQLField):
 class ObjectQLTypeMapper:
 
     def __init__(
-        self,
-        as_mutable=False,
-        as_input=False,
-        registry=None,
-        reverse_registry=None,
-        suffix="",
-        schema=None
+            self,
+            as_mutable=False,
+            as_input=False,
+            registry=None,
+            reverse_registry=None,
+            suffix="",
+            schema=None
     ):
         self.as_mutable = as_mutable
         self.as_input = as_input
@@ -109,10 +109,10 @@ class ObjectQLTypeMapper:
         return set(self.registry.values())
 
     def map_to_field(
-        self,
-        function_type: Callable,
-        name="",
-        key=""
+            self,
+            function_type: Callable,
+            name="",
+            key=""
     ) -> GraphQLField:
         type_hints = typing.get_type_hints(function_type)
         description = inspect.getdoc(function_type)
@@ -640,9 +640,9 @@ class ObjectQLTypeMapper:
 
 
 def get_class_funcs(
-    class_type,
-    schema,
-    mutable=False
+        class_type,
+        schema,
+        mutable=False
 ) -> List[Tuple[Any, Any]]:
     members = [(key, member) for key, member in inspect.getmembers(class_type)]
 
