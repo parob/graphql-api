@@ -1,10 +1,12 @@
 from typing import Type, get_type_hints
+import typing_inspect
 
 from graphql.type.definition import \
     GraphQLType, \
     GraphQLObjectType, \
     GraphQLField, \
-    GraphQLInputField
+    GraphQLInputField, \
+    GraphQLNonNull
 
 from objectql.utils import to_camel_case
 
@@ -66,6 +68,19 @@ def type_from_dataclass(_class: Type, mapper) -> GraphQLType:
                     return resolver
 
                 type_: GraphQLType = local_mapper.map(type_=field_type)
+
+                nullable = False
+
+                if typing_inspect.is_union_type(field_type):
+                    union_args = typing_inspect.get_args(
+                        field_type,
+                        evaluate=True
+                    )
+                    if type(None) in union_args:
+                        nullable = True
+
+                if not nullable:
+                    type_: GraphQLType = GraphQLNonNull(type_)
 
                 if local_mapper.as_input:
                     field = GraphQLInputField(type_=type_)
