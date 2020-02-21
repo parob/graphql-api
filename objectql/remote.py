@@ -9,7 +9,9 @@ from graphql.language import ast
 from requests.exceptions import ConnectionError
 
 from graphql import (
+    GraphQLInputObjectType,
     GraphQLObjectType,
+    GraphQLEnumType,
     GraphQLInterfaceType,
     GraphQLUnionType,
     GraphQLID,
@@ -58,6 +60,7 @@ class ObjectQLRemoteExecutor(ObjectQLBaseExecutor, GraphQLObjectType):
         self.http_method = http_method
         self.http_headers = http_headers
         self.verify = verify
+        self.ignore_unsupported = True
 
         super().__init__(name=name,
                          fields=self.build_fields,
@@ -81,10 +84,17 @@ class ObjectQLRemoteExecutor(ObjectQLBaseExecutor, GraphQLObjectType):
 
         # noinspection PyProtectedMember
         for name, type in ast_schema.type_map.items():
-            if isinstance(type, GraphQLObjectType) and \
+            if (isinstance(type, GraphQLObjectType) or
+                isinstance(type, GraphQLInputObjectType)) and \
                     not type.name.startswith("__"):
                 for key, field in type.fields.items():
                     field.resolver = resolver
+            elif isinstance(type, GraphQLEnumType):
+                if not self.ignore_unsupported:
+                    raise ObjectQLError(
+                        f"GraphQLScalarType '{type}' type is not supported "
+                        f"in a remote executor '{self.url}'."
+                    )
             elif isinstance(type, (GraphQLInterfaceType, GraphQLUnionType)):
 
                 super_type = 'GraphQLInterface' \
@@ -103,10 +113,11 @@ class ObjectQLRemoteExecutor(ObjectQLBaseExecutor, GraphQLObjectType):
                     GraphQLBoolean,
                     GraphQLInt
                 ]:
-                    raise ObjectQLError(
-                        f"GraphQLScalarType '{type}' type is not supported "
-                        f"in a remote executor '{self.url}'."
-                    )
+                    if not self.ignore_unsupported:
+                        raise ObjectQLError(
+                            f"GraphQLScalarType '{type}' type is not supported "
+                            f"in a remote executor '{self.url}'."
+                        )
             elif str(type).startswith('__'):
                 continue
             else:
