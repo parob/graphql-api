@@ -26,9 +26,9 @@ from graphql.type.definition import (
     GraphQLScalarType,
     GraphQLNonNull,
     GraphQLList,
-    GraphQLEnumType,
     GraphQLType,
-    is_enum_type)
+    is_enum_type
+)
 
 from objectql.error import ObjectQLError
 from objectql.executor import ObjectQLBaseExecutor
@@ -115,8 +115,8 @@ class ObjectQLRemoteExecutor(ObjectQLBaseExecutor, GraphQLObjectType):
                 ]:
                     if not self.ignore_unsupported:
                         raise ObjectQLError(
-                            f"GraphQLScalarType '{type}' type is not supported "
-                            f"in a remote executor '{self.url}'."
+                            f"GraphQLScalarType '{type}' type is not "
+                            f"supported in a remote executor '{self.url}'."
                         )
             elif str(type).startswith('__'):
                 continue
