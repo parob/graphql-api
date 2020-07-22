@@ -7,7 +7,7 @@ from requests.api import request
 from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
 
 # noinspection PyPackageRequirements
-from graphql.utilities import schema_printer
+from graphql.utilities import print_schema
 
 from objectql.utils import executor_to_ast
 from objectql.error import ObjectQLError
@@ -654,21 +654,13 @@ class TestGraphQL:
 
         schema, _ = api.graphql_schema()
 
-        schema_str = schema_printer.print_schema(schema)
+        schema_str = print_schema(schema)
         schema_str = schema_str.strip().replace(" ", "")
 
         expected_schema_str = '''
             schema {
                 query: Root
                 mutation: RootMutable
-            }
-
-            type Math {
-                square(number: Int!): Int!
-            }
-
-            type MathMutable {
-                createSquare(number: Int!): Int!
             }
 
             type Root {
@@ -678,9 +670,17 @@ class TestGraphQL:
             type RootMutable {
                 math: MathMutable!
             }
+
+            type Math {
+                square(number: Int!): Int!
+            }
+
+            type MathMutable {
+                createSquare(number: Int!): Int!
+            }
         '''.strip().replace(" ", "")
 
-        assert schema_str == expected_schema_str
+        assert set(schema_str.split("}")) == set(expected_schema_str.split("}"))
 
     # noinspection PyUnusedLocal
     def test_middleware(self):

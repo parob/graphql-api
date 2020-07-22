@@ -25,7 +25,7 @@ setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     install_requires=[
-        'graphql-core >= 3.0.0',
+        'graphql-core == 3.1.2',
         'requests',
         'typing-inspect'
     ],

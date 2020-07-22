@@ -10,7 +10,6 @@ from uuid import UUID
 
 from typing import List, Union, Type, Callable, Tuple, Any, Dict, Set
 
-from graphql.error import InvalidType
 from typing_inspect import get_origin
 from datetime import datetime
 
@@ -21,8 +20,7 @@ from graphql import (
     GraphQLList,
     GraphQLBoolean,
     GraphQLInt,
-    GraphQLFloat,
-    INVALID
+    GraphQLFloat
 )
 
 from graphql.type.definition import (
@@ -37,6 +35,8 @@ from graphql.type.definition import (
     GraphQLNonNull,
     GraphQLInputField
 )
+
+from graphql.pyutils import Undefined, UndefinedType
 
 from objectql.context import ObjectQLContext
 from objectql.types import (
@@ -196,7 +196,7 @@ class ObjectQLTypeMapper:
 
             arguments[to_camel_case(key)] = GraphQLArgument(
                 type_=arg_type,
-                default_value=default_args.get(key, INVALID)
+                default_value=default_args.get(key, Undefined)
             )
 
         def resolve(self, info=None, context=None, *args, **kwargs):
@@ -311,7 +311,7 @@ class ObjectQLTypeMapper:
 
         enum_type.enum_type = type_
 
-        def serialize(self, value) -> Union[str, None, InvalidType]:
+        def serialize(self, value) -> Union[str, None, UndefinedType]:
             if value and isinstance(value, collections.Hashable):
                 if isinstance(value, enum.Enum):
                     value = value.value
@@ -320,7 +320,7 @@ class ObjectQLTypeMapper:
                 if lookup_value:
                     return lookup_value
                 else:
-                    return InvalidType()
+                    return Undefined
 
             return None
 
