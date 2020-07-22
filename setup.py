@@ -26,15 +26,15 @@ setup(
     long_description_content_type='text/markdown',
     install_requires=[
         'graphql-core == 3.1.2',
-        'requests',
-        'typing-inspect'
+        'requests==2.24.0',
+        'typing-inspect==0.6.0'
     ],
     extras_require={
         'dev': [
-            'pytest',
-            'pytest-cov',
-            'coverage',
-            'faker'
+            'pytest==5.4.3',
+            'pytest-cov==2.10.0',
+            'coverage==5.2',
+            'faker==4.1.1'
         ]
     },
     classifiers=[
