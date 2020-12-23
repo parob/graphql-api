@@ -22,4 +22,4 @@ sphinxcontrib-fulltoc = "==1.2.0"
 guzzle_sphinx_theme = "==0.7.11"
 
 [requires]
-python_version = "3.7"
+python_version = "3.9"
