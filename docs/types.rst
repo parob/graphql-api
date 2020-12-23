@@ -71,7 +71,7 @@ List type modifier
 ``````````````````
 
 The Python **List** type hint is used to indicate that a field returns a List.
-It can be used to wrap object types, scalars and enums and other modifiers.
+It can be used to wrap type types, scalars and enums and other modifiers.
 
 .. code-block:: python
     :emphasize-lines: 10
@@ -81,10 +81,10 @@ It can be used to wrap object types, scalars and enums and other modifiers.
 
     schema = ObjectQLSchema()
 
-    @schema.root
+    @schema.type(root=True)
     class RootType:
 
-        @schema.query
+        @schema.field
         def user_names(self) -> List[str]:
           return ["Tom", "Steve"]
 
@@ -93,7 +93,7 @@ Non-nullable type modifier
 ``````````````````````````
 
 The Python **Optional** type hint is used to indicate that a field could return a null value.
-It can be used to wrap object types, scalars and enums and other modifiers.
+It can be used to wrap type types, scalars and enums and other modifiers.
 
 .. code-block:: python
     :emphasize-lines: 10
@@ -103,10 +103,10 @@ It can be used to wrap object types, scalars and enums and other modifiers.
 
     schema = ObjectQLSchema()
 
-    @schema.root
+    @schema.type(root=True)
     class RootType:
 
-        @schema.query
+        @schema.field
         def get_user_id(self, email: str) -> Optional[str]:
           if email == "rob@rob.com":
             return "1234"
@@ -116,7 +116,7 @@ Union type modifier
 ```````````````````
 
 The Python **Union** type hint is used to indicate that a field has a Union modifier.
-It can be used to wrap multiple object types.
+It can be used to wrap multiple type types.
 
 .. code-block:: python
     :emphasize-lines: 10
@@ -126,10 +126,10 @@ It can be used to wrap multiple object types.
 
     schema = ObjectQLSchema()
 
-    @schema.root
+    @schema.type(root=True)
     class RootType:
 
-        @schema.query
+        @schema.field
         def get_home(self, name: str) -> Union[Flat, House]:
             if name == "Phil":
                 return House()

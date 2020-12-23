@@ -1,21 +1,19 @@
 from objectql.schema import decorator
 
 
-def query(meta=None):
-    return decorator(None, meta, _type="query")
+def field(meta=None, mutable=False):
+    _type = "query"
+    if mutable:
+        _type = "mutation"
+
+    return decorator(None, meta, _type=_type)
 
 
-def mutation(meta=None):
-    return decorator(None, meta, _type="mutation")
+def type(meta=None, abstract=False, interface=False):
+    _type = "object"
+    if interface:
+        _type = "interface"
+    elif abstract:
+        _type = "abstract"
 
-
-def object(meta=None):
-    return decorator(None, meta, _type="object")
-
-
-def interface(meta=None):
-    return decorator(None, meta, _type="interface")
-
-
-def abstract(meta=None):
-    return decorator(None, meta, _type="abstract")
+    return decorator(None, meta, _type=_type)

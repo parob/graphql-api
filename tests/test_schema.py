@@ -1,41 +1,41 @@
 # noinspection PyPep8Naming,DuplicatedCode
-from objectql import ObjectQLSchema
+from objectql import ObjectQLSchema, type, field
 
 
 class TestGraphQL:
 
     def test_decorators_no_schema(self):
 
-        @ObjectQLSchema.object
+        @type
         class ObjectNoSchema:
 
-            @ObjectQLSchema.query
+            @field
             def test_query_no_schema(self, a: int) -> int:
                 pass
 
-            @ObjectQLSchema.mutation
+            @field(mutable=True)
             def test_mutation_no_schema(self, a: int) -> int:
                 pass
 
-        @ObjectQLSchema.abstract
+        @type(abstract=True)
         class AbstractNoSchema:
 
-            @ObjectQLSchema.query
+            @field
             def test_abstract_query_no_schema(self, a: int) -> int:
                 pass
 
-            @ObjectQLSchema.mutation
+            @field(mutable=True)
             def test_abstract_mutation_no_schema(self, a: int) -> int:
                 pass
 
-        @ObjectQLSchema.interface
+        @type(interface=True)
         class InterfaceNoSchema:
 
-            @ObjectQLSchema.query
+            @field
             def test_interface_query_no_schema(self, a: int) -> int:
                 pass
 
-            @ObjectQLSchema.mutation
+            @field(mutable=True)
             def test_interface_mutation_no_schema(self, a: int) -> int:
                 pass
 
@@ -54,14 +54,14 @@ class TestGraphQL:
     def test_decorators_schema(self):
         api_1 = ObjectQLSchema()
 
-        @api_1.object
+        @api_1.type
         class ObjectSchema:
 
-            @api_1.query
+            @api_1.field
             def test_query_schema(self, a: int) -> int:
                 pass
 
-            @api_1.mutation
+            @api_1.field(mutable=True)
             def test_mutation_schema(self, a: int) -> int:
                 pass
 
@@ -71,14 +71,14 @@ class TestGraphQL:
 
     def test_decorators_no_schema_meta(self):
 
-        @ObjectQLSchema.object(meta={"test": "test"})
+        @type(meta={"test": "test"})
         class ObjectNoSchemaMeta:
 
-            @ObjectQLSchema.query(meta={"test": "test"})
+            @field(meta={"test": "test"})
             def test_query_no_schema_meta(self, a: int) -> int:
                 pass
 
-            @ObjectQLSchema.mutation(meta={"test": "test"})
+            @field(meta={"test": "test"}, mutable=True)
             def test_mutation_no_schema_meta(self, a: int) -> int:
                 pass
 
@@ -89,14 +89,14 @@ class TestGraphQL:
     def test_decorators_schema_meta(self):
         api_1 = ObjectQLSchema()
 
-        @api_1.object(meta={"test": "test"})
+        @api_1.type(meta={"test": "test"})
         class ObjectSchemaMeta:
 
-            @api_1.query(meta={"test": "test"})
+            @api_1.field(meta={"test": "test"})
             def test_query_schema_meta(self, a: int) -> int:
                 pass
 
-            @api_1.mutation(meta={"test": "test"})
+            @api_1.field(meta={"test": "test"}, mutable=True)
             def test_mutation_schema_meta(self, a: int) -> int:
                 pass
 

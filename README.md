@@ -42,7 +42,7 @@ from objectql import ObjectQLSchema
 schema = ObjectQLSchema()
 
 
-@schema.root
+@schema.type(root=True)
 class Math:
 
     @schema.query

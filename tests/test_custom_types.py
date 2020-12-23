@@ -13,16 +13,16 @@ class TestCustomTypes:
         user_id = uuid.uuid4()
 
         # noinspection PyUnusedLocal
-        @api.root
+        @api.type(root=True)
         class Root:
 
-            @api.query
+            @api.field
             def name(self, id: UUID) -> str:
                 assert isinstance(id, UUID)
                 assert id == user_id
                 return "rob"
 
-            @api.query
+            @api.field
             def id(self) -> UUID:
                 return user_id
 
@@ -54,10 +54,10 @@ class TestCustomTypes:
 
         now = datetime.now()
 
-        @api.root
+        @api.type(root=True)
         class Root:
 
-            @api.query
+            @api.field
             def add_one_hour(self, time: datetime) -> datetime:
                 return time + timedelta(hours=1)
 
@@ -76,14 +76,14 @@ class TestCustomTypes:
     def test_json_type(self):
         api = ObjectQLSchema()
 
-        @api.root
+        @api.type(root=True)
         class Root:
 
-            @api.query
+            @api.field
             def adapt_profile(self, profile: dict) -> dict:
                 return {**profile, "location": "london"}
 
-            @api.query
+            @api.field
             def add_number(self, numbers: list) -> list:
                 return [*numbers, 5]
 
@@ -119,10 +119,10 @@ class TestCustomTypes:
         data_input = b'input_bytes'
         data_output = b'output_bytes'
 
-        @api.root
+        @api.type(root=True)
         class Root:
 
-            @api.query
+            @api.field
             def byte_data(self, value: bytes) -> bytes:
                 assert value == data_input
                 return data_output

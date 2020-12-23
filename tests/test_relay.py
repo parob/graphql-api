@@ -18,7 +18,7 @@ class TestRelay:
                 self._name = name
 
             @property
-            @api.query
+            @api.field
             def name(self) -> str:
                 return self._name
 
@@ -55,7 +55,7 @@ class TestRelay:
                 elif self._last is not None:
                     self.filtered_cursors = self.filtered_cursors[-self._last:]
 
-            @api.query
+            @api.field
             def edges(self) -> List[Edge]:
                 return [
                     Edge(
@@ -65,7 +65,7 @@ class TestRelay:
                     for cursor in self.filtered_cursors
                 ]
 
-            @api.query
+            @api.field
             def page_info(self) -> PageInfo:
                 return PageInfo(
                     start_cursor=self.filtered_cursors[0],
@@ -75,10 +75,10 @@ class TestRelay:
                 )
 
         # noinspection PyUnusedLocal
-        @api.root
+        @api.type(root=True)
         class Root:
 
-            @api.query
+            @api.field
             def people(
                 self,
                 before: str = None,

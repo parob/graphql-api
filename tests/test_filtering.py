@@ -12,16 +12,16 @@ class TestSchemaFiltering:
             def __init__(self):
                 self.name = ""
 
-            @api.mutation
+            @api.field(mutable=True)
             def update_name(self, name: str) -> 'Person':
                 self.name = name
                 return self
 
         # noinspection PyUnusedLocal
-        @api.root
+        @api.type(root=True)
         class Root:
 
-            @api.query
+            @api.field
             def person(self) -> Person:
                 return Person()
 
@@ -53,20 +53,20 @@ class TestSchemaFiltering:
             def __init__(self):
                 self._name = ""
 
-            @api.query
+            @api.field
             def name(self) -> str:
                 return self._name
 
-            @api.mutation
+            @api.field(mutable=True)
             def update_name(self, name: str) -> 'Person':
                 self._name = name
                 return self
 
         # noinspection PyUnusedLocal
-        @api.root
+        @api.type(root=True)
         class Root:
 
-            @api.query
+            @api.field
             def person(self) -> Person:
                 return Person()
 
@@ -98,10 +98,10 @@ class TestSchemaFiltering:
     def test_keep_interface(self):
         api = ObjectQLSchema()
 
-        @api.interface
+        @api.type(interface=True)
         class Person:
 
-            @api.query
+            @api.field
             def name(self) -> str:
                 pass
 
@@ -110,15 +110,15 @@ class TestSchemaFiltering:
             def __init__(self):
                 self._name = "Bob"
 
-            @api.query
+            @api.field
             def name(self) -> str:
                 return self._name
 
-            @api.query
+            @api.field
             def department(self) -> str:
                 return "Human Resources"
 
-            @api.mutation
+            @api.field(mutable=True)
             def set_name(self, name: str) -> str:
                 self._name = name
                 return name
@@ -126,10 +126,10 @@ class TestSchemaFiltering:
         bob_employee = Employee()
 
         # noinspection PyUnusedLocal
-        @api.root
+        @api.type(root=True)
         class Root:
 
-            @api.query
+            @api.field
             def person(self) -> Person:
                 return bob_employee
 
@@ -185,31 +185,31 @@ class TestSchemaFiltering:
     def test_mutation_return_mutable_flag(self):
         api = ObjectQLSchema()
 
-        @api.object
+        @api.type
         class Person:
 
             def __init__(self):
                 self._name = ""
 
-            @api.query
+            @api.field
             def name(self) -> str:
                 return self._name
 
-            @api.mutation
+            @api.field(mutable=True)
             def update_name(self, name: str) -> 'Person':
                 self._name = name
                 return self
 
-            @api.mutation({ObjectQLMetaKey.resolve_to_mutable: True})
+            @api.field({ObjectQLMetaKey.resolve_to_mutable: True}, mutable=True)
             def update_name_mutable(self, name: str) -> 'Person':
                 self._name = name
                 return self
 
         # noinspection PyUnusedLocal
-        @api.root
+        @api.type(root=True)
         class Root:
 
-            @api.query
+            @api.field
             def person(self) -> Person:
                 return Person()
 

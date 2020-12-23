@@ -39,10 +39,10 @@ With ObjectQL, the following Python class::
 
     schema = ObjectQLSchema()
 
-    @schema.root
+    @schema.type(root=True)
     class Calculator:
 
-      @schema.query
+      @schema.field
       def add(self, number_one: float, number_two: float) -> float:
           return number_1 + number_2
 
@@ -83,10 +83,10 @@ Simple Example:
     schema = ObjectQLSchema()
 
 
-    @schema.root
+    @schema.type(root=True)
     class Math:
 
-        @schema.query
+        @schema.field
         def square_number(self, number: int) -> int:
             return number * number
 

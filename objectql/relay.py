@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 from objectql.schema import ObjectQLSchema
 
 
-@ObjectQLSchema.interface
+@ObjectQLSchema.type(interface=True)
 class Node:
     """
     The `Node` Interface type represents a Relay Node.
@@ -20,12 +20,12 @@ class Node:
         super().__init__(*args, **kwargs)
 
     @property
-    @ObjectQLSchema.query
+    @ObjectQLSchema.field
     def _id(self) -> UUID:
         return self.id
 
 
-@ObjectQLSchema.object
+@ObjectQLSchema.type
 class PageInfo:
     """
     The `PageInfo` Object type represents a Relay PageInfo.
@@ -50,32 +50,32 @@ class PageInfo:
         self._end_cursor = end_cursor
 
     @property
-    @ObjectQLSchema.query
+    @ObjectQLSchema.field
     def has_previous_page(self) -> bool:
         return self._has_previous_page
 
     @property
-    @ObjectQLSchema.query
+    @ObjectQLSchema.field
     def has_next_page(self) -> bool:
         return self._has_next_page
 
     @property
-    @ObjectQLSchema.query
+    @ObjectQLSchema.field
     def start_cursor(self) -> str:
         return self._start_cursor
 
     @property
-    @ObjectQLSchema.query
+    @ObjectQLSchema.field
     def end_cursor(self) -> str:
         return self._end_cursor
 
     @property
-    @ObjectQLSchema.query
+    @ObjectQLSchema.field
     def count(self) -> int:
         return self._count
 
 
-@ObjectQLSchema.object
+@ObjectQLSchema.type
 class Edge:
     """
     The `Edge` Object type represents a Relay Edge.
@@ -89,17 +89,17 @@ class Edge:
         self._cursor = cursor
 
     @property
-    @ObjectQLSchema.query
+    @ObjectQLSchema.field
     def node(self) -> Node:
         return self._node
 
     @property
-    @ObjectQLSchema.query
+    @ObjectQLSchema.field
     def cursor(self) -> str:
         return self._cursor
 
 
-@ObjectQLSchema.object
+@ObjectQLSchema.type
 class Connection:
     """
     The `Connection` Object type represents a Relay Connection.
@@ -119,14 +119,14 @@ class Connection:
         self._last = last
         super().__init__(*args, **kwargs)
 
-    @ObjectQLSchema.query
+    @ObjectQLSchema.field
     def edges(self) -> List[Edge]:
         raise NotImplementedError(
             f"{self.__class__.__name__} has not "
             f"implemented 'Connection.edges'"
         )
 
-    @ObjectQLSchema.query
+    @ObjectQLSchema.field
     def page_info(self) -> PageInfo:
         raise NotImplementedError(
             f"{self.__class__.__name__} has not "

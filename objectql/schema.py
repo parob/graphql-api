@@ -91,22 +91,31 @@ def decorator(a, b, _type):
 
 class ObjectQLSchema(ObjectQLBaseExecutor):
 
-    def query(self=None, meta=None):
-        return decorator(self, meta, _type="query")
+    def field(self=None, meta=None, mutable=False):
+        _type = "query"
+        if mutable:
+            _type = "mutation"
 
-    def mutation(self=None, meta=None):
-        return decorator(self, meta, _type="mutation")
+        return decorator(self, meta, _type=_type)
 
-    def object(self=None, meta=None):
-        return decorator(self, meta, _type="object")
+    def type(
+        self=None,
+        meta=None,
+        abstract=False,
+        interface=False,
+        root=False
+    ):
+        _type = "object"
+        if interface:
+            _type = "interface"
+        elif abstract:
+            _type = "abstract"
+        elif root:
+            return self.set_root
 
-    def interface(self=None, meta=None):
-        return decorator(self, meta, _type="interface")
+        return decorator(self, meta, _type=_type)
 
-    def abstract(self=None, meta=None):
-        return decorator(self, meta, _type="abstract")
-
-    def root(self, root_type):
+    def set_root(self, root_type):
         self.root_type = root_type
         return root_type
 

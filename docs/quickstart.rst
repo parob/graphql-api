@@ -19,7 +19,7 @@ ObjectQL can build a **GraphQL schema** directly from **Python classes**.
 .. figure:: images/python_to_graphql.png
     :align: center
 
-    Each part of a Python class gets mapped to part of a GraphQL object type.
+    Each part of a Python class gets mapped to part of a GraphQL type type.
 
 Installation
 ------------
@@ -67,16 +67,16 @@ But we need to slightly change ``HelloObjectQL`` to make it suitable for creatin
 
     schema = ObjectQLSchema()
 
-    @schema.root
+    @schema.type(root=True)
     class HelloObjectQL:
 
-        @schema.query
+        @schema.field
         def hello(self, name: str) -> str:
             return "hello " + name + "!"
 
 What was changed?:
 
-- An ``ObjectQLSchema`` object was created.
+- An ``ObjectQLSchema`` type was created.
 
 - The ``@schema.query`` `decorator <https://realpython.com/primer-on-python-decorators/>`_ was imported and added. This labels the ``hello`` method as queryable via GraphQL.
 
@@ -91,10 +91,10 @@ What was changed?:
 
     schema = ObjectQLSchema()
 
-    @schema.root
+    @schema.type(root=True)
     class HelloObjectQL:
 
-        @schema.query
+        @schema.field
         def hello(self, name: str) -> str:
             return "hello " + name + "!"
 
@@ -110,10 +110,10 @@ Now we can run a GraphQL query on the ``ObjectQLExecutor``:
 
     schema = ObjectQLSchema()
 
-    @schema.root
+    @schema.type(root=True)
     class HelloObjectQL:
 
-        @schema.query
+        @schema.field
         def hello(self, name: str) -> str:
             return "hello " + name + "!"
 
@@ -208,14 +208,14 @@ For example a single class (with both queryable and mutable fields)::
 
     schema = ObjectQLSchema()
 
-    @schema.root
+    @schema.type(root=True)
     class Example:
 
-        @schema.query
+        @schema.field
         def example_query_field() -> str:
             return "query complete"
 
-        @schema.mutation
+        @schema.field(mutable=True)
         def example_mutable_field() -> str:
             # do something with the database
             return "mutation complete"
@@ -251,11 +251,11 @@ In ObjectQL this is done using `typehints <https://mypy.readthedocs.io/en/latest
 
     class ExampleModifiers:
 
-    @schema.query
+    @schema.field
     def example_list() -> List[str]:
         return ["hello", "world"]
 
-    @schema.mutation
+    @schema.field(mutable=True)
     def example_nullable() -> Optional[str]:
         return None
 
@@ -296,14 +296,14 @@ Here is an example::
 
     schema = ObjectQLSchema()
 
-    @schema.root
+    @schema.type(root=True)
     class Folder:
 
-        @schema.query
+        @schema.field
         def name() -> str:
             pass
 
-        @schema.query
+        @schema.field
         def children(self) -> List[Folder]:
             pass
 
@@ -335,32 +335,32 @@ For example here is a set of Python classes that will produce a **Schema** for a
 
     class User:
 
-        @schema.query
+        @schema.field
         def id() -> int:
             pass
 
-        @schema.query
+        @schema.field
         def name() -> str:
             pass
 
     class Comment:
 
-        @schema.query
+        @schema.field
         def message() -> str:
             pass
 
-        @schema.query
+        @schema.field
         def author() -> User:
             pass
 
-    @schema.root
+    @schema.type(root=True)
     class MainController:
 
-        @schema.query
+        @schema.field
         def users() -> List[User]:
             pass
 
-        @schema,query
+        @schema.field
         def comments() -> List[Comments]:
             pass
 
@@ -383,23 +383,23 @@ Werkzeug
 
 One of the simplest ways to serve a **Schema** is with ``Werkzeug`` and `werkzeug-graphql <https://gitlab.com/kiwi-ninja/werkzeug-graphql>`_::
 
-    from werkzeug_graphql import GraphQLAdapter
+    from graphql_http_server import GraphQLHTTPServer
 
     from objectql import ObjectQLSchema
 
     schema = ObjectQLSchema()
 
-    @schema.root
+    @schema.type(root=True)
     class HelloWorld:
 
-        @schema.query
+        @schema.field
         def hello(self) -> str:
             return "Hello World!"
 
-    adapter = GraphQLAdapter.from_schema(schema=schema)
+    server = GraphQLHTTPServer.from_schema(schema=schema)
 
     if __name__ == "__main__":
-        adapter.run_app()
+        server.run()
 
 Flask
 `````
@@ -415,7 +415,7 @@ If you are using ``Flask`` you could use `flask-graphql <https://github.com/grap
 
     class HelloWorld:
 
-        @schema.query
+        @schema.field
         def hello(self) -> str:
             return "Hello World!"
 
