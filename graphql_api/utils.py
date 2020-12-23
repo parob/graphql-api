@@ -41,7 +41,7 @@ def to_snake_case(name):
 
 
 def to_input_value(value):
-    from objectql.mapper import is_scalar
+    from graphql_api.mapper import is_scalar
 
     if value is None:
         return None
@@ -63,7 +63,7 @@ def to_input_value(value):
 
 
 def has_mutable(type, checked_types=None, interfaces_default_mutable=True):
-    from .mapper import ObjectQLMutableField, ObjectQLTypeMapError
+    from .mapper import GraphQLMutableField, GraphQLTypeMapError
 
     while isinstance(type, (GraphQLNonNull, GraphQLList)):
         type = type.of_type
@@ -77,11 +77,11 @@ def has_mutable(type, checked_types=None, interfaces_default_mutable=True):
             checked_types = set()
         try:
             fields = type.fields
-        except (AssertionError, ObjectQLTypeMapError):
+        except (AssertionError, GraphQLTypeMapError):
             return False
 
         for key, field in fields.items():
-            if isinstance(field, ObjectQLMutableField):
+            if isinstance(field, GraphQLMutableField):
                 return True
             if field.type not in checked_types:
                 checked_types.add(field.type)
@@ -96,7 +96,7 @@ def has_mutable(type, checked_types=None, interfaces_default_mutable=True):
 
 
 def iterate_fields(type: GraphQLType, done_fields=None):
-    from .mapper import ObjectQLTypeMapError
+    from .mapper import GraphQLTypeMapError
 
     while isinstance(type, (GraphQLNonNull, GraphQLList)):
         type = type.of_type
@@ -107,7 +107,7 @@ def iterate_fields(type: GraphQLType, done_fields=None):
 
         try:
             type.fields
-        except (AssertionError, ObjectQLTypeMapError):
+        except (AssertionError, GraphQLTypeMapError):
             pass
         else:
             for key, field in type.fields.items():

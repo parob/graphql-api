@@ -1,5 +1,5 @@
 # noinspection PyPep8Naming,DuplicatedCode
-from objectql import ObjectQLSchema, type, field
+from graphql_api import GraphQLAPI, type, field
 
 
 class TestGraphQL:
@@ -52,7 +52,7 @@ class TestGraphQL:
         assert InterfaceNoSchema.test_interface_mutation_no_schema.graphql
 
     def test_decorators_schema(self):
-        api_1 = ObjectQLSchema()
+        api_1 = GraphQLAPI()
 
         @api_1.type
         class ObjectSchema:
@@ -87,7 +87,7 @@ class TestGraphQL:
         assert ObjectNoSchemaMeta.test_mutation_no_schema_meta.graphql
 
     def test_decorators_schema_meta(self):
-        api_1 = ObjectQLSchema()
+        api_1 = GraphQLAPI()
 
         @api_1.type(meta={"test": "test"})
         class ObjectSchemaMeta:

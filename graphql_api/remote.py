@@ -30,14 +30,14 @@ from graphql.type.definition import (
     is_enum_type
 )
 
-from objectql.error import ObjectQLError
-from objectql.executor import ObjectQLBaseExecutor
-from objectql.mapper import ObjectQLTypeMapper, ObjectQLMetaKey
-from objectql.schema import ObjectQLSchema
-from objectql.utils import to_camel_case, url_to_ast, to_snake_case, http_query
+from graphql_api.error import GraphQLError
+from graphql_api.executor import GraphQLBaseExecutor
+from graphql_api.mapper import GraphQLTypeMapper, GraphQLMetaKey
+from graphql_api.api import GraphQLAPI
+from graphql_api.utils import to_camel_case, url_to_ast, to_snake_case, http_query
 
 
-class ObjectQLRemoteExecutor(ObjectQLBaseExecutor, GraphQLObjectType):
+class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
 
     def __init__(
         self,
@@ -91,7 +91,7 @@ class ObjectQLRemoteExecutor(ObjectQLBaseExecutor, GraphQLObjectType):
                     field.resolver = resolver
             elif isinstance(type, GraphQLEnumType):
                 if not self.ignore_unsupported:
-                    raise ObjectQLError(
+                    raise GraphQLError(
                         f"GraphQLScalarType '{type}' type is not supported "
                         f"in a remote executor '{self.url}'."
                     )
@@ -101,7 +101,7 @@ class ObjectQLRemoteExecutor(ObjectQLBaseExecutor, GraphQLObjectType):
                     if isinstance(type, GraphQLInterfaceType) \
                     else 'GraphQLUnionType'
 
-                raise ObjectQLError(
+                raise GraphQLError(
                     f"{super_type} '{type}' type is not supported"
                     f" from remote executor '{self.url}'."
                 )
@@ -114,14 +114,14 @@ class ObjectQLRemoteExecutor(ObjectQLBaseExecutor, GraphQLObjectType):
                     GraphQLInt
                 ]:
                     if not self.ignore_unsupported:
-                        raise ObjectQLError(
+                        raise GraphQLError(
                             f"GraphQLScalarType '{type}' type is not "
                             f"supported in a remote executor '{self.url}'."
                         )
             elif str(type).startswith('__'):
                 continue
             else:
-                raise ObjectQLError(
+                raise GraphQLError(
                     f"Unknown GraphQLType '{type}' type is not supported in "
                     f"a remote executor '{self.url}'."
                 )
@@ -172,8 +172,8 @@ class GraphQLMappers:
 
     def __init__(
         self,
-        query_mapper: ObjectQLTypeMapper,
-        mutable_mapper: ObjectQLTypeMapper
+        query_mapper: GraphQLTypeMapper,
+        mutable_mapper: GraphQLTypeMapper
     ):
         self.query_mapper = query_mapper
         self.mutable_mapper = mutable_mapper
@@ -207,7 +207,7 @@ class NullResponse(BaseException):
     pass
 
 
-class ObjectQLRemoteError(ObjectQLError):
+class GraphQLRemoteError(GraphQLError):
 
     def __init__(self, query=None, result=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -215,7 +215,7 @@ class ObjectQLRemoteError(ObjectQLError):
         self.result = result
 
 
-class ObjectQLRemoteObject:
+class GraphQLRemoteObject:
 
     def get_labels(self) -> List[str]:
         return self.python_type.get_labels()
@@ -224,28 +224,28 @@ class ObjectQLRemoteObject:
     def from_url(
         cls,
         url: str,
-        schema: ObjectQLSchema,
+        schema: GraphQLAPI,
         http_method: str = "GET"
-    ) -> 'ObjectQLRemoteObject':
-        executor = ObjectQLRemoteExecutor(url=url, http_method=http_method)
+    ) -> 'GraphQLRemoteObject':
+        executor = GraphQLRemoteExecutor(url=url, http_method=http_method)
 
-        return ObjectQLRemoteObject(executor=executor, schema=schema)
+        return GraphQLRemoteObject(executor=executor, schema=schema)
 
     # noinspection PyProtectedMember
     def __init__(
         self,
-        executor: ObjectQLBaseExecutor,
-        schema: ObjectQLSchema = None,
+        executor: GraphQLBaseExecutor,
+        schema: GraphQLAPI = None,
         mappers: GraphQLMappers = None,
         python_type: Type = None,
-        call_history: List[Tuple['ObjectQLRemoteField', Dict]] = None,
+        call_history: List[Tuple['GraphQLRemoteField', Dict]] = None,
         delay_mapping: bool = True
     ):
         if not call_history:
             call_history = []
 
         if not schema and python_type:
-            schema = ObjectQLSchema(root=python_type)
+            schema = GraphQLAPI(root=python_type)
 
         elif not python_type:
             python_type = schema.root_type
@@ -279,7 +279,7 @@ class ObjectQLRemoteObject:
             graphql_types = self.mappers.map(self.python_type)
             self.graphql_query_type, self.graphql_mutable_type = graphql_types
 
-    def fetch(self, fields: List[Tuple['ObjectQLRemoteField', Dict]] = None):
+    def fetch(self, fields: List[Tuple['GraphQLRemoteField', Dict]] = None):
         if fields is None:
             fields = self._fields()
 
@@ -313,7 +313,7 @@ class ObjectQLRemoteObject:
 
         return [(self.get_field(name), {}) for name in valid_fields]
 
-    def _fetch(self, fields: List[Tuple['ObjectQLRemoteField', Dict]] = None):
+    def _fetch(self, fields: List[Tuple['GraphQLRemoteField', Dict]] = None):
         """
         Load all the scalar values for this object into the values dictionary
         :return:
@@ -326,7 +326,7 @@ class ObjectQLRemoteObject:
             field.mutable
             for field, args in self.call_history + fields])
 
-        query_builder = ObjectQLRemoteQueryBuilder(
+        query_builder = GraphQLRemoteQueryBuilder(
             call_stack=self.call_history,
             fields=fields,
             mappers=self.mappers,
@@ -338,7 +338,7 @@ class ObjectQLRemoteObject:
         result = self.executor.execute(query=query)
 
         if result.errors:
-            raise ObjectQLRemoteError(
+            raise GraphQLRemoteError(
                 query=query,
                 result=result,
                 message=result.errors[0]['message']
@@ -363,7 +363,7 @@ class ObjectQLRemoteObject:
 
         def parse_field(key, value):
 
-            field: ObjectQLRemoteField = None
+            field: GraphQLRemoteField = None
 
             for _field, _field_dict in fields:
                 if _field.name == key:
@@ -426,7 +426,7 @@ class ObjectQLRemoteObject:
 
         return hash(frozenset(hashable_args.items()))
 
-    def get_value(self, field: 'ObjectQLRemoteField', args: Dict):
+    def get_value(self, field: 'GraphQLRemoteField', args: Dict):
         self._map()
 
         try:
@@ -445,7 +445,7 @@ class ObjectQLRemoteObject:
             mutated = any([field.mutable for field, args in self.call_history])
 
             if mutated and (field.scalar or field.mutable or field.nullable):
-                raise ObjectQLError(
+                raise GraphQLError(
                     f"Cannot fetch {field.name} from {self.python_type}, "
                     f"mutated objects cannot be refetched."
                 )
@@ -459,7 +459,7 @@ class ObjectQLRemoteObject:
                     reverse=True
                 )
 
-                obj = ObjectQLRemoteObject(
+                obj = GraphQLRemoteObject(
                     executor=self.executor,
                     schema=self.schema,
                     python_type=python_type,
@@ -473,7 +473,7 @@ class ObjectQLRemoteObject:
                     remote_objects = []
 
                     for remote_object_data in data:
-                        remote_object = ObjectQLRemoteObject(
+                        remote_object = GraphQLRemoteObject(
                             executor=self.executor,
                             schema=self.schema,
                             python_type=python_type,
@@ -506,7 +506,7 @@ class ObjectQLRemoteObject:
 
                         if field.recursive and \
                            meta and \
-                           meta.get(ObjectQLMetaKey.resolve_to_self, True):
+                           meta.get(GraphQLMetaKey.resolve_to_self, True):
                             self.values.update(obj.values)
                             return self
 
@@ -534,9 +534,9 @@ class ObjectQLRemoteObject:
                 pass
 
         if not field:
-            raise ObjectQLError(f"Field {name} on {self} does not exist")
+            raise GraphQLError(f"Field {name} on {self} does not exist")
 
-        return ObjectQLRemoteField(
+        return GraphQLRemoteField(
             name=camel_name,
             mutable=mutable,
             graphql_field=field,
@@ -580,7 +580,7 @@ class ObjectQLRemoteObject:
         try:
             field = self.get_field(name)
 
-        except ObjectQLError as err:
+        except GraphQLError as err:
             if "does not exist" in err.message:
                 if is_callable:
                     func = getattr(self.python_type, name)
@@ -615,7 +615,7 @@ class ObjectQLRemoteObject:
             f"at {hex(id(self))}>"
 
 
-class ObjectQLRemoteField:
+class GraphQLRemoteField:
 
     # noinspection PyProtectedMember
     def __init__(
@@ -623,7 +623,7 @@ class ObjectQLRemoteField:
         name: str,
         mutable: bool,
         graphql_field: GraphQLField,
-        parent: ObjectQLRemoteObject
+        parent: GraphQLRemoteObject
     ):
         self.name = name
         self.mutable = mutable
@@ -670,17 +670,17 @@ class ObjectQLRemoteField:
         return hash(hash(self.parent.python_type.__name__) + hash(self.name))
 
     def __eq__(self, other):
-        if isinstance(other, ObjectQLRemoteField):
+        if isinstance(other, GraphQLRemoteField):
             if other.parent == self.parent and other.name == self.name:
                 return True
 
 
-class ObjectQLRemoteQueryBuilder:
+class GraphQLRemoteQueryBuilder:
 
     def __init__(
         self,
-        call_stack: List[Tuple['ObjectQLRemoteField', Dict]],
-        fields: List[Tuple['ObjectQLRemoteField', Dict]],
+        call_stack: List[Tuple['GraphQLRemoteField', Dict]],
+        fields: List[Tuple['GraphQLRemoteField', Dict]],
         mappers: GraphQLMappers,
         mutable=False
     ):
@@ -737,7 +737,7 @@ class ObjectQLRemoteQueryBuilder:
         mappers: GraphQLMappers,
         expected_graphql_type=None
     ):
-        from objectql.mapper import is_scalar
+        from graphql_api.mapper import is_scalar
 
         if value is None:
             return None
@@ -792,7 +792,7 @@ class ObjectQLRemoteQueryBuilder:
 
                 except AttributeError:
                     if not is_nullable(field.type):
-                        raise ObjectQLError(
+                        raise GraphQLError(
                             f"InputObject error, '{type(value)}' object has"
                             f" no attribute {to_snake_case(key)}, nested"
                             f" inputs must have matching attribute "
@@ -825,7 +825,7 @@ def remote_execute(executor, context):
     result = executor.execute(query=redirected_query)
 
     if result.errors:
-        raise ObjectQLError(result.errors)
+        raise GraphQLError(result.errors)
 
     return result.data
 

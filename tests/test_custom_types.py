@@ -2,13 +2,13 @@ import uuid
 from datetime import datetime, timedelta
 from uuid import UUID
 
-from objectql.schema import ObjectQLSchema
+from graphql_api.api import GraphQLAPI
 
 
 class TestCustomTypes:
 
     def test_uuid_type(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         user_id = uuid.uuid4()
 
@@ -50,7 +50,7 @@ class TestCustomTypes:
         assert result.data == expected
 
     def test_datetime_type(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         now = datetime.now()
 
@@ -74,7 +74,7 @@ class TestCustomTypes:
         assert result.data == expected
 
     def test_json_type(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         @api.type(root=True)
         class Root:
@@ -114,7 +114,7 @@ class TestCustomTypes:
         assert result.data == expected
 
     def test_bytes_type(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         data_input = b'input_bytes'
         data_output = b'output_bytes'

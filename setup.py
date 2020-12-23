@@ -11,17 +11,17 @@ with io.open('VERSION') as version_file:
         version = version[1:]
 
 setup(
-    name='objectql',
+    name='graphql-api',
     version=version,
     license='MIT',
     packages=find_packages(),
     include_package_data=True,
     author='Robert Parker',
     author_email='rob@parob.com',
-    url='https://objectql.com',
-    download_url=f'https://gitlab.com/kiwi-ninja/objectql/-/archive/v{version}/objectql-v{version}.tar.gz',
-    keywords=['GraphQL', 'ObjectQL', 'Server'],
-    description='A framework for building Python GraphQL servers.',
+    url='https://gitlab.com/parob/graphql-api',
+    download_url=f'https://gitlab.com/parob/graphql/-/archive/v{version}/graphql-api-v{version}.tar.gz',
+    keywords=['GraphQL', 'GraphQL-API', 'GraphQLAPI', 'Server'],
+    description='A framework for building Python GraphQL APIs.',
     long_description=readme,
     long_description_content_type='text/markdown',
     install_requires=[

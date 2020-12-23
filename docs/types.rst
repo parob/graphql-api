@@ -5,7 +5,7 @@
 Types
 =====
 
-ObjectQL supports all of the core GraphQL types.
+GraphQL-API supports all of the core GraphQL types.
 
 +-------------------+--------------------+
 | Python Type       | GraphQL Type       |
@@ -25,7 +25,7 @@ ObjectQL supports all of the core GraphQL types.
 | NoneType          | null               |
 +-------------------+--------------------+
 
-ObjectQL also includes convenient mappings for some common Python types.
+GraphQL-API also includes convenient mappings for some common Python types.
 
 +-------------------+--------------------+
 | Python Type       | GraphQL Type       |
@@ -55,7 +55,7 @@ Enum type
 
 The Enum type is a scalar type that is restricted to a set of values.
 
-In ObjectQL you can define Enum types with Python Enums
+With GraphQL-API you can define Enum types with Python Enums
 
 .. code-block:: python
 
@@ -77,9 +77,9 @@ It can be used to wrap type types, scalars and enums and other modifiers.
     :emphasize-lines: 10
 
     from typing import List
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     @schema.type(root=True)
     class RootType:
@@ -99,9 +99,9 @@ It can be used to wrap type types, scalars and enums and other modifiers.
     :emphasize-lines: 10
 
     from typing import Optional
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     @schema.type(root=True)
     class RootType:
@@ -122,9 +122,9 @@ It can be used to wrap multiple type types.
     :emphasize-lines: 10
 
     from typing import Union
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     @schema.type(root=True)
     class RootType:

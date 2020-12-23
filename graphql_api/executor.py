@@ -7,15 +7,15 @@ from graphql import graphql_sync
 from graphql.execution import ExecutionResult
 from graphql.type.schema import GraphQLSchema
 
-from objectql.context import ObjectQLContext
-from objectql.middleware import \
+from graphql_api.context import GraphQLContext
+from graphql_api.middleware import \
     middleware_field_context, \
     middleware_request_context, \
     middleware_local_proxy, \
     middleware_adapt_enum
 
 
-class ObjectQLBaseExecutor:
+class GraphQLBaseExecutor:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -33,14 +33,14 @@ class ObjectQLBaseExecutor:
         pass
 
 
-class ObjectQLExecutor(ObjectQLBaseExecutor):
+class GraphQLExecutor(GraphQLBaseExecutor):
 
     def __init__(
         self,
         schema: GraphQLSchema,
         meta: Dict = None,
         root_value: Any = None,
-        middleware: List[Callable[[Callable, ObjectQLContext], Any]] = None,
+        middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
         middleware_on_introspection: bool = False
     ):
         super().__init__()
@@ -71,7 +71,7 @@ class ObjectQLExecutor(ObjectQLBaseExecutor):
         context=None
     ) -> ExecutionResult:
 
-        context = ObjectQLContext(
+        context = GraphQLContext(
             schema=self.schema,
             meta=self.meta,
             executor=self
@@ -97,11 +97,11 @@ class ObjectQLExecutor(ObjectQLBaseExecutor):
         middleware_on_introspection: bool = False
     ):
 
-        def simplify(_middleware: Callable[[Callable, ObjectQLContext], Any]):
+        def simplify(_middleware: Callable[[Callable, GraphQLContext], Any]):
             def graphql_middleware(next, root, info, **args):
                 kwargs = {}
                 if "context" in inspect.signature(_middleware).parameters:
-                    context: ObjectQLContext = info.context
+                    context: GraphQLContext = info.context
                     kwargs["context"] = context
                     context.resolve_args['root'] = root
                     context.resolve_args['info'] = info

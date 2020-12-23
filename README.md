@@ -1,16 +1,16 @@
-# ObjectQL
-Python framework for building a GraphQL execution server from Python Objects
+# GraphQL-API
+Framework for building a GraphQL API with Python
 
-[![coverage report](https://gitlab.com/kiwi-ninja/objectql/badges/master/coverage.svg)](https://gitlab.com/kiwi-ninja/pygql/commits/master)
+[![coverage report](https://gitlab.com/parob/graphql-api/badges/master/coverage.svg)](https://gitlab.com/parob/graphql-api/commits/master)
 
-[![pipeline status](https://gitlab.com/kiwi-ninja/objectql/badges/master/pipeline.svg)](https://gitlab.com/kiwi-ninja/pygql/commits/master)
+[![pipeline status](https://gitlab.com/parob/graphql-api/badges/master/pipeline.svg)](https://gitlab.com/parob/graphql-api/commits/master)
 
 ## Installation
-ObjectQL is a Python package, and is compatible with `Python 3` only (for now). It can be installed through `pip`.
+GraphQL-API is a Python package, and is compatible with `Python 3` only (for now). It can be installed through `pip`.
 
 ##### Pip
 ```
-pip install objectql
+pip install graphql-api
 ```
 
 ## Run the Unit Tests
@@ -18,14 +18,14 @@ To run the tests.
 ```
 pip install pipenv
 pipenv install --dev
-pipenv run python -m pytest tests --cov=objectql
+pipenv run python -m pytest tests --cov=graphql_api
 ```
 
 ## Docs
 
 The documentation is public, and is generated using Sphinx.
 
-[ObjectQL Documentation](http://www.objectql.com)
+[GraphQL-API Documentation](http://parob.gitlab.io/graphql-api/)
 
 ##### Build documentation
 To build a local static HTML version of the documentation.
@@ -37,9 +37,9 @@ pipenv run sphinx-build docs ./public -b html
 
 ## Simple Example
 ``` python
-from objectql import ObjectQLSchema
+from graphql_api import GraphQLAPI
 
-schema = ObjectQLSchema()
+schema = GraphQLAPI()
 
 
 @schema.type(root=True)

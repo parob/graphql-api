@@ -1,4 +1,4 @@
-class ObjectQLContext:
+class GraphQLContext:
 
     def __init__(self, schema=None, meta=None, executor=None):
 

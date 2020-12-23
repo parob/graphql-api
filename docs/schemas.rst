@@ -8,7 +8,7 @@ Building Schemas
     A GraphQL **schema** defines a set of **types** which completely describe the set of possible data you can query.
     When a GraphQL query comes in, it is validated and executed against that **schema**.
 
-ObjectQL can build an entire GraphQL **schema** from Python classes.
+GraphQL-API can build an entire GraphQL **schema** from Python classes.
 
 .. figure:: images/python_to_graphql.png
     :align: center
@@ -32,9 +32,9 @@ For example:
 .. code-block:: python
     :emphasize-lines: 3, 9
 
-        from objectql import ObjectQLSchema
+        from graphql_api import GraphQLAPI
 
-        schema = ObjectQLSchema()
+        schema = GraphQLAPI()
 
         class Human:
 
@@ -57,7 +57,7 @@ For example:
 
 
 The ``.graphql_schema()`` method can be called to get the underlying ``GraphQLSchema``.
-Child type types from the root (such as the ``Human`` type type) will be discovered by the ``ObjectQLSchema`` at runtime.
+Child type types from the root (such as the ``Human`` type type) will be discovered by the ``GraphQLAPI`` at runtime.
 
 This works as long as all the type hints have been specified.
 
@@ -68,7 +68,7 @@ Every GraphQL server has a **Root Value** at the top level. The **Root Value** i
 
 By default the **Root Value** is created by calling the constructor of the **Root Type** above.
 
-A custom **Root Value** can be used by passing one in as an argument to the ``ObjectQLSchema`` constructor.
+A custom **Root Value** can be used by passing one in as an argument to the ``GraphQLAPI`` constructor.
 
 Method Decorators
 -----------------
@@ -91,9 +91,9 @@ The ``@query`` decorator is used to label a **method** that should be exposed as
     :linenos:
     :emphasize-lines: 5
 
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     @schema.root
     class ExampleQueryDecorator:
@@ -143,9 +143,9 @@ For example the ``@schema.interface`` decorator is being used here:
 
 .. code-block:: python
 
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     @schema.interface
     class Animal:
@@ -197,7 +197,7 @@ then class inheritance would kick in and the ``name`` method on ``Animal`` would
 Abstract
 ````````
 
-The ``@schema.type(abstract=True)`` decorator can be used to indicate that a **class** should not be mapped by ObjectQL.
+The ``@schema.type(abstract=True)`` decorator can be used to indicate that a **class** should not be mapped by GraphQL-API.
 
 GraphQL does not support type *inheritance* (only `interfaces <http://graphql.github.io/learn/schema/#interfaces>`_)
 so ``@schema.type(abstract=True)`` allows us to still use class *inheritance* in Python.
@@ -206,9 +206,9 @@ For example:
 
 .. code-block:: python
 
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     @schema.type(abstract=True)
     class Animal:
@@ -250,9 +250,9 @@ The **metadata** is a dictionary that can specify *addition configuration* for t
 .. code-block:: python
     :emphasize-lines: 7,8,9,10,11,12
 
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     class Hello:
 
@@ -267,7 +267,7 @@ The **metadata** is a dictionary that can specify *addition configuration* for t
 
 When resolving a query, a fields **metadata** can be accessed through the **context**.
 
-There are some **metadata** keys that are reserved for used by ObjectQL:
+There are some **metadata** keys that are reserved for used by GraphQL-API:
 
 - ``RESOLVE_TO_MUTABLE``
 - ``RESOLVE_TO_SELF``
@@ -280,15 +280,15 @@ A GraphQL service *normally* has two separate schemas with two separate **Root t
 
 This is because **data fetches** can be run in parallel, whereas **data updates** must always run sequentially.
 
-ObjectQL uses just one **Root class**, and the ``@schema.query`` and ``@schema.mutation`` decorators are used to filter the fields into two **Root types**.
+GraphQL-API uses just one **Root class**, and the ``@schema.query`` and ``@schema.mutation`` decorators are used to filter the fields into two **Root types**.
 
 Here is an example to see exactly how the **Root class** gets mapped into two **Root types**:
 
 .. code-block:: python
 
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     class User:
 
@@ -408,19 +408,3 @@ After the above rules are applied there are a few things worth noting:
 |
 
 - **Line 23:** ``@schema.field(mutable=True)`` fields on a ``Mutable`` type will by default return a ``Query`` type (unless otherwise specified, see *Mutation recursion* below).
-
-Mutation recursion
-``````````````````
-
-Middleware
-----------
-
-
-Compatibility
--------------
-
-
-ObjectQL is actually based on the `GraphQL-core <https://github.com/graphql-python/graphql-core>`_ Python library,
-which also powers another popular frontend `Graphene <https://github.com/graphql-python/graphene>`_.
-
-For this reason ObjectQL produces a schema identical to that of Graphene.

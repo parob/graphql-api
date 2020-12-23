@@ -8,7 +8,7 @@ from graphql.type.definition import \
     GraphQLInputField, \
     GraphQLNonNull
 
-from objectql.utils import to_camel_case
+from graphql_api.utils import to_camel_case
 
 
 def type_is_dataclass(_class: Type):

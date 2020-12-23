@@ -38,17 +38,17 @@ from graphql.type.definition import (
 
 from graphql.pyutils import Undefined, UndefinedType
 
-from objectql.context import ObjectQLContext
-from objectql.types import (
+from graphql_api.context import GraphQLContext
+from graphql_api.types import (
     GraphQLBytes,
     GraphQLUUID,
     GraphQLDateTime,
     GraphQLJSON
 )
 
-from objectql.utils import to_camel_case, to_snake_case, to_input_value
-from objectql.exception import ObjectQLBaseException
-from objectql.dataclass_mapping import type_is_dataclass, type_from_dataclass
+from graphql_api.utils import to_camel_case, to_snake_case, to_input_value
+from graphql_api.exception import GraphQLBaseException
+from graphql_api.dataclass_mapping import type_is_dataclass, type_from_dataclass
 
 """
 class AnyObject:
@@ -65,32 +65,32 @@ class AnyObject:
 """
 
 
-class ObjectQLTypeMapInvalid(ObjectQLBaseException):
+class GraphQLTypeMapInvalid(GraphQLBaseException):
     pass
 
 
-class ObjectQLTypeMapError(ObjectQLBaseException):
+class GraphQLTypeMapError(GraphQLBaseException):
     pass
 
 
-class ObjectQLTypeWrapper:
+class GraphQLTypeWrapper:
 
     @classmethod
-    def graphql_type(cls, mapper: "ObjectQLTypeMapper") -> GraphQLType:
+    def graphql_type(cls, mapper: "GraphQLTypeMapper") -> GraphQLType:
         pass
 
 
-class ObjectQLMetaKey(enum.Enum):
+class GraphQLMetaKey(enum.Enum):
     resolve_to_mutable = "RESOLVE_TO_MUTABLE"
     resolve_to_self = "RESOLVE_TO_SELF"
     native_middleware = "NATIVE_MIDDLEWARE"
 
 
-class ObjectQLMutableField(GraphQLField):
+class GraphQLMutableField(GraphQLField):
     pass
 
 
-class ObjectQLTypeMapper:
+class GraphQLTypeMapper:
 
     def __init__(
         self,
@@ -125,7 +125,7 @@ class ObjectQLTypeMapper:
         return_type = type_hints.pop('return', None)
 
         if not return_type:
-            raise ObjectQLTypeMapInvalid(
+            raise GraphQLTypeMapInvalid(
                 f"Field '{name}.{key}' with function ({function_type}) did "
                 f"not specify a valid return type."
             )
@@ -140,7 +140,7 @@ class ObjectQLTypeMapper:
                 nullable = True
 
         if not self.validate(return_graphql_type):
-            raise ObjectQLTypeMapError(
+            raise GraphQLTypeMapError(
                 f"Field '{name}.{key}' with function '{function_type}' return "
                 f"type '{return_type}' could not be mapped to a valid GraphQL "
                 f"type, was mapped to invalid type {return_graphql_type}."
@@ -164,7 +164,7 @@ class ObjectQLTypeMapper:
             if value.default is not inspect.Parameter.empty
         }
 
-        input_type_mapper = ObjectQLTypeMapper(
+        input_type_mapper = GraphQLTypeMapper(
             as_mutable=self.as_mutable,
             as_input=True,
             registry=self.registry,
@@ -181,7 +181,7 @@ class ObjectQLTypeMapper:
         for key, hint in type_hints.items():
             if key == 'context' and \
                     inspect.isclass(hint) and \
-                    issubclass(hint, ObjectQLContext):
+                    issubclass(hint, GraphQLContext):
                 include_context = True
                 continue
 
@@ -247,7 +247,7 @@ class ObjectQLTypeMapper:
         field_class = GraphQLField
         func_type = get_value(function_type, self.schema, 'type')
         if func_type == "mutation":
-            field_class = ObjectQLMutableField
+            field_class = GraphQLMutableField
 
         return field_class(
             return_graphql_type,
@@ -269,11 +269,11 @@ class ObjectQLTypeMapper:
             return mapped_type
 
         def resolve_type(value, info, _type):
-            from objectql.remote import ObjectQLRemoteObject
+            from graphql_api.remote import GraphQLRemoteObject
 
             value_type = type(value)
 
-            if isinstance(value, ObjectQLRemoteObject):
+            if isinstance(value, GraphQLRemoteObject):
                 value_type = value.python_type
 
             for arg, mapped_type in union_map.items():
@@ -556,7 +556,7 @@ class ObjectQLTypeMapper:
         def _map(type__) -> GraphQLType:
 
             if use_graphql_type and inspect.isclass(type__):
-                if issubclass(type__, ObjectQLTypeWrapper):
+                if issubclass(type__, GraphQLTypeWrapper):
                     return type__.graphql_type(mapper=self)
 
                 if type_is_dataclass(type__):
@@ -745,7 +745,7 @@ def is_abstract(type_, schema):
 
 
 def is_scalar(type_):
-    for test_types, graphql_type in ObjectQLTypeMapper.scalar_map:
+    for test_types, graphql_type in GraphQLTypeMapper.scalar_map:
         for test_type in test_types:
             if issubclass(type_, test_type):
                 return True

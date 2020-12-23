@@ -2,8 +2,8 @@ import enum
 
 from graphql import GraphQLObjectType, GraphQLNonNull
 
-from objectql.context import ObjectQLContext
-from objectql.utils import to_snake_case
+from graphql_api.context import GraphQLContext
+from graphql_api.utils import to_snake_case
 
 
 def middleware_local_proxy(next):
@@ -34,8 +34,8 @@ def middleware_adapt_enum(next):
     return value
 
 
-def middleware_request_context(next, context: ObjectQLContext):
-    from objectql.schema import ObjectQLRequestContext
+def middleware_request_context(next, context: GraphQLContext):
+    from graphql_api.api import GraphQLRequestContext
 
     info = context.resolve_args.get('info')
     args = context.resolve_args.get('args')
@@ -44,7 +44,7 @@ def middleware_request_context(next, context: ObjectQLContext):
         return next()
 
     args = {to_snake_case(key): arg for key, arg in args.items()}
-    graphql_request = ObjectQLRequestContext(args=args, info=info)
+    graphql_request = GraphQLRequestContext(args=args, info=info)
 
     info.context.request = graphql_request
 
@@ -56,8 +56,8 @@ def middleware_request_context(next, context: ObjectQLContext):
     return value
 
 
-def middleware_field_context(next, context: ObjectQLContext):
-    from objectql.schema import ObjectQLFieldContext
+def middleware_field_context(next, context: GraphQLContext):
+    from graphql_api.api import GraphQLFieldContext
 
     info = context.resolve_args.get('info')
 
@@ -78,7 +78,7 @@ def middleware_field_context(next, context: ObjectQLContext):
         sub_loc = info.field_nodes[0].selection_set.loc
         kwargs['query'] = sub_loc.source.body[sub_loc.start:sub_loc.end]
 
-    info.context.field = ObjectQLFieldContext(meta=field_meta, **kwargs)
+    info.context.field = GraphQLFieldContext(meta=field_meta, **kwargs)
 
     try:
         value = next()

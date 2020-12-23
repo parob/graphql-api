@@ -9,13 +9,13 @@ from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
 # noinspection PyPackageRequirements
 from graphql.utilities import print_schema
 
-from objectql.utils import executor_to_ast
-from objectql.error import ObjectQLError
-from objectql.context import ObjectQLContext
-from objectql.schema import ObjectQLSchema
-from objectql.reduce import TagFilter
-from objectql.remote import ObjectQLRemoteExecutor, remote_execute
-from objectql.decorators import field
+from graphql_api.utils import executor_to_ast
+from graphql_api.error import GraphQLError
+from graphql_api.context import GraphQLContext
+from graphql_api.api import GraphQLAPI
+from graphql_api.reduce import TagFilter
+from graphql_api.remote import GraphQLRemoteExecutor, remote_execute
+from graphql_api.decorators import field
 
 
 def available(url, method="GET"):
@@ -34,8 +34,8 @@ def available(url, method="GET"):
 class TestGraphQL:
 
     def test_multiple_apis(self):
-        api_1 = ObjectQLSchema()
-        api_2 = ObjectQLSchema()
+        api_1 = GraphQLAPI()
+        api_2 = GraphQLAPI()
 
         @api_1.type
         class Math:
@@ -101,7 +101,7 @@ class TestGraphQL:
         assert result_3.errors
 
     def test_deep_query(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         class Math:
 
@@ -134,7 +134,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_query_object_input(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         class Person:
 
@@ -164,7 +164,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_custom_query_input(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         class Person:
 
@@ -210,7 +210,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_runtime_field(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         class Person:
 
@@ -252,7 +252,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_recursive_query(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         class Root:
 
@@ -302,8 +302,8 @@ class TestGraphQL:
             def social_security_number(self) -> int:
                 return 56
 
-        api = ObjectQLSchema(root=Root, filters=[TagFilter(tags=["admin"])])
-        admin_api = ObjectQLSchema(root=Root)
+        api = GraphQLAPI(root=Root, filters=[TagFilter(tags=["admin"])])
+        admin_api = GraphQLAPI(root=Root)
 
         api_executor = api.executor()
         admin_api_executor = admin_api.executor()
@@ -326,7 +326,7 @@ class TestGraphQL:
         assert result.errors
 
     def test_property(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         # noinspection PyUnusedLocal
         @api.type(root=True)
@@ -378,7 +378,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_interface(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         @api.type(interface=True)
         class Animal:
@@ -459,7 +459,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_multiple_interfaces(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         @api.type(interface=True)
         class Animal:
@@ -535,7 +535,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_dataclass(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         # noinspection PyUnusedLocal
         @api.type(root=True)
@@ -560,7 +560,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_mutation(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         # noinspection PyUnusedLocal
         @api.type(root=True)
@@ -587,7 +587,7 @@ class TestGraphQL:
         assert result.data == expected
 
     def test_deep_mutation(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         class Math:
 
@@ -629,7 +629,7 @@ class TestGraphQL:
 
     def test_print(self):
 
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         class Math:
 
@@ -681,7 +681,7 @@ class TestGraphQL:
 
     # noinspection PyUnusedLocal
     def test_middleware(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         was_called = []
 
@@ -743,7 +743,7 @@ class TestGraphQL:
 
     # noinspection PyUnusedLocal
     def test_input(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         class TestInputObject:
             """
@@ -787,7 +787,7 @@ class TestGraphQL:
 
     # noinspection PyUnusedLocal
     def test_enum(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         class AnimalType(enum.Enum):
             dog = "dog"
@@ -820,7 +820,7 @@ class TestGraphQL:
 
     # noinspection PyUnusedLocal
     def test_required(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         @api.type(root=True)
         class Root:
@@ -843,7 +843,7 @@ class TestGraphQL:
 
     # noinspection PyUnusedLocal
     def test_optional(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         @api.type(root=True)
         class Root:
@@ -870,7 +870,7 @@ class TestGraphQL:
 
     # noinspection PyUnusedLocal
     def test_union(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         class Customer:
 
@@ -959,7 +959,7 @@ class TestGraphQL:
 
     # noinspection PyUnusedLocal
     def test_non_null(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         @api.type(root=True)
         class Root:
@@ -1001,13 +1001,13 @@ class TestGraphQL:
 
     # noinspection PyUnusedLocal
     def test_context(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         @api.type(root=True)
         class Root:
 
             @api.field
-            def has_context(self, context: ObjectQLContext) -> bool:
+            def has_context(self, context: GraphQLContext) -> bool:
                 return bool(context)
 
         executor = api.executor()
@@ -1033,22 +1033,22 @@ class TestGraphQL:
     @pytest.mark.skipif(not available(location_api_url),
                         reason=f"The location API '{location_api_url}' is unavailable")
     def test_remote_get(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
-        RemoteAPI = ObjectQLRemoteExecutor(url=self.location_api_url)
+        RemoteAPI = GraphQLRemoteExecutor(url=self.location_api_url)
 
         @api.type(root=True)
         class Root:
 
             @api.field
-            def graph_loc(self, context: ObjectQLContext) -> RemoteAPI:
+            def graph_loc(self, context: GraphQLContext) -> RemoteAPI:
                 operation = context.request.info.operation.operation
                 query = context.field.query
                 redirected_query = operation.value + " " + query
                 _result = RemoteAPI.execute(query=redirected_query)
 
                 if _result.errors:
-                    raise ObjectQLError(str(_result.errors))
+                    raise GraphQLError(str(_result.errors))
 
                 return _result.data
 
@@ -1078,16 +1078,16 @@ class TestGraphQL:
     @pytest.mark.skipif(not available(europe_graphql_url),
                         reason=f"The graphql-europe API '{europe_graphql_url}' is unavailable")
     def test_remote_post(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
-        RemoteAPI = ObjectQLRemoteExecutor(url=self.europe_graphql_url, http_method="POST")
+        RemoteAPI = GraphQLRemoteExecutor(url=self.europe_graphql_url, http_method="POST")
 
         # noinspection PyUnusedLocal
         @api.type(root=True)
         class Root:
 
             @api.field
-            def graphql(self, context: ObjectQLContext) -> RemoteAPI:
+            def graphql(self, context: GraphQLContext) -> RemoteAPI:
                 operation = context.request.info.operation.operation
                 query = context.field.query
                 redirected_query = operation.value + " " + query
@@ -1095,7 +1095,7 @@ class TestGraphQL:
                 result_ = RemoteAPI.execute(query=redirected_query)
 
                 if result_.errors:
-                    raise ObjectQLError(str(result_.errors))
+                    raise GraphQLError(str(result_.errors))
 
                 return result_.data
 
@@ -1124,9 +1124,9 @@ class TestGraphQL:
         reason=f"The graphql-europe API '{europe_graphql_url}' is unavailable"
     )
     def test_remote_post_helper(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
-        RemoteAPI = ObjectQLRemoteExecutor(
+        RemoteAPI = GraphQLRemoteExecutor(
             url=self.europe_graphql_url,
             http_method="POST"
         )
@@ -1136,7 +1136,7 @@ class TestGraphQL:
         class Root:
 
             @api.field
-            def graphql(self, context: ObjectQLContext) -> RemoteAPI:
+            def graphql(self, context: GraphQLContext) -> RemoteAPI:
                 return remote_execute(executor=RemoteAPI, context=context)
 
         executor = api.executor()
@@ -1161,7 +1161,7 @@ class TestGraphQL:
 
     # noinspection PyUnusedLocal
     def test_executor_to_ast(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         @api.type(root=True)
         class Root:

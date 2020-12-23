@@ -5,20 +5,20 @@
 Installation
 ============
 
-ObjectQL requires **Python 3.5** or newer.
+GraphQL-API requires **Python 3.5** or newer.
 
-Install ObjectQL with pip::
+Install GraphQL-API with pip::
 
-    pip install objectql
+    pip install graphql-api
 
-Install ObjectQL with pipenv::
+Install GraphQL-API with pipenv::
 
-    pipenv install objectql
+    pipenv install graphql-api
 
 Dependencies
 ------------
 
-ObjectQL has a few lightweight dependencies that will automatically be installed when installing ObjectQL.
+GraphQL-API has a few lightweight dependencies that will automatically be installed.
 
 - **graphql-core** the core GraphQL base implementation in Python.
 - **requests** a lightweight HTTP request library

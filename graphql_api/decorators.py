@@ -1,4 +1,4 @@
-from objectql.schema import decorator
+from graphql_api.api import decorator
 
 
 def field(meta=None, mutable=False):

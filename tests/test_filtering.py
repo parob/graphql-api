@@ -1,11 +1,11 @@
-from objectql.mapper import ObjectQLMetaKey
-from objectql.schema import ObjectQLSchema
+from graphql_api.mapper import GraphQLMetaKey
+from graphql_api.api import GraphQLAPI
 
 
 class TestSchemaFiltering:
 
     def test_query_remove_invalid(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         class Person:
 
@@ -46,7 +46,7 @@ class TestSchemaFiltering:
         Mutation fields by default should return queries
         :return:
         """
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         class Person:
 
@@ -96,7 +96,7 @@ class TestSchemaFiltering:
         assert result.data == expected
 
     def test_keep_interface(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         @api.type(interface=True)
         class Person:
@@ -183,7 +183,7 @@ class TestSchemaFiltering:
         assert result.data == expected_2
 
     def test_mutation_return_mutable_flag(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         @api.type
         class Person:
@@ -200,7 +200,7 @@ class TestSchemaFiltering:
                 self._name = name
                 return self
 
-            @api.field({ObjectQLMetaKey.resolve_to_mutable: True}, mutable=True)
+            @api.field({GraphQLMetaKey.resolve_to_mutable: True}, mutable=True)
             def update_name_mutable(self, name: str) -> 'Person':
                 self._name = name
                 return self

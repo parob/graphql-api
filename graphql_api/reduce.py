@@ -3,14 +3,14 @@ from typing import List
 from graphql import GraphQLNonNull, GraphQLList, GraphQLObjectType
 from graphql.type.definition import GraphQLInterfaceType
 
-from objectql.mapper import \
-    ObjectQLMutableField, \
-    ObjectQLTypeMapError, \
-    ObjectQLMetaKey
-from objectql.utils import has_mutable, iterate_fields, to_snake_case
+from graphql_api.mapper import \
+    GraphQLMutableField, \
+    GraphQLTypeMapError, \
+    GraphQLMetaKey
+from graphql_api.utils import has_mutable, iterate_fields, to_snake_case
 
 
-class ObjectQLFilter:
+class GraphQLFilter:
 
     def filter_field(self, name, meta: dict) -> bool:
         """
@@ -19,7 +19,7 @@ class ObjectQLFilter:
         raise NotImplementedError()
 
 
-class TagFilter(ObjectQLFilter):
+class TagFilter(GraphQLFilter):
 
     def __init__(self, tags: List[str] = None):
         """
@@ -37,7 +37,7 @@ class TagFilter(ObjectQLFilter):
         return False
 
 
-class ObjectQLSchemaReducer:
+class GraphQLSchemaReducer:
 
     @staticmethod
     def reduce_query(mapper, root, filters=None):
@@ -45,7 +45,7 @@ class ObjectQLSchemaReducer:
 
         # Remove any types that have no fields
         # (and remove any fields that returned that type)
-        invalid_types, invalid_fields = ObjectQLSchemaReducer.invalid(
+        invalid_types, invalid_fields = GraphQLSchemaReducer.invalid(
             root_type=query,
             filters=filters,
             meta=mapper.meta
@@ -87,7 +87,7 @@ class ObjectQLSchemaReducer:
                 wraps.append(field_type.__class__)
                 field_type = field_type.of_type
 
-            if meta.get(ObjectQLMetaKey.resolve_to_mutable):
+            if meta.get(GraphQLMetaKey.resolve_to_mutable):
                 # Flagged as mutable
                 continue
 
@@ -120,7 +120,7 @@ class ObjectQLSchemaReducer:
                     ]
                 for key, field in type_.fields.items():
                     if key not in interface_fields and \
-                            not isinstance(field, ObjectQLMutableField) and \
+                            not isinstance(field, GraphQLMutableField) and \
                             not has_mutable(field.type):
                         fields_to_remove.add((type_, key))
 
@@ -154,7 +154,7 @@ class ObjectQLSchemaReducer:
 
         try:
             fields = root_type.fields
-        except (AssertionError, ObjectQLTypeMapError):
+        except (AssertionError, GraphQLTypeMapError):
             invalid_types.add(root_type)
             return invalid_types, invalid_fields
 
@@ -170,7 +170,7 @@ class ObjectQLSchemaReducer:
                     key
                     for key, field in interface.fields.items()
                 ]
-            except (AssertionError, ObjectQLTypeMapError):
+            except (AssertionError, GraphQLTypeMapError):
                 invalid_types.add(interface)
 
         for key, field in fields.items():
@@ -195,7 +195,7 @@ class ObjectQLSchemaReducer:
                 ):
                     try:
                         assert type_.fields
-                        sub_invalid = ObjectQLSchemaReducer.invalid(
+                        sub_invalid = GraphQLSchemaReducer.invalid(
                             root_type=type_,
                             filters=filters,
                             meta=meta,
@@ -207,7 +207,7 @@ class ObjectQLSchemaReducer:
                         invalid_types.update(sub_invalid[0])
                         invalid_fields.update(sub_invalid[1])
 
-                    except (AssertionError, ObjectQLTypeMapError):
+                    except (AssertionError, GraphQLTypeMapError):
                         invalid_types.add(type_)
                         invalid_fields.add((root_type, key))
 

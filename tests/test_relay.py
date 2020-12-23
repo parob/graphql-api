@@ -2,14 +2,14 @@ import collections
 from dataclasses import dataclass
 from typing import List
 
-from objectql.relay import Node, Connection, Edge, PageInfo
-from objectql.schema import ObjectQLSchema
+from graphql_api.relay import Node, Connection, Edge, PageInfo
+from graphql_api.api import GraphQLAPI
 
 
 class TestRelay:
 
     def test_relay_query(self):
-        api = ObjectQLSchema()
+        api = GraphQLAPI()
 
         class Person(Node):
 

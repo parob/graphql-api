@@ -5,16 +5,16 @@
 Quickstart Guide
 ================
 
-This quickstart guide is a brief overview of some of ObjectQL's features, just to get you started.
+This quickstart guide is a brief overview of some of GraphQL-API's features, just to get you started.
 
 For a full breakdown of each feature please refer to the **individual docs** (in the table of contents), or for specific implementation details check out the **API docs**.
 
-What is ObjectQL
+What is GraphQLAPI
 ----------------
 
-ObjectQL is a framework to help build a GraphQL server with Python. Before getting started it's recommended that you have a good understanding of `GraphQL <https://graphql.org/learn/>`_.
+GraphQLAPI is a framework to help build a GraphQL server with Python. Before getting started it's recommended that you have a good understanding of `GraphQL <https://graphql.org/learn/>`_.
 
-ObjectQL can build a **GraphQL schema** directly from **Python classes**.
+GraphQLAPI can build a **GraphQL schema** directly from **Python classes**.
 
 .. figure:: images/python_to_graphql.png
     :align: center
@@ -24,51 +24,51 @@ ObjectQL can build a **GraphQL schema** directly from **Python classes**.
 Installation
 ------------
 
-ObjectQL requires **Python 3.5** or newer.
+GraphQLAPI requires **Python 3.5** or newer.
 
-Install ObjectQL first::
+Install GraphQL-API first::
 
-    pip install objectql
+    pip install graphql-api
 
 
 Creating a basic Schema
 -----------------------
 
-A **Schema** is used to describe a **GraphQL API**. ObjectQL uses Python classes to create this **Schema**.
+A **Schema** is used to describe a **GraphQL API**. GraphQL-API uses Python classes to create this **Schema**.
 
 To get started we will create a very simple Python class:
 
 .. code-block:: python
     :name: hello-py
 
-    class HelloObjectQL:
+    class HelloGraphQLAPI:
 
         def hello(self, name):
             return "hello " + name + "!"
 
-``HelloObjectQL`` is a typical Python class, and obviously we could use this just like any regular class:
+``HelloGraphQLAPI`` is a typical Python class, and obviously we could use this just like any regular class:
 
 .. code-block:: python
 
-    hello_instance = HelloObjectQL()
+    hello_instance = HelloGraphQLAPI()
 
     print(hello_instance.hello("rob"))
 
     >>> hello rob!
 
-But we need to slightly change ``HelloObjectQL`` to make it suitable for creating a **Schema**:
+But we need to slightly change ``HelloGraphQLAPI`` to make it suitable for creating a **Schema**:
 
 .. code-block:: python
     :caption: hello.py
     :name: hello-py
     :emphasize-lines: 1,3,5,8
 
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     @schema.type(root=True)
-    class HelloObjectQL:
+    class HelloGraphQLAPI:
 
         @schema.field
         def hello(self, name: str) -> str:
@@ -76,23 +76,23 @@ But we need to slightly change ``HelloObjectQL`` to make it suitable for creatin
 
 What was changed?:
 
-- An ``ObjectQLSchema`` type was created.
+- An ``GraphQLAPI`` type was created.
 
-- The ``@schema.query`` `decorator <https://realpython.com/primer-on-python-decorators/>`_ was imported and added. This labels the ``hello`` method as queryable via GraphQL.
+- The ``@schema.field`` `decorator <https://realpython.com/primer-on-python-decorators/>`_ was imported and added. This labels the ``hello`` method as queryable via GraphQL.
 
-- `Typehints <https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html>`_ were added to the ``hello`` method arguments and return type. This tells ObjectQL what types it should expect.
+- `Typehints <https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html>`_ were added to the ``hello`` method arguments and return type. This tells GraphQL-API what types it should expect.
 
 |
 
 .. code-block:: python
     :emphasize-lines: 12
 
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     @schema.type(root=True)
-    class HelloObjectQL:
+    class HelloGraphQLAPI:
 
         @schema.field
         def hello(self, name: str) -> str:
@@ -101,17 +101,17 @@ What was changed?:
     executor = schema.executor()
 
 |
-Now we can run a GraphQL query on the ``ObjectQLExecutor``:
+Now we can run a GraphQL query on the ``GraphQLExecutor``:
 
 .. code-block:: python
     :emphasize-lines: 14, 15
 
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     @schema.type(root=True)
-    class HelloObjectQL:
+    class HelloGraphQLAPI:
 
         @schema.field
         def hello(self, name: str) -> str:
@@ -140,7 +140,7 @@ So to recap:
 
 - A Python class gets mapped to the **Root type** of a **Schema**.
 
-- The **Schema** is then used to create a ``ObjectQLExecutor``.
+- The **Schema** is then used to create a ``GraphQLExecutor``.
 
 
 Types
@@ -149,11 +149,11 @@ Types
 Type Mapping
 ````````````
 
-ObjectQL maps Python types directly to the equivalent GraphQL types.
+GraphQL-API maps Python types directly to the equivalent GraphQL types.
 
 This means you **must** specify all the type hints for any methods that are marked with the ``@schema.query`` (or ``@schema.mutation``) decorator. If a type hint is not specified then that argument will be ignored.
 
-Here are *some* of the types that ObjectQL can map:
+Here are *some* of the types that GraphQL-API can map:
 
 +-------------------+--------------------+
 | Python Type       | GraphQL Type       |
@@ -200,13 +200,13 @@ Queries and Mutations
 
 GraphQL **Queries** and **Mutations** are separate types. This is am important distinction because queries can be run in parallel, whereas mutations must always run sequentially.
 
-    ObjectQL uses a single Python class to build both the **Query** and **Mutation** GraphQL types, the fields are separated out when the schema is generated.
+    GraphQLAPI uses a single Python class to build both the **Query** and **Mutation** GraphQL types, the fields are separated out when the schema is generated.
 
 For example a single class (with both queryable and mutable fields)::
 
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     @schema.type(root=True)
     class Example:
@@ -240,14 +240,14 @@ Type Modifiers
 
 **Modifiers** are used in GraphQL to indicate *Non-Null* type or a *List* of a certain type.
 
-In ObjectQL this is done using `typehints <https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html>`_, for example:
+In GraphQL-API this is done using `typehints <https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html>`_, for example:
 
 .. code-block:: python
    :emphasize-lines: 6,10
 
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     class ExampleModifiers:
 
@@ -292,9 +292,9 @@ Here is an example::
 
     # note: the methods are not implemented here
 
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     @schema.type(root=True)
     class Folder:
@@ -329,9 +329,9 @@ For example here is a set of Python classes that will produce a **Schema** for a
 
     # note: the methods are not implemented here
 
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     class User:
 
@@ -372,7 +372,7 @@ HTTP
 
 Once you've built your **Schema**, you'll probably want to make it accessible over the internet through a webserver.
 
-The ObjectQL library *does not* have a built in webserver, but the **Schema** that ObjectQL produces is identical to the **Schema** used in other Python GraphQL frameworks.
+The GraphQL-API library *does not* have a built in webserver, but the **Schema** that GraphQL-API produces is identical to the **Schema** used in other Python GraphQL frameworks.
 This means that we can use existing HTTP GraphQL tools with the **Schema** to create a web server.
 
 Here are some examples with some popular web frameworks.
@@ -385,9 +385,9 @@ One of the simplest ways to serve a **Schema** is with ``Werkzeug`` and `werkzeu
 
     from graphql_http_server import GraphQLHTTPServer
 
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     @schema.type(root=True)
     class HelloWorld:
@@ -409,17 +409,20 @@ If you are using ``Flask`` you could use `flask-graphql <https://github.com/grap
     from flask import Flask
     from flask_graphql import GraphQLView
 
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
     app = Flask(__name__)
 
+    schema = GraphQLAPI()
+
+    @schema.type(root=True)
     class HelloWorld:
 
         @schema.field
         def hello(self) -> str:
             return "Hello World!"
 
-    graphql_schema, _, root_value = schema.graphql_schema()
+    graphql_schema, _, _ = schema.graphql_schema()
     root_value = HelloWorld()
 
     app.add_url_rule('/graphql', view_func=GraphQLView.as_view('graphql', schema=graphql_schema, root_value=root_value, graphiql=True))

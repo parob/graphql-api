@@ -11,15 +11,15 @@ from graphql import (
     GraphQLType
 )
 
-from objectql import ObjectQLError
+from graphql_api import GraphQLError
 
-from objectql.executor import ObjectQLExecutor, ObjectQLBaseExecutor
-from objectql.context import ObjectQLContext
-from objectql.reduce import ObjectQLSchemaReducer, ObjectQLFilter
-from objectql.mapper import ObjectQLTypeMapper
+from graphql_api.executor import GraphQLExecutor, GraphQLBaseExecutor
+from graphql_api.context import GraphQLContext
+from graphql_api.reduce import GraphQLSchemaReducer, GraphQLFilter
+from graphql_api.mapper import GraphQLTypeMapper
 
 
-class ObjectQLFieldContext:
+class GraphQLFieldContext:
 
     def __init__(self, meta, query=None):
         self.meta = meta
@@ -32,7 +32,7 @@ class ObjectQLFieldContext:
         return f"<Node meta: {self.meta}{query_str}>"
 
 
-class ObjectQLRequestContext:
+class GraphQLRequestContext:
 
     def __init__(self, args, info):
         self.args = args
@@ -42,7 +42,7 @@ class ObjectQLRequestContext:
 def decorate(
     func: Callable,
     _type: str,
-    schema: "ObjectQLSchema" = None,
+    schema: "GraphQLAPI" = None,
     meta: Dict = None
 ):
     func.graphql = True
@@ -70,8 +70,8 @@ def decorate(
 def decorator(a, b, _type):
     func = a if callable(a) else b if callable(b) else None
     meta = a if isinstance(a, dict) else b if isinstance(b, dict) else None
-    schema = a if isinstance(a, ObjectQLSchema) else \
-        b if isinstance(b, ObjectQLSchema) else None
+    schema = a if isinstance(a, GraphQLAPI) else \
+        b if isinstance(b, GraphQLAPI) else None
 
     if func:
         return decorate(
@@ -89,7 +89,7 @@ def decorator(a, b, _type):
     )
 
 
-class ObjectQLSchema(ObjectQLBaseExecutor):
+class GraphQLAPI(GraphQLBaseExecutor):
 
     def field(self=None, meta=None, mutable=False):
         _type = "query"
@@ -122,8 +122,8 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
     def __init__(
         self,
         root: Type = None,
-        middleware: List[Callable[[Callable, ObjectQLContext], Any]] = None,
-        filters: List[ObjectQLFilter] = None
+        middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
+        filters: List[GraphQLFilter] = None
     ):
         super().__init__()
         if middleware is None:
@@ -141,16 +141,16 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
 
         if self.root_type:
             # Create the root query
-            query_mapper = ObjectQLTypeMapper(schema=self)
+            query_mapper = GraphQLTypeMapper(schema=self)
             query: GraphQLType = query_mapper.map(self.root_type)
 
             if not isinstance(query, GraphQLObjectType):
-                raise ObjectQLError(
+                raise GraphQLError(
                     f"Query {query} was not a valid ObjectType."
                 )
 
             # Filter the root query
-            filtered_query = ObjectQLSchemaReducer.reduce_query(
+            filtered_query = GraphQLSchemaReducer.reduce_query(
                 query_mapper,
                 query,
                 filters=self.filters
@@ -166,7 +166,7 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
                 registry = None
 
             # Create the root mutation
-            mutation_mapper = ObjectQLTypeMapper(
+            mutation_mapper = GraphQLTypeMapper(
                 as_mutable=True,
                 suffix="Mutable",
                 registry=registry,
@@ -175,12 +175,12 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
             mutation: GraphQLType = mutation_mapper.map(self.root_type)
 
             if not isinstance(mutation, GraphQLObjectType):
-                raise ObjectQLError(
+                raise GraphQLError(
                     f"Mutation {mutation} was not a valid ObjectType."
                 )
 
             # Filter the root mutation
-            filtered_mutation = ObjectQLSchemaReducer.reduce_mutation(
+            filtered_mutation = GraphQLSchemaReducer.reduce_mutation(
                 mutation_mapper,
                 mutation
             )
@@ -232,15 +232,15 @@ class ObjectQLSchema(ObjectQLBaseExecutor):
     def executor(
         self,
         root_value: Any = None,
-        middleware: List[Callable[[Callable, ObjectQLContext], Any]] = None,
+        middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
         middleware_on_introspection: bool = False
-    ) -> ObjectQLExecutor:
+    ) -> GraphQLExecutor:
         schema, meta = self.graphql_schema()
 
         if callable(self.root_type) and root_value is None:
             root_value = self.root_type()
 
-        return ObjectQLExecutor(
+        return GraphQLExecutor(
             schema=schema,
             meta=meta,
             root_value=root_value,

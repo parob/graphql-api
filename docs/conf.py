@@ -8,7 +8,7 @@ import guzzle_sphinx_theme
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/stable/config
 
-project = 'ObjectQL'
+project = 'GraphQL-API'
 copyright = '2018, Robert Parker'
 author = 'Robert Parker'
 

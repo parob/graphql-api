@@ -17,27 +17,27 @@
     examples
     api
 
-ObjectQL: A GraphQL server for Python
+GraphQL-API: A GraphQL server for Python
 =====================================
 
-**ObjectQL** is a library for creating a GraphQL server with Python.
+**GraphQL-API** is a library for creating a GraphQL server with Python.
 
-.. image:: https://gitlab.com/kiwi-ninja/objectql/badges/master/coverage.svg
-   :target: https://gitlab.com/kiwi-ninja/objectql/commits/master
+.. image:: https://gitlab.com/parob/graphql-api/badges/master/coverage.svg
+   :target: https://gitlab.com/parob/graphql-api/commits/master
 
-.. image:: https://gitlab.com/kiwi-ninja/objectql/badges/master/pipeline.svg
-    :target: https://gitlab.com/kiwi-ninja/objectql/commits/master
+.. image:: https://gitlab.com/parob/graphql-api/badges/master/pipeline.svg
+    :target: https://gitlab.com/parob/graphql-api/commits/master
 
 
-ObjectQL requires **Python 3.5** or newer.
+GraphQL-API requires **Python 3.5** or newer.
 
 -------------------
 
-ObjectQL uses Python **classes**, **methods** and **typehints** to create the **schemas** and **resolvers** for a GraphQL engine.
+GraphQL-API uses Python **classes**, **methods** and **typehints** to create the **schemas** and **resolvers** for a GraphQL engine.
 
-With ObjectQL, the following Python class::
+With GraphQL-API, the following Python class::
 
-    schema = ObjectQLSchema()
+    schema = GraphQLAPI()
 
     @schema.type(root=True)
     class Calculator:
@@ -70,18 +70,17 @@ and like any normal GraphQL server it can be queried::
 Getting Started
 ---------------
 
-Install ObjectQL::
+Install GraphQL-API::
 
-    pip install objectql
+    pip install graphql-api
 
 Simple Example:
 
 .. code-block:: python
 
-    from objectql import ObjectQLSchema
+    from graphql_api import GraphQLAPI
 
-    schema = ObjectQLSchema()
-
+    schema = GraphQLAPI()
 
     @schema.type(root=True)
     class Math:
