@@ -48,7 +48,9 @@ from graphql_api.types import (
 
 from graphql_api.utils import to_camel_case, to_snake_case, to_input_value
 from graphql_api.exception import GraphQLBaseException
-from graphql_api.dataclass_mapping import type_is_dataclass, type_from_dataclass
+from graphql_api.dataclass_mapping import \
+    type_is_dataclass, \
+    type_from_dataclass
 
 """
 class AnyObject:

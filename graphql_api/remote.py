@@ -34,7 +34,11 @@ from graphql_api.error import GraphQLError
 from graphql_api.executor import GraphQLBaseExecutor
 from graphql_api.mapper import GraphQLTypeMapper, GraphQLMetaKey
 from graphql_api.api import GraphQLAPI
-from graphql_api.utils import to_camel_case, url_to_ast, to_snake_case, http_query
+from graphql_api.utils import \
+    to_camel_case, \
+    url_to_ast, \
+    to_snake_case, \
+    http_query
 
 
 class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
