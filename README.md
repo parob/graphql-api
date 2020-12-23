@@ -39,29 +39,28 @@ pipenv run sphinx-build docs ./public -b html
 ``` python
 from graphql_api import GraphQLAPI
 
-schema = GraphQLAPI()
+api = GraphQLAPI()
+
+@api.type(root=True)
+class MathService:
+
+    @api.field
+    def is_odd(self, number: int) -> str:
+        return "No" if (num % 2) else "Yes"
 
 
-@schema.type(root=True)
-class Math:
-
-    @schema.query
-    def square_number(self, number: int) -> int:
-        return number * number
-
-
-gql_query = '''
-    query SquareNumberFive {
-        fiveSquaredIs: squareNumber(number: 5)
+query = '''
+    query {
+        isOdd(number: 5)
     }
 '''
 
-result = schema.executor().execute(gql_query)
+result = api.executor().execute(query)
 
 print(result.data)
 ```
 
 ``` text
 $ python example.py
->>> {'fiveSquaredIs': 25}
+>>> {'isOdd': 'No'}
 ```
