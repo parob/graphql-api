@@ -96,7 +96,7 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
                 for key, field in type.fields.items():
                     field.resolver = resolver
             elif isinstance(type, GraphQLEnumType):
-                if not self.ignore_unsupported:z
+                if not self.ignore_unsupported:
                     raise GraphQLError(
                         f"GraphQLScalarType '{type}' type is not supported "
                         f"in a remote executor '{self.url}'."
