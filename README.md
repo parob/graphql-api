@@ -6,7 +6,6 @@ Framework for building a GraphQL API with Python
 [![pipeline status](https://gitlab.com/parob/graphql-api/badges/master/pipeline.svg)](https://gitlab.com/parob/graphql-api/commits/master)
 
 ## Installation
-GraphQL-API is a Python package, and is compatible with `Python 3` only (for now). It can be installed through `pip`.
 
 ##### Pip
 ```
