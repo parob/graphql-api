@@ -6,7 +6,7 @@ import uuid
 from typing import List, Tuple, Dict, Type
 
 from graphql.language import ast
-from requests.exceptions import ConnectionError
+from requests.exceptions import RequestException
 
 from graphql import (
     GraphQLInputObjectType,
@@ -96,7 +96,7 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
                 for key, field in type.fields.items():
                     field.resolver = resolver
             elif isinstance(type, GraphQLEnumType):
-                if not self.ignore_unsupported:
+                if not self.ignore_unsupported:z
                     raise GraphQLError(
                         f"GraphQLScalarType '{type}' type is not supported "
                         f"in a remote executor '{self.url}'."
@@ -159,7 +159,7 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
                 http_timeout=self.http_timeout,
                 verify=self.verify
             )
-        except ConnectionError as e:
+        except RequestException as e:
             import sys
             err_msg = f"{e}, remote service '{self.name}' is unavailable."
             raise type(e)(err_msg).with_traceback(sys.exc_info()[2])
