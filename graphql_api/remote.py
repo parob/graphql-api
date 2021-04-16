@@ -50,6 +50,7 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
         description=None,
         http_method="GET",
         http_headers=None,
+        http_timeout=None,
         verify=True
     ):
 
@@ -63,6 +64,7 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
         self.url = url
         self.http_method = http_method
         self.http_headers = http_headers
+        self.http_timeout = http_timeout
         self.verify = verify
         self.ignore_unsupported = True
 
@@ -154,6 +156,7 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
                 operation_name=operation_name,
                 http_method=self.http_method,
                 http_headers=http_headers,
+                http_timeout=self.http_timeout,
                 verify=self.verify
             )
         except ConnectionError as e:

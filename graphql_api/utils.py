@@ -155,6 +155,7 @@ def http_query(
     operation_name=None,
     http_method="GET",
     http_headers=None,
+    http_timeout=10,
     verify=True
 ):
     params = {"query": query}
@@ -173,7 +174,8 @@ def http_query(
             url,
             params=params,
             verify=verify,
-            headers={'Accept': 'application/json', **http_headers}
+            headers={'Accept': 'application/json', **http_headers},
+            timeout=http_timeout
         )
 
     elif http_method == "POST":
@@ -181,7 +183,8 @@ def http_query(
             url,
             json=params,
             verify=verify,
-            headers={'Accept': 'application/json', **http_headers}
+            headers={'Accept': 'application/json', **http_headers},
+            timeout=http_timeout
         )
 
     else:
