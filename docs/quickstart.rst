@@ -134,7 +134,7 @@ So to recap:
 
 - Python classes are mapped directly to GraphQL types.
 
-- Any instance method on a Python class that is labeled with a ``@schema.query`` (or ``@schema.mutation``) decorator is mapped to a field on the **Schema**.
+- Any instance method on a Python class that is labeled with a ``@schema.type`` decorator is mapped to a field on the **Schema**.
 
 - The `typehints <https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html>`_ on methods are mapped to field arguments and return types in the **Schema**.
 
@@ -151,7 +151,7 @@ Type Mapping
 
 GraphQL-API maps Python types directly to the equivalent GraphQL types.
 
-This means you **must** specify all the type hints for any methods that are marked with the ``@schema.query`` (or ``@schema.mutation``) decorator. If a type hint is not specified then that argument will be ignored.
+This means you **must** specify all the type hints for any methods that are marked with the ``@schema.type`` decorator. If a type hint is not specified then that argument will be ignored.
 
 Here are *some* of the types that GraphQL-API can map:
 

@@ -38,18 +38,18 @@ For example:
 
         class Human:
 
-            @schema.query
+            @schema.field
             def name(self) -> str:
                 return "Tom"
 
         @schema.root
         class Root:
 
-            @schema.query
+            @schema.field
             def hello_world(self) -> str:
                 return "Hello world!"
 
-            @schema.query
+            @schema.field
             def a_person(self) -> Human:
                 return Human()
 
@@ -75,17 +75,13 @@ Method Decorators
 
 Classes will often have functionality that shouldn't exposed in the GraphQL schema.
 
-To handle this, only methods that are labeled with specific `decorators <https://realpython.com/primer-on-python-decorators/>`_ are mapped.
+To handle this, only methods that are labeled with the ``field`` `decorators <https://realpython.com/primer-on-python-decorators/>`_ are mapped.
 
-There are 2 decorators available that can label methods.
-
-    - ``@query``
-    - ``@mutation``
 
 Query
 `````
 
-The ``@query`` decorator is used to label a **method** that should be exposed as a **query** field on the GraphQL schema, for example:
+The ``@field`` decorator is used to label a **method** that should be exposed as a **query** field on the GraphQL schema, for example:
 
 .. code-block:: python
     :linenos:
@@ -95,10 +91,10 @@ The ``@query`` decorator is used to label a **method** that should be exposed as
 
     schema = GraphQLAPI()
 
-    @schema.root
+    @schema.type(root=True)
     class ExampleQueryDecorator:
 
-        @schema.query
+        @schema.field
         def hello(self, name: str) -> str:
             return self.hidden_hello(name)
 
@@ -113,13 +109,12 @@ In contrast, the *hidden_hello* **method** wont be exposed on the schema. Althou
 Mutation
 ````````
 
-The ``@schema.mutation`` decorator is almost identical to the ``@schema.query`` decorator, except it labels a **method** that should be exposed as a **mutation** field on the GraphQL schema.
+The ``@field(mutable=True)`` labels a **method** that should be exposed as a **mutation** field on the GraphQL schema.
 
-The ``@schema.mutation`` decorator should only be used on **methods** that mutate or modify data.
 
 |
 
-    Its **very important** to only use the ``@schema.query`` decorator for **methods** that fetch data and the ``@schema.mutation`` decorator for
+    Its **very important** to only use the ``@schema.field`` decorator for **methods** that fetch data and the ``@schema.field(mutable=True)`` decorator for
     **methods** that mutate data. The reasons why are explained in the **Schema Filtering** section below.
 
 |
@@ -129,17 +124,17 @@ Class Decorators
 
 There are 2 additional decorators that are used to label classes.
 
-    - ``@schema.type_interface``
-    - ``@schema.type_abstract``
+    - ``@schema.type(interface=True)``
+    - ``@schema.type(abstract=True)``
 
 Interface
 `````````
 
-The ``@schema.interface`` decorator can be used on a **class** to create a GraphQL interface type (instead of an type type).
+The ``@schema.type(interface=True)`` decorator can be used on a **class** to create a GraphQL interface type (instead of an type type).
 
 The interface functionality closely mirrors `GraphQL interfaces <http://graphql.github.io/learn/schema/#interfaces>`_.
 
-For example the ``@schema.interface`` decorator is being used here:
+For example the ``@schema.type(interface=True)`` decorator is being used here:
 
 .. code-block:: python
 
@@ -147,30 +142,30 @@ For example the ``@schema.interface`` decorator is being used here:
 
     schema = GraphQLAPI()
 
-    @schema.interface
+    @schema.type(interface=True)
     class Animal:
 
-        @schema.query
+        @schema.field
         def name(self) -> str:
             return "John Doe"
 
     class Human(Animal):
 
-        @schema.query
+        @schema.field
         def name(self) -> str:
             return "Thomas"
 
-        @schema.query
+        @schema.field
         def social_security_number(self) -> str:
             return "111-11-1111"
 
     class Dog(Animal):
 
-        @schema.query
+        @schema.field
         def name(self, name: str) -> str:
             return "Spot"
 
-        @schema.query
+        @schema.field
         def favourite_toy(self) -> str:
             return "Ball"
 
@@ -280,7 +275,7 @@ A GraphQL service *normally* has two separate schemas with two separate **Root t
 
 This is because **data fetches** can be run in parallel, whereas **data updates** must always run sequentially.
 
-GraphQL-API uses just one **Root class**, and the ``@schema.query`` and ``@schema.mutation`` decorators are used to filter the fields into two **Root types**.
+GraphQL-API uses just one **Root class**, and the ``@schema.field`` and ``@schema.field(mutable=True)`` decorators are used to filter the fields into two **Root types**.
 
 Here is an example to see exactly how the **Root class** gets mapped into two **Root types**:
 
@@ -311,11 +306,11 @@ Here is an example to see exactly how the **Root class** gets mapped into two **
         def message(self) -> str:
             pass
 
-        @schema.query
+        @schema.field
         def likes(self) -> int:
             pass
 
-        @schema.query
+        @schema.field
         def author(self) -> User:
             pass
 
