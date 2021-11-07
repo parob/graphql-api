@@ -231,18 +231,18 @@ class GraphQLRemoteObject:
     def from_url(
         cls,
         url: str,
-        schema: GraphQLAPI,
+        api: GraphQLAPI,
         http_method: str = "GET"
     ) -> 'GraphQLRemoteObject':
         executor = GraphQLRemoteExecutor(url=url, http_method=http_method)
 
-        return GraphQLRemoteObject(executor=executor, schema=schema)
+        return GraphQLRemoteObject(executor=executor, api=api)
 
     # noinspection PyProtectedMember
     def __init__(
         self,
         executor: GraphQLBaseExecutor,
-        schema: GraphQLAPI = None,
+        api: GraphQLAPI = None,
         mappers: GraphQLMappers = None,
         python_type: Type = None,
         call_history: List[Tuple['GraphQLRemoteField', Dict]] = None,
@@ -251,14 +251,14 @@ class GraphQLRemoteObject:
         if not call_history:
             call_history = []
 
-        if not schema and python_type:
-            schema = GraphQLAPI(root=python_type)
+        if not api and python_type:
+            api = GraphQLAPI(root=python_type)
 
         elif not python_type:
-            python_type = schema.root_type
+            python_type = api.root_type
 
         self.executor = executor
-        self.schema = schema
+        self.api = api
         self.mappers = mappers
         self.call_history = call_history
         self.values = {}
@@ -272,13 +272,13 @@ class GraphQLRemoteObject:
 
     def _map(self, force=False):
         if self.mappers is None:
-            schema = self.schema
+            api = self.api
 
-            schema.graphql_schema()
+            api.graphql_schema()
 
             self.mappers = GraphQLMappers(
-                query_mapper=schema.query_mapper,
-                mutable_mapper=schema.mutation_mapper
+                query_mapper=api.query_mapper,
+                mutable_mapper=api.mutation_mapper
             )
 
         if not self.mapped_types:
@@ -468,7 +468,7 @@ class GraphQLRemoteObject:
 
                 obj = GraphQLRemoteObject(
                     executor=self.executor,
-                    schema=self.schema,
+                    api=self.api,
                     python_type=python_type,
                     mappers=self.mappers,
                     call_history=[*self.call_history, (field, args)]
@@ -482,7 +482,7 @@ class GraphQLRemoteObject:
                     for remote_object_data in data:
                         remote_object = GraphQLRemoteObject(
                             executor=self.executor,
-                            schema=self.schema,
+                            api=self.api,
                             python_type=python_type,
                             mappers=self.mappers,
                             call_history=[*self.call_history, (field, args)]

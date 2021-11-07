@@ -26,7 +26,7 @@ class TestGraphQLRemote:
 
         house: House = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         assert house.number_of_doors() == 5
@@ -57,7 +57,7 @@ class TestGraphQLRemote:
 
         house: House = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         doors = house.doors()
@@ -106,7 +106,7 @@ class TestGraphQLRemote:
 
         house: House = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         doors = house.doors()
@@ -130,7 +130,7 @@ class TestGraphQLRemote:
 
         house: House = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         assert house.type() == HouseType.bungalow
@@ -165,7 +165,7 @@ class TestGraphQLRemote:
 
         house: House = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         assert house.get_room().room_type() == RoomType.bedroom
@@ -184,7 +184,7 @@ class TestGraphQLRemote:
 
         person: Person = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         assert person.id() == person_id
@@ -210,7 +210,7 @@ class TestGraphQLRemote:
 
         counter: Counter = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         assert counter.value == 0
@@ -234,7 +234,7 @@ class TestGraphQLRemote:
 
         multiplier: Multiplier = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         assert multiplier.calculate(4, 2) == 8
@@ -265,7 +265,7 @@ class TestGraphQLRemote:
 
         bank: Bank = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         assert bank.owner().age == 25
@@ -288,7 +288,7 @@ class TestGraphQLRemote:
 
         counter: Counter = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         assert counter.add(value=5) == 5
@@ -306,7 +306,7 @@ class TestGraphQLRemote:
 
         calculator: Calculator = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         assert calculator.square(value=5) == 25
@@ -328,7 +328,7 @@ class TestGraphQLRemote:
 
         calculator: Calculator = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         assert calculator.add(values=[5, 2, 7]) == 14
@@ -355,7 +355,7 @@ class TestGraphQLRemote:
 
         house: House = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
         assert house.value(garden=Garden(size=10)) == 90
 
@@ -404,7 +404,7 @@ class TestGraphQLRemote:
 
         house: House = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         with pytest.raises(
@@ -469,7 +469,7 @@ class TestGraphQLRemote:
 
         flipper: Flipper = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         assert flipper.value()
@@ -555,7 +555,7 @@ class TestGraphQLRemote:
 
         root: Root = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         person: Person = root.rob()
@@ -591,7 +591,7 @@ class TestGraphQLRemote:
 
         person: Person = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         assert person.age() == 50
@@ -613,7 +613,7 @@ class TestGraphQLRemote:
 
         person: Person = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         assert person.age() == 50
@@ -635,7 +635,7 @@ class TestGraphQLRemote:
 
         person: Person = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         assert person.age() == 50
@@ -658,7 +658,7 @@ class TestGraphQLRemote:
 
         person: Person = GraphQLRemoteObject(
             executor=api.executor(),
-            schema=api
+            api=api
         )
 
         assert person.age() == 50
