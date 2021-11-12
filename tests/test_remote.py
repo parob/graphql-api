@@ -1,3 +1,4 @@
+import asyncio
 import enum
 import uuid
 from typing import Optional, List
@@ -8,10 +9,12 @@ import pytest
 from graphql_api.error import GraphQLError
 from graphql_api.mapper import GraphQLMetaKey
 from graphql_api.api import GraphQLAPI
-from graphql_api.remote import GraphQLRemoteObject
-
+from graphql_api.remote import GraphQLRemoteObject, GraphQLRemoteExecutor, GraphQLAsyncStub
 
 # noinspection PyTypeChecker
+from tests.test_graphql import available
+
+
 class TestGraphQLRemote:
 
     def test_remote_query(self):
@@ -478,7 +481,7 @@ class TestGraphQLRemote:
 
         with pytest.raises(
             GraphQLError,
-            match="mutated objects cannot be refetched"
+            match="mutated objects cannot be re-fetched"
         ):
             flipped_flipper.flagged_flip()
 
@@ -663,3 +666,34 @@ class TestGraphQLRemote:
 
         assert person.age() == 50
         assert person.hello() == "hello"
+
+    star_wars_api_url = "https://swapi-graphql.netlify.app/.netlify/functions/index"
+
+    # noinspection DuplicatedCode,PyUnusedLocal
+    @pytest.mark.skipif(not available(star_wars_api_url),
+                        reason=f"The star wars API '{star_wars_api_url}' is unavailable")
+    def test_remote_get_async(self):
+        star_wars_api = GraphQLAPI()
+
+        remote_executor = GraphQLRemoteExecutor(url=self.star_wars_api_url)
+
+        class FilmsConnection(GraphQLAsyncStub):
+
+            @star_wars_api.field
+            def total_count(self) -> int:
+                pass
+
+        @star_wars_api.type(root=True)
+        class StarWarsAPI:
+            @star_wars_api.field
+            def all_films(self) -> FilmsConnection:
+                pass
+
+        api: StarWarsAPI = GraphQLRemoteObject(
+            executor=remote_executor,
+            api=star_wars_api
+        )
+
+        total_count = asyncio.run(api.all_films().call_async("total_count"))
+
+        assert total_count >= 6
