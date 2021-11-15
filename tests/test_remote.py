@@ -4,6 +4,7 @@ import uuid
 from typing import Optional, List
 from uuid import UUID
 
+import aiohttp
 import pytest
 
 from graphql_api.error import GraphQLError
@@ -667,33 +668,36 @@ class TestGraphQLRemote:
         assert person.age() == 50
         assert person.hello() == "hello"
 
-    star_wars_api_url = "https://swapi-graphql.netlify.app/.netlify/functions/index"
+    utc_time_api_url = "https://europe-west2-parob-297412.cloudfunctions.net/utc_time"
 
     # noinspection DuplicatedCode,PyUnusedLocal
-    @pytest.mark.skipif(not available(star_wars_api_url),
-                        reason=f"The star wars API '{star_wars_api_url}' is unavailable")
+    @pytest.mark.skipif(not available(utc_time_api_url),
+                        reason=f"The UTCTime API '{utc_time_api_url}' is unavailable")
     def test_remote_get_async(self):
-        star_wars_api = GraphQLAPI()
+        utc_time_api = GraphQLAPI()
 
-        remote_executor = GraphQLRemoteExecutor(url=self.star_wars_api_url)
+        remote_executor = GraphQLRemoteExecutor(url=self.utc_time_api_url)
 
-        class FilmsConnection(GraphQLAsyncStub):
-
-            @star_wars_api.field
-            def total_count(self) -> int:
+        @utc_time_api.type(root=True)
+        class UTCTimeAPI:
+            @utc_time_api.field
+            def now(self) -> str:
                 pass
 
-        @star_wars_api.type(root=True)
-        class StarWarsAPI:
-            @star_wars_api.field
-            def all_films(self) -> FilmsConnection:
-                pass
-
-        api: StarWarsAPI = GraphQLRemoteObject(
+        api: UTCTimeAPI = GraphQLRemoteObject(
             executor=remote_executor,
-            api=star_wars_api
+            api=utc_time_api
         )
 
-        total_count = asyncio.run(api.all_films().call_async("total_count"))
+        async def fetch():
+            tasks = []
+            for number in range(0, 10):
+                tasks.append(asyncio.ensure_future(api.call_async("now")))
 
-        assert total_count >= 6
+            return await asyncio.gather(*tasks)
+
+        total_counts = asyncio.run(fetch())
+
+        assert len(set(total_counts)) == 10
+
+
