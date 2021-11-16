@@ -318,6 +318,9 @@ class GraphQLRemoteObject:
         if not delay_mapping:
             self._map()
 
+    def clear_cache(self):
+        self.values.clear()
+
     def _map(self, force=False):
         if self.mappers is None:
             api = self.api
