@@ -1,7 +1,6 @@
 import asyncio
 import enum
 import re
-
 import aiohttp
 
 from json.decoder import JSONDecodeError
@@ -175,39 +174,38 @@ async def http_query(
     if operation_name:
         params["operationName"] = operation_name
 
-    session = aiohttp.ClientSession()
+    async with aiohttp.ClientSession() as session:
+        if http_method == "GET":
+            r = await session.get(
+                url,
+                params=params,
+                ssl=verify,
+                headers={'Accept': 'application/json', **http_headers},
+                timeout=ClientTimeout(total=http_timeout)
+            )
 
-    if http_method == "GET":
-        r = await session.get(
-            url,
-            params=params,
-            ssl=verify,
-            headers={'Accept': 'application/json', **http_headers},
-            timeout=ClientTimeout(total=http_timeout)
-        )
+        elif http_method == "POST":
+            r = await session.post(
+                url,
+                json=params,
+                ssl=verify,
+                headers={'Accept': 'application/json', **http_headers},
+                timeout=ClientTimeout(total=http_timeout)
+            )
 
-    elif http_method == "POST":
-        r = await session.post(
-            url,
-            json=params,
-            ssl=verify,
-            headers={'Accept': 'application/json', **http_headers},
-            timeout=ClientTimeout(total=http_timeout)
-        )
+        else:
+            raise AttributeError(f"Invalid HTTP method {http_method}")
 
-    else:
-        raise AttributeError(f"Invalid HTTP method {http_method}")
+        if r.status != 200:
+            raise ValueError(
+                f"Invalid response code '{r.status}'"
+            )
 
-    if r.status != 200:
-        raise ValueError(
-            f"Invalid response code '{r.status}'"
-        )
-
-    try:
-        json = await r.json()
-    except JSONDecodeError as e:
-        raise ValueError(
-            f"{e}, unable to decode JSON"
-        )
+        try:
+            json = await r.json()
+        except JSONDecodeError as e:
+            raise ValueError(
+                f"{e}, unable to decode JSON"
+            )
 
     return json
