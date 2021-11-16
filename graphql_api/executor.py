@@ -2,7 +2,7 @@ import inspect
 
 from typing import Any, List, Dict, Callable
 
-from graphql import graphql_sync
+from graphql import graphql, graphql_sync
 
 from graphql.execution import ExecutionResult
 from graphql.type.schema import GraphQLSchema
@@ -25,6 +25,14 @@ class GraphQLBaseExecutor:
         pass
 
     def execute(
+        self,
+        query,
+        variables=None,
+        operation_name=None
+    ) -> ExecutionResult:
+        pass
+
+    async def execute_async(
         self,
         query,
         variables=None,
@@ -81,6 +89,35 @@ class GraphQLExecutor(GraphQLBaseExecutor):
             root_value = self.root_value
 
         value = graphql_sync(
+            self.schema,
+            query,
+            context_value=context,
+            variable_values=variables,
+            operation_name=operation_name,
+            middleware=self.adapt_middleware(self.middleware),
+            root_value=root_value
+        )
+        return value
+
+    async def execute_async(
+        self,
+        query,
+        variables=None,
+        operation_name=None,
+        root_value=None,
+        context=None
+    ) -> ExecutionResult:
+
+        context = GraphQLContext(
+            schema=self.schema,
+            meta=self.meta,
+            executor=self
+        )
+
+        if root_value is None:
+            root_value = self.root_value
+
+        value = await graphql(
             self.schema,
             query,
             context_value=context,

@@ -1,3 +1,4 @@
+import asyncio
 import enum
 import inspect
 import json
@@ -51,7 +52,8 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
         http_method="GET",
         http_headers=None,
         http_timeout=None,
-        verify=True
+        verify=True,
+        ignore_unsupported=True
     ):
 
         if not description:
@@ -66,7 +68,7 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
         self.http_headers = http_headers
         self.http_timeout = http_timeout
         self.verify = verify
-        self.ignore_unsupported = True
+        self.ignore_unsupported = ignore_unsupported
 
         super().__init__(name=name,
                          fields=self.build_fields,
@@ -107,10 +109,11 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
                     if isinstance(type, GraphQLInterfaceType) \
                     else 'GraphQLUnionType'
 
-                raise GraphQLError(
-                    f"{super_type} '{type}' type is not supported"
-                    f" from remote executor '{self.url}'."
-                )
+                if not self.ignore_unsupported:
+                    raise GraphQLError(
+                        f"{super_type} '{type}' type is not supported"
+                        f" from remote executor '{self.url}'."
+                    )
             elif isinstance(type, GraphQLScalarType):
                 if type not in [
                     GraphQLID,
@@ -135,7 +138,7 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
         # noinspection PyProtectedMember
         return ast_schema.query_type.fields
 
-    def execute(
+    async def execute_async(
         self,
         query,
         variable_values=None,
@@ -149,7 +152,7 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
             http_headers = {**self.http_headers, **http_headers}
 
         try:
-            json_ = http_query(
+            json_ = await http_query(
                 url=self.url,
                 query=query,
                 variable_values=variable_values,
@@ -159,6 +162,45 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
                 http_timeout=self.http_timeout,
                 verify=self.verify
             )
+        except RequestException as e:
+            import sys
+            err_msg = f"{e}, remote service '{self.name}' is unavailable."
+            raise type(e)(err_msg).with_traceback(sys.exc_info()[2])
+
+        except ValueError as e:
+            raise ValueError(
+                f"{e}, from remote service '{self.name}'."
+            )
+
+        return ExecutionResult(
+            data=json_.get('data'),
+            errors=json_.get('errors')
+        )
+
+    def execute(
+            self,
+            query,
+            variable_values=None,
+            operation_name=None,
+            http_headers=None
+    ) -> ExecutionResult:
+
+        if http_headers is None:
+            http_headers = self.http_headers
+        else:
+            http_headers = {**self.http_headers, **http_headers}
+
+        try:
+            json_ = asyncio.run(http_query(
+                url=self.url,
+                query=query,
+                variable_values=variable_values,
+                operation_name=operation_name,
+                http_method=self.http_method,
+                http_headers=http_headers,
+                http_timeout=self.http_timeout,
+                verify=self.verify
+            ))
         except RequestException as e:
             import sys
             err_msg = f"{e}, remote service '{self.name}' is unavailable."
@@ -220,6 +262,12 @@ class GraphQLRemoteError(GraphQLError):
         super().__init__(*args, **kwargs)
         self.query = query
         self.result = result
+
+
+class GraphQLAsyncStub:
+
+    async def call_async(self, name, *args, **kwargs):
+        pass
 
 
 class GraphQLRemoteObject:
@@ -299,6 +347,22 @@ class GraphQLRemoteObject:
 
             self.values[(field, arg_hash)] = field_value
 
+    async def fetch_async(
+        self,
+        fields: List[Tuple['GraphQLRemoteField', Dict]] = None
+    ):
+        if fields is None:
+            fields = self._fields()
+
+        field_values = await self._fetch_async(fields=fields)
+
+        for field, args in fields:
+            field_value = field_values.get(to_camel_case(field.name))
+
+            arg_hash = self.hash(args)
+
+            self.values[(field, arg_hash)] = field_value
+
     def _fields(self):
         self._map()
 
@@ -325,9 +389,37 @@ class GraphQLRemoteObject:
         Load all the scalar values for this object into the values dictionary
         :return:
         """
-        self._map()
         if fields is None:
             fields = self._fields()
+
+        query = self._fetch_build_query(fields=fields)
+
+        result = self.executor.execute(query=query)
+
+        return self._fetch_process(query, result, fields)
+
+    async def _fetch_async(
+        self,
+        fields: List[Tuple['GraphQLRemoteField', Dict]] = None
+    ):
+        """
+        Load all the scalar values for this object into the values dictionary
+        :return:
+        """
+        if fields is None:
+            fields = self._fields()
+
+        query = self._fetch_build_query(fields=fields)
+
+        result = await self.executor.execute_async(query=query)
+
+        return self._fetch_process(query, result, fields)
+
+    def _fetch_build_query(
+        self,
+        fields: List[Tuple['GraphQLRemoteField', Dict]]
+    ):
+        self._map()
 
         mutable = any([
             field.mutable
@@ -340,9 +432,14 @@ class GraphQLRemoteObject:
             mutable=mutable
         )
 
-        query = query_builder.build()
+        return query_builder.build()
 
-        result = self.executor.execute(query=query)
+    def _fetch_process(
+        self,
+        query,
+        result: ExecutionResult,
+        fields: List[Tuple['GraphQLRemoteField', Dict]]
+    ):
 
         if result.errors:
             raise GraphQLRemoteError(
@@ -433,9 +530,7 @@ class GraphQLRemoteObject:
 
         return hash(frozenset(hashable_args.items()))
 
-    def get_value(self, field: 'GraphQLRemoteField', args: Dict):
-        self._map()
-
+    def _get_value_cached(self, field: 'GraphQLRemoteField', args: Dict):
         try:
             arg_hash = self.hash(args)
         except TypeError:
@@ -446,80 +541,168 @@ class GraphQLRemoteObject:
 
         for ((_field, _arg_hash), value) in self.values.items():
             if field.name == _field.name and arg_hash == _arg_hash:
-                return value
+                return value, arg_hash
 
-        if (field, arg_hash) not in self.values.keys():
-            mutated = any([field.mutable for field, args in self.call_history])
+        return None, arg_hash
 
-            if mutated and (field.scalar or field.mutable or field.nullable):
-                raise GraphQLError(
-                    f"Cannot fetch {field.name} from {self.python_type}, "
-                    f"mutated objects cannot be refetched."
-                )
+    def _get_value_check_mutated(self, field):
+        mutated = any([field.mutable for field, args in self.call_history])
 
-            if field.scalar:
-                self.fetch(fields=[(field, args)])
+        if mutated and (field.scalar or field.mutable or field.nullable):
+            raise GraphQLError(
+                f"Cannot fetch {field.name} from {self.python_type}, "
+                f"mutated objects cannot be re-fetched."
+            )
+
+    async def get_value_async(self, field: 'GraphQLRemoteField', args: Dict):
+        self._map()
+        value, arg_hash = self._get_value_cached(field, args)
+
+        if value:
+            return value
+
+        if (field, arg_hash) in self.values.keys():
+            return self.values.get((field, arg_hash), None)
+
+        self._get_value_check_mutated(field)
+
+        if field.scalar:
+            await self.fetch_async(fields=[(field, args)])
+            return self.values.get((field, arg_hash), None)
+
+        else:
+            python_type = self.mappers.map(
+                field.graphql_field.type,
+                reverse=True
+            )
+
+            obj = GraphQLRemoteObject(
+                executor=self.executor,
+                api=self.api,
+                python_type=python_type,
+                mappers=self.mappers,
+                call_history=[*self.call_history, (field, args)]
+            )
+
+            if field.list:
+                data = await obj._fetch_async()
+                fields = obj._fields()
+                remote_objects = []
+
+                for remote_object_data in data:
+                    remote_object = GraphQLRemoteObject(
+                        executor=self.executor,
+                        api=self.api,
+                        python_type=python_type,
+                        mappers=self.mappers,
+                        call_history=[*self.call_history, (field, args)]
+                    )
+
+                    for field, args in fields:
+                        field_value = remote_object_data.get(
+                            to_camel_case(field.name)
+                        )
+                        arg_hash = self.hash(args)
+                        field_key = (field, arg_hash)
+                        remote_object.values[field_key] = field_value
+
+                    remote_objects.append(remote_object)
+                return remote_objects
 
             else:
-                python_type = self.mappers.map(
-                    field.graphql_field.type,
-                    reverse=True
-                )
+                if field.mutable or field.nullable:
+                    try:
+                        await obj.fetch_async()
+                    except NullResponse:
+                        return None
 
-                obj = GraphQLRemoteObject(
-                    executor=self.executor,
-                    api=self.api,
-                    python_type=python_type,
-                    mappers=self.mappers,
-                    call_history=[*self.call_history, (field, args)]
-                )
+                if field.mutable:
+                    meta = self.mappers.mutable_mapper.meta.get(
+                        (self.graphql_mutable_type.name, field.name)
+                    )
 
-                if field.list:
-                    data = obj._fetch()
-                    fields = obj._fields()
-                    remote_objects = []
+                    if field.recursive and \
+                            meta and \
+                            meta.get(GraphQLMetaKey.resolve_to_self, True):
+                        self.values.update(obj.values)
+                        return self
 
-                    for remote_object_data in data:
-                        remote_object = GraphQLRemoteObject(
-                            executor=self.executor,
-                            api=self.api,
-                            python_type=python_type,
-                            mappers=self.mappers,
-                            call_history=[*self.call_history, (field, args)]
+                return obj
+
+    def get_value(self, field: 'GraphQLRemoteField', args: Dict):
+        self._map()
+        value, arg_hash = self._get_value_cached(field, args)
+
+        if value:
+            return value
+
+        if (field, arg_hash) in self.values.keys():
+            return self.values.get((field, arg_hash), None)
+
+        self._get_value_check_mutated(field)
+
+        if field.scalar:
+            self.fetch(fields=[(field, args)])
+            return self.values.get((field, arg_hash), None)
+
+        else:
+            python_type = self.mappers.map(
+                field.graphql_field.type,
+                reverse=True
+            )
+
+            obj = GraphQLRemoteObject(
+                executor=self.executor,
+                api=self.api,
+                python_type=python_type,
+                mappers=self.mappers,
+                call_history=[*self.call_history, (field, args)]
+            )
+
+            if field.list:
+                data = obj._fetch()
+                fields = obj._fields()
+                remote_objects = []
+
+                for remote_object_data in data:
+                    remote_object = GraphQLRemoteObject(
+                        executor=self.executor,
+                        api=self.api,
+                        python_type=python_type,
+                        mappers=self.mappers,
+                        call_history=[*self.call_history, (field, args)]
+                    )
+
+                    for field, args in fields:
+                        field_value = remote_object_data.get(
+                            to_camel_case(field.name)
                         )
+                        arg_hash = self.hash(args)
+                        field_key = (field, arg_hash)
+                        remote_object.values[field_key] = field_value
 
-                        for field, args in fields:
-                            field_value = remote_object_data.get(
-                                to_camel_case(field.name)
-                            )
-                            arg_hash = self.hash(args)
-                            field_key = (field, arg_hash)
-                            remote_object.values[field_key] = field_value
+                    remote_objects.append(remote_object)
+                return remote_objects
 
-                        remote_objects.append(remote_object)
-                    return remote_objects
+            else:
+                if field.mutable or field.nullable:
+                    try:
+                        obj.fetch()
+                    except NullResponse:
+                        return None
 
-                else:
-                    if field.mutable or field.nullable:
-                        try:
-                            obj.fetch()
-                        except NullResponse:
-                            return None
+                if field.mutable:
+                    meta = self.mappers.mutable_mapper.meta.get(
+                        (self.graphql_mutable_type.name, field.name)
+                    )
 
-                    if field.mutable:
-                        meta = self.mappers.mutable_mapper.meta.get(
-                            (self.graphql_mutable_type.name, field.name)
-                        )
+                    if field.recursive and \
+                            meta and \
+                            meta.get(GraphQLMetaKey.resolve_to_self, True):
+                        self.values.update(obj.values)
+                        return self
 
-                        if field.recursive and \
-                           meta and \
-                           meta.get(GraphQLMetaKey.resolve_to_self, True):
-                            self.values.update(obj.values)
-                            return self
-
-                    return obj
-
-        return self.values.get((field, arg_hash), None)
+                return obj
 
     def get_field(self, name):
         self._map()
@@ -551,6 +734,18 @@ class GraphQLRemoteObject:
         )
 
     def __getattr__(self, name):
+        field, auto_call = self.getattr(name)
+
+        if auto_call:
+            return field()
+
+        return field
+
+    async def call_async(self, name, *args, **kwargs):
+        field, auto_call = self.getattr(name, pass_through=False)
+        return await field.call_async(*args, **kwargs)
+
+    def getattr(self, name, pass_through=True):
         self._map()
 
         attribute_type = getattr(self.python_type, name, None)
@@ -588,6 +783,9 @@ class GraphQLRemoteObject:
             field = self.get_field(name)
 
         except GraphQLError as err:
+            if not pass_through:
+                raise err
+
             if "does not exist" in err.message:
                 if is_callable:
                     func = getattr(self.python_type, name)
@@ -598,28 +796,25 @@ class GraphQLRemoteObject:
                     )
 
                     if _is_method or _is_static_method:
-                        return func
+                        return func, False
                     else:
-                        return lambda *args, **kwargs: func(
+                        return (lambda *args, **kwargs: func(
                             self,
                             *args, **kwargs
-                        )
+                        )), False
 
                 if is_property:
                     prop = getattr(self.python_type, name)
-                    return prop.fget(self)
+                    return prop.fget(self), False
             raise
 
-        if auto_call:
-            return field()
-
-        return field
+        return field, auto_call
 
     def __str__(self):
         self._map()
 
         return f"<RemoteObject({self.graphql_query_type.name}) " \
-            f"at {hex(id(self))}>"
+               f"at {hex(id(self))}>"
 
 
 class GraphQLRemoteField:
@@ -672,6 +867,11 @@ class GraphQLRemoteField:
         if args:
             self.remap_args_to_kwargs(args=args, kwargs=kwargs)
         return self.parent.get_value(self, kwargs)
+
+    async def call_async(self, *args, **kwargs):
+        if args:
+            self.remap_args_to_kwargs(args=args, kwargs=kwargs)
+        return await self.parent.get_value_async(self, kwargs)
 
     def __hash__(self):
         return hash(hash(self.parent.python_type.__name__) + hash(self.name))
@@ -824,7 +1024,7 @@ class GraphQLRemoteQueryBuilder:
             return input_value
 
 
-def remote_execute(executor, context):
+def remote_execute(executor: GraphQLBaseExecutor, context):
     operation = context.request.info.operation.operation
     query = context.field.query
     redirected_query = operation.value + " " + query
@@ -832,7 +1032,7 @@ def remote_execute(executor, context):
     result = executor.execute(query=redirected_query)
 
     if result.errors:
-        raise GraphQLError(result.errors)
+        raise GraphQLError(str(result.errors))
 
     return result.data
 

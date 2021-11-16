@@ -7,6 +7,7 @@ name = "pypi"
 graphql-core = "==3.1.2"
 requests = "==2.24.0"
 typing-inspect = "==0.6.0"
+aiohttp = "*"
 
 [dev-packages]
 # Testing

@@ -1,17 +1,21 @@
+import asyncio
 import enum
 import uuid
 from typing import Optional, List
 from uuid import UUID
 
+import aiohttp
 import pytest
 
 from graphql_api.error import GraphQLError
 from graphql_api.mapper import GraphQLMetaKey
 from graphql_api.api import GraphQLAPI
-from graphql_api.remote import GraphQLRemoteObject
-
+from graphql_api.remote import GraphQLRemoteObject, GraphQLRemoteExecutor, GraphQLAsyncStub
 
 # noinspection PyTypeChecker
+from tests.test_graphql import available
+
+
 class TestGraphQLRemote:
 
     def test_remote_query(self):
@@ -478,7 +482,7 @@ class TestGraphQLRemote:
 
         with pytest.raises(
             GraphQLError,
-            match="mutated objects cannot be refetched"
+            match="mutated objects cannot be re-fetched"
         ):
             flipped_flipper.flagged_flip()
 
@@ -663,3 +667,37 @@ class TestGraphQLRemote:
 
         assert person.age() == 50
         assert person.hello() == "hello"
+
+    utc_time_api_url = "https://europe-west2-parob-297412.cloudfunctions.net/utc_time"
+
+    # noinspection DuplicatedCode,PyUnusedLocal
+    @pytest.mark.skipif(not available(utc_time_api_url),
+                        reason=f"The UTCTime API '{utc_time_api_url}' is unavailable")
+    def test_remote_get_async(self):
+        utc_time_api = GraphQLAPI()
+
+        remote_executor = GraphQLRemoteExecutor(url=self.utc_time_api_url)
+
+        @utc_time_api.type(root=True)
+        class UTCTimeAPI:
+            @utc_time_api.field
+            def now(self) -> str:
+                pass
+
+        api: UTCTimeAPI = GraphQLRemoteObject(
+            executor=remote_executor,
+            api=utc_time_api
+        )
+
+        async def fetch():
+            tasks = []
+            for number in range(0, 10):
+                tasks.append(asyncio.ensure_future(api.call_async("now")))
+
+            return await asyncio.gather(*tasks)
+
+        total_counts = asyncio.run(fetch())
+
+        assert len(set(total_counts)) == 10
+
+
