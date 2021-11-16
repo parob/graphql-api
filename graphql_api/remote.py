@@ -4,7 +4,7 @@ import inspect
 import json
 import uuid
 
-from typing import List, Tuple, Dict, Type, Callable, Union
+from typing import List, Tuple, Dict, Type
 
 from graphql.language import ast
 from requests.exceptions import RequestException
@@ -347,7 +347,10 @@ class GraphQLRemoteObject:
 
             self.values[(field, arg_hash)] = field_value
 
-    async def fetch_async(self, fields: List[Tuple['GraphQLRemoteField', Dict]] = None):
+    async def fetch_async(
+        self,
+        fields: List[Tuple['GraphQLRemoteField', Dict]] = None
+    ):
         if fields is None:
             fields = self._fields()
 
@@ -395,7 +398,10 @@ class GraphQLRemoteObject:
 
         return self._fetch_process(query, result, fields)
 
-    async def _fetch_async(self, fields: List[Tuple['GraphQLRemoteField', Dict]] = None):
+    async def _fetch_async(
+        self,
+        fields: List[Tuple['GraphQLRemoteField', Dict]] = None
+    ):
         """
         Load all the scalar values for this object into the values dictionary
         :return:
@@ -409,7 +415,10 @@ class GraphQLRemoteObject:
 
         return self._fetch_process(query, result, fields)
 
-    def _fetch_build_query(self, fields: List[Tuple['GraphQLRemoteField', Dict]]):
+    def _fetch_build_query(
+        self,
+        fields: List[Tuple['GraphQLRemoteField', Dict]]
+    ):
         self._map()
 
         mutable = any([

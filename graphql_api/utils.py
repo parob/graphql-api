@@ -3,8 +3,6 @@ import enum
 import re
 
 import aiohttp
-import aiohttp as aiohttp
-import requests
 
 from json.decoder import JSONDecodeError
 
