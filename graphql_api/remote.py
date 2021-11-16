@@ -45,15 +45,15 @@ from graphql_api.utils import \
 class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
 
     def __init__(
-            self,
-            url,
-            name="Remote",
-            description=None,
-            http_method="GET",
-            http_headers=None,
-            http_timeout=None,
-            verify=True,
-            ignore_unsupported=True
+        self,
+        url,
+        name="Remote",
+        description=None,
+        http_method="GET",
+        http_headers=None,
+        http_timeout=None,
+        verify=True,
+        ignore_unsupported=True
     ):
 
         if not description:
@@ -139,11 +139,11 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
         return ast_schema.query_type.fields
 
     async def execute_async(
-            self,
-            query,
-            variable_values=None,
-            operation_name=None,
-            http_headers=None
+        self,
+        query,
+        variable_values=None,
+        operation_name=None,
+        http_headers=None
     ) -> ExecutionResult:
 
         if http_headers is None:
@@ -220,9 +220,9 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
 class GraphQLMappers:
 
     def __init__(
-            self,
-            query_mapper: GraphQLTypeMapper,
-            mutable_mapper: GraphQLTypeMapper
+        self,
+        query_mapper: GraphQLTypeMapper,
+        mutable_mapper: GraphQLTypeMapper
     ):
         self.query_mapper = query_mapper
         self.mutable_mapper = mutable_mapper
@@ -277,10 +277,10 @@ class GraphQLRemoteObject:
 
     @classmethod
     def from_url(
-            cls,
-            url: str,
-            api: GraphQLAPI,
-            http_method: str = "GET"
+        cls,
+        url: str,
+        api: GraphQLAPI,
+        http_method: str = "GET"
     ) -> 'GraphQLRemoteObject':
         executor = GraphQLRemoteExecutor(url=url, http_method=http_method)
 
@@ -288,13 +288,13 @@ class GraphQLRemoteObject:
 
     # noinspection PyProtectedMember
     def __init__(
-            self,
-            executor: GraphQLBaseExecutor,
-            api: GraphQLAPI = None,
-            mappers: GraphQLMappers = None,
-            python_type: Type = None,
-            call_history: List[Tuple['GraphQLRemoteField', Dict]] = None,
-            delay_mapping: bool = True
+        self,
+        executor: GraphQLBaseExecutor,
+        api: GraphQLAPI = None,
+        mappers: GraphQLMappers = None,
+        python_type: Type = None,
+        call_history: List[Tuple['GraphQLRemoteField', Dict]] = None,
+        delay_mapping: bool = True
     ):
         if not call_history:
             call_history = []
@@ -435,10 +435,10 @@ class GraphQLRemoteObject:
         return query_builder.build()
 
     def _fetch_process(
-            self,
-            query,
-            result: ExecutionResult,
-            fields: List[Tuple['GraphQLRemoteField', Dict]]
+        self,
+        query,
+        result: ExecutionResult,
+        fields: List[Tuple['GraphQLRemoteField', Dict]]
     ):
 
         if result.errors:
@@ -821,11 +821,11 @@ class GraphQLRemoteField:
 
     # noinspection PyProtectedMember
     def __init__(
-            self,
-            name: str,
-            mutable: bool,
-            graphql_field: GraphQLField,
-            parent: GraphQLRemoteObject
+        self,
+        name: str,
+        mutable: bool,
+        graphql_field: GraphQLField,
+        parent: GraphQLRemoteObject
     ):
         self.name = name
         self.mutable = mutable
@@ -885,11 +885,11 @@ class GraphQLRemoteField:
 class GraphQLRemoteQueryBuilder:
 
     def __init__(
-            self,
-            call_stack: List[Tuple['GraphQLRemoteField', Dict]],
-            fields: List[Tuple['GraphQLRemoteField', Dict]],
-            mappers: GraphQLMappers,
-            mutable=False
+        self,
+        call_stack: List[Tuple['GraphQLRemoteField', Dict]],
+        fields: List[Tuple['GraphQLRemoteField', Dict]],
+        mappers: GraphQLMappers,
+        mutable=False
     ):
         self.call_stack = call_stack
         self.fields = fields
@@ -939,10 +939,10 @@ class GraphQLRemoteQueryBuilder:
 
     # noinspection PyMethodMayBeStatic
     def map_to_input_value(
-            self,
-            value,
-            mappers: GraphQLMappers,
-            expected_graphql_type=None
+        self,
+        value,
+        mappers: GraphQLMappers,
+        expected_graphql_type=None
     ):
         from graphql_api.mapper import is_scalar
 
