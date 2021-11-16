@@ -1027,21 +1027,21 @@ class TestGraphQL:
         assert not result.errors
         assert result.data == expected
 
-    location_api_url = "http://api.graphloc.com/graphql"
+    star_wars_api_url = "https://swapi-graphql.netlify.app/.netlify/functions/index"
 
     # noinspection DuplicatedCode,PyUnusedLocal
-    @pytest.mark.skipif(not available(location_api_url),
-                        reason=f"The location API '{location_api_url}' is unavailable")
+    @pytest.mark.skipif(not available(star_wars_api_url),
+                        reason=f"The star wars API '{star_wars_api_url}' is unavailable")
     def test_remote_get(self):
         api = GraphQLAPI()
 
-        RemoteAPI = GraphQLRemoteExecutor(url=self.location_api_url)
+        RemoteAPI = GraphQLRemoteExecutor(url=self.star_wars_api_url)
 
         @api.type(root=True)
         class Root:
 
             @api.field
-            def graph_loc(self, context: GraphQLContext) -> RemoteAPI:
+            def star_wars(self, context: GraphQLContext) -> RemoteAPI:
                 operation = context.request.info.operation.operation
                 query = context.field.query
                 redirected_query = operation.value + " " + query
@@ -1055,14 +1055,11 @@ class TestGraphQL:
         executor = api.executor()
 
         test_query = '''
-            query GetIPLocation {
-                graphLoc {
-                    getLocation(ip: "8.8.8.8") {
-                        location {
-                            latitude
-                            longitude
-                        }
-                    }
+            query GetAllFilms {
+                starWars {
+                  allFilms {
+                     totalCount
+                  }
                 }
             }
         '''
@@ -1070,17 +1067,17 @@ class TestGraphQL:
         result = executor.execute(test_query)
 
         assert not result.errors
-        assert len(result.data.get("graphLoc", {}).get("getLocation", {}).get("location", {})) == 2
+        assert result.data.get("starWars", {}).get("allFilms", {}).get("totalCount", {}) >= 6
 
-    europe_graphql_url = "https://graphql-pokemon.now.sh/"
+    pokemon_graphql_url = "https://graphqlpokemon.favware.tech/"
 
     # noinspection DuplicatedCode
-    @pytest.mark.skipif(not available(europe_graphql_url),
-                        reason=f"The graphql-europe API '{europe_graphql_url}' is unavailable")
+    @pytest.mark.skipif(not available(pokemon_graphql_url),
+                        reason=f"The Pokemon API '{pokemon_graphql_url}' is unavailable")
     def test_remote_post(self):
         api = GraphQLAPI()
 
-        RemoteAPI = GraphQLRemoteExecutor(url=self.europe_graphql_url, http_method="POST")
+        RemoteAPI = GraphQLRemoteExecutor(url=self.pokemon_graphql_url, http_method="POST")
 
         # noinspection PyUnusedLocal
         @api.type(root=True)
@@ -1102,9 +1099,9 @@ class TestGraphQL:
         executor = api.executor()
 
         test_query = '''
-            query GetConferences {
+            query getPokemon {
                 graphql {
-                    pokemon(name: "Pikachu") {
+                    getPokemon(pokemon: pikachu) {
                         types
                     }
                 }
@@ -1115,19 +1112,19 @@ class TestGraphQL:
 
         assert not result.errors
 
-        pokemon = result.data.get("graphql").get("pokemon")
+        pokemon = result.data.get("graphql").get("getPokemon")
 
         assert pokemon.get("types") == ["Electric"]
 
     @pytest.mark.skipif(
-        not available(europe_graphql_url),
-        reason=f"The graphql-europe API '{europe_graphql_url}' is unavailable"
+        not available(pokemon_graphql_url),
+        reason=f"The pokemon API '{pokemon_graphql_url}' is unavailable"
     )
     def test_remote_post_helper(self):
         api = GraphQLAPI()
 
         RemoteAPI = GraphQLRemoteExecutor(
-            url=self.europe_graphql_url,
+            url=self.pokemon_graphql_url,
             http_method="POST"
         )
 
@@ -1142,9 +1139,9 @@ class TestGraphQL:
         executor = api.executor()
 
         test_query = '''
-            query GetConferences {
+            query getPokemon {
                 graphql {
-                    pokemon(name: "Pikachu") {
+                    getPokemon(pokemon: pikachu) {
                         types
                     }
                 }
@@ -1155,7 +1152,7 @@ class TestGraphQL:
 
         assert not result.errors
 
-        pokemon = result.data.get("graphql").get("pokemon")
+        pokemon = result.data.get("graphql").get("getPokemon")
 
         assert pokemon.get("types") == ["Electric"]
 

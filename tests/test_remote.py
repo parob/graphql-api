@@ -1,17 +1,21 @@
+import asyncio
 import enum
 import uuid
 from typing import Optional, List
 from uuid import UUID
 
+import time
 import pytest
 
 from graphql_api.error import GraphQLError
 from graphql_api.mapper import GraphQLMetaKey
 from graphql_api.api import GraphQLAPI
-from graphql_api.remote import GraphQLRemoteObject
-
+from graphql_api.remote import GraphQLRemoteObject, GraphQLRemoteExecutor
 
 # noinspection PyTypeChecker
+from tests.test_graphql import available
+
+
 class TestGraphQLRemote:
 
     def test_remote_query(self):
@@ -478,7 +482,7 @@ class TestGraphQLRemote:
 
         with pytest.raises(
             GraphQLError,
-            match="mutated objects cannot be refetched"
+            match="mutated objects cannot be re-fetched"
         ):
             flipped_flipper.flagged_flip()
 
@@ -663,3 +667,53 @@ class TestGraphQLRemote:
 
         assert person.age() == 50
         assert person.hello() == "hello"
+
+    utc_time_api_url = "https://europe-west2-parob-297412.cloudfunctions.net/utc_time"
+
+    # noinspection DuplicatedCode,PyUnusedLocal
+    @pytest.mark.skipif(not available(utc_time_api_url),
+                        reason=f"The UTCTime API '{utc_time_api_url}' is unavailable")
+    def test_remote_get_async(self):
+        utc_time_api = GraphQLAPI()
+
+        remote_executor = GraphQLRemoteExecutor(url=self.utc_time_api_url)
+
+        @utc_time_api.type(root=True)
+        class UTCTimeAPI:
+            @utc_time_api.field
+            def now(self) -> str:
+                pass
+
+        api: UTCTimeAPI = GraphQLRemoteObject(
+            executor=remote_executor,
+            api=utc_time_api
+        )
+
+        request_count = 100
+
+        # Async test
+        async_start = time.time()
+
+        async def fetch():
+            tasks = []
+            for _ in range(0, request_count):
+                tasks.append(api.call_async("now"))
+            return await asyncio.gather(*tasks)
+
+        async_utc_now_list = asyncio.run(fetch())
+
+        async_time = time.time() - async_start
+        assert len(set(async_utc_now_list)) == request_count
+
+        # Sync test
+        sync_start = time.time()
+        sync_utc_now_list = []
+
+        for _ in range(0, request_count):
+            sync_utc_now_list.append(api.now())
+            api.clear_cache()   # Clear the API cache so that it re-fetches the request.
+        sync_time = time.time() - sync_start
+
+        assert len(set(sync_utc_now_list)) == request_count
+
+        assert sync_time >= 1.5 * async_time

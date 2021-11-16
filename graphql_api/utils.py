@@ -1,10 +1,11 @@
+import asyncio
 import enum
 import re
-
-import requests
+import aiohttp
 
 from json.decoder import JSONDecodeError
 
+from aiohttp import ClientTimeout
 from graphql import (
     GraphQLNonNull,
     GraphQLList,
@@ -126,11 +127,15 @@ def url_to_ast(
 ) -> GraphQLSchema:
     _introspect_query = get_introspection_query()
 
-    response = http_query(url=url,
-                          query=_introspect_query,
-                          http_method=http_method,
-                          http_headers=http_headers,
-                          verify=verify)
+    response = asyncio.run(
+        http_query(
+            url=url,
+            query=_introspect_query,
+            http_method=http_method,
+            http_headers=http_headers,
+            verify=verify
+        )
+    )
     errors = response.get('errors')
 
     if errors:
@@ -148,7 +153,7 @@ def executor_to_ast(executor) -> GraphQLSchema:
     return build_client_schema(introspect_schema)
 
 
-def http_query(
+async def http_query(
     url,
     query,
     variable_values=None,
@@ -169,37 +174,38 @@ def http_query(
     if operation_name:
         params["operationName"] = operation_name
 
-    if http_method == "GET":
-        r = requests.get(
-            url,
-            params=params,
-            verify=verify,
-            headers={'Accept': 'application/json', **http_headers},
-            timeout=http_timeout
-        )
+    async with aiohttp.ClientSession() as session:
+        if http_method == "GET":
+            r = await session.get(
+                url,
+                params=params,
+                ssl=verify,
+                headers={'Accept': 'application/json', **http_headers},
+                timeout=ClientTimeout(total=http_timeout)
+            )
 
-    elif http_method == "POST":
-        r = requests.post(
-            url,
-            json=params,
-            verify=verify,
-            headers={'Accept': 'application/json', **http_headers},
-            timeout=http_timeout
-        )
+        elif http_method == "POST":
+            r = await session.post(
+                url,
+                json=params,
+                ssl=verify,
+                headers={'Accept': 'application/json', **http_headers},
+                timeout=ClientTimeout(total=http_timeout)
+            )
 
-    else:
-        raise AttributeError(f"Invalid HTTP method {http_method}")
+        else:
+            raise AttributeError(f"Invalid HTTP method {http_method}")
 
-    if r.status_code != 200:
-        raise ValueError(
-            f"Invalid response code '{r.status_code}'"
-        )
+        if r.status != 200:
+            raise ValueError(
+                f"Invalid response code '{r.status}'"
+            )
 
-    try:
-        json = r.json()
-    except JSONDecodeError as e:
-        raise ValueError(
-            f"{e}, unable to decode JSON"
-        )
+        try:
+            json = await r.json()
+        except JSONDecodeError as e:
+            raise ValueError(
+                f"{e}, unable to decode JSON"
+            )
 
     return json
