@@ -4,13 +4,13 @@ import uuid
 from typing import Optional, List
 from uuid import UUID
 
-import aiohttp
+import time
 import pytest
 
 from graphql_api.error import GraphQLError
 from graphql_api.mapper import GraphQLMetaKey
 from graphql_api.api import GraphQLAPI
-from graphql_api.remote import GraphQLRemoteObject, GraphQLRemoteExecutor, GraphQLAsyncStub
+from graphql_api.remote import GraphQLRemoteObject, GraphQLRemoteExecutor
 
 # noinspection PyTypeChecker
 from tests.test_graphql import available
@@ -689,15 +689,31 @@ class TestGraphQLRemote:
             api=utc_time_api
         )
 
+        request_count = 100
+
+        # Async test
+        async_start = time.time()
+
         async def fetch():
             tasks = []
-            for number in range(0, 10):
-                tasks.append(asyncio.ensure_future(api.call_async("now")))
-
+            for _ in range(0, request_count):
+                tasks.append(api.call_async("now"))
             return await asyncio.gather(*tasks)
 
-        total_counts = asyncio.run(fetch())
+        async_utc_now_list = asyncio.run(fetch())
 
-        assert len(set(total_counts)) == 10
+        async_time = time.time() - async_start
+        assert len(set(async_utc_now_list)) == request_count
 
+        # Sync test
+        sync_start = time.time()
+        sync_utc_now_list = []
 
+        for _ in range(0, request_count):
+            sync_utc_now_list.append(api.now())
+            api.clear_cache()   # Clear the API cache so that it re-fetches the request.
+        sync_time = time.time() - sync_start
+
+        assert len(set(sync_utc_now_list)) == request_count
+
+        assert sync_time >= 2 * async_time

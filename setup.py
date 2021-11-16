@@ -25,9 +25,10 @@ setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     install_requires=[
-        'graphql-core == 3.1.2',
+        'graphql-core==3.1.2',
         'requests==2.24.0',
-        'typing-inspect==0.6.0'
+        'typing-inspect==0.6.0',
+        'aiohttp==3.8.0'
     ],
     extras_require={
         'dev': [
