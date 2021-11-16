@@ -178,11 +178,11 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
         )
 
     def execute(
-            self,
-            query,
-            variable_values=None,
-            operation_name=None,
-            http_headers=None
+        self,
+        query,
+        variable_values=None,
+        operation_name=None,
+        http_headers=None
     ) -> ExecutionResult:
 
         if http_headers is None:
