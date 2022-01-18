@@ -737,6 +737,9 @@ class GraphQLRemoteObject:
         )
 
     def __getattr__(self, name):
+        if name == "__await__":
+            raise AttributeError('Not Awaitable')
+
         field, auto_call = self.getattr(name)
 
         if auto_call:
