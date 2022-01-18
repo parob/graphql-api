@@ -484,6 +484,14 @@ class GraphQLRemoteObject:
 
             field_type = field.graphql_type()
 
+            if value is None:
+                if not field.nullable:
+                    raise TypeError(
+                        f"Unable to parse None type for non nullable field, "
+                        f"'{key}'. Expected type: {field_type}"
+                    )
+                return None
+
             if not is_scalar(field_type):
                 raise TypeError(
                     f"Unable to parse non-scalar type {field_type}"
@@ -544,9 +552,9 @@ class GraphQLRemoteObject:
 
         for ((_field, _arg_hash), value) in self.values.items():
             if field.name == _field.name and arg_hash == _arg_hash:
-                return value, arg_hash
+                return value, True, arg_hash
 
-        return None, arg_hash
+        return None, False, arg_hash
 
     def _get_value_check_mutated(self, field):
         mutated = any([field.mutable for field, args in self.call_history])
@@ -559,9 +567,9 @@ class GraphQLRemoteObject:
 
     async def get_value_async(self, field: 'GraphQLRemoteField', args: Dict):
         self._map()
-        value, arg_hash = self._get_value_cached(field, args)
+        value, result, arg_hash = self._get_value_cached(field, args)
 
-        if value:
+        if result:
             return value
 
         if (field, arg_hash) in self.values.keys():
@@ -634,9 +642,9 @@ class GraphQLRemoteObject:
 
     def get_value(self, field: 'GraphQLRemoteField', args: Dict):
         self._map()
-        value, arg_hash = self._get_value_cached(field, args)
+        value, result, arg_hash = self._get_value_cached(field, args)
 
-        if value:
+        if result:
             return value
 
         if (field, arg_hash) in self.values.keys():
