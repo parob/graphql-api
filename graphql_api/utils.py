@@ -196,11 +196,6 @@ async def http_query(
         else:
             raise AttributeError(f"Invalid HTTP method {http_method}")
 
-        if r.status != 200:
-            raise ValueError(
-                f"Invalid response code '{r.status}'"
-            )
-
         try:
             json = await r.json()
         except JSONDecodeError as e:
