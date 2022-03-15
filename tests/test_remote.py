@@ -716,4 +716,4 @@ class TestGraphQLRemote:
 
         assert len(set(sync_utc_now_list)) == request_count
 
-        assert sync_time >= 1.5 * async_time
+        assert sync_time >= 1.25 * async_time
