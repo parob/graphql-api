@@ -18,7 +18,16 @@ unit test:
     - pip install pipenv
     - pipenv install --dev
   script:
-    - pipenv run python -m pytest tests --cov=graphql_api
+    - coverage run -m pytest --cov=graphql_api
+    - coverage report
+    - coverage xml
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
 
 pages:
   stage: deploy
