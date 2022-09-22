@@ -26,7 +26,6 @@ unit test:
         coverage_format: cobertura
         path: coverage.xml
 
-
 pages:
   stage: deploy
   before_script:
