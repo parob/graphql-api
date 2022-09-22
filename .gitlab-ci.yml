@@ -1,6 +1,7 @@
 variables:
   PUBLISH_PYPI: true
 
+
 include:
   - project: parob/gitlab-ci-templates
     file: "/python/pytest.yaml"
