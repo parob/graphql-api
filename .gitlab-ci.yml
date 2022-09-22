@@ -26,7 +26,7 @@ unit test:
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: coverage.xml
+        path: graphql_api/coverage.xml
 
 
 pages:
