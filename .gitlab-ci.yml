@@ -1,5 +1,5 @@
 variables:
-  PUBLISH_PYPI: true
+  PUBLISH_PYPI: "true"
 
 include:
   - project: parob/gitlab-ci-templates
