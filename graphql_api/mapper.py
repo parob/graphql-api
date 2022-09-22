@@ -1,6 +1,6 @@
 import enum
 import inspect
-import collections
+import collections.abc
 
 import typing
 import types
@@ -314,7 +314,7 @@ class GraphQLTypeMapper:
         enum_type.enum_type = type_
 
         def serialize(self, value) -> Union[str, None, UndefinedType]:
-            if value and isinstance(value, collections.Hashable):
+            if value and isinstance(value, collections.abc.Hashable):
                 if isinstance(value, enum.Enum):
                     value = value.value
 
