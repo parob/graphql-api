@@ -5,6 +5,7 @@ Framework for building a GraphQL API with Python
 
 [![pipeline status](https://gitlab.com/parob/graphql-api/badges/master/pipeline.svg)](https://gitlab.com/parob/graphql-api/commits/master)
 
+
 ## Installation
 
 ##### Pip
