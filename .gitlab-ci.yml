@@ -4,4 +4,4 @@ variables:
 
 include:
   - project: parob/gitlab-ci-templates
-    file: "/python/pytest.yaml"
+    file: "python.yml"
