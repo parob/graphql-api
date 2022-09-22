@@ -1,4 +1,5 @@
 # flake8: noqa
+from __future__ import annotations
 
 from graphql_api.error import GraphQLError
 from graphql_api.executor import GraphQLExecutor

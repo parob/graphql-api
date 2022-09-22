@@ -280,7 +280,7 @@ class GraphQLTypeMapper:
 
             for arg, mapped_type in union_map.items():
                 if issubclass(value_type, arg):
-                    return mapped_type
+                    return mapped_type.name
 
         names = [arg.__name__ for arg in union_args]
         name = f"{''.join(names)}{self.suffix}Union"
@@ -372,7 +372,7 @@ class GraphQLTypeMapper:
             local_self = self
 
             def resolve_type(value, info, _type):
-                return local_self.map(type(value))
+                return local_self.map(type(value)).name
             return resolve_type
 
         def local_fields():
