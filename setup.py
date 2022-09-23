@@ -11,10 +11,7 @@ with io.open('README.md', 'rt', encoding='utf8') as readme_file:
 def current_pypi_version(package):
     r = urllib.request.urlopen(f'https://pypi.python.org/pypi/{package}/json')
     if r.code == 200:
-        t = json.loads(r.read())
-        releases = t.get('releases', [])
-        if releases:
-            return sorted(releases)[-1]
+        return json.loads(r.read()).get('info').get('version')
 
 
 def increment_ver(version):
