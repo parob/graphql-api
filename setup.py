@@ -1,14 +1,29 @@
 import io
+import json
+import urllib.request
 
 from setuptools import setup, find_packages
 
 with io.open('README.md', 'rt', encoding='utf8') as readme_file:
     readme = readme_file.read()
 
-with io.open('VERSION') as version_file:
-    version = version_file.read().strip().lower()
-    if version.startswith("v"):
-        version = version[1:]
+
+def current_pypi_version(package):
+    r = urllib.request.urlopen(f'https://pypi.python.org/pypi/{package}/json')
+    if r.code == 200:
+        t = json.loads(r.read())
+        releases = t.get('releases', [])
+        if releases:
+            return sorted(releases)[-1]
+
+
+def increment_ver(version):
+    version = version.split('.')
+    version[2] = str(int(version[2]) + 1)
+    return '.'.join(version)
+
+
+version = increment_ver(current_pypi_version('graphql-api'))
 
 setup(
     name='graphql-api',
