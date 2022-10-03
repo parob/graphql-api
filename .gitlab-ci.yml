@@ -2,6 +2,7 @@ variables:
   PUBLISH_PYPI: "true"
   AUTO_TAG_DEFAULT_BRANCH: "true"
 
+
 include:
   - project: parob/gitlab-ci-templates
     file: "python.yml"
