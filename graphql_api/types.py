@@ -4,7 +4,7 @@ import uuid
 
 from typing import Dict
 
-from graphql import GraphQLScalarType, StringValueNode
+from graphql import GraphQLScalarType, StringValueNode, Undefined
 from graphql.language import ast
 
 
@@ -13,7 +13,7 @@ def parse_uuid_literal(ast):
         try:
             return uuid.UUID(ast.value)
         except ValueError:
-            pass
+            return Undefined
 
 
 GraphQLUUID = GraphQLScalarType(

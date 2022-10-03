@@ -49,6 +49,12 @@ class TestCustomTypes:
         assert not result.errors
         assert result.data == expected
 
+        test_invalid_name_query = 'query GetName { name(id: "INVALID_UUID") }'
+
+        result = executor.execute(test_invalid_name_query)
+
+        assert result.errors
+
     def test_datetime_type(self):
         api = GraphQLAPI()
 
