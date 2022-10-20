@@ -193,6 +193,25 @@ class TestGraphQLRemote:
 
         assert person.id() == person_id
 
+    def test_remote_query_list(self):
+        api = GraphQLAPI()
+
+        @api.type(root=True)
+        class Tags:
+
+            @api.field
+            def join_tags(self, tags: List[str] = None) -> str:
+                return "".join(tags) if tags else ""
+
+        tags: Tags = GraphQLRemoteObject(
+            executor=api.executor(),
+            api=api
+        )
+
+        assert tags.join_tags() == ""
+        assert tags.join_tags(tags=[]) == ""
+        assert tags.join_tags(tags=["a", "b"]) == "ab"
+
     def test_remote_mutation(self):
         api = GraphQLAPI()
 
@@ -680,6 +699,7 @@ class TestGraphQLRemote:
 
         @utc_time_api.type(root=True)
         class UTCTimeAPI:
+
             @utc_time_api.field
             def now(self) -> str:
                 pass
