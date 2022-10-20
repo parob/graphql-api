@@ -193,7 +193,7 @@ class TestGraphQLRemote:
 
         assert person.id() == person_id
 
-    def test_remote_query_list(self):
+    def test_remote_query_list_parameter(self):
         api = GraphQLAPI()
 
         @api.type(root=True)
