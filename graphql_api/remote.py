@@ -518,7 +518,6 @@ class GraphQLRemoteObject:
             else:
                 return _to_value(value)
 
-
             raise TypeError(
                 f"Scalar type {field_type} missing 'parse_literal' attribute"
             )
