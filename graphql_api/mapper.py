@@ -204,10 +204,15 @@ class GraphQLTypeMapper:
         def resolve(self, info=None, context=None, *args, **kwargs):
             _args = {to_snake_case(key): arg for key, arg in kwargs.items()}
 
+            def _unwrap_union(_type):
+                if typing_inspect.is_optional_type(_type):
+                    return typing_inspect.get_args(_type, evaluate=True)[0]
+                return _type
+
             if enum_arguments:
                 enum_keys = list(enum_arguments.keys())
                 _args = {
-                    key: enum_arguments[key](arg)
+                    key: _unwrap_union(enum_arguments[key])(arg)
                     if key in enum_keys else arg
                     for key, arg in _args.items()
                 }
