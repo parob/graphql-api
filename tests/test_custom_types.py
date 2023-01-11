@@ -1,3 +1,4 @@
+import base64
 import uuid
 from datetime import datetime, timedelta
 from uuid import UUID
@@ -135,12 +136,12 @@ class TestCustomTypes:
 
         executor = api.executor()
 
-        test_bytes_query = f"query GetByteData {{ byteData(value: \"{data_input.decode('utf-8')}\") }}"
+        test_bytes_query = f"query GetByteData {{ byteData(value: \"{base64.b64encode(data_input).decode('utf-8')}\") }}"
 
         result = executor.execute(test_bytes_query)
 
         expected = {
-            "byteData": data_output.decode('utf-8')
+            "byteData": base64.b64encode(data_output).decode('utf-8')
         }
         assert not result.errors
         assert result.data == expected

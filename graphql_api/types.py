@@ -1,3 +1,4 @@
+import base64
 import datetime
 import json
 import uuid
@@ -82,11 +83,11 @@ GraphQLJSON = GraphQLScalarType(
 
 
 def serialize_bytes(bytes: bytes) -> str:
-    return bytes.decode("utf-8")
+    return base64.b64encode(bytes).decode('utf-8')
 
 
 def parse_bytes_value(value: str) -> bytes:
-    return value.encode("utf-8")
+    return base64.b64decode(value)
 
 
 def parse_bytes_literal(node):
@@ -96,8 +97,8 @@ def parse_bytes_literal(node):
 
 GraphQLBytes = GraphQLScalarType(
     name='Bytes',
-    description='The `Bytes` scalar type represents a '
-                'Byte array datatype in UTF-8 string format.',
+    description='The `Bytes` scalar type expects and returns a Base64 Encoded'
+                'Byte array in UTF-8 string format that represents the Bytes.',
     serialize=serialize_bytes,
     parse_value=parse_bytes_value,
     parse_literal=parse_bytes_literal
