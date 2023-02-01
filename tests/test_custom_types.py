@@ -123,8 +123,9 @@ class TestCustomTypes:
     def test_bytes_type(self):
         api = GraphQLAPI()
 
-        data_input = b'input_bytes'
-        data_output = b'output_bytes'
+        data_input = b'aW5wdXRfYnl0ZXM='
+        data_output = b'b3V0cHV0X2J5dGVz'
+        non_utf_output = "A".encode("utf-32")
 
         @api.type(root=True)
         class Root:
@@ -134,14 +135,27 @@ class TestCustomTypes:
                 assert value == data_input
                 return data_output
 
+            @api.field
+            def non_utf_byte_data(self) -> bytes:
+                return non_utf_output
+
         executor = api.executor()
 
-        test_bytes_query = f"query GetByteData {{ byteData(value: \"{base64.b64encode(data_input).decode('utf-8')}\") }}"
+        test_bytes_query = f"query GetByteData {{ byteData(value: \"{data_input.decode('utf-8')}\") }}"
 
         result = executor.execute(test_bytes_query)
 
         expected = {
-            "byteData": base64.b64encode(data_output).decode('utf-8')
+            "byteData": data_output.decode('utf-8')
+        }
+        assert not result.errors
+        assert result.data == expected
+
+        test_non_utf_bytes_query = f"query GetNonUtfByteData {{ nonUtfByteData }}"
+        result = executor.execute(test_non_utf_bytes_query)
+
+        expected = {
+            'nonUtfByteData': 'UTF-8 ENCODED PREVIEW: \x00\x00A\x00\x00\x00'
         }
         assert not result.errors
         assert result.data == expected
