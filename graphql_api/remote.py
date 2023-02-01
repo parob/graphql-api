@@ -35,6 +35,7 @@ from graphql_api.error import GraphQLError
 from graphql_api.executor import GraphQLBaseExecutor
 from graphql_api.mapper import GraphQLTypeMapper, GraphQLMetaKey
 from graphql_api.api import GraphQLAPI
+from graphql_api.types import serialize_bytes
 from graphql_api.utils import \
     to_camel_case, \
     url_to_ast, \
@@ -448,7 +449,7 @@ class GraphQLRemoteObject:
             raise GraphQLRemoteError(
                 query=query,
                 result=result,
-                message=result.errors[0]['message']
+                message=result.errors[0].message
             )
 
         field_values = result.data
@@ -992,6 +993,8 @@ class GraphQLRemoteQueryBuilder:
                 return 'true' if value else 'false'
             if isinstance(value, (float, int)):
                 return str(value)
+            if isinstance(value, bytes):
+                return '"' + serialize_bytes(value) + '"'
             else:
                 return '"' + str(value) + '"'
 

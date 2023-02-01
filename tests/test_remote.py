@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import enum
 import uuid
 from typing import Optional, List
@@ -192,6 +193,29 @@ class TestGraphQLRemote:
         )
 
         assert person.id() == person_id
+
+    def test_query_bytes(self):
+        api = GraphQLAPI()
+
+        a_value = b'hello '
+        b_value = b'world'
+
+        @api.type(root=True)
+        class BytesUtils:
+
+            @api.field
+            def add_bytes(self, a: bytes, b: bytes) -> bytes:
+                return b''.join([a, b])
+
+        executor = api.executor()
+
+        bytes_utils: BytesUtils = GraphQLRemoteObject(
+            executor=executor,
+            api=api
+        )
+        test_bytes = bytes_utils.add_bytes(a_value, b_value)
+
+        assert test_bytes == b''.join([a_value, b_value])
 
     def test_remote_query_list_parameter(self):
         api = GraphQLAPI()
@@ -398,10 +422,10 @@ class TestGraphQLRemote:
         class Garden:
 
             def __init__(
-                self,
-                size: int,
-                animal: Animal,
-                set_animal: bool = False
+                    self,
+                    size: int,
+                    animal: Animal,
+                    set_animal: bool = False
             ):
                 self.set_animal = set_animal
                 if set_animal:
@@ -431,8 +455,8 @@ class TestGraphQLRemote:
         )
 
         with pytest.raises(
-            GraphQLError,
-            match="nested inputs must have matching attribute to field names"
+                GraphQLError,
+                match="nested inputs must have matching attribute to field names"
         ):
             assert house.value(
                 garden=Garden(
@@ -500,8 +524,8 @@ class TestGraphQLRemote:
         assert not flipped_flipper.value()
 
         with pytest.raises(
-            GraphQLError,
-            match="mutated objects cannot be re-fetched"
+                GraphQLError,
+                match="mutated objects cannot be re-fetched"
         ):
             flipped_flipper.flagged_flip()
 
@@ -552,9 +576,9 @@ class TestGraphQLRemote:
 
             @api.field(mutable=True)
             def update(
-                self,
-                name: str = None,
-                height: float = None
+                    self,
+                    name: str = None,
+                    height: float = None
             ) -> 'Person':
 
                 if name:
@@ -731,7 +755,7 @@ class TestGraphQLRemote:
 
         for _ in range(0, request_count):
             sync_utc_now_list.append(api.now())
-            api.clear_cache()   # Clear the API cache so that it re-fetches the request.
+            api.clear_cache()  # Clear the API cache so that it re-fetches the request.
         sync_time = time.time() - sync_start
 
         assert len(set(sync_utc_now_list)) == request_count
