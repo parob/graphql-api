@@ -449,7 +449,7 @@ class GraphQLRemoteObject:
             raise GraphQLRemoteError(
                 query=query,
                 result=result,
-                message=result.errors[0].message
+                message=result.errors[0]
             )
 
         field_values = result.data
