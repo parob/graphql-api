@@ -1,6 +1,9 @@
 variables:
   AUTO_TAG_AND_PUBLISH_DEFAULT_BRANCH: "true"
-  PYPI_REPOSITORY: "PYPI"
+  PYPI_USERNAME: gitlab-ci-token
+  PYPI_PASSWORD: ${CI_JOB_TOKEN}
+  PYPI_REPOSITORY: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
+
 
 include:
   - project: parob/gitlab-ci-templates
