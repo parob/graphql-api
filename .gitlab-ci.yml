@@ -1,5 +1,5 @@
 variables:
-  AUTO_TAG_DEFAULT_BRANCH: "true"
+  AUTO_TAG_AND_PUBLISH_DEFAULT_BRANCH: "true"
 
 include:
   - project: parob/gitlab-ci-templates
