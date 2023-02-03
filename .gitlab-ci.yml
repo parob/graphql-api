@@ -4,7 +4,6 @@ variables:
   PYPI_PASSWORD: ${CI_JOB_TOKEN}
   PYPI_REPOSITORY: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
 
-
 include:
   - project: parob/gitlab-ci-templates
     file: "python.yml"
