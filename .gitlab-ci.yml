@@ -1,5 +1,4 @@
 variables:
-  PUBLISH_PYPI: "true"
   AUTO_TAG_DEFAULT_BRANCH: "true"
 
 include:
