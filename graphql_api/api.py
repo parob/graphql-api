@@ -101,6 +101,7 @@ class GraphQLRootTypeDelegate:
         """
         return schema
 
+
 class GraphQLAPI(GraphQLBaseExecutor):
 
     def field(self=None, meta=None, mutable=False):
