@@ -3,6 +3,8 @@ import pytest
 
 from dataclasses import dataclass
 from typing import Union, Optional
+
+from graphql import GraphQLSchema
 from requests.api import request
 from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
 
@@ -12,7 +14,7 @@ from graphql.utilities import print_schema
 from graphql_api.utils import executor_to_ast
 from graphql_api.error import GraphQLError
 from graphql_api.context import GraphQLContext
-from graphql_api.api import GraphQLAPI
+from graphql_api.api import GraphQLAPI, GraphQLRootTypeDelegate
 from graphql_api.reduce import TagFilter
 from graphql_api.remote import GraphQLRemoteExecutor, remote_execute
 from graphql_api.decorators import field
@@ -1173,3 +1175,34 @@ class TestGraphQL:
 
         # noinspection PyProtectedMember
         assert schema.type_map.keys() == executor.schema.type_map.keys()
+
+    def test_root_type_delegate(self):
+        api = GraphQLAPI()
+
+        updated_schema = GraphQLSchema()
+
+        @api.type(root=True)
+        class Root(GraphQLRootTypeDelegate):
+            was_called = False
+            input_schema = None
+
+            @classmethod
+            def validate_graphql_schema(
+                cls,
+                schema: GraphQLSchema
+            ) -> GraphQLSchema:
+                cls.was_called = True
+                cls.input_schema = schema
+
+                return updated_schema
+
+            @api.field
+            def hello(self) -> str:
+                return "hello world"
+
+        schema = api.graphql_schema()[0]
+
+        assert Root.was_called
+        assert Root.input_schema
+        assert schema == updated_schema
+
