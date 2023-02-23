@@ -58,7 +58,7 @@ GraphQLDateTime = GraphQLScalarType(
     parse_literal=parse_datetime_literal)
 
 
-JsonType = Union[None, int, str, bool, List, Dict]
+JsonType = Union[None, int, float, str, bool, List, Dict]
 
 
 def serialize_json(data: JsonType) -> str:

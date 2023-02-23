@@ -101,7 +101,8 @@ class TestCustomTypes:
         executor = api.executor()
 
         test_profile_query = r'query GetAdaptProfile {' \
-                             r'     adaptProfile(profile: "{ \"name\": \"rob\", \"age\": 26 }") ' \
+                             r'     adaptProfile(profile: ' \
+                             r'     "{ \"name\": \"rob\", \"age\": 26 }") ' \
                              r'}'
 
         result = executor.execute(test_profile_query)
@@ -131,6 +132,7 @@ class TestCustomTypes:
                           '     d: sendJson(json: "\\"test\\"") ' \
                           '     e: sendJson(json: "{ \\"a\\": 1 }") ' \
                           '     f: sendJson(json: "[ 1, 2, 3 ]") ' \
+                          '     g: sendJson(json: "1.01") ' \
                           '}'
 
         result = executor.execute(test_json_query)
@@ -141,7 +143,8 @@ class TestCustomTypes:
             'c': "<class 'bool'>True",
             'd': "<class 'str'>test",
             'e': "<class 'dict'>{'a': 1}",
-            'f': "<class 'list'>[1, 2, 3]"
+            'f': "<class 'list'>[1, 2, 3]",
+            'g': "<class 'float'>1.01"
         }
         assert not result.errors
         assert result.data == expected
