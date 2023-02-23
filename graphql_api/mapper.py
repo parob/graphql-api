@@ -43,7 +43,7 @@ from graphql_api.types import (
     GraphQLBytes,
     GraphQLUUID,
     GraphQLDateTime,
-    GraphQLJSON
+    GraphQLJSON, JsonType
 )
 
 from graphql_api.utils import to_camel_case, to_snake_case, to_input_value
@@ -561,6 +561,9 @@ class GraphQLTypeMapper:
     def map(self, type_, use_graphql_type=True) -> GraphQLType:
 
         def _map(type__) -> GraphQLType:
+
+            if type_ == JsonType:
+                return GraphQLJSON
 
             if use_graphql_type and inspect.isclass(type__):
                 if issubclass(type__, GraphQLTypeWrapper):

@@ -1,9 +1,9 @@
-import base64
 import uuid
 from datetime import datetime, timedelta
 from uuid import UUID
 
 from graphql_api.api import GraphQLAPI
+from graphql_api.types import JsonType
 
 
 class TestCustomTypes:
@@ -94,6 +94,10 @@ class TestCustomTypes:
             def add_number(self, numbers: list) -> list:
                 return [*numbers, 5]
 
+            @api.field
+            def send_json(self, json: JsonType) -> str:
+                return str(type(json)) + str(json)
+
         executor = api.executor()
 
         test_profile_query = r'query GetAdaptProfile {' \
@@ -116,6 +120,28 @@ class TestCustomTypes:
 
         expected = {
             "addNumber": '[1, 2, 3, 4, 5]'
+        }
+        assert not result.errors
+        assert result.data == expected
+
+        test_json_query = 'query SendJson {' \
+                          '     a: sendJson(json: "1") ' \
+                          '     b: sendJson(json: true) ' \
+                          '     c: sendJson(json: "true") ' \
+                          '     d: sendJson(json: "\\"test\\"") ' \
+                          '     e: sendJson(json: "{ \\"a\\": 1 }") ' \
+                          '     f: sendJson(json: "[ 1, 2, 3 ]") ' \
+                          '}'
+
+        result = executor.execute(test_json_query)
+
+        expected = {
+            'a': "<class 'int'>1",
+            'b': "<class 'bool'>True",
+            'c': "<class 'bool'>True",
+            'd': "<class 'str'>test",
+            'e': "<class 'dict'>{'a': 1}",
+            'f': "<class 'list'>[1, 2, 3]"
         }
         assert not result.errors
         assert result.data == expected

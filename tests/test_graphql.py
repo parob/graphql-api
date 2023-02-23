@@ -1,4 +1,6 @@
 import enum
+import sys
+
 import pytest
 
 from dataclasses import dataclass
@@ -852,6 +854,35 @@ class TestGraphQL:
 
             @api.field
             def value(self, a_int: int = 50) -> int:
+                return a_int
+
+        executor = api.executor()
+
+        test_input_query = '''
+            query TestOptionalQuery {
+                value
+            }
+        '''
+
+        result = executor.execute(test_input_query)
+
+        expected = {
+            "value": 50
+        }
+        assert not result.errors
+        assert result.data == expected
+
+    @pytest.mark.skipif(
+        sys.version_info < (3, 10), reason="requires python3.10"
+    )
+    def test_optional_311(self):
+        api = GraphQLAPI()
+
+        @api.type(root=True)
+        class Root:
+
+            @api.field
+            def value(self, a_int: int | None = 50) -> Optional[int]:
                 return a_int
 
         executor = api.executor()

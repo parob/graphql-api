@@ -2,8 +2,7 @@ import binascii
 import datetime
 import json
 import uuid
-
-from typing import Dict
+from typing import Dict, Union, List
 
 from graphql import GraphQLScalarType, StringValueNode, Undefined
 from graphql.language import ast
@@ -59,17 +58,24 @@ GraphQLDateTime = GraphQLScalarType(
     parse_literal=parse_datetime_literal)
 
 
-def serialize_json(data: Dict) -> str:
+JsonType = Union[None, int, str, bool, List, Dict]
+
+
+def serialize_json(data: JsonType) -> str:
     return json.dumps(data)
 
 
-def parse_json_value(value: str) -> Dict:
+def parse_json_value(value: str) -> JsonType:
     return json.loads(value)
 
 
-def parse_json_literal(node) -> Dict:
+def parse_json_literal(node) -> JsonType:
     if isinstance(node, ast.StringValueNode):
         return parse_json_value(node.value)
+    if isinstance(node, ast.BooleanValueNode):
+        return node.value
+    if isinstance(node, ast.FloatValueNode):
+        return node.value
 
 
 GraphQLJSON = GraphQLScalarType(

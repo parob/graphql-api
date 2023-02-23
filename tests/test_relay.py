@@ -1,5 +1,4 @@
 import collections
-from dataclasses import dataclass
 from typing import List
 
 from graphql_api.relay import Node, Connection, Edge, PageInfo
