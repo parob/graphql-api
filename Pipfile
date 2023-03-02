@@ -8,11 +8,13 @@ graphql-core = "*"
 requests = "*"
 typing-inspect = "*"
 aiohttp = "*"
+pytest-asyncio = "*"
 
 [dev-packages]
 # Testing
 pytest = "*"
 pytest-cov = "*"
+pytest-asyncio = "*"
 coverage = "*"
 faker = "*"
 # Linting
