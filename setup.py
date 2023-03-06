@@ -25,17 +25,18 @@ setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     install_requires=[
-        'graphql-core>=3.1.2',
-        'requests>=2.24.0',
-        'typing-inspect>=0.6.0',
-        'aiohttp>=3.8.0'
+        'graphql-core~=3.1',
+        'requests~=2.24',
+        'typing-inspect~=0.6',
+        'aiohttp~=3.8',
+        'docstring-parser~=0.15'
     ],
     extras_require={
         'dev': [
-            'pytest>=5.4.3',
-            'pytest-cov>=2.10.0',
-            'coverage>=5.2',
-            'faker>=4.1.1'
+            'pytest~=5.4',
+            'pytest-cov~=2.10',
+            'coverage~=5.2',
+            'faker~=4.1'
         ]
     },
     classifiers=[

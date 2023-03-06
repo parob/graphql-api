@@ -1,5 +1,6 @@
 from typing import Type, get_type_hints
 import typing_inspect
+from docstring_parser import parse_from_object
 
 from graphql.type.definition import \
     GraphQLType, \
@@ -24,6 +25,7 @@ def type_from_dataclass(_class: Type, mapper) -> GraphQLType:
     dataclass_fields = dict(_class.__dataclass_fields__)
     dataclass_types = get_type_hints(_class)
     base_type: GraphQLObjectType = mapper.map(_class, use_graphql_type=False)
+    docstrings = parse_from_object(_class)
 
     # Remove any modifiers
     while hasattr(base_type, 'of_type'):
@@ -67,6 +69,12 @@ def type_from_dataclass(_class: Type, mapper) -> GraphQLType:
                         return getattr(self, local_prop_name)
                     return resolver
 
+                description = None
+
+                for docstring_param in docstrings.params:
+                    if docstring_param.arg_name == prop_name:
+                        description = docstring_param.description
+
                 type_: GraphQLType = local_mapper.map(type_=field_type)
 
                 nullable = False
@@ -83,9 +91,16 @@ def type_from_dataclass(_class: Type, mapper) -> GraphQLType:
                     type_: GraphQLType = GraphQLNonNull(type_)
 
                 if local_mapper.as_input:
-                    field = GraphQLInputField(type_=type_)
+                    field = GraphQLInputField(
+                        type_=type_,
+                        description=description
+                    )
                 else:
-                    field = GraphQLField(type_=type_, resolve=local_resolver())
+                    field = GraphQLField(
+                        type_=type_,
+                        resolve=local_resolver(),
+                        description=description
+                    )
 
                 local_fields[to_camel_case(prop_name)] = field
 

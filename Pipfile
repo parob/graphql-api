@@ -9,6 +9,7 @@ requests = "*"
 typing-inspect = "*"
 aiohttp = "*"
 pytest-asyncio = "*"
+docstring-parser = "*"
 
 [dev-packages]
 # Testing
