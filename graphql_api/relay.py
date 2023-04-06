@@ -12,6 +12,7 @@ class Node:
     `https://facebook.github.io/relay/graphql/objectidentification.htm`
     """
 
+    # noinspection PyShadowingBuiltins
     def __init__(self, id: UUID = None, *args, **kwargs):
         if id is None:
             id = uuid4()

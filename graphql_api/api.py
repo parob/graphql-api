@@ -90,6 +90,7 @@ def decorator(a, b, _type):
 
 
 class GraphQLRootTypeDelegate:
+    infer_subclass_fields = True
 
     @classmethod
     def validate_graphql_schema(cls, schema: GraphQLSchema) -> GraphQLSchema:

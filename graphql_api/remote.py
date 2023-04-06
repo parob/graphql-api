@@ -519,10 +519,6 @@ class GraphQLRemoteObject:
             else:
                 return _to_value(value)
 
-            raise TypeError(
-                f"Scalar type {field_type} missing 'parse_literal' attribute"
-            )
-
         if isinstance(field_values, list):
             field_values = [
                 {
@@ -777,6 +773,7 @@ class GraphQLRemoteObject:
         is_dataclass_field = False
 
         try:
+            # noinspection PyUnresolvedReferences
             from dataclasses import fields, is_dataclass
 
             if is_dataclass(self.python_type):
@@ -798,6 +795,7 @@ class GraphQLRemoteObject:
 
         if not auto_call:
             try:
+                # noinspection PyPackageRequirements
                 from sqlalchemy.orm.attributes import InstrumentedAttribute
                 auto_call = isinstance(attribute_type, InstrumentedAttribute)
             except ImportError:

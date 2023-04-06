@@ -201,8 +201,9 @@ class GraphQLTypeMapper:
                 default_value=default_args.get(key, Undefined)
             )
 
-        def resolve(self, info=None, context=None, *args, **kwargs):
-            _args = {to_snake_case(key): arg for key, arg in kwargs.items()}
+        # noinspection PyUnusedLocal
+        def resolve(_self, info=None, context=None, *args, **kwargs):
+            _args = {to_snake_case(_key): arg for _key, arg in kwargs.items()}
 
             def _unwrap_union(_type):
                 if typing_inspect.is_optional_type(_type):
@@ -212,16 +213,16 @@ class GraphQLTypeMapper:
             if enum_arguments:
                 enum_keys = list(enum_arguments.keys())
                 _args = {
-                    key: _unwrap_union(enum_arguments[key])(arg)
-                    if key in enum_keys else arg
-                    for key, arg in _args.items()
+                    _key: _unwrap_union(enum_arguments[_key])(arg)
+                    if _key in enum_keys else arg
+                    for _key, arg in _args.items()
                 }
 
             if include_context:
                 _args['context'] = info.context
 
             function_name = function_type.__name__
-            parent_type = self.__class__
+            parent_type = _self.__class__
             class_attribute = getattr(parent_type, function_name, None)
             is_property = isinstance(class_attribute, property)
             response = None
@@ -234,16 +235,16 @@ class GraphQLTypeMapper:
                             f" property, and cannot have multiple arguments."
                         )
                     else:
-                        response = function_type(self, **_args)
+                        response = function_type(_self, **_args)
                 else:
-                    response = getattr(self, function_name, None)
+                    response = getattr(_self, function_name, None)
             else:
-                function_type_override = getattr(self, function_name, None)
+                function_type_override = getattr(_self, function_name, None)
 
                 if function_type_override is not None:
                     response = function_type_override(**_args)
                 else:
-                    response = function_type(self, **_args)
+                    response = function_type(_self, **_args)
 
             if enum_return:
                 if isinstance(response, enum.Enum):
@@ -275,6 +276,7 @@ class GraphQLTypeMapper:
             _, mapped_type = union_map.popitem()
             return mapped_type
 
+        # noinspection PyUnusedLocal
         def resolve_type(value, info, _type):
             from graphql_api.remote import GraphQLRemoteObject
 
@@ -283,9 +285,10 @@ class GraphQLTypeMapper:
             if isinstance(value, GraphQLRemoteObject):
                 value_type = value.python_type
 
-            for arg, mapped_type in union_map.items():
-                if issubclass(value_type, arg):
-                    return mapped_type.name
+            for arg, _mapped_type in union_map.items():
+                if issubclass(value_type, arg) \
+                        and hasattr(_mapped_type, 'name'):
+                    return _mapped_type.name
 
         names = [arg.__name__ for arg in union_args]
         name = f"{''.join(names)}{self.suffix}Union"
@@ -303,6 +306,7 @@ class GraphQLTypeMapper:
 
         return list_type
 
+    # noinspection PyMethodMayBeStatic
     def map_to_enum(self, type_: Type[enum.Enum]) -> GraphQLEnumType:
         enum_type = type_
         name = f"{type_.__name__}Enum"
@@ -318,12 +322,13 @@ class GraphQLTypeMapper:
 
         enum_type.enum_type = type_
 
-        def serialize(self, value) -> Union[str, None, UndefinedType]:
+        def serialize(_self, value) -> Union[str, None, UndefinedType]:
             if value and isinstance(value, collections.abc.Hashable):
                 if isinstance(value, enum.Enum):
                     value = value.value
 
-                lookup_value = self._value_lookup.get(value)
+                # noinspection PyProtectedMember
+                lookup_value = _self._value_lookup.get(value)
                 if lookup_value:
                     return lookup_value
                 else:
@@ -376,8 +381,11 @@ class GraphQLTypeMapper:
         def local_resolve_type():
             local_self = self
 
+            # noinspection PyUnusedLocal
             def resolve_type(value, info, _type):
-                return local_self.map(type(value)).name
+                value = local_self.map(type(value))
+                if hasattr(value, 'name'):
+                    return value.name
             return resolve_type
 
         def local_fields():
@@ -416,6 +424,7 @@ class GraphQLTypeMapper:
 
         else:
             creator = class_type
+            # noinspection PyTypeChecker
             func = class_type.__init__
 
         description = inspect.getdoc(func) or inspect.getdoc(class_type)
@@ -454,6 +463,7 @@ class GraphQLTypeMapper:
 
                     nullable = key in local_default_args
                     if not nullable:
+                        # noinspection PyTypeChecker
                         input_arg_type = GraphQLNonNull(input_arg_type)
 
                     default_value = local_default_args.get(key, None)
@@ -461,9 +471,9 @@ class GraphQLTypeMapper:
                     if default_value is not None:
                         try:
                             default_value = to_input_value(default_value)
-                        except ValueError as err:
+                        except ValueError as _err:
                             raise ValueError(
-                                f"Unable to map {local_name}.{key}, {err}."
+                                f"Unable to map {local_name}.{key}, {_err}."
                             )
 
                     arguments[to_camel_case(key)] = GraphQLInputField(
@@ -515,7 +525,10 @@ class GraphQLTypeMapper:
 
                 for superclass in superclasses:
                     if is_interface(superclass, local_self.schema):
-                        _interfaces.append(local_self.map(superclass))
+                        value = local_self.map(superclass)
+                        if isinstance(value, GraphQLInterfaceType):
+                            interface: GraphQLInterfaceType = value
+                            _interfaces.append(interface)
 
                 return _interfaces
 
@@ -643,6 +656,7 @@ class GraphQLTypeMapper:
             return False
 
         if isinstance(type_, GraphQLObjectType):
+            # noinspection PyProtectedMember
             if evaluate:
                 try:
                     if len(type_.fields) == 0:
@@ -661,7 +675,12 @@ def get_class_funcs(
     schema,
     mutable=False
 ) -> List[Tuple[Any, Any]]:
-    members = [(key, member) for key, member in inspect.getmembers(class_type)]
+    members = []
+    for _class_type in class_type.mro():
+        members = [
+            *members,
+            *[(key, member) for key, member in inspect.getmembers(_class_type)]
+        ]
 
     if hasattr(class_type, 'graphql_fields'):
         members += [
@@ -732,7 +751,6 @@ def get_value(type_, schema, key):
 def is_graphql(type_, schema):
     graphql = getattr(type_, 'graphql', None)
     schemas = getattr(type_, 'schemas', {})
-
     valid_schema = schema in schemas.keys() or None in schemas.keys()
 
     return graphql and schemas and valid_schema

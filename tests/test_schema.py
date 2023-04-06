@@ -103,3 +103,4 @@ class TestGraphQL:
         assert ObjectSchemaMeta.graphql
         assert ObjectSchemaMeta.test_query_schema_meta.graphql
         assert ObjectSchemaMeta.test_mutation_schema_meta.graphql
+

@@ -743,7 +743,7 @@ class TestGraphQL:
         assert result.data == expected
 
         test_mutation = '''
-            query TestMiddlewareQuery {
+            query TestMisddlewareQuery {
                 testQuery(testString: "not_hello")
             }
         '''
@@ -1247,4 +1247,71 @@ class TestGraphQL:
         assert Root.was_called
         assert Root.input_schema
         assert schema == updated_schema
+
+    def test_schema_subclass(self):
+
+        class Interface:
+
+            @field
+            def hello(self) -> str:
+                raise NotImplementedError()
+
+            @field(mutable=True)
+            def hello_mutable(self) -> str:
+                raise NotImplementedError()
+
+            @field(mutable=True)
+            def hello_changed(self) -> str:
+                raise NotImplementedError()
+
+        class Implementation(Interface):
+            count = 0
+
+            def hello(self) -> str:
+                return "hello world"
+
+            def hello_mutable(self) -> str:
+                self.count += 1
+                return f"hello {self.count}"
+
+            @field
+            def hello_changed(self) -> str:
+                return "hello world"
+
+        api = GraphQLAPI(root=Implementation)
+
+        executor = api.executor()
+
+        test_query = '''
+            query {
+                hello
+            }
+        '''
+
+        result = executor.execute(test_query)
+
+        assert not result.errors
+        assert result.data['hello'] == "hello world"
+
+        test_query = '''
+            mutation {
+                helloMutable
+            }
+        '''
+
+        result = executor.execute(test_query)
+
+        assert not result.errors
+        assert result.data['helloMutable'] == "hello 1"
+
+        test_query = '''
+            query {
+                helloChanged
+            }
+        '''
+
+        result = executor.execute(test_query)
+
+        assert not result.errors
+        assert result.data['helloChanged'] == "hello world"
 
