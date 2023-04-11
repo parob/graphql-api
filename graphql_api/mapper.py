@@ -713,7 +713,7 @@ def get_class_funcs(
         elif key in inherited_fields:
             try:
                 member.__dict__ = {
-                    **inherited_fields[key], 
+                    **inherited_fields[key],
                     'defined_on': member
                 }
             except Exception as err:
