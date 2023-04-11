@@ -95,13 +95,13 @@ class GraphQLMutableField(GraphQLField):
 class GraphQLTypeMapper:
 
     def __init__(
-        self,
-        as_mutable=False,
-        as_input=False,
-        registry=None,
-        reverse_registry=None,
-        suffix="",
-        schema=None
+            self,
+            as_mutable=False,
+            as_input=False,
+            registry=None,
+            reverse_registry=None,
+            suffix="",
+            schema=None
     ):
         self.as_mutable = as_mutable
         self.as_input = as_input
@@ -116,10 +116,10 @@ class GraphQLTypeMapper:
         return set(self.registry.values())
 
     def map_to_field(
-        self,
-        function_type: Callable,
-        name="",
-        key=""
+            self,
+            function_type: Callable,
+            name="",
+            key=""
     ) -> GraphQLField:
         type_hints = typing.get_type_hints(function_type)
         description = inspect.getdoc(function_type)
@@ -671,17 +671,15 @@ class GraphQLTypeMapper:
 
 
 def get_class_funcs(
-    class_type,
-    schema,
-    mutable=False
+        class_type,
+        schema,
+        mutable=False
 ) -> List[Tuple[Any, Any]]:
     members = []
     for _class_type in class_type.mro():
-        members = [
-            *[(key, member)
-              for key, member in inspect.getmembers(_class_type)],
-            *members
-        ]
+        for key, member in inspect.getmembers(_class_type):
+            if not (key.startswith("__") and key.endswith("__")):
+                members.append((key, member))
 
     if hasattr(class_type, 'graphql_fields'):
         members += [
@@ -690,7 +688,7 @@ def get_class_funcs(
         ]
     func_members = []
 
-    for key, member in members:
+    for key, member in reversed(members):
         if isinstance(member, property):
             getter = member.fget
             if getter:
@@ -707,6 +705,16 @@ def get_class_funcs(
         return func_type == "query" or (mutable and func_type == "mutation")
 
     callable_funcs = []
+
+    inherited_fields = {}
+    for key, member in func_members:
+        if getattr(member, 'graphql', None) and key != "test_property":
+            inherited_fields[key] = {**member.__dict__}
+        elif key in inherited_fields:
+            try:
+                member.__dict__ = inherited_fields[key]
+            except Exception as err:
+                print(err)
 
     for key, member in func_members:
         if is_graphql(member, schema=schema) and matches_criterion(member):
