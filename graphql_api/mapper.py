@@ -678,8 +678,9 @@ def get_class_funcs(
     members = []
     for _class_type in class_type.mro():
         members = [
-            *members,
-            *[(key, member) for key, member in inspect.getmembers(_class_type)]
+            *[(key, member)
+              for key, member in inspect.getmembers(_class_type)],
+            *members
         ]
 
     if hasattr(class_type, 'graphql_fields'):
