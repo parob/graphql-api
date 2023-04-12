@@ -719,7 +719,9 @@ def get_class_funcs(
             except Exception as err:
                 print(err)
 
-    for key, member in func_members:
+    done = []
+
+    for key, member in reversed(func_members):
         if is_graphql(member, schema=schema) and matches_criterion(member):
             if not callable(member):
                 type_hints = typing.get_type_hints(member)
@@ -750,7 +752,9 @@ def get_class_funcs(
             else:
                 func = member
 
-            callable_funcs.append((key, func))
+            if key not in done:
+                done.append(key)
+                callable_funcs.append((key, func))
 
     return callable_funcs
 

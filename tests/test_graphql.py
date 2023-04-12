@@ -1315,3 +1315,77 @@ class TestGraphQL:
         assert not result.errors
         assert result.data['helloChanged'] == "hello world"
 
+    def test_class_update(self):
+
+        @dataclass
+        class Person:
+            name: str
+
+        class GreetInterface:
+
+            @field
+            def hello(self, person: Person) -> str:
+                raise NotImplementedError()
+
+        class HashablePerson(Person):
+
+            def __hash__(self):
+                return hash(self.name)
+
+        class Implementation(GreetInterface):
+
+            def hello(self, person: HashablePerson) -> str:
+                return f"hello {hash(person)}"
+
+        api = GraphQLAPI(root=Implementation)
+
+        executor = api.executor()
+
+        test_query = '''
+            query {
+                hello(person:{name:"rob"})
+            }
+        '''
+
+        result = executor.execute(test_query)
+
+        assert not result.errors
+        assert result.data['hello'] == f"hello {hash('rob')}"
+
+    def test_class_update_same_name(self):
+
+        @dataclass
+        class Person:
+            name: str
+
+        class GreetInterface:
+
+            @field
+            def hello(self, person: Person) -> str:
+                raise NotImplementedError()
+
+        class Person(Person):
+
+            def __hash__(self):
+                return hash(self.name)
+
+        class Implementation(GreetInterface):
+
+            def hello(self, person: Person) -> str:
+                return f"hello {hash(person)}"
+
+        api = GraphQLAPI(root=Implementation)
+
+        executor = api.executor()
+
+        test_query = '''
+            query {
+                hello(person:{name:"rob"})
+            }
+        '''
+
+        result = executor.execute(test_query)
+
+        assert not result.errors
+        assert result.data['hello'] == f"hello {hash('rob')}"
+
