@@ -4,7 +4,7 @@ import sys
 import pytest
 
 from dataclasses import dataclass
-from typing import Union, Optional
+from typing import Union, Optional, Literal
 
 from graphql import GraphQLSchema
 from requests.api import request
@@ -830,6 +830,35 @@ class TestGraphQL:
 
         result = executor.execute(test_enum_query)
         expected = {"opposite": "cat"}
+
+        assert result.data == expected
+
+    # noinspection PyUnusedLocal
+    def test_literal(self):
+        api = GraphQLAPI()
+
+        Period = Literal["1d", "5d", "1mo", "3mo", "6mo", "1y"]
+
+        @api.type(root=True)
+        class Root:
+
+            @api.field
+            def get_count(self, period: Period) -> int:
+                if period == "1d":
+                    return 365
+
+                return 0
+
+        executor = api.executor()
+
+        test_literal_query = '''
+            query TestEnum {
+                getCount(period: "1d")
+            }
+        '''
+
+        result = executor.execute(test_literal_query)
+        expected = {"getCount": 365}
 
         assert result.data == expected
 

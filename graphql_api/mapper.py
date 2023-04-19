@@ -306,6 +306,14 @@ class GraphQLTypeMapper:
 
         return list_type
 
+    def map_to_literal(self, type__) -> GraphQLType:
+        literal_args = typing_inspect.get_args(type__, evaluate=True)
+        _type = type(literal_args[0])
+        if not all(isinstance(x, _type) for x in literal_args):
+            raise TypeError("Literals must all be of the same type")
+
+        return self.map(_type)
+
     # noinspection PyMethodMayBeStatic
     def map_to_enum(self, type_: Type[enum.Enum]) -> GraphQLEnumType:
         enum_type = type_
@@ -588,6 +596,9 @@ class GraphQLTypeMapper:
             if typing_inspect.is_union_type(type__):
                 return self.map_to_union(type__)
 
+            if typing_inspect.is_literal_type(type__):
+                return self.map_to_literal(type__)
+
             origin_type = get_origin(type__)
 
             if inspect.isclass(origin_type) and \
@@ -668,6 +679,7 @@ class GraphQLTypeMapper:
                 return False
 
         return True
+
 
 
 def get_class_funcs(
