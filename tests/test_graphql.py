@@ -834,6 +834,37 @@ class TestGraphQL:
         assert result.data == expected
 
     # noinspection PyUnusedLocal
+    def test_functional_enum(self):
+        api = GraphQLAPI()
+
+        AnimalType = enum.Enum("AnimalType", ["dog", "cat"])
+
+        @api.type(root=True)
+        class Root:
+
+            @api.field
+            def opposite(self, animal: AnimalType) -> AnimalType:
+                assert isinstance(animal, AnimalType)
+
+                if animal == AnimalType.dog:
+                    return AnimalType.cat
+
+                return AnimalType.dog
+
+        executor = api.executor()
+
+        test_enum_query = '''
+            query TestEnum {
+                opposite(animal: dog)
+            }
+        '''
+
+        result = executor.execute(test_enum_query)
+        expected = {"opposite": "cat"}
+
+        assert result.data == expected
+
+    # noinspection PyUnusedLocal
     def test_literal(self):
         api = GraphQLAPI()
 
