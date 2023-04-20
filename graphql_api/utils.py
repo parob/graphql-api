@@ -197,7 +197,7 @@ async def http_query(
             raise AttributeError(f"Invalid HTTP method {http_method}")
 
         try:
-            json = await r.json()
+            json = await r.json(content_type=None)
         except JSONDecodeError as e:
             raise ValueError(
                 f"{e}, unable to decode JSON"
