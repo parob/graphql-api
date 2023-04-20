@@ -318,7 +318,7 @@ class GraphQLTypeMapper:
     def map_to_enum(self, type_: Type[enum.Enum]) -> GraphQLEnumType:
         enum_type = type_
         name = f"{type_.__name__}Enum"
-        # Enums dont include a suffix as they are immutable
+        # Enums don't include a suffix as they are immutable
 
         description = inspect.getdoc(enum_type)
 
@@ -679,7 +679,6 @@ class GraphQLTypeMapper:
                 return False
 
         return True
-
 
 
 def get_class_funcs(
