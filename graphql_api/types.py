@@ -4,8 +4,18 @@ import json
 import uuid
 from typing import Dict, Union, List
 
-from graphql import GraphQLScalarType, StringValueNode, Undefined
+from graphql import GraphQLScalarType, StringValueNode, Undefined, \
+    GraphQLEnumType
 from graphql.language import ast
+
+
+class GraphQLMappedEnumType(GraphQLEnumType):
+
+    def parse_literal(self, *args, **kwargs):
+        result = super().parse_literal(*args, **kwargs)
+
+        return self.enum_type(result) \
+            if hasattr(self, 'enum_type') else result
 
 
 def parse_uuid_literal(ast):

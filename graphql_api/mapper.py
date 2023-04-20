@@ -43,7 +43,7 @@ from graphql_api.types import (
     GraphQLBytes,
     GraphQLUUID,
     GraphQLDateTime,
-    GraphQLJSON, JsonType
+    GraphQLJSON, JsonType, GraphQLMappedEnumType
 )
 
 from graphql_api.utils import to_camel_case, to_snake_case, to_input_value
@@ -205,23 +205,6 @@ class GraphQLTypeMapper:
         def resolve(_self, info=None, context=None, *args, **kwargs):
             _args = {to_snake_case(_key): arg for _key, arg in kwargs.items()}
 
-            def _unwrap_union(_type):
-                if typing_inspect.is_optional_type(_type):
-                    return typing_inspect.get_args(_type, evaluate=True)[0]
-                return _type
-
-            if enum_arguments:
-                enum_keys = list(enum_arguments.keys())
-                for _key, arg in _args.copy().items():
-                    try:
-                        _args[_key] = _unwrap_union(enum_arguments[_key])(arg)\
-                            if _key in enum_keys else arg
-                    except Exception as err:
-                        if arg is None:
-                            _args[_key] = None
-                        else:
-                            raise err
-
             if include_context:
                 _args['context'] = info.context
 
@@ -326,7 +309,7 @@ class GraphQLTypeMapper:
 
         description = inspect.getdoc(enum_type)
 
-        enum_type = GraphQLEnumType(
+        enum_type = GraphQLMappedEnumType(
             name=name,
             values=enum_type,
             description=description

@@ -4,7 +4,7 @@ import sys
 import pytest
 
 from dataclasses import dataclass
-from typing import Union, Optional, Literal
+from typing import Union, Optional, Literal, List
 
 from graphql import GraphQLSchema
 from requests.api import request
@@ -833,6 +833,38 @@ class TestGraphQL:
 
         result = executor.execute(test_enum_query)
         expected = {"opposite": "cat"}
+
+        assert result.data == expected
+
+    # noinspection PyUnusedLocal
+    def test_enum_list(self):
+        api = GraphQLAPI()
+
+        class AnimalType(enum.Enum):
+            dog = "dog"
+            cat = "cat"
+
+        @api.type(root=True)
+        class Root:
+
+            @api.field
+            def all(self, animals: List[AnimalType]) -> List[AnimalType]:
+                assert all(
+                    isinstance(animal, AnimalType) for animal in animals
+                )
+
+                return animals
+
+        executor = api.executor()
+
+        test_enum_query = '''
+            query TestEnum {
+                all(animals: [dog, cat])
+            }
+        '''
+
+        result = executor.execute(test_enum_query)
+        expected = {"all": ["dog","cat"]}
 
         assert result.data == expected
 
