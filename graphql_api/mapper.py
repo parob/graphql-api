@@ -212,11 +212,15 @@ class GraphQLTypeMapper:
 
             if enum_arguments:
                 enum_keys = list(enum_arguments.keys())
-                _args = {
-                    _key: _unwrap_union(enum_arguments[_key])(arg)
-                    if _key in enum_keys else arg
-                    for _key, arg in _args.items()
-                }
+                for _key, arg in _args.copy().items():
+                    try:
+                        _args[_key] = _unwrap_union(enum_arguments[_key])(arg)\
+                            if _key in enum_keys else arg
+                    except Exception as err:
+                        if arg is None:
+                            _args[_key] = None
+                        else:
+                            raise err
 
             if include_context:
                 _args['context'] = info.context

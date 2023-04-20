@@ -557,19 +557,22 @@ class TestGraphQL:
         @dataclass
         class Root:
             hello_world: str = "hello world"
+            hello_world_optional: Optional[str] = None
 
         executor = api.executor()
 
         test_query = '''
             query HelloWorld {
                 helloWorld
+                helloWorldOptional
             }
         '''
 
         result = executor.execute(test_query)
 
         expected = {
-            "helloWorld": "hello world"
+            "helloWorld": "hello world",
+            'helloWorldOptional': None
         }
         assert not result.errors
         assert result.data == expected
@@ -830,6 +833,42 @@ class TestGraphQL:
 
         result = executor.execute(test_enum_query)
         expected = {"opposite": "cat"}
+
+        assert result.data == expected
+
+    def test_optional_enum(self):
+        api = GraphQLAPI()
+
+        class AnimalType(enum.Enum):
+            dog = "dog"
+            cat = "cat"
+
+        @api.type(root=True)
+        class Root:
+
+            @api.field
+            def opposite(self, animal: Optional[AnimalType] = None) \
+                    -> Optional[AnimalType]:
+
+                if animal is None:
+                    return None
+
+                if animal == AnimalType.dog:
+                    return AnimalType.cat
+
+                return AnimalType.dog
+
+        executor = api.executor()
+
+        test_enum_query = '''
+                query TestEnum {
+                    opposite
+                }
+            '''
+
+        result = executor.execute(test_enum_query)
+        expected = {"opposite": None}
+        assert not result.errors
 
         assert result.data == expected
 
