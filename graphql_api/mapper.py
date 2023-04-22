@@ -86,6 +86,7 @@ class GraphQLMetaKey(enum.Enum):
     resolve_to_mutable = "RESOLVE_TO_MUTABLE"
     resolve_to_self = "RESOLVE_TO_SELF"
     native_middleware = "NATIVE_MIDDLEWARE"
+    error_protection = "ERROR_PROTECTION"
 
 
 class GraphQLMutableField(GraphQLField):
@@ -709,13 +710,10 @@ def get_class_funcs(
         if getattr(member, 'graphql', None) and key != "test_property":
             inherited_fields[key] = {**member.__dict__}
         elif key in inherited_fields:
-            try:
-                member.__dict__ = {
-                    **inherited_fields[key],
-                    'defined_on': member
-                }
-            except Exception as err:
-                print(err)
+            member.__dict__ = {
+                **inherited_fields[key],
+                'defined_on': member
+            }
 
     done = []
 

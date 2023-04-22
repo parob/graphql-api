@@ -1,21 +1,50 @@
 import enum
+import sys
+import traceback
 
-from graphql import GraphQLObjectType, GraphQLNonNull
+from graphql import GraphQLObjectType, GraphQLNonNull, GraphQLResolveInfo
+
+from graphql_api.mapper import GraphQLMetaKey
 
 from graphql_api.context import GraphQLContext
 from graphql_api.utils import to_snake_case
+
+
+def middleware_catch_exception(next, context: GraphQLContext):
+    try:
+        value = next()
+    except Exception as err:
+        from graphql_api.executor import ErrorProtectionExecutionContext
+        info: GraphQLResolveInfo = context.resolve_args.get("info")
+
+        field_meta = context.field.meta
+        if field_meta.get(GraphQLMetaKey.error_protection) is not None:
+            setattr(
+                err,
+                ErrorProtectionExecutionContext.error_protection,
+                field_meta.get(GraphQLMetaKey.error_protection)
+            )
+
+        return_type = info.return_type
+        ignored = isinstance(return_type, GraphQLNonNull)
+
+        print(
+            f"GraphQLField '{info.field_name}' on '{info.parent_type.name}' "
+            f"resolver {'(ignored) ' if ignored else ''}Exception: {err} ",
+            file=sys.stderr
+        )
+        traceback.print_exc()
+        raise err
+
+    return value
 
 
 def middleware_local_proxy(next):
     value = next()
 
     # Compatibility with LocalProxy from Werkzeug
-    try:
-        if hasattr(value, '_get_current_object'):
-            value = value._get_current_object()
-
-    except Exception:
-        pass
+    if hasattr(value, '_get_current_object'):
+        value = value._get_current_object()
 
     if isinstance(value, Exception):
         raise value

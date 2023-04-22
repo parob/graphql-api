@@ -2,7 +2,8 @@ import inspect
 
 from typing import Any, List, Dict, Callable
 
-from graphql import graphql, graphql_sync
+from graphql import graphql, graphql_sync, ExecutionContext, GraphQLError, \
+    GraphQLOutputType
 
 from graphql.execution import ExecutionResult
 from graphql.type.schema import GraphQLSchema
@@ -12,7 +13,7 @@ from graphql_api.middleware import \
     middleware_field_context, \
     middleware_request_context, \
     middleware_local_proxy, \
-    middleware_adapt_enum
+    middleware_adapt_enum, middleware_catch_exception
 
 
 class GraphQLBaseExecutor:
@@ -25,31 +26,61 @@ class GraphQLBaseExecutor:
         pass
 
     def execute(
-        self,
-        query,
-        variables=None,
-        operation_name=None
+            self,
+            query,
+            variables=None,
+            operation_name=None
     ) -> ExecutionResult:
         pass
 
     async def execute_async(
-        self,
-        query,
-        variables=None,
-        operation_name=None
+            self,
+            query,
+            variables=None,
+            operation_name=None
     ) -> ExecutionResult:
         pass
+
+
+class ErrorProtectionExecutionContext(ExecutionContext):
+    default_error_protection = True
+
+    error_protection = "ERROR_PROTECTION"
+
+    def handle_field_error(
+            self,
+            error: GraphQLError,
+            return_type: GraphQLOutputType,
+    ) -> None:
+
+        error_protection = self.default_error_protection
+        original_error = error.original_error
+        if hasattr(error, self.error_protection):
+            error_protection = getattr(error, self.error_protection)
+
+        elif hasattr(original_error, self.error_protection):
+            error_protection = getattr(original_error, self.error_protection)
+
+        if not error_protection:
+            raise error.original_error
+
+        return super().handle_field_error(error=error, return_type=return_type)
+
+
+class NoErrorProtectionExecutionContext(ErrorProtectionExecutionContext):
+    default_error_protection = False
 
 
 class GraphQLExecutor(GraphQLBaseExecutor):
 
     def __init__(
-        self,
-        schema: GraphQLSchema,
-        meta: Dict = None,
-        root_value: Any = None,
-        middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
-        middleware_on_introspection: bool = False
+            self,
+            schema: GraphQLSchema,
+            meta: Dict = None,
+            root_value: Any = None,
+            middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
+            middleware_on_introspection: bool = False,
+            error_protection: bool = True
     ):
         super().__init__()
 
@@ -59,6 +90,7 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         if middleware is None:
             middleware = []
 
+        middleware.insert(0, middleware_catch_exception)
         middleware.insert(0, middleware_field_context)
         middleware.insert(0, middleware_request_context)
         middleware.insert(0, middleware_local_proxy)
@@ -69,14 +101,16 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         self.middleware = middleware
         self.root_value = root_value
         self.middleware_on_introspection = middleware_on_introspection
+        self.execution_context_class = ErrorProtectionExecutionContext \
+            if error_protection else NoErrorProtectionExecutionContext
 
     def execute(
-        self,
-        query,
-        variables=None,
-        operation_name=None,
-        root_value=None,
-        context=None
+            self,
+            query,
+            variables=None,
+            operation_name=None,
+            root_value=None,
+            context=None
     ) -> ExecutionResult:
 
         context = GraphQLContext(
@@ -95,17 +129,18 @@ class GraphQLExecutor(GraphQLBaseExecutor):
             variable_values=variables,
             operation_name=operation_name,
             middleware=self.adapt_middleware(self.middleware),
-            root_value=root_value
+            root_value=root_value,
+            execution_context_class=self.execution_context_class
         )
         return value
 
     async def execute_async(
-        self,
-        query,
-        variables=None,
-        operation_name=None,
-        root_value=None,
-        context=None
+            self,
+            query,
+            variables=None,
+            operation_name=None,
+            root_value=None,
+            context=None
     ) -> ExecutionResult:
 
         context = GraphQLContext(
@@ -124,14 +159,15 @@ class GraphQLExecutor(GraphQLBaseExecutor):
             variable_values=variables,
             operation_name=operation_name,
             middleware=self.adapt_middleware(self.middleware),
-            root_value=root_value
+            root_value=root_value,
+            execution_context_class=self.execution_context_class
         )
         return value
 
     @staticmethod
     def adapt_middleware(
-        middleware,
-        middleware_on_introspection: bool = False
+            middleware,
+            middleware_on_introspection: bool = False
     ):
 
         def simplify(_middleware: Callable[[Callable, GraphQLContext], Any]):

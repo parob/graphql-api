@@ -229,23 +229,15 @@ class GraphQLMappers:
         self.mutable_mapper = mutable_mapper
 
     def map(self, type, reverse=False):
-        query_type = None
-        try:
-            if reverse:
-                query_type = self.query_mapper.rmap(type)
-            else:
-                query_type = self.query_mapper.map(type)
-        except Exception:
-            pass
+        if reverse:
+            query_type = self.query_mapper.rmap(type)
+        else:
+            query_type = self.query_mapper.map(type)
 
-        mutable_type = None
-        try:
-            if reverse:
-                mutable_type = self.mutable_mapper.rmap(type)
-            else:
-                mutable_type = self.mutable_mapper.map(type)
-        except Exception:
-            pass
+        if reverse:
+            mutable_type = self.mutable_mapper.rmap(type)
+        else:
+            mutable_type = self.mutable_mapper.map(type)
 
         if reverse:
             return query_type or mutable_type

@@ -137,7 +137,8 @@ class GraphQLAPI(GraphQLBaseExecutor):
             self,
             root: Type = None,
             middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
-            filters: List[GraphQLFilter] = None
+            filters: List[GraphQLFilter] = None,
+            error_protection=True
     ):
         super().__init__()
         if middleware is None:
@@ -148,6 +149,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
         self.filters = filters
         self.query_mapper = None
         self.mutation_mapper = None
+        self.error_protection = error_protection
 
     def graphql_schema(self) -> Tuple[GraphQLSchema, Dict]:
         schema_args = {}
@@ -238,22 +240,32 @@ class GraphQLAPI(GraphQLBaseExecutor):
         return schema, meta
 
     def execute(
-            self,
-            query,
-            variables=None,
-            operation_name=None
+        self,
+        query,
+        variables=None,
+        operation_name=None,
+        root_value: Any = None,
+        middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
+        middleware_on_introspection: bool = False,
+        error_protection: bool = None
     ) -> ExecutionResult:
-        return self.executor().execute(
+        return self.executor(
+            root_value=root_value,
+            middleware=middleware,
+            middleware_on_introspection=middleware_on_introspection,
+            error_protection=error_protection
+        ).execute(
             query=query,
             variables=variables,
-            operation_name=operation_name
+            operation_name=operation_name,
         )
 
     def executor(
-            self,
-            root_value: Any = None,
-            middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
-            middleware_on_introspection: bool = False
+        self,
+        root_value: Any = None,
+        middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
+        middleware_on_introspection: bool = False,
+        error_protection: bool = None
     ) -> GraphQLExecutor:
         schema, meta = self.graphql_schema()
 
@@ -265,5 +277,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
             meta=meta,
             root_value=root_value,
             middleware=middleware,
-            middleware_on_introspection=middleware_on_introspection
+            middleware_on_introspection=middleware_on_introspection,
+            error_protection=error_protection if error_protection is not None
+            else self.error_protection
         )
