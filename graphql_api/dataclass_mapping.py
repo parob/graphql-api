@@ -2,12 +2,13 @@ from typing import Type, get_type_hints
 import typing_inspect
 from docstring_parser import parse_from_object
 
-from graphql.type.definition import \
-    GraphQLType, \
-    GraphQLObjectType, \
-    GraphQLField, \
-    GraphQLInputField, \
-    GraphQLNonNull
+from graphql.type.definition import (
+    GraphQLType,
+    GraphQLObjectType,
+    GraphQLField,
+    GraphQLInputField,
+    GraphQLNonNull,
+)
 
 from graphql_api.utils import to_camel_case
 
@@ -28,14 +29,17 @@ def type_from_dataclass(_class: Type, mapper) -> GraphQLType:
     docstrings = parse_from_object(_class)
 
     # Remove any modifiers
-    while hasattr(base_type, 'of_type'):
+    while hasattr(base_type, "of_type"):
         base_type = base_type.of_type
 
     if mapper.as_input:
         return base_type
 
-    exclude_fields = _class.graphql_exclude_fields() \
-        if hasattr(_class, 'graphql_exclude_fields') else []
+    exclude_fields = (
+        _class.graphql_exclude_fields()
+        if hasattr(_class, "graphql_exclude_fields")
+        else []
+    )
 
     properties = {
         name: (field, dataclass_types.get(name))
@@ -59,14 +63,9 @@ def type_from_dataclass(_class: Type, mapper) -> GraphQLType:
                 def local_resolver():
                     local_prop_name = prop_name
 
-                    def resolver(
-                        self,
-                        info=None,
-                        context=None,
-                        *args,
-                        **kwargs
-                    ):
+                    def resolver(self, info=None, context=None, *args, **kwargs):
                         return getattr(self, local_prop_name)
+
                     return resolver
 
                 description = None
@@ -80,10 +79,7 @@ def type_from_dataclass(_class: Type, mapper) -> GraphQLType:
                 nullable = False
 
                 if typing_inspect.is_union_type(field_type):
-                    union_args = typing_inspect.get_args(
-                        field_type,
-                        evaluate=True
-                    )
+                    union_args = typing_inspect.get_args(field_type, evaluate=True)
                     if type(None) in union_args:
                         nullable = True
 
@@ -91,15 +87,10 @@ def type_from_dataclass(_class: Type, mapper) -> GraphQLType:
                     type_: GraphQLType = GraphQLNonNull(type_)
 
                 if local_mapper.as_input:
-                    field = GraphQLInputField(
-                        type_=type_,
-                        description=description
-                    )
+                    field = GraphQLInputField(type_=type_, description=description)
                 else:
                     field = GraphQLField(
-                        type_=type_,
-                        resolve=local_resolver(),
-                        description=description
+                        type_=type_, resolve=local_resolver(), description=description
                     )
 
                 local_fields[to_camel_case(prop_name)] = field
@@ -114,6 +105,7 @@ def type_from_dataclass(_class: Type, mapper) -> GraphQLType:
                     pass
 
             return local_fields
+
         return fields_callback
 
     base_type._fields = local_fields_callback()

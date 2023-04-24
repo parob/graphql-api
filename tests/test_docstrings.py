@@ -23,7 +23,6 @@ from graphql_api.decorators import field
 
 
 class TestGraphQL:
-
     def test_basic_docstring(self):
         api = GraphQLAPI()
 
@@ -56,7 +55,7 @@ class TestGraphQL:
 
         assert schema.query_type.description == "ROOT_DOCSTRING"
 
-        root_field = schema.query_type.fields['rootField']
+        root_field = schema.query_type.fields["rootField"]
 
         assert root_field.description == "ROOT_FIELD_DOCSTRING"
 
@@ -76,6 +75,7 @@ class TestGraphQL:
             """
             NODE_DOCSTRING
             """
+
             string_field: Optional[str] = None
             int_field: Optional[int] = None
 
@@ -103,7 +103,7 @@ class TestGraphQL:
 
         assert schema.query_type.description == "ROOT_DOCSTRING"
 
-        root_field = schema.query_type.fields['rootField']
+        root_field = schema.query_type.fields["rootField"]
 
         assert root_field.description == "ROOT_FIELD_DOCSTRING"
 
@@ -123,6 +123,7 @@ class TestGraphQL:
             """
             NODE_DOCSTRING
             """
+
             string_field: Optional[str] = None
             """STRING_FIELD_DOCSTRING"""
             int_field: Optional[int] = None
@@ -152,7 +153,7 @@ class TestGraphQL:
 
         assert schema.query_type.description == "ROOT_DOCSTRING"
 
-        root_field = schema.query_type.fields['rootField']
+        root_field = schema.query_type.fields["rootField"]
 
         assert root_field.description == "ROOT_FIELD_DOCSTRING"
 
@@ -180,6 +181,7 @@ class TestGraphQL:
                 string_field: STRING_FIELD_DOCSTRING
                 int_field: INT_FIELD_DOCSTRING
             """
+
             string_field: Optional[str] = None
             int_field: Optional[int] = None
 
@@ -192,13 +194,12 @@ class TestGraphQL:
 
         @api.type(root=True)
         class Root:
-
             @api.field
             def root_field(self) -> Node:
                 return Node()
 
         schema = api.graphql_schema()[0]
-        root_field = schema.query_type.fields['rootField']
+        root_field = schema.query_type.fields["rootField"]
         root_field_type = root_field.type.of_type
 
         string_field = root_field_type.fields["stringField"]

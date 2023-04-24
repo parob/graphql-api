@@ -40,9 +40,8 @@ class PageInfo:
         start_cursor: str,
         end_cursor: str,
         *args,
-        **kwargs
+        **kwargs,
     ):
-
         super().__init__(*args, **kwargs)
 
         self._has_previous_page = has_previous_page
@@ -112,7 +111,9 @@ class Connection:
         before: str = None,
         after: str = None,
         first: int = None,
-        last: int = None, *args, **kwargs
+        last: int = None,
+        *args,
+        **kwargs,
     ):
         self._before = before
         self._after = after
@@ -123,13 +124,11 @@ class Connection:
     @GraphQLAPI.field
     def edges(self) -> List[Edge]:
         raise NotImplementedError(
-            f"{self.__class__.__name__} has not "
-            f"implemented 'Connection.edges'"
+            f"{self.__class__.__name__} has not " f"implemented 'Connection.edges'"
         )
 
     @GraphQLAPI.field
     def page_info(self) -> PageInfo:
         raise NotImplementedError(
-            f"{self.__class__.__name__} has not "
-            f"implemented 'Connection.page_info'"
+            f"{self.__class__.__name__} has not " f"implemented 'Connection.page_info'"
         )

@@ -2,22 +2,28 @@ import inspect
 
 from typing import Any, List, Dict, Callable
 
-from graphql import graphql, graphql_sync, ExecutionContext, GraphQLError, \
-    GraphQLOutputType
+from graphql import (
+    graphql,
+    graphql_sync,
+    ExecutionContext,
+    GraphQLError,
+    GraphQLOutputType,
+)
 
 from graphql.execution import ExecutionResult
 from graphql.type.schema import GraphQLSchema
 
 from graphql_api.context import GraphQLContext
-from graphql_api.middleware import \
-    middleware_field_context, \
-    middleware_request_context, \
-    middleware_local_proxy, \
-    middleware_adapt_enum, middleware_catch_exception
+from graphql_api.middleware import (
+    middleware_field_context,
+    middleware_request_context,
+    middleware_local_proxy,
+    middleware_adapt_enum,
+    middleware_catch_exception,
+)
 
 
 class GraphQLBaseExecutor:
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.validate()
@@ -25,19 +31,11 @@ class GraphQLBaseExecutor:
     def validate(self):
         pass
 
-    def execute(
-            self,
-            query,
-            variables=None,
-            operation_name=None
-    ) -> ExecutionResult:
+    def execute(self, query, variables=None, operation_name=None) -> ExecutionResult:
         pass
 
     async def execute_async(
-            self,
-            query,
-            variables=None,
-            operation_name=None
+        self, query, variables=None, operation_name=None
     ) -> ExecutionResult:
         pass
 
@@ -48,11 +46,10 @@ class ErrorProtectionExecutionContext(ExecutionContext):
     error_protection = "ERROR_PROTECTION"
 
     def handle_field_error(
-            self,
-            error: GraphQLError,
-            return_type: GraphQLOutputType,
+        self,
+        error: GraphQLError,
+        return_type: GraphQLOutputType,
     ) -> None:
-
         error_protection = self.default_error_protection
         original_error = error.original_error
         if hasattr(error, self.error_protection):
@@ -72,15 +69,14 @@ class NoErrorProtectionExecutionContext(ErrorProtectionExecutionContext):
 
 
 class GraphQLExecutor(GraphQLBaseExecutor):
-
     def __init__(
-            self,
-            schema: GraphQLSchema,
-            meta: Dict = None,
-            root_value: Any = None,
-            middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
-            middleware_on_introspection: bool = False,
-            error_protection: bool = True
+        self,
+        schema: GraphQLSchema,
+        meta: Dict = None,
+        root_value: Any = None,
+        middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
+        middleware_on_introspection: bool = False,
+        error_protection: bool = True,
     ):
         super().__init__()
 
@@ -101,23 +97,16 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         self.middleware = middleware
         self.root_value = root_value
         self.middleware_on_introspection = middleware_on_introspection
-        self.execution_context_class = ErrorProtectionExecutionContext \
-            if error_protection else NoErrorProtectionExecutionContext
+        self.execution_context_class = (
+            ErrorProtectionExecutionContext
+            if error_protection
+            else NoErrorProtectionExecutionContext
+        )
 
     def execute(
-            self,
-            query,
-            variables=None,
-            operation_name=None,
-            root_value=None,
-            context=None
+        self, query, variables=None, operation_name=None, root_value=None, context=None
     ) -> ExecutionResult:
-
-        context = GraphQLContext(
-            schema=self.schema,
-            meta=self.meta,
-            executor=self
-        )
+        context = GraphQLContext(schema=self.schema, meta=self.meta, executor=self)
 
         if root_value is None:
             root_value = self.root_value
@@ -130,24 +119,14 @@ class GraphQLExecutor(GraphQLBaseExecutor):
             operation_name=operation_name,
             middleware=self.adapt_middleware(self.middleware),
             root_value=root_value,
-            execution_context_class=self.execution_context_class
+            execution_context_class=self.execution_context_class,
         )
         return value
 
     async def execute_async(
-            self,
-            query,
-            variables=None,
-            operation_name=None,
-            root_value=None,
-            context=None
+        self, query, variables=None, operation_name=None, root_value=None, context=None
     ) -> ExecutionResult:
-
-        context = GraphQLContext(
-            schema=self.schema,
-            meta=self.meta,
-            executor=self
-        )
+        context = GraphQLContext(schema=self.schema, meta=self.meta, executor=self)
 
         if root_value is None:
             root_value = self.root_value
@@ -160,25 +139,21 @@ class GraphQLExecutor(GraphQLBaseExecutor):
             operation_name=operation_name,
             middleware=self.adapt_middleware(self.middleware),
             root_value=root_value,
-            execution_context_class=self.execution_context_class
+            execution_context_class=self.execution_context_class,
         )
         return value
 
     @staticmethod
-    def adapt_middleware(
-            middleware,
-            middleware_on_introspection: bool = False
-    ):
-
+    def adapt_middleware(middleware, middleware_on_introspection: bool = False):
         def simplify(_middleware: Callable[[Callable, GraphQLContext], Any]):
             def graphql_middleware(next, root, info, **args):
                 kwargs = {}
                 if "context" in inspect.signature(_middleware).parameters:
                     context: GraphQLContext = info.context
                     kwargs["context"] = context
-                    context.resolve_args['root'] = root
-                    context.resolve_args['info'] = info
-                    context.resolve_args['args'] = args
+                    context.resolve_args["root"] = root
+                    context.resolve_args["info"] = info
+                    context.resolve_args["args"] = args
 
                 return _middleware(lambda: next(root, info, **args), **kwargs)
 
@@ -186,8 +161,10 @@ class GraphQLExecutor(GraphQLBaseExecutor):
 
         def skip_if_introspection(_middleware):
             def middleware_with_skip(next, root, info, **args):
-                skip = info.operation.name and \
-                       info.operation.name.value == 'IntrospectionQuery'
+                skip = (
+                    info.operation.name
+                    and info.operation.name.value == "IntrospectionQuery"
+                )
                 if skip:
                     return next(root, info, **args)
                 return _middleware(next, root, info, **args)

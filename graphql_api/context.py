@@ -1,7 +1,5 @@
 class GraphQLContext:
-
     def __init__(self, schema=None, meta=None, executor=None):
-
         if not meta:
             meta = {}
 

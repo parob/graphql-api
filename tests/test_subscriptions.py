@@ -4,8 +4,16 @@ from inspect import isawaitable
 from typing import AsyncIterator, Optional
 
 import pytest
-from graphql import GraphQLSchema, GraphQLObjectType, GraphQLField, \
-    GraphQLInt, subscribe, parse, MapAsyncIterator, graphql
+from graphql import (
+    GraphQLSchema,
+    GraphQLObjectType,
+    GraphQLField,
+    GraphQLInt,
+    subscribe,
+    parse,
+    MapAsyncIterator,
+    graphql,
+)
 from graphql.pyutils import SimplePubSub
 
 from graphql_api import GraphQLAPI
@@ -32,18 +40,11 @@ def subscribe_count(_root, info):
 schema = GraphQLSchema(
     query=GraphQLObjectType(
         "RootQueryType",
-        {
-            "count": GraphQLField(GraphQLInt, resolve=resolve_count)
-        },
+        {"count": GraphQLField(GraphQLInt, resolve=resolve_count)},
     ),
     mutation=GraphQLObjectType(
         "RootMutationType",
-        {
-            "increaseCount": GraphQLField(
-                GraphQLInt,
-                resolve=resolve_increase_count
-            )
-        },
+        {"increaseCount": GraphQLField(GraphQLInt, resolve=resolve_increase_count)},
     ),
     subscription=GraphQLObjectType(
         "RootSubscriptionType",
@@ -59,10 +60,8 @@ schema = GraphQLSchema(
 
 
 class TestSubscriptions:
-
     @pytest.mark.asyncio
     async def test_subscribe_to_count(self):
-
         a = await graphql(schema, "query {count}")
         b = await graphql(schema, "mutation {increaseCount}")
         c = await graphql(schema, "query {count}")
@@ -92,12 +91,13 @@ class TestSubscriptions:
             async for result in await subscription:
                 received_count.append(result)
 
-        done, pending = await wait([
-            create_task(receive_count()), create_task(mutate_count())
-        ], timeout=1)
+        done, pending = await wait(
+            [create_task(receive_count()), create_task(mutate_count())], timeout=1
+        )
 
-        assert len(received_count) == 4 \
-               and all(result.data["count"] for result in received_count)
+        assert len(received_count) == 4 and all(
+            result.data["count"] for result in received_count
+        )
 
     @pytest.mark.asyncio
     async def test_graphql_api_subscribe(self):
@@ -110,31 +110,27 @@ class TestSubscriptions:
 
         @api.type(root=True)
         class Root:
-
             @api.field
             # async
             def on_comment_added(
-                    self,
-                    by_user: str = None
-            ) -> Comment:   # AsyncIterator[Comment]:
+                self, by_user: str = None
+            ) -> Comment:  # AsyncIterator[Comment]:
                 return Comment(user="rob", comment="test comment")
                 # comment_pub_sub = SimplePubSub()
                 # return comment_pub_sub.get_subscriber()
 
         executor = api.executor()
 
-        test_input_query = '''
+        test_input_query = """
             query {
                 onCommentAdded {
                     comment
                 }
             }
-        '''
+        """
 
         result = executor.execute(test_input_query)
 
-        expected = {
-            "onCommentAdded": {"comment": "test comment"}
-        }
+        expected = {"onCommentAdded": {"comment": "test comment"}}
         assert not result.errors
         assert result.data == expected

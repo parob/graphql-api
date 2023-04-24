@@ -13,7 +13,8 @@ from graphql import (
     GraphQLSchema,
     GraphQLError,
     build_client_schema,
-    get_introspection_query)
+    get_introspection_query,
+)
 
 from graphql.type.definition import GraphQLType, GraphQLInterfaceType
 
@@ -21,24 +22,24 @@ from graphql.type.definition import GraphQLType, GraphQLInterfaceType
 # From this response in Stackoverflow
 # http://stackoverflow.com/a/19053800/1072990
 def to_camel_case(snake_str, title=False):
-    if snake_str.startswith('_'):
+    if snake_str.startswith("_"):
         snake_str = snake_str[1:]
 
-    components = snake_str.split('_')
+    components = snake_str.split("_")
     # We capitalize the first letter of each component except the first one
     # with the 'title' method and join them together.
     if not snake_str:
         return ""
     prefix = components[0].title() if title else components[0]
-    value = prefix + "".join(x.title() if x else '_' for x in components[1:])
+    value = prefix + "".join(x.title() if x else "_" for x in components[1:])
     return value
 
 
 # From this response in Stackoverflow
 # http://stackoverflow.com/a/1176023/1072990
 def to_snake_case(name):
-    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+    s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+    return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
 
 
 def to_input_value(value):
@@ -53,14 +54,14 @@ def to_input_value(value):
         if isinstance(value, str):
             return '"' + value + '"'
         if isinstance(value, bool):
-            return 'true' if value else 'false'
+            return "true" if value else "false"
         else:
             return str(value)
 
     if isinstance(value, enum.Enum):
         return str(value.value)
 
-    raise ValueError(f'Cannot map {value} to GraphQLInput')
+    raise ValueError(f"Cannot map {value} to GraphQLInput")
 
 
 def has_mutable(type, checked_types=None, interfaces_default_mutable=True):
@@ -70,8 +71,7 @@ def has_mutable(type, checked_types=None, interfaces_default_mutable=True):
         type = type.of_type
 
     if isinstance(type, (GraphQLObjectType, GraphQLInterfaceType)):
-        if interfaces_default_mutable and \
-                isinstance(type, GraphQLInterfaceType):
+        if interfaces_default_mutable and isinstance(type, GraphQLInterfaceType):
             return True
 
         if not checked_types:
@@ -86,11 +86,7 @@ def has_mutable(type, checked_types=None, interfaces_default_mutable=True):
                 return True
             if field.type not in checked_types:
                 checked_types.add(field.type)
-                if has_mutable(
-                    field.type,
-                    checked_types,
-                    interfaces_default_mutable
-                ):
+                if has_mutable(field.type, checked_types, interfaces_default_mutable):
                     return True
 
     return False
@@ -119,12 +115,7 @@ def iterate_fields(type: GraphQLType, done_fields=None):
                     yield from iterate_fields(field.type, done_fields)
 
 
-def url_to_ast(
-    url,
-    http_method="GET",
-    http_headers=None,
-    verify=True
-) -> GraphQLSchema:
+def url_to_ast(url, http_method="GET", http_headers=None, verify=True) -> GraphQLSchema:
     _introspect_query = get_introspection_query()
 
     response = asyncio.run(
@@ -133,15 +124,15 @@ def url_to_ast(
             query=_introspect_query,
             http_method=http_method,
             http_headers=http_headers,
-            verify=verify
+            verify=verify,
         )
     )
-    errors = response.get('errors')
+    errors = response.get("errors")
 
     if errors:
         raise GraphQLError(f"RemoteSchema {url} Error: {str(errors)}")
 
-    introspect_schema = response.get('data')
+    introspect_schema = response.get("data")
     return build_client_schema(introspect_schema)
 
 
@@ -161,7 +152,7 @@ async def http_query(
     http_method="GET",
     http_headers=None,
     http_timeout=10,
-    verify=True
+    verify=True,
 ):
     params = {"query": query}
 
@@ -180,8 +171,11 @@ async def http_query(
                 url,
                 params=params,
                 ssl=verify,
-                headers={'Accept': 'application/json', **http_headers},
-                timeout=ClientTimeout(total=http_timeout)
+                headers={
+                    "Accept": "application/json",
+                    **http_headers
+                },
+                timeout=ClientTimeout(total=http_timeout),
             )
 
         elif http_method == "POST":
@@ -189,8 +183,12 @@ async def http_query(
                 url,
                 json=params,
                 ssl=verify,
-                headers={'Accept': 'application/json', **http_headers},
-                timeout=ClientTimeout(total=http_timeout)
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    **http_headers
+                },
+                timeout=ClientTimeout(total=http_timeout),
             )
 
         else:
@@ -199,8 +197,6 @@ async def http_query(
         try:
             json = await r.json(content_type=None)
         except JSONDecodeError as e:
-            raise ValueError(
-                f"{e}, unable to decode JSON"
-            )
+            raise ValueError(f"{e}, unable to decode JSON")
 
     return json

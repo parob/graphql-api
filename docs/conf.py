@@ -8,41 +8,32 @@ import guzzle_sphinx_theme
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/stable/config
 
-project = 'GraphQL-API'
-copyright = '2018, Robert Parker'
-author = 'Robert Parker'
+project = "GraphQL-API"
+copyright = "2018, Robert Parker"
+author = "Robert Parker"
 
-version = '0.1'
-release = '0.1.0'
+version = "0.1"
+release = "0.1.0"
 
-extensions = [
-    'sphinx.ext.autodoc',
-    'sphinxcontrib.fulltoc',
-    'guzzle_sphinx_theme'
-]
+extensions = ["sphinx.ext.autodoc", "sphinxcontrib.fulltoc", "guzzle_sphinx_theme"]
 
-templates_path = ['_templates']
-source_suffix = '.rst'
-master_doc = 'index'
+templates_path = ["_templates"]
+source_suffix = ".rst"
+master_doc = "index"
 language = None
-exclude_patterns = ['_build']
-pygments_style = 'sphinx'
+exclude_patterns = ["_build"]
+pygments_style = "sphinx"
 
 
 # -- Options for HTML output -------------------------------------------------
 
-html_theme = 'guzzle_sphinx_theme'
+html_theme = "guzzle_sphinx_theme"
 html_theme_path = guzzle_sphinx_theme.html_theme_path()
 html_theme_options = {
     "project_nav_name": project,
 }
-html_static_path = ['_static']
-html_favicon = '_static/favicon.ico'
+html_static_path = ["_static"]
+html_favicon = "_static/favicon.ico"
 html_sidebars = {
-    '**': [
-        'logo-text.html',
-        'sidebarlogo.html',
-        'globaltoc.html',
-        'searchbox.html'
-    ]
+    "**": ["logo-text.html", "sidebarlogo.html", "globaltoc.html", "searchbox.html"]
 }

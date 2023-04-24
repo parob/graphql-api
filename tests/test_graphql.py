@@ -30,11 +30,10 @@ def available(url, method="GET"):
             timeout=5,
             verify=False,
             headers={
-                "accept":
-                    "text/html,application/xhtml+xml,application/xml;q=0.9,"
-                    "image/avif,image/webp,image/apng,*/*;q=0.8,"
-                    "application/signed-exchange;v=b3;q=0.7"
-            }
+                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,"
+                "image/avif,image/webp,image/apng,*/*;q=0.8,"
+                "application/signed-exchange;v=b3;q=0.7"
+            },
         )
     except (ConnectionError, ConnectTimeout, ReadTimeout):
         return False
@@ -47,14 +46,12 @@ def available(url, method="GET"):
 
 # noinspection PyPep8Naming,DuplicatedCode
 class TestGraphQL:
-
     def test_multiple_apis(self):
         api_1 = GraphQLAPI()
         api_2 = GraphQLAPI()
 
         @api_1.type
         class Math:
-
             @api_1.field
             def test_square(self, number: int) -> int:
                 return number * number
@@ -67,51 +64,51 @@ class TestGraphQL:
         @api_1.type(root=True)
         @api_2.type(root=True)
         class Root:
-
             @api_1.field
             @api_2.field
             def math(self) -> Math:
                 return Math()
 
-        result_1 = api_1.execute('''
+        result_1 = api_1.execute(
+            """
             query GetTestSquare {
                 math {
                     square: testSquare(number: %d)
                 }
             }
-        ''' % 5)
+        """
+            % 5
+        )
 
-        expected = {
-            "math": {
-                "square": 25
-            }
-        }
+        expected = {"math": {"square": 25}}
         assert not result_1.errors
         assert result_1.data == expected
 
-        result_2 = api_2.execute('''
+        result_2 = api_2.execute(
+            """
             query GetTestCube {
                 math {
                     square: testCube(number: %d)
                 }
             }
-        ''' % 5)
+        """
+            % 5
+        )
 
-        expected = {
-            "math": {
-                "square": 125
-            }
-        }
+        expected = {"math": {"square": 125}}
         assert not result_2.errors
         assert result_2.data == expected
 
-        result_3 = api_2.execute('''
+        result_3 = api_2.execute(
+            """
             query GetTestSquare {
                 math {
                     square: testSquare(number: %d)
                 }
             }
-        ''' % 5)
+        """
+            % 5
+        )
 
         assert result_3.errors
 
@@ -119,7 +116,6 @@ class TestGraphQL:
         api = GraphQLAPI()
 
         class Math:
-
             @api.field
             def test_square(self, number: int) -> int:
                 return number * number
@@ -127,24 +123,22 @@ class TestGraphQL:
         # noinspection PyUnusedLocal
         @api.type(root=True)
         class Root:
-
             @api.field
             def math(self) -> Math:
                 return Math()
 
-        result = api.execute('''
+        result = api.execute(
+            """
             query GetTestSquare {
                 math {
                     square: testSquare(number: %d)
                 }
             }
-        ''' % 5)
+        """
+            % 5
+        )
 
-        expected = {
-            "math": {
-                "square": 25
-            }
-        }
+        expected = {"math": {"square": 25}}
         assert not result.errors
         assert result.data == expected
 
@@ -152,29 +146,25 @@ class TestGraphQL:
         api = GraphQLAPI()
 
         class Person:
-
             def __init__(self, name: str):
                 self.name = name
 
         # noinspection PyUnusedLocal
         @api.type(root=True)
         class Root:
-
             @api.field
             def get_name(self, person: Person) -> str:
                 return person.name
 
-        test_query = '''
+        test_query = """
             query GetTestSquare {
                 getName(person: { name: "steve" })
             }
-        '''
+        """
 
         result = api.execute(test_query)
 
-        expected = {
-            "getName": "steve"
-        }
+        expected = {"getName": "steve"}
         assert not result.errors
         assert result.data == expected
 
@@ -182,7 +172,6 @@ class TestGraphQL:
         api = GraphQLAPI()
 
         class Person:
-
             @classmethod
             def graphql_from_input(cls, age: int):
                 person = Person(name="hugh")
@@ -202,7 +191,6 @@ class TestGraphQL:
                 return self.age
 
         class Root:
-
             @api.field
             def person_info(self, person: Person) -> str:
                 return person.name + " is " + str(person.age)
@@ -210,17 +198,15 @@ class TestGraphQL:
         api.root_type = Root
         executor = api.executor()
 
-        test_query = '''
+        test_query = """
             query GetPersonInfo {
                 personInfo(person: { age: 30 })
             }
-        '''
+        """
 
         result = executor.execute(test_query)
 
-        expected = {
-            "personInfo": "hugh is 30"
-        }
+        expected = {"personInfo": "hugh is 30"}
         assert not result.errors
         assert result.data == expected
 
@@ -228,10 +214,8 @@ class TestGraphQL:
         api = GraphQLAPI()
 
         class Person:
-
             @classmethod
             def graphql_fields(cls):
-
                 @api.field
                 def age(_self) -> int:
                     return _self.hidden_age
@@ -242,7 +226,6 @@ class TestGraphQL:
                 self.hidden_age = age
 
         class Root:
-
             @api.field
             def thomas(self) -> Person:
                 return Person(age=2)
@@ -250,19 +233,15 @@ class TestGraphQL:
         api.root_type = Root
         executor = api.executor()
 
-        test_query = '''
+        test_query = """
             query GetThomasAge {
                 thomas { age }
             }
-        '''
+        """
 
         result = executor.execute(test_query)
 
-        expected = {
-            "thomas": {
-                "age": 2
-            }
-        }
+        expected = {"thomas": {"age": 2}}
         assert not result.errors
         assert result.data == expected
 
@@ -270,9 +249,8 @@ class TestGraphQL:
         api = GraphQLAPI()
 
         class Root:
-
             @api.field
-            def root(self) -> 'Root':
+            def root(self) -> "Root":
                 return Root()
 
             @api.field
@@ -282,7 +260,7 @@ class TestGraphQL:
         api.root_type = Root
         executor = api.executor()
 
-        test_query = '''
+        test_query = """
             query GetRecursiveRoot {
                 root {
                     root {
@@ -290,25 +268,17 @@ class TestGraphQL:
                     }
                 }
             }
-        '''
+        """
 
         result = executor.execute(test_query)
 
-        expected = {
-            "root": {
-                "root":  {
-                    "value": 5
-                }
-            }
-        }
+        expected = {"root": {"root": {"value": 5}}}
         assert not result.errors
         assert result.data == expected
 
     def test_field_filter(self):
-
         # noinspection PyUnusedLocal
         class Root:
-
             @field
             def name(self) -> str:
                 return "rob"
@@ -346,7 +316,6 @@ class TestGraphQL:
         # noinspection PyUnusedLocal
         @api.type(root=True)
         class Root:
-
             def __init__(self):
                 self._test_property = 5
 
@@ -364,31 +333,27 @@ class TestGraphQL:
 
         executor = api.executor()
 
-        test_query = '''
+        test_query = """
             query GetTestProperty {
                 testProperty
             }
-        '''
+        """
 
         result = executor.execute(test_query)
 
-        expected = {
-            "testProperty": 5
-        }
+        expected = {"testProperty": 5}
         assert not result.errors
         assert result.data == expected
 
-        test_mutation = '''
+        test_mutation = """
             mutation SetTestProperty {
                 testProperty(value: 10)
             }
-        '''
+        """
 
         result = executor.execute(test_mutation)
 
-        expected = {
-            "testProperty": 10
-        }
+        expected = {"testProperty": 10}
         assert not result.errors
         assert result.data == expected
 
@@ -397,7 +362,6 @@ class TestGraphQL:
 
         @api.type(interface=True)
         class Animal:
-
             @api.field
             def planet(self) -> str:
                 return "Earth"
@@ -407,13 +371,11 @@ class TestGraphQL:
                 return "GenericAnimalName"
 
         class Dog(Animal):
-
             @api.field
             def name(self) -> str:
                 return "Floppy"
 
         class Human(Animal):
-
             @api.field
             def name(self) -> str:
                 return "John"
@@ -423,7 +385,6 @@ class TestGraphQL:
                 return Dog()
 
         class Root:
-
             @api.field
             def best_animal(self, task: str = "bark") -> Animal:
                 if task == "bark":
@@ -433,7 +394,7 @@ class TestGraphQL:
         api.root_type = Root
         executor = api.executor()
 
-        test_query = '''
+        test_query = """
             query GetAnimal {
                 bestAnimal(task: "%s") {
                     planet
@@ -445,16 +406,11 @@ class TestGraphQL:
                     }
                 }
             }
-        '''
+        """
 
         result = executor.execute(test_query % "bark")
 
-        expected = {
-            "bestAnimal": {
-                "planet": "Earth",
-                "name": "Floppy"
-            }
-        }
+        expected = {"bestAnimal": {"planet": "Earth", "name": "Floppy"}}
 
         assert not result.errors
         assert result.data == expected
@@ -462,13 +418,7 @@ class TestGraphQL:
         result = executor.execute(test_query % "making a cake")
 
         expected = {
-            "bestAnimal": {
-                "planet": "Earth",
-                "name": "John",
-                "pet": {
-                    "name": "Floppy"
-                }
-            }
+            "bestAnimal": {"planet": "Earth", "name": "John", "pet": {"name": "Floppy"}}
         }
         assert not result.errors
         assert result.data == expected
@@ -478,34 +428,29 @@ class TestGraphQL:
 
         @api.type(interface=True)
         class Animal:
-
             @api.field
             def name(self) -> str:
                 return "GenericAnimalName"
 
         @api.type(interface=True)
         class Object:
-
             @api.field
             def weight(self) -> int:
                 return 100
 
         @api.type(interface=True)
         class Responds:
-
             # noinspection PyUnusedLocal
             @api.field
             def ask_question(self, text: str) -> str:
                 return "GenericResponse"
 
         class BasicRespondMixin(Responds, Animal):
-
             @api.field
             def ask_question(self, text: str) -> str:
                 return f"Hello, im {self.name()}!"
 
         class Dog(BasicRespondMixin, Animal, Object):
-
             @api.field
             def name(self) -> str:
                 return "Floppy"
@@ -517,14 +462,13 @@ class TestGraphQL:
         # noinspection PyUnusedLocal
         @api.type(root=True)
         class Root:
-
             @api.field
             def animal(self) -> Animal:
                 return Dog()
 
         executor = api.executor()
 
-        test_query = '''
+        test_query = """
             query GetDog {
                 animal {
                     name
@@ -534,16 +478,12 @@ class TestGraphQL:
                     }
                 }
             }
-        '''
+        """
 
         result = executor.execute(test_query)
 
         expected = {
-            "animal": {
-                "name": "Floppy",
-                "weight": 20,
-                "response": "Hello, im Floppy!"
-            }
+            "animal": {"name": "Floppy", "weight": 20, "response": "Hello, im Floppy!"}
         }
 
         assert not result.errors
@@ -561,19 +501,16 @@ class TestGraphQL:
 
         executor = api.executor()
 
-        test_query = '''
+        test_query = """
             query HelloWorld {
                 helloWorld
                 helloWorldOptional
             }
-        '''
+        """
 
         result = executor.execute(test_query)
 
-        expected = {
-            "helloWorld": "hello world",
-            'helloWorldOptional': None
-        }
+        expected = {"helloWorld": "hello world", "helloWorldOptional": None}
         assert not result.errors
         assert result.data == expected
 
@@ -583,24 +520,21 @@ class TestGraphQL:
         # noinspection PyUnusedLocal
         @api.type(root=True)
         class Root:
-
             @api.field(mutable=True)
             def hello_world(self) -> str:
                 return "hello world"
 
         executor = api.executor()
 
-        test_query = '''
+        test_query = """
             mutation HelloWorld {
                 helloWorld
             }
-        '''
+        """
 
         result = executor.execute(test_query)
 
-        expected = {
-            "helloWorld": "hello world"
-        }
+        expected = {"helloWorld": "hello world"}
         assert not result.errors
         assert result.data == expected
 
@@ -608,7 +542,6 @@ class TestGraphQL:
         api = GraphQLAPI()
 
         class Math:
-
             @api.field
             def square(self, number: int) -> int:
                 return number * number
@@ -620,37 +553,33 @@ class TestGraphQL:
         # noinspection PyUnusedLocal
         @api.type(root=True)
         class Root:
-
             @api.field
             def math(self) -> Math:
                 return Math()
 
         executor = api.executor()
 
-        test_query = '''
+        test_query = (
+            """
         mutation GetTestSquare {
             math {
                 square: createSquare(number: %d)
             }
         }
-        ''' % 5
+        """
+            % 5
+        )
 
         result = executor.execute(test_query)
 
-        expected = {
-            "math": {
-                "square": 25
-            }
-        }
+        expected = {"math": {"square": 25}}
         assert not result.errors
         assert result.data == expected
 
     def test_print(self):
-
         api = GraphQLAPI()
 
         class Math:
-
             @api.field
             def square(self, number: int) -> int:
                 return number * number
@@ -662,7 +591,6 @@ class TestGraphQL:
         # noinspection PyUnusedLocal
         @api.type(root=True)
         class Root:
-
             @api.field
             def math(self) -> Math:
                 return Math()
@@ -672,7 +600,7 @@ class TestGraphQL:
         schema_str = print_schema(schema)
         schema_str = schema_str.strip().replace(" ", "")
 
-        expected_schema_str = '''
+        expected_schema_str = """
             schema {
                 query: Root
                 mutation: RootMutable
@@ -693,7 +621,9 @@ class TestGraphQL:
             type MathMutable {
                 createSquare(number: Int!): Int!
             }
-        '''.strip().replace(" ", "")
+        """.strip().replace(
+            " ", ""
+        )
 
         assert set(schema_str.split("}")) == set(expected_schema_str.split("}"))
 
@@ -705,7 +635,6 @@ class TestGraphQL:
 
         @api.type(root=True)
         class Root:
-
             @api.field({"test_meta": "hello_meta"})
             def test_query(self, test_string: str = None) -> str:
                 if test_string == "hello":
@@ -714,7 +643,7 @@ class TestGraphQL:
 
         def test_middleware(next_, context):
             if context.field.meta.get("test_meta") == "hello_meta":
-                if context.request.args.get('test_string') == "hello":
+                if context.request.args.get("test_string") == "hello":
                     return next_()
             return "possible"
 
@@ -722,40 +651,33 @@ class TestGraphQL:
             was_called.append(True)
             return next_()
 
-        middleware = [
-            test_middleware,
-            test_simple_middleware
-        ]
+        middleware = [test_middleware, test_simple_middleware]
 
         executor = api.executor(middleware=middleware)
 
-        test_mutation = '''
+        test_mutation = """
             query TestMiddlewareQuery {
                 testQuery(testString: "hello")
             }
-        '''
+        """
 
         result = executor.execute(test_mutation)
 
         assert was_called
 
-        expected = {
-            "testQuery": "world"
-        }
+        expected = {"testQuery": "world"}
         assert not result.errors
         assert result.data == expected
 
-        test_mutation = '''
+        test_mutation = """
             query TestMisddlewareQuery {
                 testQuery(testString: "not_hello")
             }
-        '''
+        """
 
         result = executor.execute(test_mutation)
 
-        expected = {
-            "testQuery": "possible"
-        }
+        expected = {"testQuery": "possible"}
         assert not result.errors
         assert result.data == expected
 
@@ -778,28 +700,23 @@ class TestGraphQL:
 
         @api.type(root=True)
         class Root:
-
             @api.field
             def square(self, value: TestInputObject) -> TestInputObject:
                 return value
 
         executor = api.executor()
 
-        test_input_query = '''
+        test_input_query = """
             query TestInputQuery {
                 square(value: {aValue: 14}){
                     valueSquared
                 }
             }
-        '''
+        """
 
         result = executor.execute(test_input_query)
 
-        expected = {
-            "square": {
-                "valueSquared": 196
-            }
-        }
+        expected = {"square": {"valueSquared": 196}}
         assert not result.errors
         assert result.data == expected
 
@@ -813,7 +730,6 @@ class TestGraphQL:
 
         @api.type(root=True)
         class Root:
-
             @api.field
             def opposite(self, animal: AnimalType) -> AnimalType:
                 assert isinstance(animal, AnimalType)
@@ -825,11 +741,11 @@ class TestGraphQL:
 
         executor = api.executor()
 
-        test_enum_query = '''
+        test_enum_query = """
             query TestEnum {
                 opposite(animal: dog)
             }
-        '''
+        """
 
         result = executor.execute(test_enum_query)
         expected = {"opposite": "cat"}
@@ -846,25 +762,22 @@ class TestGraphQL:
 
         @api.type(root=True)
         class Root:
-
             @api.field
             def all(self, animals: List[AnimalType]) -> List[AnimalType]:
-                assert all(
-                    isinstance(animal, AnimalType) for animal in animals
-                )
+                assert all(isinstance(animal, AnimalType) for animal in animals)
 
                 return animals
 
         executor = api.executor()
 
-        test_enum_query = '''
+        test_enum_query = """
             query TestEnum {
                 all(animals: [dog, cat])
             }
-        '''
+        """
 
         result = executor.execute(test_enum_query)
-        expected = {"all": ["dog","cat"]}
+        expected = {"all": ["dog", "cat"]}
 
         assert result.data == expected
 
@@ -877,11 +790,10 @@ class TestGraphQL:
 
         @api.type(root=True)
         class Root:
-
             @api.field
-            def opposite(self, animal: Optional[AnimalType] = None) \
-                    -> Optional[AnimalType]:
-
+            def opposite(
+                self, animal: Optional[AnimalType] = None
+            ) -> Optional[AnimalType]:
                 if animal is None:
                     return None
 
@@ -892,11 +804,11 @@ class TestGraphQL:
 
         executor = api.executor()
 
-        test_enum_query = '''
+        test_enum_query = """
                 query TestEnum {
                     opposite
                 }
-            '''
+            """
 
         result = executor.execute(test_enum_query)
         expected = {"opposite": None}
@@ -912,7 +824,6 @@ class TestGraphQL:
 
         @api.type(root=True)
         class Root:
-
             @api.field
             def opposite(self, animal: AnimalType) -> AnimalType:
                 assert isinstance(animal, AnimalType)
@@ -924,11 +835,11 @@ class TestGraphQL:
 
         executor = api.executor()
 
-        test_enum_query = '''
+        test_enum_query = """
             query TestEnum {
                 opposite(animal: dog)
             }
-        '''
+        """
 
         result = executor.execute(test_enum_query)
         expected = {"opposite": "cat"}
@@ -943,7 +854,6 @@ class TestGraphQL:
 
         @api.type(root=True)
         class Root:
-
             @api.field
             def get_count(self, period: Period) -> int:
                 if period == "1d":
@@ -953,11 +863,11 @@ class TestGraphQL:
 
         executor = api.executor()
 
-        test_literal_query = '''
+        test_literal_query = """
             query TestEnum {
                 getCount(period: "1d")
             }
-        '''
+        """
 
         result = executor.execute(test_literal_query)
         expected = {"getCount": 365}
@@ -970,22 +880,24 @@ class TestGraphQL:
 
         @api.type(root=True)
         class Root:
-
             @api.field
             def value(self, a_int: int) -> Optional[int]:
                 return a_int
 
         executor = api.executor()
 
-        test_input_query = '''
+        test_input_query = """
             query TestOptionalQuery {
                 value
             }
-        '''
+        """
 
         result = executor.execute(test_input_query)
 
-        assert result.errors and "is required, but it was not provided" in result.errors[0].message
+        assert (
+            result.errors
+            and "is required, but it was not provided" in result.errors[0].message
+        )
 
     # noinspection PyUnusedLocal
     def test_optional(self):
@@ -993,53 +905,45 @@ class TestGraphQL:
 
         @api.type(root=True)
         class Root:
-
             @api.field
             def value(self, a_int: int = 50) -> int:
                 return a_int
 
         executor = api.executor()
 
-        test_input_query = '''
+        test_input_query = """
             query TestOptionalQuery {
                 value
             }
-        '''
+        """
 
         result = executor.execute(test_input_query)
 
-        expected = {
-            "value": 50
-        }
+        expected = {"value": 50}
         assert not result.errors
         assert result.data == expected
 
-    @pytest.mark.skipif(
-        sys.version_info < (3, 10), reason="requires python3.10"
-    )
+    @pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python3.10")
     def test_optional_311(self):
         api = GraphQLAPI()
 
         @api.type(root=True)
         class Root:
-
             @api.field
             def value(self, a_int: int | None = 50) -> Optional[int]:
                 return a_int
 
         executor = api.executor()
 
-        test_input_query = '''
+        test_input_query = """
             query TestOptionalQuery {
                 value
             }
-        '''
+        """
 
         result = executor.execute(test_input_query)
 
-        expected = {
-            "value": 50
-        }
+        expected = {"value": 50}
         assert not result.errors
         assert result.data == expected
 
@@ -1048,22 +952,21 @@ class TestGraphQL:
         api = GraphQLAPI()
 
         class Customer:
-
             @api.field
             def id(self) -> int:
                 return 5
 
         class Owner:
-
             @api.field
             def name(self) -> str:
                 return "rob"
 
         @api.type(root=True)
         class Bank:
-
             @api.field
-            def owner_or_customer(self, owner: bool = True, none: bool = False) -> Optional[Union[Owner, Customer]]:
+            def owner_or_customer(
+                self, owner: bool = True, none: bool = False
+            ) -> Optional[Union[Owner, Customer]]:
                 if owner:
                     return Owner()
 
@@ -1074,7 +977,7 @@ class TestGraphQL:
 
         executor = api.executor()
 
-        test_owner_query = '''
+        test_owner_query = """
             query TestOwnerUnion {
                 ownerOrCustomer {
                     ... on Owner {
@@ -1082,19 +985,15 @@ class TestGraphQL:
                     }
                 }
             }
-        '''
+        """
 
-        owner_expected = {
-            "ownerOrCustomer": {
-                "name": "rob"
-            }
-        }
+        owner_expected = {"ownerOrCustomer": {"name": "rob"}}
 
         owner_result = executor.execute(test_owner_query)
         assert not owner_result.errors
         assert owner_result.data == owner_expected
 
-        test_customer_query = '''
+        test_customer_query = """
             query TestCustomerUnion {
                 ownerOrCustomer(owner: false) {
                     ... on Customer {
@@ -1102,19 +1001,15 @@ class TestGraphQL:
                     }
                 }
             }
-        '''
+        """
 
-        customer_expected = {
-            "ownerOrCustomer": {
-                "id": 5
-            }
-        }
+        customer_expected = {"ownerOrCustomer": {"id": 5}}
 
         customer_result = executor.execute(test_customer_query)
         assert not customer_result.errors
         assert customer_result.data == customer_expected
 
-        test_none_query = '''
+        test_none_query = """
             query TestCustomerUnion {
                 ownerOrCustomer(owner: false, none: true) {
                     ... on Customer {
@@ -1122,11 +1017,9 @@ class TestGraphQL:
                     }
                 }
             }
-        '''
+        """
 
-        none_expected = {
-            "ownerOrCustomer": None
-        }
+        none_expected = {"ownerOrCustomer": None}
 
         none_result = executor.execute(test_none_query)
         assert not none_result.errors
@@ -1138,7 +1031,6 @@ class TestGraphQL:
 
         @api.type(root=True)
         class Root:
-
             @api.field
             def non_nullable(self) -> int:
                 # noinspection PyTypeChecker
@@ -1150,25 +1042,23 @@ class TestGraphQL:
 
         executor = api.executor()
 
-        test_non_null_query = '''
+        test_non_null_query = """
             query TestNonNullQuery {
                 nonNullable
             }
-        '''
+        """
 
         non_null_result = executor.execute(test_non_null_query)
 
         assert non_null_result.errors
 
-        test_null_query = '''
+        test_null_query = """
             query TestNullQuery {
                 nullable
             }
-        '''
+        """
 
-        expected = {
-            "nullable": None
-        }
+        expected = {"nullable": None}
 
         null_result = executor.execute(test_null_query)
         assert not null_result.errors
@@ -1180,22 +1070,19 @@ class TestGraphQL:
 
         @api.type(root=True)
         class Root:
-
             @api.field
             def has_context(self, context: GraphQLContext) -> bool:
                 return bool(context)
 
         executor = api.executor()
 
-        test_query = '''
+        test_query = """
             query HasContext {
                 hasContext
             }
-        '''
+        """
 
-        expected = {
-            "hasContext": True
-        }
+        expected = {"hasContext": True}
 
         result = executor.execute(test_query)
 
@@ -1205,8 +1092,10 @@ class TestGraphQL:
     star_wars_api_url = "https://swapi-graphql.netlify.app/.netlify/functions/index"
 
     # noinspection DuplicatedCode,PyUnusedLocal
-    @pytest.mark.skipif(not available(star_wars_api_url),
-                        reason=f"The star wars API '{star_wars_api_url}' is unavailable")
+    @pytest.mark.skipif(
+        not available(star_wars_api_url),
+        reason=f"The star wars API '{star_wars_api_url}' is unavailable",
+    )
     def test_remote_get(self):
         api = GraphQLAPI()
 
@@ -1214,7 +1103,6 @@ class TestGraphQL:
 
         @api.type(root=True)
         class Root:
-
             @api.field
             def star_wars(self, context: GraphQLContext) -> RemoteAPI:
                 operation = context.request.info.operation.operation
@@ -1229,7 +1117,7 @@ class TestGraphQL:
 
         executor = api.executor()
 
-        test_query = '''
+        test_query = """
             query GetAllFilms {
                 starWars {
                   allFilms {
@@ -1237,27 +1125,33 @@ class TestGraphQL:
                   }
                 }
             }
-        '''
+        """
 
         result = executor.execute(test_query)
 
         assert not result.errors
-        assert result.data.get("starWars", {}).get("allFilms", {}).get("totalCount", {}) >= 6
+        assert (
+            result.data.get("starWars", {}).get("allFilms", {}).get("totalCount", {})
+            >= 6
+        )
 
     pokemon_graphql_url = "https://graphqlpokemon.favware.tech/"
 
     # noinspection DuplicatedCode
-    @pytest.mark.skipif(not available(pokemon_graphql_url),
-                        reason=f"The Pokemon API '{pokemon_graphql_url}' is unavailable")
+    @pytest.mark.skipif(
+        not available(pokemon_graphql_url),
+        reason=f"The Pokemon API '{pokemon_graphql_url}' is unavailable",
+    )
     def test_remote_post(self):
         api = GraphQLAPI()
 
-        RemoteAPI = GraphQLRemoteExecutor(url=self.pokemon_graphql_url, http_method="POST")
+        RemoteAPI = GraphQLRemoteExecutor(
+            url=self.pokemon_graphql_url, http_method="POST"
+        )
 
         # noinspection PyUnusedLocal
         @api.type(root=True)
         class Root:
-
             @api.field
             def graphql(self, context: GraphQLContext) -> RemoteAPI:
                 operation = context.request.info.operation.operation
@@ -1273,7 +1167,7 @@ class TestGraphQL:
 
         executor = api.executor()
 
-        test_query = '''
+        test_query = """
             query getPokemon {
                 graphql {
                     getPokemon(pokemon: pikachu) {
@@ -1281,7 +1175,7 @@ class TestGraphQL:
                     }
                 }
             }
-        '''
+        """
 
         result = executor.execute(test_query)
 
@@ -1293,27 +1187,25 @@ class TestGraphQL:
 
     @pytest.mark.skipif(
         not available(pokemon_graphql_url),
-        reason=f"The pokemon API '{pokemon_graphql_url}' is unavailable"
+        reason=f"The pokemon API '{pokemon_graphql_url}' is unavailable",
     )
     def test_remote_post_helper(self):
         api = GraphQLAPI()
 
         RemoteAPI = GraphQLRemoteExecutor(
-            url=self.pokemon_graphql_url,
-            http_method="POST"
+            url=self.pokemon_graphql_url, http_method="POST"
         )
 
         # noinspection PyUnusedLocal
         @api.type(root=True)
         class Root:
-
             @api.field
             def graphql(self, context: GraphQLContext) -> RemoteAPI:
                 return remote_execute(executor=RemoteAPI, context=context)
 
         executor = api.executor()
 
-        test_query = '''
+        test_query = """
             query getPokemon {
                 graphql {
                     getPokemon(pokemon: pikachu) {
@@ -1321,7 +1213,7 @@ class TestGraphQL:
                     }
                 }
             }
-        '''
+        """
 
         result = executor.execute(test_query)
 
@@ -1337,7 +1229,6 @@ class TestGraphQL:
 
         @api.type(root=True)
         class Root:
-
             @api.field
             def hello(self) -> str:
                 return "hello world"
@@ -1360,10 +1251,7 @@ class TestGraphQL:
             input_schema = None
 
             @classmethod
-            def validate_graphql_schema(
-                cls,
-                schema: GraphQLSchema
-            ) -> GraphQLSchema:
+            def validate_graphql_schema(cls, schema: GraphQLSchema) -> GraphQLSchema:
                 cls.was_called = True
                 cls.input_schema = schema
 
@@ -1380,9 +1268,7 @@ class TestGraphQL:
         assert schema == updated_schema
 
     def test_schema_subclass(self):
-
         class Interface:
-
             @field
             def hello(self) -> str:
                 raise NotImplementedError()
@@ -1413,58 +1299,54 @@ class TestGraphQL:
 
         executor = api.executor()
 
-        test_query = '''
+        test_query = """
             query {
                 hello
             }
-        '''
+        """
 
         result = executor.execute(test_query)
 
         assert not result.errors
-        assert result.data['hello'] == "hello world"
+        assert result.data["hello"] == "hello world"
 
-        test_query = '''
+        test_query = """
             mutation {
                 helloMutable
             }
-        '''
+        """
 
         result = executor.execute(test_query)
 
         assert not result.errors
-        assert result.data['helloMutable'] == "hello 1"
+        assert result.data["helloMutable"] == "hello 1"
 
-        test_query = '''
+        test_query = """
             query {
                 helloChanged
             }
-        '''
+        """
 
         result = executor.execute(test_query)
 
         assert not result.errors
-        assert result.data['helloChanged'] == "hello world"
+        assert result.data["helloChanged"] == "hello world"
 
     def test_class_update(self):
-
         @dataclass
         class Person:
             name: str
 
         class GreetInterface:
-
             @field
             def hello(self, person: Person) -> str:
                 raise NotImplementedError()
 
         class HashablePerson(Person):
-
             def __hash__(self):
                 return hash(self.name)
 
         class Implementation(GreetInterface):
-
             def hello(self, person: HashablePerson) -> str:
                 return f"hello {hash(person)}"
 
@@ -1472,36 +1354,32 @@ class TestGraphQL:
 
         executor = api.executor()
 
-        test_query = '''
+        test_query = """
             query {
                 hello(person:{name:"rob"})
             }
-        '''
+        """
 
         result = executor.execute(test_query)
 
         assert not result.errors
-        assert result.data['hello'] == f"hello {hash('rob')}"
+        assert result.data["hello"] == f"hello {hash('rob')}"
 
     def test_class_update_same_name(self):
-
         @dataclass
         class Person:
             name: str
 
         class GreetInterface:
-
             @field
             def hello(self, person: Person) -> str:
                 raise NotImplementedError()
 
         class Person(Person):
-
             def __hash__(self):
                 return hash(self.name)
 
         class Implementation(GreetInterface):
-
             def hello(self, person: Person) -> str:
                 return f"hello {hash(person)}"
 
@@ -1509,14 +1387,13 @@ class TestGraphQL:
 
         executor = api.executor()
 
-        test_query = '''
+        test_query = """
             query {
                 hello(person:{name:"rob"})
             }
-        '''
+        """
 
         result = executor.execute(test_query)
 
         assert not result.errors
-        assert result.data['hello'] == f"hello {hash('rob')}"
-
+        assert result.data["hello"] == f"hello {hash('rob')}"

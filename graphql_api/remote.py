@@ -19,7 +19,7 @@ from graphql import (
     GraphQLString,
     GraphQLFloat,
     GraphQLBoolean,
-    GraphQLInt
+    GraphQLInt,
 )
 from graphql.execution import ExecutionResult
 from graphql.type.definition import (
@@ -28,7 +28,7 @@ from graphql.type.definition import (
     GraphQLNonNull,
     GraphQLList,
     GraphQLType,
-    is_enum_type
+    is_enum_type,
 )
 
 from graphql_api.error import GraphQLError
@@ -36,30 +36,26 @@ from graphql_api.executor import GraphQLBaseExecutor
 from graphql_api.mapper import GraphQLTypeMapper, GraphQLMetaKey
 from graphql_api.api import GraphQLAPI
 from graphql_api.types import serialize_bytes
-from graphql_api.utils import \
-    to_camel_case, \
-    url_to_ast, \
-    to_snake_case, \
-    http_query
+from graphql_api.utils import to_camel_case, url_to_ast, to_snake_case, http_query
 
 
 class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
-
     def __init__(
-            self,
-            url,
-            name="Remote",
-            description=None,
-            http_method="GET",
-            http_headers=None,
-            http_timeout=None,
-            verify=True,
-            ignore_unsupported=True
+        self,
+        url,
+        name="Remote",
+        description=None,
+        http_method="GET",
+        http_headers=None,
+        http_timeout=None,
+        verify=True,
+        ignore_unsupported=True,
     ):
-
         if not description:
-            description = f'The `{name}` object type forwards all ' \
-                          f'requests to the GraphQL executor at {url}'
+            description = (
+                f"The `{name}` object type forwards all "
+                f"requests to the GraphQL executor at {url}"
+            )
 
         if http_headers is None:
             http_headers = {}
@@ -71,15 +67,11 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
         self.verify = verify
         self.ignore_unsupported = ignore_unsupported
 
-        super().__init__(name=name,
-                         fields=self.build_fields,
-                         description=description)
+        super().__init__(name=name, fields=self.build_fields, description=description)
 
     def build_fields(self):
         ast_schema = url_to_ast(
-            self.url,
-            http_method=self.http_method,
-            http_headers=self.http_headers
+            self.url, http_method=self.http_method, http_headers=self.http_headers
         )
 
         def resolver(info=None, context=None, *args, **kwargs):
@@ -93,9 +85,10 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
 
         # noinspection PyProtectedMember
         for name, type in ast_schema.type_map.items():
-            if (isinstance(type, GraphQLObjectType) or
-                isinstance(type, GraphQLInputObjectType)) and \
-                    not type.name.startswith("__"):
+            if (
+                isinstance(type, GraphQLObjectType)
+                or isinstance(type, GraphQLInputObjectType)
+            ) and not type.name.startswith("__"):
                 for key, field in type.fields.items():
                     field.resolver = resolver
             elif isinstance(type, GraphQLEnumType):
@@ -105,10 +98,11 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
                         f"in a remote executor '{self.url}'."
                     )
             elif isinstance(type, (GraphQLInterfaceType, GraphQLUnionType)):
-
-                super_type = 'GraphQLInterface' \
-                    if isinstance(type, GraphQLInterfaceType) \
-                    else 'GraphQLUnionType'
+                super_type = (
+                    "GraphQLInterface"
+                    if isinstance(type, GraphQLInterfaceType)
+                    else "GraphQLUnionType"
+                )
 
                 if not self.ignore_unsupported:
                     raise GraphQLError(
@@ -121,14 +115,14 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
                     GraphQLString,
                     GraphQLFloat,
                     GraphQLBoolean,
-                    GraphQLInt
+                    GraphQLInt,
                 ]:
                     if not self.ignore_unsupported:
                         raise GraphQLError(
                             f"GraphQLScalarType '{type}' type is not "
                             f"supported in a remote executor '{self.url}'."
                         )
-            elif str(type).startswith('__'):
+            elif str(type).startswith("__"):
                 continue
             else:
                 raise GraphQLError(
@@ -140,13 +134,8 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
         return ast_schema.query_type.fields
 
     async def execute_async(
-            self,
-            query,
-            variable_values=None,
-            operation_name=None,
-            http_headers=None
+        self, query, variable_values=None, operation_name=None, http_headers=None
     ) -> ExecutionResult:
-
         if http_headers is None:
             http_headers = self.http_headers
         else:
@@ -161,69 +150,55 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
                 http_method=self.http_method,
                 http_headers=http_headers,
                 http_timeout=self.http_timeout,
-                verify=self.verify
+                verify=self.verify,
             )
         except RequestException as e:
             import sys
+
             err_msg = f"{e}, remote service '{self.name}' is unavailable."
             raise type(e)(err_msg).with_traceback(sys.exc_info()[2])
 
         except ValueError as e:
-            raise ValueError(
-                f"{e}, from remote service '{self.name}'."
-            )
+            raise ValueError(f"{e}, from remote service '{self.name}'.")
 
-        return ExecutionResult(
-            data=json_.get('data'),
-            errors=json_.get('errors')
-        )
+        return ExecutionResult(data=json_.get("data"), errors=json_.get("errors"))
 
     def execute(
-            self,
-            query,
-            variable_values=None,
-            operation_name=None,
-            http_headers=None
+        self, query, variable_values=None, operation_name=None, http_headers=None
     ) -> ExecutionResult:
-
         if http_headers is None:
             http_headers = self.http_headers
         else:
             http_headers = {**self.http_headers, **http_headers}
 
         try:
-            json_ = asyncio.run(http_query(
-                url=self.url,
-                query=query,
-                variable_values=variable_values,
-                operation_name=operation_name,
-                http_method=self.http_method,
-                http_headers=http_headers,
-                http_timeout=self.http_timeout,
-                verify=self.verify
-            ))
+            json_ = asyncio.run(
+                http_query(
+                    url=self.url,
+                    query=query,
+                    variable_values=variable_values,
+                    operation_name=operation_name,
+                    http_method=self.http_method,
+                    http_headers=http_headers,
+                    http_timeout=self.http_timeout,
+                    verify=self.verify,
+                )
+            )
         except RequestException as e:
             import sys
+
             err_msg = f"{e}, remote service '{self.name}' is unavailable."
             raise type(e)(err_msg).with_traceback(sys.exc_info()[2])
 
         except ValueError as e:
-            raise ValueError(
-                f"{e}, from remote service '{self.name}'."
-            )
+            raise ValueError(f"{e}, from remote service '{self.name}'.")
 
-        return ExecutionResult(
-            data=json_.get('data'),
-            errors=json_.get('errors')
-        )
+        return ExecutionResult(data=json_.get("data"), errors=json_.get("errors"))
 
 
 class GraphQLMappers:
-
     def __init__(
-            self,
-            query_mapper: GraphQLTypeMapper,
-            mutable_mapper: GraphQLTypeMapper
+        self, query_mapper: GraphQLTypeMapper, mutable_mapper: GraphQLTypeMapper
     ):
         self.query_mapper = query_mapper
         self.mutable_mapper = mutable_mapper
@@ -250,7 +225,6 @@ class NullResponse(BaseException):
 
 
 class GraphQLRemoteError(GraphQLError):
-
     def __init__(self, query=None, result=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.query = query
@@ -258,36 +232,31 @@ class GraphQLRemoteError(GraphQLError):
 
 
 class GraphQLAsyncStub:
-
     async def call_async(self, name, *args, **kwargs):
         pass
 
 
 class GraphQLRemoteObject:
-
     def get_labels(self) -> List[str]:
         return self.python_type.get_labels()
 
     @classmethod
     def from_url(
-            cls,
-            url: str,
-            api: GraphQLAPI,
-            http_method: str = "GET"
-    ) -> 'GraphQLRemoteObject':
+        cls, url: str, api: GraphQLAPI, http_method: str = "GET"
+    ) -> "GraphQLRemoteObject":
         executor = GraphQLRemoteExecutor(url=url, http_method=http_method)
 
         return GraphQLRemoteObject(executor=executor, api=api)
 
     # noinspection PyProtectedMember
     def __init__(
-            self,
-            executor: GraphQLBaseExecutor,
-            api: GraphQLAPI = None,
-            mappers: GraphQLMappers = None,
-            python_type: Type = None,
-            call_history: List[Tuple['GraphQLRemoteField', Dict]] = None,
-            delay_mapping: bool = True
+        self,
+        executor: GraphQLBaseExecutor,
+        api: GraphQLAPI = None,
+        mappers: GraphQLMappers = None,
+        python_type: Type = None,
+        call_history: List[Tuple["GraphQLRemoteField", Dict]] = None,
+        delay_mapping: bool = True,
     ):
         if not call_history:
             call_history = []
@@ -321,8 +290,7 @@ class GraphQLRemoteObject:
             api.graphql_schema()
 
             self.mappers = GraphQLMappers(
-                query_mapper=api.query_mapper,
-                mutable_mapper=api.mutation_mapper
+                query_mapper=api.query_mapper, mutable_mapper=api.mutation_mapper
             )
 
         if not self.mapped_types:
@@ -330,7 +298,7 @@ class GraphQLRemoteObject:
             graphql_types = self.mappers.map(self.python_type)
             self.graphql_query_type, self.graphql_mutable_type = graphql_types
 
-    def fetch(self, fields: List[Tuple['GraphQLRemoteField', Dict]] = None):
+    def fetch(self, fields: List[Tuple["GraphQLRemoteField", Dict]] = None):
         if fields is None:
             fields = self._fields()
 
@@ -343,10 +311,7 @@ class GraphQLRemoteObject:
 
             self.values[(field, arg_hash)] = field_value
 
-    async def fetch_async(
-            self,
-            fields: List[Tuple['GraphQLRemoteField', Dict]] = None
-    ):
+    async def fetch_async(self, fields: List[Tuple["GraphQLRemoteField", Dict]] = None):
         if fields is None:
             fields = self._fields()
 
@@ -380,7 +345,7 @@ class GraphQLRemoteObject:
 
         return [(self.get_field(name), {}) for name in valid_fields]
 
-    def _fetch(self, fields: List[Tuple['GraphQLRemoteField', Dict]] = None):
+    def _fetch(self, fields: List[Tuple["GraphQLRemoteField", Dict]] = None):
         """
         Load all the scalar values for this object into the values dictionary
         :return:
@@ -395,8 +360,7 @@ class GraphQLRemoteObject:
         return self._fetch_process(query, result, fields)
 
     async def _fetch_async(
-            self,
-            fields: List[Tuple['GraphQLRemoteField', Dict]] = None
+        self, fields: List[Tuple["GraphQLRemoteField", Dict]] = None
     ):
         """
         Load all the scalar values for this object into the values dictionary
@@ -411,37 +375,29 @@ class GraphQLRemoteObject:
 
         return self._fetch_process(query, result, fields)
 
-    def _fetch_build_query(
-            self,
-            fields: List[Tuple['GraphQLRemoteField', Dict]]
-    ):
+    def _fetch_build_query(self, fields: List[Tuple["GraphQLRemoteField", Dict]]):
         self._map()
 
-        mutable = any([
-            field.mutable
-            for field, args in self.call_history + fields])
+        mutable = any([field.mutable for field, args in self.call_history + fields])
 
         query_builder = GraphQLRemoteQueryBuilder(
             call_stack=self.call_history,
             fields=fields,
             mappers=self.mappers,
-            mutable=mutable
+            mutable=mutable,
         )
 
         return query_builder.build()
 
     def _fetch_process(
-            self,
-            query,
-            result: ExecutionResult,
-            fields: List[Tuple['GraphQLRemoteField', Dict]]
+        self,
+        query,
+        result: ExecutionResult,
+        fields: List[Tuple["GraphQLRemoteField", Dict]],
     ):
-
         if result.errors:
             raise GraphQLRemoteError(
-                query=query,
-                result=result,
-                message=result.errors[0]["message"]
+                query=query, result=result, message=result.errors[0]["message"]
             )
 
         field_values = result.data
@@ -449,9 +405,7 @@ class GraphQLRemoteObject:
             camel_name = to_camel_case(field.name)
 
             if isinstance(field_values, list):
-                raise ValueError(
-                    "GraphQLLists can only contain scalar values."
-                )
+                raise ValueError("GraphQLLists can only contain scalar values.")
 
             if field_values is None:
                 raise NullResponse()
@@ -462,7 +416,6 @@ class GraphQLRemoteObject:
             raise NullResponse()
 
         def parse_field(key, value):
-
             field: GraphQLRemoteField = None
 
             for _field, _field_dict in fields:
@@ -471,9 +424,7 @@ class GraphQLRemoteObject:
                     break
 
             if not field:
-                raise KeyError(
-                    f"Could not find field for key {key}"
-                )
+                raise KeyError(f"Could not find field for key {key}")
 
             field_type = field.graphql_type()
 
@@ -486,18 +437,15 @@ class GraphQLRemoteObject:
                 return None
 
             if not is_scalar(field_type):
-                raise TypeError(
-                    f"Unable to parse non-scalar type {field_type}"
-                )
+                raise TypeError(f"Unable to parse non-scalar type {field_type}")
 
             def _to_value(value):
                 ast_value = to_ast_value(value, field_type)
 
-                if hasattr(field_type, 'parse_literal'):
+                if hasattr(field_type, "parse_literal"):
                     value = field_type.parse_literal(ast_value)
 
-                    if is_enum_type(field_type) and \
-                            hasattr(field_type, 'enum_type'):
+                    if is_enum_type(field_type) and hasattr(field_type, "enum_type"):
                         enum_type = field_type.enum_type
                         value = enum_type(value)
 
@@ -521,8 +469,7 @@ class GraphQLRemoteObject:
             ]
         else:
             field_values = {
-                key: parse_field(key, value)
-                for key, value in field_values.items()
+                key: parse_field(key, value) for key, value in field_values.items()
             }
 
         return field_values
@@ -531,7 +478,6 @@ class GraphQLRemoteObject:
         hashable_args = {}
 
         for key, value in args.items():
-
             if isinstance(value, list):
                 value = tuple(value)
 
@@ -539,7 +485,7 @@ class GraphQLRemoteObject:
 
         return hash(frozenset(hashable_args.items()))
 
-    def _get_value_cached(self, field: 'GraphQLRemoteField', args: Dict):
+    def _get_value_cached(self, field: "GraphQLRemoteField", args: Dict):
         try:
             arg_hash = self.hash(args)
         except TypeError:
@@ -548,7 +494,7 @@ class GraphQLRemoteObject:
         if field.mutable:
             self.values.clear()
 
-        for ((_field, _arg_hash), value) in self.values.items():
+        for (_field, _arg_hash), value in self.values.items():
             if field.name == _field.name and arg_hash == _arg_hash:
                 return value, True, arg_hash
 
@@ -563,7 +509,7 @@ class GraphQLRemoteObject:
                 f"mutated objects cannot be re-fetched."
             )
 
-    async def get_value_async(self, field: 'GraphQLRemoteField', args: Dict):
+    async def get_value_async(self, field: "GraphQLRemoteField", args: Dict):
         self._map()
         value, result, arg_hash = self._get_value_cached(field, args)
 
@@ -580,17 +526,14 @@ class GraphQLRemoteObject:
             return self.values.get((field, arg_hash), None)
 
         else:
-            python_type = self.mappers.map(
-                field.graphql_field.type,
-                reverse=True
-            )
+            python_type = self.mappers.map(field.graphql_field.type, reverse=True)
 
             obj = GraphQLRemoteObject(
                 executor=self.executor,
                 api=self.api,
                 python_type=python_type,
                 mappers=self.mappers,
-                call_history=[*self.call_history, (field, args)]
+                call_history=[*self.call_history, (field, args)],
             )
 
             if field.list:
@@ -604,13 +547,11 @@ class GraphQLRemoteObject:
                         api=self.api,
                         python_type=python_type,
                         mappers=self.mappers,
-                        call_history=[*self.call_history, (field, args)]
+                        call_history=[*self.call_history, (field, args)],
                     )
 
                     for field, args in fields:
-                        field_value = remote_object_data.get(
-                            to_camel_case(field.name)
-                        )
+                        field_value = remote_object_data.get(to_camel_case(field.name))
                         arg_hash = self.hash(args)
                         field_key = (field, arg_hash)
                         remote_object.values[field_key] = field_value
@@ -630,15 +571,17 @@ class GraphQLRemoteObject:
                         (self.graphql_mutable_type.name, field.name)
                     )
 
-                    if field.recursive and \
-                            meta and \
-                            meta.get(GraphQLMetaKey.resolve_to_self, True):
+                    if (
+                        field.recursive
+                        and meta
+                        and meta.get(GraphQLMetaKey.resolve_to_self, True)
+                    ):
                         self.values.update(obj.values)
                         return self
 
                 return obj
 
-    def get_value(self, field: 'GraphQLRemoteField', args: Dict):
+    def get_value(self, field: "GraphQLRemoteField", args: Dict):
         self._map()
         value, result, arg_hash = self._get_value_cached(field, args)
 
@@ -655,17 +598,14 @@ class GraphQLRemoteObject:
             return self.values.get((field, arg_hash), None)
 
         else:
-            python_type = self.mappers.map(
-                field.graphql_field.type,
-                reverse=True
-            )
+            python_type = self.mappers.map(field.graphql_field.type, reverse=True)
 
             obj = GraphQLRemoteObject(
                 executor=self.executor,
                 api=self.api,
                 python_type=python_type,
                 mappers=self.mappers,
-                call_history=[*self.call_history, (field, args)]
+                call_history=[*self.call_history, (field, args)],
             )
 
             if field.list:
@@ -679,13 +619,11 @@ class GraphQLRemoteObject:
                         api=self.api,
                         python_type=python_type,
                         mappers=self.mappers,
-                        call_history=[*self.call_history, (field, args)]
+                        call_history=[*self.call_history, (field, args)],
                     )
 
                     for field, args in fields:
-                        field_value = remote_object_data.get(
-                            to_camel_case(field.name)
-                        )
+                        field_value = remote_object_data.get(to_camel_case(field.name))
                         arg_hash = self.hash(args)
                         field_key = (field, arg_hash)
                         remote_object.values[field_key] = field_value
@@ -705,9 +643,11 @@ class GraphQLRemoteObject:
                         (self.graphql_mutable_type.name, field.name)
                     )
 
-                    if field.recursive and \
-                            meta and \
-                            meta.get(GraphQLMetaKey.resolve_to_self, True):
+                    if (
+                        field.recursive
+                        and meta
+                        and meta.get(GraphQLMetaKey.resolve_to_self, True)
+                    ):
                         self.values.update(obj.values)
                         return self
 
@@ -736,15 +676,12 @@ class GraphQLRemoteObject:
             raise GraphQLError(f"Field {name} on {self} does not exist")
 
         return GraphQLRemoteField(
-            name=camel_name,
-            mutable=mutable,
-            graphql_field=field,
-            parent=self
+            name=camel_name, mutable=mutable, graphql_field=field, parent=self
         )
 
     def __getattr__(self, name):
         if name == "__await__":
-            raise AttributeError('Not Awaitable')
+            raise AttributeError("Not Awaitable")
 
         field, auto_call = self.getattr(name)
 
@@ -770,10 +707,7 @@ class GraphQLRemoteObject:
 
             if is_dataclass(self.python_type):
                 # noinspection PyDataclass
-                field_names = [
-                    field.name
-                    for field in fields(self.python_type)
-                ]
+                field_names = [field.name for field in fields(self.python_type)]
 
                 is_dataclass_field = name in field_names
 
@@ -789,6 +723,7 @@ class GraphQLRemoteObject:
             try:
                 # noinspection PyPackageRequirements
                 from sqlalchemy.orm.attributes import InstrumentedAttribute
+
                 auto_call = isinstance(attribute_type, InstrumentedAttribute)
             except ImportError:
                 pass
@@ -804,18 +739,14 @@ class GraphQLRemoteObject:
                 if is_callable:
                     func = getattr(self.python_type, name)
                     _is_method = inspect.ismethod(func)
-                    _is_static_method = is_static_method(
-                        self.python_type,
-                        name
-                    )
+                    _is_static_method = is_static_method(self.python_type, name)
 
                     if _is_method or _is_static_method:
                         return func, False
                     else:
-                        return (lambda *args, **kwargs: func(
-                            self,
-                            *args, **kwargs
-                        )), False
+                        return (
+                            lambda *args, **kwargs: func(self, *args, **kwargs)
+                        ), False
 
                 if is_property:
                     prop = getattr(self.python_type, name)
@@ -827,19 +758,17 @@ class GraphQLRemoteObject:
     def __str__(self):
         self._map()
 
-        return f"<RemoteObject({self.graphql_query_type.name}) " \
-               f"at {hex(id(self))}>"
+        return f"<RemoteObject({self.graphql_query_type.name}) " f"at {hex(id(self))}>"
 
 
 class GraphQLRemoteField:
-
     # noinspection PyProtectedMember
     def __init__(
-            self,
-            name: str,
-            mutable: bool,
-            graphql_field: GraphQLField,
-            parent: GraphQLRemoteObject
+        self,
+        name: str,
+        mutable: bool,
+        graphql_field: GraphQLField,
+        parent: GraphQLRemoteObject,
     ):
         self.name = name
         self.mutable = mutable
@@ -850,13 +779,12 @@ class GraphQLRemoteField:
         self.list = is_list(self.graphql_field.type)
 
         self.recursive = self.parent.python_type == self.parent.mappers.map(
-            self.graphql_field.type,
-            reverse=True
+            self.graphql_field.type, reverse=True
         )
 
     def graphql_type(self) -> GraphQLType:
         graphql_type = self.graphql_field.type
-        while hasattr(graphql_type, 'of_type'):
+        while hasattr(graphql_type, "of_type"):
             graphql_type = graphql_type.of_type
 
         return graphql_type
@@ -897,13 +825,12 @@ class GraphQLRemoteField:
 
 
 class GraphQLRemoteQueryBuilder:
-
     def __init__(
-            self,
-            call_stack: List[Tuple['GraphQLRemoteField', Dict]],
-            fields: List[Tuple['GraphQLRemoteField', Dict]],
-            mappers: GraphQLMappers,
-            mutable=False
+        self,
+        call_stack: List[Tuple["GraphQLRemoteField", Dict]],
+        fields: List[Tuple["GraphQLRemoteField", Dict]],
+        mappers: GraphQLMappers,
+        mutable=False,
     ):
         self.call_stack = call_stack
         self.fields = fields
@@ -912,9 +839,9 @@ class GraphQLRemoteQueryBuilder:
 
     def build(self):
         if self.mutable:
-            query = 'mutation'
+            query = "mutation"
         else:
-            query = 'query'
+            query = "query"
 
         def to_field_call(field, args=None):
             name = field.name
@@ -929,7 +856,7 @@ class GraphQLRemoteQueryBuilder:
                     str_value = self.map_to_input_value(
                         value=value,
                         expected_graphql_type=graphql_type,
-                        mappers=self.mappers
+                        mappers=self.mappers,
                     )
 
                     if str_value is not None:
@@ -941,10 +868,7 @@ class GraphQLRemoteQueryBuilder:
         for field, args in self.call_stack:
             query += "{" + to_field_call(field, args=args)
 
-        field_calls = [
-            to_field_call(field, args=args)
-            for field, args in self.fields
-        ]
+        field_calls = [to_field_call(field, args=args) for field, args in self.fields]
 
         query += "{" + ",".join(field_calls) + "}"
         query += "}" * len(self.call_stack)
@@ -953,10 +877,7 @@ class GraphQLRemoteQueryBuilder:
 
     # noinspection PyMethodMayBeStatic
     def map_to_input_value(
-            self,
-            value,
-            mappers: GraphQLMappers,
-            expected_graphql_type=None
+        self, value, mappers: GraphQLMappers, expected_graphql_type=None
     ):
         from graphql_api.mapper import is_scalar
 
@@ -971,16 +892,16 @@ class GraphQLRemoteQueryBuilder:
                     self.map_to_input_value(
                         item,
                         mappers=mappers,
-                        expected_graphql_type=expected_graphql_type
+                        expected_graphql_type=expected_graphql_type,
                     )
                     for item in value
                 ]
-                return '[' + ','.join(values) + ']'
+                return "[" + ",".join(values) + "]"
 
             if isinstance(value, str):
                 return json.dumps(value)
             if isinstance(value, bool):
-                return 'true' if value else 'false'
+                return "true" if value else "false"
             if isinstance(value, (float, int)):
                 return str(value)
             if isinstance(value, bytes):
@@ -992,17 +913,13 @@ class GraphQLRemoteQueryBuilder:
             return str(value.value)
 
         if isinstance(value, object):
-
             if expected_graphql_type is not None:
-
-                while hasattr(expected_graphql_type, 'of_type'):
+                while hasattr(expected_graphql_type, "of_type"):
                     expected_graphql_type = expected_graphql_type.of_type
 
                 graphql_type = expected_graphql_type
             else:
-                graphql_type = mappers.query_mapper.input_type_mapper.map(
-                    type(value)
-                )
+                graphql_type = mappers.query_mapper.input_type_mapper.map(type(value))
 
             input_dict = {}
 
@@ -1022,18 +939,12 @@ class GraphQLRemoteQueryBuilder:
                             f"to field names"
                         )
                 else:
-                    _value = self.map_to_input_value(
-                        raw_input_value,
-                        mappers=mappers
-                    )
+                    _value = self.map_to_input_value(raw_input_value, mappers=mappers)
 
                     if _value is not None:
                         input_dict[key] = _value
 
-            input_values = [
-                f"{key}:{value}"
-                for key, value in input_dict.items()
-            ]
+            input_values = [f"{key}:{value}" for key, value in input_dict.items()]
 
             input_value = "{" + ",".join(input_values) + "}"
 
@@ -1054,7 +965,7 @@ def remote_execute(executor: GraphQLBaseExecutor, context):
 
 
 def is_list(graphql_type):
-    while hasattr(graphql_type, 'of_type'):
+    while hasattr(graphql_type, "of_type"):
         if isinstance(graphql_type, GraphQLList):
             return True
         graphql_type = graphql_type.of_type
@@ -1063,7 +974,7 @@ def is_list(graphql_type):
 
 
 def is_scalar(graphql_type):
-    while hasattr(graphql_type, 'of_type'):
+    while hasattr(graphql_type, "of_type"):
         graphql_type = graphql_type.of_type
 
     if isinstance(graphql_type, GraphQLScalarType):
@@ -1076,7 +987,7 @@ def is_scalar(graphql_type):
 
 
 def is_nullable(graphql_type):
-    while hasattr(graphql_type, 'of_type'):
+    while hasattr(graphql_type, "of_type"):
         if isinstance(graphql_type, GraphQLNonNull):
             return False
         graphql_type = graphql_type.of_type
@@ -1107,7 +1018,7 @@ def to_ast_value(value, graphql_type):
         (bool,): ast.BooleanValueNode,
         (str,): ast.StringValueNode,
         (float,): ast.FloatValueNode,
-        (int,): ast.IntValueNode
+        (int,): ast.IntValueNode,
     }
     ast_type = None
     ast_value = None

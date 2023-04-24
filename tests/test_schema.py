@@ -3,12 +3,9 @@ from graphql_api import GraphQLAPI, type, field
 
 
 class TestGraphQL:
-
     def test_decorators_no_schema(self):
-
         @type
         class ObjectNoSchema:
-
             @field
             def test_query_no_schema(self, a: int) -> int:
                 pass
@@ -19,7 +16,6 @@ class TestGraphQL:
 
         @type(abstract=True)
         class AbstractNoSchema:
-
             @field
             def test_abstract_query_no_schema(self, a: int) -> int:
                 pass
@@ -30,7 +26,6 @@ class TestGraphQL:
 
         @type(interface=True)
         class InterfaceNoSchema:
-
             @field
             def test_interface_query_no_schema(self, a: int) -> int:
                 pass
@@ -56,7 +51,6 @@ class TestGraphQL:
 
         @api_1.type
         class ObjectSchema:
-
             @api_1.field
             def test_query_schema(self, a: int) -> int:
                 pass
@@ -70,10 +64,8 @@ class TestGraphQL:
         assert ObjectSchema.test_mutation_schema.graphql
 
     def test_decorators_no_schema_meta(self):
-
         @type(meta={"test": "test"})
         class ObjectNoSchemaMeta:
-
             @field(meta={"test": "test"})
             def test_query_no_schema_meta(self, a: int) -> int:
                 pass
@@ -91,7 +83,6 @@ class TestGraphQL:
 
         @api_1.type(meta={"test": "test"})
         class ObjectSchemaMeta:
-
             @api_1.field(meta={"test": "test"})
             def test_query_schema_meta(self, a: int) -> int:
                 pass
@@ -103,4 +94,3 @@ class TestGraphQL:
         assert ObjectSchemaMeta.graphql
         assert ObjectSchemaMeta.test_query_schema_meta.graphql
         assert ObjectSchemaMeta.test_mutation_schema_meta.graphql
-

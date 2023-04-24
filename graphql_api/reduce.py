@@ -3,15 +3,11 @@ from typing import List
 from graphql import GraphQLNonNull, GraphQLList, GraphQLObjectType
 from graphql.type.definition import GraphQLInterfaceType
 
-from graphql_api.mapper import \
-    GraphQLMutableField, \
-    GraphQLTypeMapError, \
-    GraphQLMetaKey
+from graphql_api.mapper import GraphQLMutableField, GraphQLTypeMapError, GraphQLMetaKey
 from graphql_api.utils import has_mutable, iterate_fields, to_snake_case
 
 
 class GraphQLFilter:
-
     def filter_field(self, name, meta: dict) -> bool:
         """
         Return True to filter (remove) a field from the schema
@@ -20,7 +16,6 @@ class GraphQLFilter:
 
 
 class TagFilter(GraphQLFilter):
-
     def __init__(self, tags: List[str] = None):
         """
         Remove any fields that are tagged with a tag in tags
@@ -38,7 +33,6 @@ class TagFilter(GraphQLFilter):
 
 
 class GraphQLSchemaReducer:
-
     @staticmethod
     def reduce_query(mapper, root, filters=None):
         query: GraphQLObjectType = mapper.map(root)
@@ -46,9 +40,7 @@ class GraphQLSchemaReducer:
         # Remove any types that have no fields
         # (and remove any fields that returned that type)
         invalid_types, invalid_fields = GraphQLSchemaReducer.invalid(
-            root_type=query,
-            filters=filters,
-            meta=mapper.meta
+            root_type=query, filters=filters, meta=mapper.meta
         )
 
         for type_, key in invalid_fields:
@@ -80,7 +72,7 @@ class GraphQLSchemaReducer:
         for type_, key, field in iterate_fields(mutation):
             field_type = field.type
             meta = mapper.meta.get((type_.name, to_snake_case(key)), {})
-            field_definition_type = meta.get('type', 'query')
+            field_definition_type = meta.get("type", "query")
 
             wraps = []
             while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
@@ -92,8 +84,10 @@ class GraphQLSchemaReducer:
                 continue
 
             if field_definition_type == "query":
-                if mapper.suffix in str(field_type) or \
-                        field_type in filtered_mutation_types:
+                if (
+                    mapper.suffix in str(field_type)
+                    or field_type in filtered_mutation_types
+                ):
                     # Calculated as it as mutable
                     continue
 
@@ -114,14 +108,13 @@ class GraphQLSchemaReducer:
             if isinstance(type_, GraphQLObjectType):
                 interface_fields = []
                 for interface in type_.interfaces:
-                    interface_fields += [
-                        key
-                        for key, field in interface.fields.items()
-                    ]
+                    interface_fields += [key for key, field in interface.fields.items()]
                 for key, field in type_.fields.items():
-                    if key not in interface_fields and \
-                            not isinstance(field, GraphQLMutableField) and \
-                            not has_mutable(field.type):
+                    if (
+                        key not in interface_fields
+                        and not isinstance(field, GraphQLMutableField)
+                        and not has_mutable(field.type)
+                    ):
                         fields_to_remove.add((type_, key))
 
         for type_, key in fields_to_remove:
@@ -136,7 +129,7 @@ class GraphQLSchemaReducer:
         meta=None,
         checked_types=None,
         invalid_types=None,
-        invalid_fields=None
+        invalid_fields=None,
     ):
         if not checked_types:
             checked_types = set()
@@ -160,16 +153,13 @@ class GraphQLSchemaReducer:
 
         interfaces = []
 
-        if hasattr(root_type, 'interfaces'):
+        if hasattr(root_type, "interfaces"):
             interfaces = root_type.interfaces
 
         interface_fields = []
         for interface in interfaces:
             try:
-                interface_fields += [
-                    key
-                    for key, field in interface.fields.items()
-                ]
+                interface_fields += [key for key, field in interface.fields.items()]
             except (AssertionError, GraphQLTypeMapError):
                 invalid_types.add(interface)
 
@@ -189,10 +179,7 @@ class GraphQLSchemaReducer:
                         if field_filter.filter_field(field_name, field_meta):
                             invalid_fields.add((root_type, key))
 
-                if isinstance(
-                    type_,
-                    (GraphQLInterfaceType, GraphQLObjectType)
-                ):
+                if isinstance(type_, (GraphQLInterfaceType, GraphQLObjectType)):
                     try:
                         assert type_.fields
                         sub_invalid = GraphQLSchemaReducer.invalid(
@@ -201,7 +188,7 @@ class GraphQLSchemaReducer:
                             meta=meta,
                             checked_types=checked_types,
                             invalid_types=invalid_types,
-                            invalid_fields=invalid_fields
+                            invalid_fields=invalid_fields,
                         )
 
                         invalid_types.update(sub_invalid[0])

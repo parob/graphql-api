@@ -15,6 +15,7 @@ def middleware_catch_exception(next, context: GraphQLContext):
         value = next()
     except Exception as err:
         from graphql_api.executor import ErrorProtectionExecutionContext
+
         info: GraphQLResolveInfo = context.resolve_args.get("info")
 
         field_meta = context.field.meta
@@ -22,7 +23,7 @@ def middleware_catch_exception(next, context: GraphQLContext):
             setattr(
                 err,
                 ErrorProtectionExecutionContext.error_protection,
-                field_meta.get(GraphQLMetaKey.error_protection)
+                field_meta.get(GraphQLMetaKey.error_protection),
             )
 
         return_type = info.return_type
@@ -31,7 +32,7 @@ def middleware_catch_exception(next, context: GraphQLContext):
         print(
             f"GraphQLField '{info.field_name}' on '{info.parent_type.name}' "
             f"resolver {'(ignored) ' if ignored else ''}Exception: {err} ",
-            file=sys.stderr
+            file=sys.stderr,
         )
         traceback.print_exc()
         raise err
@@ -43,7 +44,7 @@ def middleware_local_proxy(next):
     value = next()
 
     # Compatibility with LocalProxy from Werkzeug
-    if hasattr(value, '_get_current_object'):
+    if hasattr(value, "_get_current_object"):
         value = value._get_current_object()
 
     if isinstance(value, Exception):
@@ -66,8 +67,8 @@ def middleware_adapt_enum(next):
 def middleware_request_context(next, context: GraphQLContext):
     from graphql_api.api import GraphQLRequestContext
 
-    info = context.resolve_args.get('info')
-    args = context.resolve_args.get('args')
+    info = context.resolve_args.get("info")
+    args = context.resolve_args.get("args")
 
     if info.context.request:
         return next()
@@ -88,11 +89,10 @@ def middleware_request_context(next, context: GraphQLContext):
 def middleware_field_context(next, context: GraphQLContext):
     from graphql_api.api import GraphQLFieldContext
 
-    info = context.resolve_args.get('info')
+    info = context.resolve_args.get("info")
 
     field_meta = info.context.meta.get(
-        (info.parent_type.name, to_snake_case(info.field_name)),
-        {}
+        (info.parent_type.name, to_snake_case(info.field_name)), {}
     )
     return_type = info.return_type
 
@@ -105,7 +105,7 @@ def middleware_field_context(next, context: GraphQLContext):
     kwargs = {}
     if return_type and isinstance(return_type, GraphQLObjectType):
         sub_loc = info.field_nodes[0].selection_set.loc
-        kwargs['query'] = sub_loc.source.body[sub_loc.start:sub_loc.end]
+        kwargs["query"] = sub_loc.source.body[sub_loc.start : sub_loc.end]
 
     info.context.field = GraphQLFieldContext(meta=field_meta, **kwargs)
 

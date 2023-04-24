@@ -20,7 +20,7 @@ from graphql import (
     GraphQLList,
     GraphQLBoolean,
     GraphQLInt,
-    GraphQLFloat
+    GraphQLFloat,
 )
 
 from graphql.type.definition import (
@@ -33,7 +33,7 @@ from graphql.type.definition import (
     GraphQLEnumType,
     GraphQLScalarType,
     GraphQLNonNull,
-    GraphQLInputField
+    GraphQLInputField,
 )
 
 from graphql.pyutils import Undefined, UndefinedType
@@ -43,14 +43,14 @@ from graphql_api.types import (
     GraphQLBytes,
     GraphQLUUID,
     GraphQLDateTime,
-    GraphQLJSON, JsonType, GraphQLMappedEnumType
+    GraphQLJSON,
+    JsonType,
+    GraphQLMappedEnumType,
 )
 
 from graphql_api.utils import to_camel_case, to_snake_case, to_input_value
 from graphql_api.exception import GraphQLBaseException
-from graphql_api.dataclass_mapping import \
-    type_is_dataclass, \
-    type_from_dataclass
+from graphql_api.dataclass_mapping import type_is_dataclass, type_from_dataclass
 
 """
 class AnyObject:
@@ -76,7 +76,6 @@ class GraphQLTypeMapError(GraphQLBaseException):
 
 
 class GraphQLTypeWrapper:
-
     @classmethod
     def graphql_type(cls, mapper: "GraphQLTypeMapper") -> GraphQLType:
         pass
@@ -94,15 +93,14 @@ class GraphQLMutableField(GraphQLField):
 
 
 class GraphQLTypeMapper:
-
     def __init__(
-            self,
-            as_mutable=False,
-            as_input=False,
-            registry=None,
-            reverse_registry=None,
-            suffix="",
-            schema=None
+        self,
+        as_mutable=False,
+        as_input=False,
+        registry=None,
+        reverse_registry=None,
+        suffix="",
+        schema=None,
     ):
         self.as_mutable = as_mutable
         self.as_input = as_input
@@ -116,16 +114,11 @@ class GraphQLTypeMapper:
     def types(self) -> Set[GraphQLType]:
         return set(self.registry.values())
 
-    def map_to_field(
-            self,
-            function_type: Callable,
-            name="",
-            key=""
-    ) -> GraphQLField:
+    def map_to_field(self, function_type: Callable, name="", key="") -> GraphQLField:
         type_hints = typing.get_type_hints(function_type)
         description = inspect.getdoc(function_type)
 
-        return_type = type_hints.pop('return', None)
+        return_type = type_hints.pop("return", None)
 
         if not return_type:
             raise GraphQLTypeMapInvalid(
@@ -155,9 +148,7 @@ class GraphQLTypeMapper:
             enum_return = return_type
 
         if not nullable:
-            return_graphql_type: GraphQLType = GraphQLNonNull(
-                return_graphql_type
-            )
+            return_graphql_type: GraphQLType = GraphQLNonNull(return_graphql_type)
 
         signature = inspect.signature(function_type)
 
@@ -173,7 +164,7 @@ class GraphQLTypeMapper:
             registry=self.registry,
             reverse_registry=self.reverse_registry,
             suffix=self.suffix,
-            schema=self.schema
+            schema=self.schema,
         )
         self.input_type_mapper = input_type_mapper
         arguments = {}
@@ -182,9 +173,11 @@ class GraphQLTypeMapper:
         include_context = False
 
         for key, hint in type_hints.items():
-            if key == 'context' and \
-                    inspect.isclass(hint) and \
-                    issubclass(hint, GraphQLContext):
+            if (
+                key == "context"
+                and inspect.isclass(hint)
+                and issubclass(hint, GraphQLContext)
+            ):
                 include_context = True
                 continue
 
@@ -198,8 +191,7 @@ class GraphQLTypeMapper:
                 arg_type = GraphQLNonNull(arg_type)
 
             arguments[to_camel_case(key)] = GraphQLArgument(
-                type_=arg_type,
-                default_value=default_args.get(key, Undefined)
+                type_=arg_type, default_value=default_args.get(key, Undefined)
             )
 
         # noinspection PyUnusedLocal
@@ -207,7 +199,7 @@ class GraphQLTypeMapper:
             _args = {to_snake_case(_key): arg for _key, arg in kwargs.items()}
 
             if include_context:
-                _args['context'] = info.context
+                _args["context"] = info.context
 
             function_name = function_type.__name__
             parent_type = _self.__class__
@@ -241,23 +233,19 @@ class GraphQLTypeMapper:
             return response
 
         field_class = GraphQLField
-        func_type = get_value(function_type, self.schema, 'type')
+        func_type = get_value(function_type, self.schema, "type")
         if func_type == "mutation":
             field_class = GraphQLMutableField
 
         return field_class(
-            return_graphql_type,
-            arguments,
-            resolve,
-            description=description
+            return_graphql_type, arguments, resolve, description=description
         )
 
     def map_to_union(self, union_type: Union) -> GraphQLType:
         union_args = typing_inspect.get_args(union_type, evaluate=True)
         none_type = type(None)
         union_map: Dict[type, GraphQLType] = {
-            arg: self.map(arg)
-            for arg in union_args if arg and arg != none_type
+            arg: self.map(arg) for arg in union_args if arg and arg != none_type
         }
 
         if len(union_map) == 1:
@@ -274,17 +262,14 @@ class GraphQLTypeMapper:
                 value_type = value.python_type
 
             for arg, _mapped_type in union_map.items():
-                if issubclass(value_type, arg) \
-                        and hasattr(_mapped_type, 'name'):
+                if issubclass(value_type, arg) and hasattr(_mapped_type, "name"):
                     return _mapped_type.name
 
         names = [arg.__name__ for arg in union_args]
         name = f"{''.join(names)}{self.suffix}Union"
 
         return GraphQLUnionType(
-            name,
-            types=[*union_map.values()],
-            resolve_type=resolve_type
+            name, types=[*union_map.values()], resolve_type=resolve_type
         )
 
     def map_to_list(self, type_: List) -> GraphQLList:
@@ -311,9 +296,7 @@ class GraphQLTypeMapper:
         description = inspect.getdoc(enum_type)
 
         enum_type = GraphQLMappedEnumType(
-            name=name,
-            values=enum_type,
-            description=description
+            name=name, values=enum_type, description=description
         )
 
         enum_type.enum_type = type_
@@ -345,7 +328,7 @@ class GraphQLTypeMapper:
         ([dict, list, set], GraphQLJSON),
         ([float], GraphQLFloat),
         ([datetime], GraphQLDateTime),
-        ([type(None)], None)
+        ([type(None)], None),
     ]
 
     def scalar_classes(self):
@@ -361,7 +344,10 @@ class GraphQLTypeMapper:
                 if issubclass(class_type, test_type):
                     return graphql_type
 
-    def map_to_interface(self, class_type: Type, ) -> GraphQLType:
+    def map_to_interface(
+        self,
+        class_type: Type,
+    ) -> GraphQLType:
         subclasses = class_type.__subclasses__()
         name = class_type.__name__
 
@@ -380,8 +366,9 @@ class GraphQLTypeMapper:
             # noinspection PyUnusedLocal
             def resolve_type(value, info, _type):
                 value = local_self.map(type(value))
-                if hasattr(value, 'name'):
+                if hasattr(value, "name"):
                     return value.name
+
             return resolve_type
 
         def local_fields():
@@ -396,25 +383,24 @@ class GraphQLTypeMapper:
                     local_class_name = local_class_type.__name__
                     func_.__globals__[local_class_name] = local_class_type
                     fields_[to_camel_case(key_)] = local_self.map_to_field(
-                        func_,
-                        local_name,
-                        key_
+                        func_, local_name, key_
                     )
 
                 return fields_
+
             return fields
 
         return GraphQLInterfaceType(
             interface_name,
             fields=local_fields(),
             resolve_type=local_resolve_type(),
-            description=description
+            description=description,
         )
 
     def map_to_input(self, class_type: Type) -> GraphQLType:
         name = f"{class_type.__name__}{self.suffix}Input"
 
-        if hasattr(class_type, 'graphql_from_input'):
+        if hasattr(class_type, "graphql_from_input"):
             creator = class_type.graphql_from_input
             func = creator
 
@@ -444,7 +430,6 @@ class GraphQLTypeMapper:
         }
 
         def local_fields():
-
             local_name = name
             local_self = self
             local_type_hints = type_hints
@@ -454,7 +439,6 @@ class GraphQLTypeMapper:
                 arguments = {}
 
                 for key, hint in local_type_hints.items():
-
                     input_arg_type = local_self.map(hint)
 
                     nullable = key in local_default_args
@@ -473,8 +457,7 @@ class GraphQLTypeMapper:
                             )
 
                     arguments[to_camel_case(key)] = GraphQLInputField(
-                        type_=input_arg_type,
-                        default_value=default_value
+                        type_=input_arg_type, default_value=default_value
                     )
                 return arguments
 
@@ -484,10 +467,7 @@ class GraphQLTypeMapper:
             local_creator = creator
 
             def container_type(data):
-                data = {
-                    to_snake_case(key): value
-                    for key, value in data.items()
-                }
+                data = {to_snake_case(key): value for key, value in data.items()}
                 return local_creator(**data)
 
             return container_type
@@ -496,7 +476,7 @@ class GraphQLTypeMapper:
             name,
             fields=local_fields(),
             out_type=local_container_type(),
-            description=description
+            description=description,
         )
 
     def map_to_object(self, class_type: Type) -> GraphQLType:
@@ -506,8 +486,8 @@ class GraphQLTypeMapper:
         class_funcs = get_class_funcs(class_type, self.schema, self.as_mutable)
 
         for key, func in class_funcs:
-            func_meta = get_value(func, self.schema, 'meta')
-            func_meta['type'] = get_value(func, self.schema, 'type')
+            func_meta = get_value(func, self.schema, "meta")
+            func_meta["type"] = get_value(func, self.schema, "type")
 
             self.meta[(name, to_snake_case(key))] = func_meta
 
@@ -543,9 +523,7 @@ class GraphQLTypeMapper:
                     local_class_type_name = local_class_type.__name__
                     func_.__globals__[local_class_type_name] = local_class_type
                     fields_[to_camel_case(key_)] = local_self.map_to_field(
-                        func_,
-                        local_name,
-                        key_
+                        func_, local_name, key_
                     )
 
                 return fields_
@@ -553,24 +531,19 @@ class GraphQLTypeMapper:
             return fields
 
         obj = GraphQLObjectType(
-            name,
-            local_fields(),
-            local_interfaces(),
-            description=description
+            name, local_fields(), local_interfaces(), description=description
         )
 
         return obj
 
     def rmap(self, graphql_type: GraphQLType) -> Type:
-        while hasattr(graphql_type, 'of_type'):
+        while hasattr(graphql_type, "of_type"):
             graphql_type = graphql_type.of_type
 
         return self.reverse_registry.get(graphql_type)
 
     def map(self, type_, use_graphql_type=True) -> GraphQLType:
-
         def _map(type__) -> GraphQLType:
-
             if type_ == JsonType:
                 return GraphQLJSON
 
@@ -589,8 +562,9 @@ class GraphQLTypeMapper:
 
             origin_type = get_origin(type__)
 
-            if inspect.isclass(origin_type) and \
-                    issubclass(get_origin(type__), (List, Set)):
+            if inspect.isclass(origin_type) and issubclass(
+                get_origin(type__), (List, Set)
+            ):
                 return self.map_to_list(type__)
 
             if inspect.isclass(type__):
@@ -614,10 +588,11 @@ class GraphQLTypeMapper:
             if isinstance(type__, GraphQLType):
                 return type__
 
-        key_hash = abs(hash(str(type_))) % (10 ** 8)
-        suffix = {'|' + self.suffix if self.suffix else ''}
-        generic_key = f"Registry({key_hash})" \
-                      f"{suffix}|{self.as_input}|{self.as_mutable}"
+        key_hash = abs(hash(str(type_))) % (10**8)
+        suffix = {"|" + self.suffix if self.suffix else ""}
+        generic_key = (
+            f"Registry({key_hash})" f"{suffix}|{self.as_input}|{self.as_mutable}"
+        )
 
         generic_registry_value = self.registry.get(generic_key, None)
 
@@ -669,22 +644,15 @@ class GraphQLTypeMapper:
         return True
 
 
-def get_class_funcs(
-        class_type,
-        schema,
-        mutable=False
-) -> List[Tuple[Any, Any]]:
+def get_class_funcs(class_type, schema, mutable=False) -> List[Tuple[Any, Any]]:
     members = []
     for _class_type in class_type.mro():
         for key, member in inspect.getmembers(_class_type):
             if not (key.startswith("__") and key.endswith("__")):
                 members.append((key, member))
 
-    if hasattr(class_type, 'graphql_fields'):
-        members += [
-            (func.__name__, func)
-            for func in class_type.graphql_fields()
-        ]
+    if hasattr(class_type, "graphql_fields"):
+        members += [(func.__name__, func) for func in class_type.graphql_fields()]
     func_members = []
 
     for key, member in reversed(members):
@@ -700,20 +668,17 @@ def get_class_funcs(
             func_members.append((key, member))
 
     def matches_criterion(func):
-        func_type = get_value(func, schema, 'type')
+        func_type = get_value(func, schema, "type")
         return func_type == "query" or (mutable and func_type == "mutation")
 
     callable_funcs = []
 
     inherited_fields = {}
     for key, member in func_members:
-        if getattr(member, 'graphql', None) and key != "test_property":
+        if getattr(member, "graphql", None) and key != "test_property":
             inherited_fields[key] = {**member.__dict__}
         elif key in inherited_fields:
-            member.__dict__ = {
-                **inherited_fields[key],
-                'defined_on': member
-            }
+            member.__dict__ = {**inherited_fields[key], "defined_on": member}
 
     done = []
 
@@ -721,7 +686,7 @@ def get_class_funcs(
         if is_graphql(member, schema=schema) and matches_criterion(member):
             if not callable(member):
                 type_hints = typing.get_type_hints(member)
-                return_type = type_hints.pop('return', None)
+                return_type = type_hints.pop("return", None)
 
                 def local_func():
                     local_key = key
@@ -737,7 +702,7 @@ def get_class_funcs(
                             "meta": local_member.meta,
                             "type": local_member.type,
                             "defined_on": local_member.defined_on,
-                            "schema": schema
+                            "schema": schema,
                         }
                     }
 
@@ -761,8 +726,8 @@ def get_value(type_, schema, key):
 
 
 def is_graphql(type_, schema):
-    graphql = getattr(type_, 'graphql', None)
-    schemas = getattr(type_, 'schemas', {})
+    graphql = getattr(type_, "graphql", None)
+    schemas = getattr(type_, "schemas", {})
     valid_schema = schema in schemas.keys() or None in schemas.keys()
 
     return graphql and schemas and valid_schema
@@ -770,16 +735,16 @@ def is_graphql(type_, schema):
 
 def is_interface(type_, schema):
     if is_graphql(type_, schema):
-        type_type = get_value(type_, schema, 'type')
-        type_defined_on = get_value(type_, schema, 'defined_on')
+        type_type = get_value(type_, schema, "type")
+        type_defined_on = get_value(type_, schema, "defined_on")
 
         return type_type == "interface" and type_defined_on == type_
 
 
 def is_abstract(type_, schema):
     if is_graphql(type_, schema):
-        type_type = get_value(type_, schema, 'type')
-        type_defined_on = get_value(type_, schema, 'defined_on')
+        type_type = get_value(type_, schema, "type")
+        type_defined_on = get_value(type_, schema, "defined_on")
 
         return type_type == "abstract" and type_defined_on == type_
 
