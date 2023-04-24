@@ -169,7 +169,7 @@ class TestCustomTypes:
         assert not result.errors
         assert result.data == expected
 
-        test_non_utf_bytes_query = f"query GetNonUtfByteData {{ nonUtfByteData }}"
+        test_non_utf_bytes_query = "query GetNonUtfByteData {{ nonUtfByteData }}"
         result = executor.execute(test_non_utf_bytes_query)
 
         expected = {"nonUtfByteData": "UTF-8 ENCODED PREVIEW: \x00\x00A\x00\x00\x00"}

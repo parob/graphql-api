@@ -1,7 +1,7 @@
 import asyncio
-import base64
 import enum
 import uuid
+
 from typing import Optional, List
 from uuid import UUID
 

@@ -1,7 +1,5 @@
 from asyncio import sleep, create_task, wait
 from dataclasses import dataclass
-from inspect import isawaitable
-from typing import AsyncIterator, Optional
 
 import pytest
 from graphql import (

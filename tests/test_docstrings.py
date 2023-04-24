@@ -1,25 +1,7 @@
-import enum
-import sys
-
-import pytest
-
 from dataclasses import dataclass
-from typing import Union, Optional
+from typing import Optional
 
-from graphql import GraphQLSchema
-from requests.api import request
-from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
-
-# noinspection PyPackageRequirements
-from graphql.utilities import print_schema
-
-from graphql_api.utils import executor_to_ast
-from graphql_api.error import GraphQLError
-from graphql_api.context import GraphQLContext
-from graphql_api.api import GraphQLAPI, GraphQLRootTypeDelegate
-from graphql_api.reduce import TagFilter
-from graphql_api.remote import GraphQLRemoteExecutor, remote_execute
-from graphql_api.decorators import field
+from graphql_api.api import GraphQLAPI
 
 
 class TestGraphQL:

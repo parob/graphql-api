@@ -171,10 +171,7 @@ async def http_query(
                 url,
                 params=params,
                 ssl=verify,
-                headers={
-                    "Accept": "application/json",
-                    **http_headers
-                },
+                headers={"Accept": "application/json", **http_headers},
                 timeout=ClientTimeout(total=http_timeout),
             )
 
@@ -186,7 +183,7 @@ async def http_query(
                 headers={
                     "Accept": "application/json",
                     "Content-Type": "application/json",
-                    **http_headers
+                    **http_headers,
                 },
                 timeout=ClientTimeout(total=http_timeout),
             )
