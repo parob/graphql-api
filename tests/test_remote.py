@@ -1,6 +1,8 @@
 import asyncio
 import enum
+import random
 import uuid
+from dataclasses import dataclass
 
 from typing import Optional, List
 from uuid import UUID
@@ -387,6 +389,118 @@ class TestGraphQLRemote:
             == 85
         )
 
+    def test_remote_return_object(self):
+        api = GraphQLAPI()
+
+        @dataclass
+        class Door:
+            height: int
+
+        @api.type(root=True)
+        class House:
+            @api.field
+            def doors(self) -> List[Door]:
+                return [Door(height=180), Door(height=204)]
+
+            @api.field
+            def front_door(self) -> Door:
+                return Door(height=204)
+
+        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)
+
+        assert house.doors()[0].height == 180
+        assert house.front_door().height == 204
+
+    def test_remote_return_object_call_count(self):
+        api = GraphQLAPI()
+
+        @dataclass
+        class Door:
+            height: int
+            weight: int
+
+        @api.type(root=True)
+        class House:
+            def __init__(self):
+                self.api_calls = 0
+
+            @api.field
+            def number(self) -> int:
+                self.api_calls += 1
+                return 18
+
+            @api.field
+            def front_door(self) -> Door:
+                self.api_calls += 1
+                return Door(height=204, weight=70)
+
+        root_house = House()
+
+        house: House = GraphQLRemoteObject(
+            executor=api.executor(root_value=root_house),
+            api=api,
+        )
+
+        front_door = house.front_door()
+        assert root_house.api_calls == 0
+
+        assert front_door.height == 204
+        assert front_door.weight == 70
+
+        assert root_house.api_calls == 2
+
+        assert front_door.height == 204
+
+        assert root_house.api_calls == 2
+
+        front_door = house.front_door()
+        assert root_house.api_calls == 2
+
+        assert front_door.height == 204
+
+        assert root_house.api_calls == 3
+        root_house.api_calls = 0
+
+        assert root_house.number() == 18
+        assert root_house.number() == 18
+        assert root_house.api_calls == 2
+
+    def test_remote_return_object_cache(self):
+        api = GraphQLAPI()
+
+        @dataclass
+        class Door:
+            id: str
+
+            @api.field
+            def rand(self, max: int = 100) -> int:
+                return random.randint(0, max)
+
+        @api.type(root=True)
+        class House:
+            @api.field
+            def front_door(self, id: str) -> Door:
+                return Door(id=id)
+
+        root_house = House()
+
+        house: House = GraphQLRemoteObject(
+            executor=api.executor(root_value=root_house),
+            api=api,
+        )
+
+        front_door = house.front_door(id="door_a")
+        random_int = front_door.rand()
+        assert random_int == front_door.rand()
+        assert random_int != front_door.rand(max=200)
+        assert random_int == front_door.rand()
+
+        front_door = house.front_door(id="door_a")
+        assert random_int != front_door.rand()
+
+        front_door = house.front_door(id="door_b")
+        assert random_int != front_door.rand()
+
     def test_remote_recursive_mutated(self):
         api = GraphQLAPI()
 
@@ -643,3 +757,30 @@ class TestGraphQLRemote:
         assert len(set(sync_utc_now_list)) == request_count
 
         assert sync_time >= 1.25 * async_time
+
+    # noinspection DuplicatedCode,PyUnusedLocal
+    @pytest.mark.skipif(
+        not available(utc_time_api_url),
+        reason=f"The UTCTime API '{utc_time_api_url}' is unavailable",
+    )
+    def test_remote_get_async_await(self):
+        utc_time_api = GraphQLAPI()
+
+        remote_executor = GraphQLRemoteExecutor(url=self.utc_time_api_url)
+
+        @utc_time_api.type(root=True)
+        class UTCTimeAPI:
+            @utc_time_api.field
+            def now(self) -> str:
+                pass
+
+        api: UTCTimeAPI = GraphQLRemoteObject(
+            executor=remote_executor, api=utc_time_api
+        )
+
+        async def fetch():
+            return await api.call_async("now")
+
+        async_utc_now = asyncio.run(fetch())
+
+        assert async_utc_now
