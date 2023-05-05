@@ -187,11 +187,11 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
         except RequestException as e:
             import sys
 
-            err_msg = f"{e}, remote service '{self.name}' is unavailable."
+            err_msg = f"{e}, remote service '{self.name}' is unavailable '{self.url}'."
             raise type(e)(err_msg).with_traceback(sys.exc_info()[2])
 
         except ValueError as e:
-            raise ValueError(f"{e}, from remote service '{self.name}'.")
+            raise ValueError(f"{e}, from remote service '{self.name}' at '{self.url}'.")
 
         return ExecutionResult(data=json_.get("data"), errors=json_.get("errors"))
 
