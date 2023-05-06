@@ -10,7 +10,7 @@ from graphql.type.definition import (
     GraphQLNonNull,
 )
 
-from graphql_api.utils import to_camel_case
+from graphql_api.utils import to_camel_case, to_camel_case_text
 
 
 def type_is_dataclass(_class: Type):
@@ -72,7 +72,7 @@ def type_from_dataclass(_class: Type, mapper) -> GraphQLType:
 
                 for docstring_param in docstrings.params:
                     if docstring_param.arg_name == prop_name:
-                        description = docstring_param.description
+                        description = to_camel_case_text(docstring_param.description)
 
                 type_: GraphQLType = local_mapper.map(type_=field_type)
 

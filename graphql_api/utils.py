@@ -42,6 +42,15 @@ def to_snake_case(name):
     return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
 
 
+def to_camel_case_text(text: str):
+    if not text:
+        return text
+    for word in text.split():
+        if "_" in word and word.islower():
+            text = text.replace(word, to_camel_case(word))
+    return text
+
+
 def to_input_value(value):
     from graphql_api.mapper import is_scalar
 

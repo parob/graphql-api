@@ -48,7 +48,12 @@ from graphql_api.types import (
     GraphQLMappedEnumType,
 )
 
-from graphql_api.utils import to_camel_case, to_snake_case, to_input_value
+from graphql_api.utils import (
+    to_camel_case,
+    to_snake_case,
+    to_input_value,
+    to_camel_case_text,
+)
 from graphql_api.exception import GraphQLBaseException
 from graphql_api.dataclass_mapping import type_is_dataclass, type_from_dataclass
 
@@ -116,7 +121,7 @@ class GraphQLTypeMapper:
 
     def map_to_field(self, function_type: Callable, name="", key="") -> GraphQLField:
         type_hints = typing.get_type_hints(function_type)
-        description = inspect.getdoc(function_type)
+        description = to_camel_case_text(inspect.getdoc(function_type))
 
         return_type = type_hints.pop("return", None)
 
@@ -293,7 +298,7 @@ class GraphQLTypeMapper:
         name = f"{type_.__name__}Enum"
         # Enums don't include a suffix as they are immutable
 
-        description = inspect.getdoc(enum_type)
+        description = to_camel_case_text(inspect.getdoc(enum_type))
 
         enum_type = GraphQLMappedEnumType(
             name=name, values=enum_type, description=description
@@ -358,7 +363,7 @@ class GraphQLTypeMapper:
         class_funcs = get_class_funcs(class_type, self.schema, self.as_mutable)
 
         interface_name = f"{name}{self.suffix}Interface"
-        description = inspect.getdoc(class_type)
+        description = to_camel_case_text(inspect.getdoc(class_type))
 
         def local_resolve_type():
             local_self = self
@@ -409,7 +414,9 @@ class GraphQLTypeMapper:
             # noinspection PyTypeChecker
             func = class_type.__init__
 
-        description = inspect.getdoc(func) or inspect.getdoc(class_type)
+        description = to_camel_case_text(
+            inspect.getdoc(func) or inspect.getdoc(class_type)
+        )
 
         try:
             type_hints = typing.get_type_hints(func)
@@ -481,7 +488,7 @@ class GraphQLTypeMapper:
 
     def map_to_object(self, class_type: Type) -> GraphQLType:
         name = f"{class_type.__name__}{self.suffix}"
-        description = inspect.getdoc(class_type)
+        description = to_camel_case_text(inspect.getdoc(class_type))
 
         class_funcs = get_class_funcs(class_type, self.schema, self.as_mutable)
 
