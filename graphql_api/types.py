@@ -78,9 +78,7 @@ def parse_date_value(value):
         except ValueError:
             pass
 
-    raise ValueError(
-        f"Date{value} did not fit any " f"of the formats {date_formats}."
-    )
+    raise ValueError(f"Date{value} did not fit any " f"of the formats {date_formats}.")
 
 
 def parse_date_literal(node):
@@ -91,7 +89,7 @@ def parse_date_literal(node):
 GraphQLDate = GraphQLScalarType(
     name="Date",
     description="The `Date` scalar type represents a datetime, "
-                "the datetime should be in the format `2018-01-22`",
+    "the datetime should be in the format `2018-01-22`",
     serialize=serialize_date,
     parse_value=parse_date_value,
     parse_literal=parse_date_literal,

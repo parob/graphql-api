@@ -45,7 +45,8 @@ from graphql_api.types import (
     GraphQLDateTime,
     GraphQLJSON,
     JsonType,
-    GraphQLMappedEnumType, GraphQLDate,
+    GraphQLMappedEnumType,
+    GraphQLDate,
 )
 
 from graphql_api.utils import (

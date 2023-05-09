@@ -20,7 +20,6 @@ from graphql_api.api import GraphQLAPI
 
 
 class TestDataclass:
-
     def test_dataclass(self):
         api = GraphQLAPI()
 
