@@ -1,21 +1,5 @@
-import enum
-import sys
-
-import pytest
-
 from dataclasses import dataclass
-from typing import Union, Optional, Literal, List
-
-from graphql import GraphQLSchema
-from requests.api import request
-from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
-
-# noinspection PyPackageRequirements
-from graphql.utilities import print_schema
-
-from graphql_api.utils import executor_to_ast
-from graphql_api.error import GraphQLError
-from graphql_api.context import GraphQLContext
+from typing import Optional
 from graphql_api.api import GraphQLAPI
 
 
@@ -56,9 +40,9 @@ class TestDataclass:
         @api.type(root=True)
         @dataclass
         class Root:
-            person: Person = Person(name="rob")
+            person: Person
 
-        executor = api.executor()
+        executor = api.executor(root_value=Root(person=Person(name="rob")))
 
         test_query = """
             query {
