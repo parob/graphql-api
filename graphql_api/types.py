@@ -65,6 +65,39 @@ GraphQLDateTime = GraphQLScalarType(
 )
 
 
+def serialize_date(dt: datetime.date):
+    return dt.isoformat()
+
+
+def parse_date_value(value):
+    date_formats = ["%Y-%m-%d"]
+
+    for date_format in date_formats:
+        try:
+            return datetime.datetime.strptime(value, date_format).date()
+        except ValueError:
+            pass
+
+    raise ValueError(
+        f"Date{value} did not fit any " f"of the formats {date_formats}."
+    )
+
+
+def parse_date_literal(node):
+    if isinstance(node, StringValueNode):
+        return parse_date_value(node.value)
+
+
+GraphQLDate = GraphQLScalarType(
+    name="Date",
+    description="The `Date` scalar type represents a datetime, "
+                "the datetime should be in the format `2018-01-22`",
+    serialize=serialize_date,
+    parse_value=parse_date_value,
+    parse_literal=parse_date_literal,
+)
+
+
 JsonType = Union[None, int, float, str, bool, List, Dict]
 
 

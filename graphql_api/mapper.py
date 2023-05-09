@@ -11,7 +11,7 @@ from uuid import UUID
 from typing import List, Union, Type, Callable, Tuple, Any, Dict, Set
 
 from typing_inspect import get_origin
-from datetime import datetime
+from datetime import datetime, date
 
 from graphql import (
     GraphQLObjectType,
@@ -45,7 +45,7 @@ from graphql_api.types import (
     GraphQLDateTime,
     GraphQLJSON,
     JsonType,
-    GraphQLMappedEnumType,
+    GraphQLMappedEnumType, GraphQLDate,
 )
 
 from graphql_api.utils import (
@@ -333,6 +333,7 @@ class GraphQLTypeMapper:
         ([dict, list, set], GraphQLJSON),
         ([float], GraphQLFloat),
         ([datetime], GraphQLDateTime),
+        ([date], GraphQLDate),
         ([type(None)], None),
     ]
 

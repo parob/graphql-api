@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from uuid import UUID
 
 from graphql_api.api import GraphQLAPI
@@ -68,6 +68,27 @@ class TestCustomTypes:
         result = executor.execute(test_time_query)
 
         expected = {"addOneHour": str(now + timedelta(hours=1))}
+        assert not result.errors
+        assert result.data == expected
+
+    def test_date_type(self):
+        api = GraphQLAPI()
+
+        now = date.today()
+
+        @api.type(root=True)
+        class Root:
+            @api.field
+            def add_one_day(self, date: date) -> date:
+                return date + timedelta(days=1)
+
+        executor = api.executor()
+
+        test_time_query = f'query GetTimeInOneHour {{ addOneDay(date: "{now}") }}'
+
+        result = executor.execute(test_time_query)
+
+        expected = {"addOneDay": str(now + timedelta(days=1))}
         assert not result.errors
         assert result.data == expected
 
