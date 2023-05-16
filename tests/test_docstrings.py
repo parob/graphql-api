@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum
 from typing import Optional
 
 from graphql_api.api import GraphQLAPI
@@ -48,6 +49,41 @@ class TestGraphQL:
         node_field = root_field_type.fields["nodeField"]
 
         assert node_field.description == "NODE_FIELD_DOCSTRING"
+
+    def test_enum_docstring(self):
+        api = GraphQLAPI()
+
+        class TestEnumA(Enum):
+            VALUE_A = "value_a"
+            VALUE_B = "value_b"
+
+        class TestEnumB(Enum):
+            """
+            TEST_ENUM_B_DOCSTRING
+            """
+
+            VALUE_A = "value_a"
+            VALUE_B = "value_b"
+
+        @api.type(root=True)
+        class Root:
+            @api.field
+            def enum_field_a(self) -> TestEnumA:
+                return TestEnumA.VALUE_A
+
+            @api.field
+            def enum_field_b(self) -> TestEnumB:
+                return TestEnumB.VALUE_A
+
+        schema = api.graphql_schema()[0]
+
+        enum_field = schema.query_type.fields["enumFieldA"]
+
+        assert enum_field.type.of_type.description == "A TestEnumAEnum."
+
+        enum_field_b = schema.query_type.fields["enumFieldB"]
+
+        assert enum_field_b.type.of_type.description == "TEST_ENUM_B_DOCSTRING"
 
     def test_basic_dataclass_docstring(self):
         api = GraphQLAPI()

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, List
 from graphql_api.api import GraphQLAPI
 
 
@@ -33,8 +33,14 @@ class TestDataclass:
         api = GraphQLAPI()
 
         @dataclass
-        class Person:
+        class Entity:
             name: str
+            embedding: List[float]
+
+        @dataclass
+        class Person(Entity):
+            name: str
+            embedding: List[float]
 
         # noinspection PyUnusedLocal
         @api.type(root=True)
@@ -42,15 +48,17 @@ class TestDataclass:
         class Root:
             person: Person
 
-        executor = api.executor(root_value=Root(person=Person(name="rob")))
+        executor = api.executor(
+            root_value=Root(person=Person(name="rob", embedding=[1, 2]))
+        )
 
         test_query = """
             query {
-                person { name }
+                person { name, embedding }
             }
         """
 
         result = executor.execute(test_query)
 
         assert not result.errors
-        assert result.data == {"person": {"name": "rob"}}
+        assert result.data == {"person": {"name": "rob", "embedding": [1, 2]}}

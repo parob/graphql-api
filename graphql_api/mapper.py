@@ -10,6 +10,7 @@ from uuid import UUID
 
 from typing import List, Union, Type, Callable, Tuple, Any, Dict, Set
 
+from docstring_parser import parse_from_object
 from typing_inspect import get_origin
 from datetime import datetime, date
 
@@ -95,6 +96,10 @@ class GraphQLMetaKey(enum.Enum):
 
 
 class GraphQLMutableField(GraphQLField):
+    pass
+
+
+class GraphQLGenericEnum(enum.Enum):
     pass
 
 
@@ -298,8 +303,11 @@ class GraphQLTypeMapper:
         enum_type = type_
         name = f"{type_.__name__}Enum"
         # Enums don't include a suffix as they are immutable
+        description = to_camel_case_text(inspect.getdoc(type_))
+        default_description = to_camel_case_text(inspect.getdoc(GraphQLGenericEnum))
 
-        description = to_camel_case_text(inspect.getdoc(enum_type))
+        if not description or description == default_description:
+            description = f"A {name}."
 
         enum_type = GraphQLMappedEnumType(
             name=name, values=enum_type, description=description
