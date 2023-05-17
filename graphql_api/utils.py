@@ -203,7 +203,6 @@ async def http_query(
         try:
             json = await r.json(content_type=None)
         except JSONDecodeError as e:
-            raise ValueError(
-                f"{e}, unable to decode JSON from response: `{str(r.text())}`"
-            )
+            text = await r.text()
+            raise ValueError(f"{e}, unable to decode JSON from response: `{str(text)}`")
     return json
