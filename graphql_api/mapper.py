@@ -10,7 +10,6 @@ from uuid import UUID
 
 from typing import List, Union, Type, Callable, Tuple, Any, Dict, Set
 
-from docstring_parser import parse_from_object
 from typing_inspect import get_origin
 from datetime import datetime, date
 
