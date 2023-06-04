@@ -4,7 +4,6 @@ from graphql_api.api import GraphQLAPI
 
 
 class TestAsync:
-
     def test_basic_async(self):
         api = GraphQLAPI()
 
@@ -39,7 +38,7 @@ class TestAsync:
             """
         )
         assert not result_1.errors
-        assert result_1.data == {'math': {'square': 25}}
+        assert result_1.data == {"math": {"square": 25}}
 
         result_2 = api.execute(
             """
@@ -51,4 +50,4 @@ class TestAsync:
             """
         )
         assert not result_2.errors
-        assert result_2.data == {'asyncMath': {'square': 25}}
+        assert result_2.data == {"asyncMath": {"square": 25}}

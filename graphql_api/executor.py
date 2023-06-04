@@ -19,7 +19,8 @@ from graphql_api.middleware import (
     middleware_request_context,
     middleware_local_proxy,
     middleware_adapt_enum,
-    middleware_catch_exception, middleware_call_coroutine,
+    middleware_catch_exception,
+    middleware_call_coroutine,
 )
 
 
