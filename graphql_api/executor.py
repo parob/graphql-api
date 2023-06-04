@@ -19,7 +19,7 @@ from graphql_api.middleware import (
     middleware_request_context,
     middleware_local_proxy,
     middleware_adapt_enum,
-    middleware_catch_exception,
+    middleware_catch_exception, middleware_call_coroutine,
 )
 
 
@@ -91,6 +91,7 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         middleware.insert(0, middleware_request_context)
         middleware.insert(0, middleware_local_proxy)
         middleware.insert(0, middleware_adapt_enum)
+        middleware.insert(0, middleware_call_coroutine)
 
         self.meta = meta
         self.schema = schema

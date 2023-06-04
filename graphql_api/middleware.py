@@ -1,4 +1,7 @@
 import enum
+import inspect
+
+import asyncio
 import sys
 import traceback
 
@@ -49,6 +52,17 @@ def middleware_local_proxy(next):
 
     if isinstance(value, Exception):
         raise value
+
+    return value
+
+
+def middleware_call_coroutine(next):
+    """
+    GraphQL middleware, call coroutine
+    """
+    value = next()
+    if inspect.iscoroutine(value):
+        value = asyncio.run(value)
 
     return value
 
