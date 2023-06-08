@@ -454,7 +454,7 @@ class GraphQLRemoteObject:
             if field.list:
                 values = []
                 for _value in value:
-                    values.append(_to_value(value))
+                    values.append(_to_value(_value))
                 return value
             else:
                 return _to_value(value)

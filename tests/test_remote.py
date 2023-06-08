@@ -784,3 +784,22 @@ class TestGraphQLRemote:
         async_utc_now = asyncio.run(fetch())
 
         assert async_utc_now
+
+    # Fix a bug calling fetch() with string list
+    def test_remote_query_fetch_str_list(self):
+        api = GraphQLAPI()
+
+        @api.type(root=True)
+        class StudentRoll:
+
+            @api.field
+            def students(self) -> List[str]:
+                return ["alice", "bob"]
+
+        roll: StudentRoll = GraphQLRemoteObject(
+            executor=api.executor(),
+            api=api
+        )
+        roll.fetch()
+
+        assert roll.students() == ["alice", "bob"]
