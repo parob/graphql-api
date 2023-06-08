@@ -7,6 +7,7 @@ import traceback
 
 from graphql import GraphQLObjectType, GraphQLNonNull, GraphQLResolveInfo
 
+from graphql_api import GraphQLError
 from graphql_api.mapper import GraphQLMetaKey
 
 from graphql_api.context import GraphQLContext
@@ -47,8 +48,13 @@ def middleware_local_proxy(next):
     value = next()
 
     # Compatibility with LocalProxy from Werkzeug
-    if hasattr(value, "_get_current_object"):
-        value = value._get_current_object()
+    try:
+        if hasattr(value, "_get_current_object"):
+            value = value._get_current_object()
+    except GraphQLError:
+        # hasattr calls getattr and remote.getattr() can raise a GraphQLError if
+        # the object doesn't have the attr
+        return value
 
     if isinstance(value, Exception):
         raise value
