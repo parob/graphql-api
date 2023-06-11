@@ -54,7 +54,7 @@ def middleware_local_proxy(next):
     except GraphQLError:
         # hasattr calls getattr and remote.getattr() can raise a GraphQLError if
         # the object doesn't have the attr
-        return value
+        pass
 
     if isinstance(value, Exception):
         raise value
