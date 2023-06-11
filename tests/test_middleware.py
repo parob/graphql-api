@@ -18,7 +18,8 @@ class TestMiddleware:
         def remote_iterable():
             return house
 
-        # Testing a bug where this would throw a GraphQLError exception if a function returning a GraphQLRemoteObject
+        # Testing a bug where this would throw a GraphQLError
+        # exception if a function returning a GraphQLRemoteObject
         # was passed
         value = middleware_local_proxy(remote_iterable)
 
