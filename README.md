@@ -1,5 +1,5 @@
 # GraphQL-API
-Framework for building a GraphQL API with Python
+Framework for building a GraphQL API with Python using typehints.
 
 [![coverage report](https://gitlab.com/parob/graphql-api/badges/master/coverage.svg)](https://gitlab.com/parob/graphql-api/commits/master)
 
