@@ -1135,7 +1135,7 @@ class TestGraphQL:
             >= 6
         )
 
-    pokemon_graphql_url = "https://graphqlpokemon.favware.tech/"
+    pokemon_graphql_url = "https://graphqlpokemon.favware.tech/v8"
 
     # noinspection DuplicatedCode
     @pytest.mark.skipif(
@@ -1171,7 +1171,9 @@ class TestGraphQL:
             query getPokemon {
                 graphql {
                     getPokemon(pokemon: pikachu) {
-                        types
+                        types {
+                            name
+                        }
                     }
                 }
             }
@@ -1183,7 +1185,7 @@ class TestGraphQL:
 
         pokemon = result.data.get("graphql").get("getPokemon")
 
-        assert pokemon.get("types") == ["Electric"]
+        assert pokemon.get("types")[0].get("name") == "Electric"
 
     @pytest.mark.skipif(
         not available(pokemon_graphql_url),
@@ -1209,7 +1211,9 @@ class TestGraphQL:
             query getPokemon {
                 graphql {
                     getPokemon(pokemon: pikachu) {
-                        types
+                        types {
+                            name
+                        }
                     }
                 }
             }
@@ -1221,7 +1225,7 @@ class TestGraphQL:
 
         pokemon = result.data.get("graphql").get("getPokemon")
 
-        assert pokemon.get("types") == ["Electric"]
+        assert pokemon.get("types")[0].get("name") == "Electric"
 
     # noinspection PyUnusedLocal
     def test_executor_to_ast(self):

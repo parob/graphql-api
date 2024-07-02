@@ -1,4 +1,4 @@
-# GraphQL-API
+# GraphQL API
 Framework for building a GraphQL API with Python
 
 [![coverage report](https://gitlab.com/parob/graphql-api/badges/master/coverage.svg)](https://gitlab.com/parob/graphql-api/commits/master)

@@ -49,6 +49,11 @@ class TestGraphQLRemote:
             def wood(self) -> str:
                 return "oak"
 
+            @property
+            @api.field
+            def tags(self) -> List[str]:
+                return ["oak", "white", "solid"]
+
         @api.type(root=True)
         class House:
             @api.field
@@ -66,8 +71,11 @@ class TestGraphQLRemote:
         heights_2 = {door_2.height() for door_2 in doors_2}
         woods_2 = {door_2.wood for door_2 in doors_2}
 
+        tags_2 = [door_2.tags for door_2 in doors_2]
+
         assert heights_2 == {3, 5}
         assert woods_2 == {"oak"}
+        assert tags_2 == [['oak', 'white', 'solid'], ['oak', 'white', 'solid']]
 
     def test_remote_query_list_nested(self):
         api = GraphQLAPI()
