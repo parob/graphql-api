@@ -670,7 +670,7 @@ class TestGraphQL:
         assert result.data == expected
 
         test_mutation = """
-            query TestMisddlewareQuery {
+            query TestMiddlewareQuery {
                 testQuery(testString: "not_hello")
             }
         """
@@ -1152,8 +1152,9 @@ class TestGraphQL:
         # noinspection PyUnusedLocal
         @api.type(root=True)
         class Root:
+
             @api.field
-            def graphql(self, context: GraphQLContext) -> RemoteAPI:
+            def pokemon(self, context: GraphQLContext) -> RemoteAPI:
                 operation = context.request.info.operation.operation
                 query = context.field.query
                 redirected_query = operation.value + " " + query
@@ -1169,7 +1170,7 @@ class TestGraphQL:
 
         test_query = """
             query getPokemon {
-                graphql {
+                pokemon {
                     getPokemon(pokemon: pikachu) {
                         types {
                             name
@@ -1183,7 +1184,7 @@ class TestGraphQL:
 
         assert not result.errors
 
-        pokemon = result.data.get("graphql").get("getPokemon")
+        pokemon = result.data.get("pokemon").get("getPokemon")
 
         assert pokemon.get("types")[0].get("name") == "Electric"
 

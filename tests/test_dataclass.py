@@ -29,7 +29,7 @@ class TestDataclass:
         assert not result.errors
         assert result.data == expected
 
-    def test_dataclas_inheritance(self):
+    def test_dataclass_inheritance(self):
         api = GraphQLAPI()
 
         @dataclass

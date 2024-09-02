@@ -13,6 +13,7 @@ class TestMiddleware:
             def number_of_doors(self) -> int:
                 return 5
 
+        # noinspection PyTypeChecker
         house: House = GraphQLRemoteObject(executor=api.executor(), api=api)
 
         def remote_iterable():

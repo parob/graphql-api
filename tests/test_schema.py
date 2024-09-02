@@ -1,4 +1,11 @@
 # noinspection PyPep8Naming,DuplicatedCode
+import dataclasses
+from dataclasses import dataclass
+from typing import Generic, List, Optional, Callable, TypeVar
+
+from graphql import DirectiveLocation, GraphQLDirective, GraphQLString, GraphQLArgument, GraphQLSkipDirective, \
+    GraphQLDirectiveKwargs, print_introspection_schema, print_schema
+
 from graphql_api import GraphQLAPI, type, field
 
 
@@ -34,17 +41,17 @@ class TestGraphQL:
             def test_interface_mutation_no_schema(self, a: int) -> int:
                 pass
 
-        assert ObjectNoSchema.graphql
-        assert ObjectNoSchema.test_query_no_schema.graphql
-        assert ObjectNoSchema.test_mutation_no_schema.graphql
+        assert ObjectNoSchema._graphql
+        assert ObjectNoSchema.test_query_no_schema._graphql
+        assert ObjectNoSchema.test_mutation_no_schema._graphql
 
-        assert AbstractNoSchema.graphql
-        assert AbstractNoSchema.test_abstract_query_no_schema.graphql
-        assert AbstractNoSchema.test_abstract_mutation_no_schema.graphql
+        assert AbstractNoSchema._graphql
+        assert AbstractNoSchema.test_abstract_query_no_schema._graphql
+        assert AbstractNoSchema.test_abstract_mutation_no_schema._graphql
 
-        assert InterfaceNoSchema.graphql
-        assert InterfaceNoSchema.test_interface_query_no_schema.graphql
-        assert InterfaceNoSchema.test_interface_mutation_no_schema.graphql
+        assert InterfaceNoSchema._graphql
+        assert InterfaceNoSchema.test_interface_query_no_schema._graphql
+        assert InterfaceNoSchema.test_interface_mutation_no_schema._graphql
 
     def test_decorators_schema(self):
         api_1 = GraphQLAPI()
@@ -59,9 +66,9 @@ class TestGraphQL:
             def test_mutation_schema(self, a: int) -> int:
                 pass
 
-        assert ObjectSchema.graphql
-        assert ObjectSchema.test_query_schema.graphql
-        assert ObjectSchema.test_mutation_schema.graphql
+        assert ObjectSchema._graphql
+        assert ObjectSchema.test_query_schema._graphql
+        assert ObjectSchema.test_mutation_schema._graphql
 
     def test_decorators_no_schema_meta(self):
         @type(meta={"test": "test"})
@@ -74,23 +81,90 @@ class TestGraphQL:
             def test_mutation_no_schema_meta(self, a: int) -> int:
                 pass
 
-        assert ObjectNoSchemaMeta.graphql
-        assert ObjectNoSchemaMeta.test_query_no_schema_meta.graphql
-        assert ObjectNoSchemaMeta.test_mutation_no_schema_meta.graphql
+        # noinspection PyUnresolvedReferences
+        assert ObjectNoSchemaMeta._graphql
+        # noinspection PyUnresolvedReferences
+        assert ObjectNoSchemaMeta.test_query_no_schema_meta._graphql
+        # noinspection PyUnresolvedReferences
+        assert ObjectNoSchemaMeta.test_mutation_no_schema_meta._graphql
 
     def test_decorators_schema_meta(self):
         api_1 = GraphQLAPI()
 
-        @api_1.type(meta={"test": "test"})
+        @api_1.type(meta={"test1": "test2"}, root=True)
         class ObjectSchemaMeta:
-            @api_1.field(meta={"test": "test"})
+            @api_1.field(meta={"test3": "test4"})
             def test_query_schema_meta(self, a: int) -> int:
                 pass
 
-            @api_1.field(meta={"test": "test"}, mutable=True)
+            @api_1.field(meta={"test5": "test6"}, mutable=True)
             def test_mutation_schema_meta(self, a: int) -> int:
                 pass
 
-        assert ObjectSchemaMeta.graphql
-        assert ObjectSchemaMeta.test_query_schema_meta.graphql
-        assert ObjectSchemaMeta.test_mutation_schema_meta.graphql
+        assert ObjectSchemaMeta._graphql
+        assert ObjectSchemaMeta.test_query_schema_meta._graphql
+        assert ObjectSchemaMeta.test_mutation_schema_meta._graphql
+
+        # api_1.set_root(ObjectSchemaMeta)
+        schema = api_1.graphql_schema()
+
+        assert schema
+
+    def test_predefined_operation_directive(self):
+        class TestSchema:
+
+            @field
+            def test(self, a: int) -> int:
+                return a + 1
+
+        api = GraphQLAPI(root=TestSchema)
+
+        executor = api.executor()
+
+        test_query = """
+            query Test($testBool: Boolean!) {
+                test(a:1) @skip(if: $testBool)
+            }
+        """
+
+        result = executor.execute(test_query, variables={"testBool": True})
+
+        assert not result.errors
+        assert result.data == {}
+
+        result = executor.execute(test_query, variables={"testBool": False})
+
+        assert not result.errors
+        assert result.data == {"test": 2}
+
+    def test_schema_directive(self):
+        schema_directive_definition = GraphQLDirective(
+            name="test1",
+            locations=[DirectiveLocation.SCHEMA, DirectiveLocation.OBJECT, DirectiveLocation.FIELD_DEFINITION],
+            args={"arg": GraphQLArgument(GraphQLString, description="arg description")},
+            description="test description",
+            is_repeatable=True,
+        )
+
+        @dataclass
+        class Key:
+            fields: str
+
+        @dataclass
+        class Tag:
+            name: str
+
+        @type(directives=Key(fields="test"))
+        class TestSchema:
+
+            @field(directives=[Tag(name="test_tag")])
+            def test(self, a: int) -> int:
+                return a + 1
+
+        api = GraphQLAPI(root=TestSchema, directives=[schema_directive_definition])
+
+        schema, _ = api.graphql_schema()
+        printed_schema = print_schema(schema)
+
+        assert "directive @test1" in printed_schema
+

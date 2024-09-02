@@ -547,7 +547,11 @@ class GraphQLTypeMapper:
             return fields
 
         obj = GraphQLObjectType(
-            name, local_fields(), local_interfaces(), description=description
+            name,
+            local_fields(),
+            local_interfaces(),
+            description=description,
+            extensions={}
         )
 
         return obj
@@ -662,7 +666,8 @@ class GraphQLTypeMapper:
 
 def get_class_funcs(class_type, schema, mutable=False) -> List[Tuple[Any, Any]]:
     members = []
-    for _class_type in class_type.mro():
+    class_types = class_type.mro()
+    for _class_type in class_types:
         for key, member in inspect.getmembers(_class_type):
             if not (key.startswith("__") and key.endswith("__")):
                 members.append((key, member))
@@ -691,7 +696,7 @@ def get_class_funcs(class_type, schema, mutable=False) -> List[Tuple[Any, Any]]:
 
     inherited_fields = {}
     for key, member in func_members:
-        if getattr(member, "graphql", None) and key != "test_property":
+        if getattr(member, "_graphql", None) and key != "test_property":
             inherited_fields[key] = {**member.__dict__}
         elif key in inherited_fields:
             member.__dict__ = {**inherited_fields[key], "defined_on": member}
@@ -704,6 +709,7 @@ def get_class_funcs(class_type, schema, mutable=False) -> List[Tuple[Any, Any]]:
                 type_hints = typing.get_type_hints(member)
                 return_type = type_hints.pop("return", None)
 
+                # noinspection PyProtectedMember
                 def local_func():
                     local_key = key
                     local_member = member
@@ -711,13 +717,13 @@ def get_class_funcs(class_type, schema, mutable=False) -> List[Tuple[Any, Any]]:
                     def func(self) -> return_type:
                         return getattr(self, local_key)
 
-                    func.graphql = local_member.graphql
-                    func.defined_on = local_member.defined_on
-                    func.schemas = {
+                    func._graphql = local_member._graphql
+                    func._defined_on = local_member._defined_on
+                    func._schemas = {
                         schema: {
-                            "meta": local_member.meta,
-                            "type": local_member.type,
-                            "defined_on": local_member.defined_on,
+                            "meta": local_member._meta,
+                            "type": local_member._type,
+                            "defined_on": local_member._defined_on,
                             "schema": schema,
                         }
                     }
@@ -738,12 +744,13 @@ def get_class_funcs(class_type, schema, mutable=False) -> List[Tuple[Any, Any]]:
 
 def get_value(type_, schema, key):
     if is_graphql(type_, schema):
-        return type_.schemas.get(schema, type_.schemas.get(None)).get(key)
+        # noinspection PyProtectedMember
+        return type_._schemas.get(schema, type_._schemas.get(None)).get(key)
 
 
 def is_graphql(type_, schema):
-    graphql = getattr(type_, "graphql", None)
-    schemas = getattr(type_, "schemas", {})
+    graphql = getattr(type_, "_graphql", None)
+    schemas = getattr(type_, "_schemas", {})
     valid_schema = schema in schemas.keys() or None in schemas.keys()
 
     return graphql and schemas and valid_schema
