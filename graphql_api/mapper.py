@@ -247,7 +247,7 @@ class GraphQLTypeMapper:
 
         field_class = GraphQLField
         func_type = get_value(function_type, self.schema, "type")
-        if func_type == "mutation":
+        if func_type == "mutable_field":
             field_class = GraphQLMutableField
 
         return field_class(
@@ -711,7 +711,7 @@ def get_class_funcs(class_type, schema, mutable=False) -> List[Tuple[Any, Any]]:
 
     def matches_criterion(func):
         func_type = get_value(func, schema, "type")
-        return func_type == "query" or (mutable and func_type == "mutation")
+        return func_type == "field" or (mutable and func_type == "mutable_field")
 
     callable_funcs = []
 

@@ -39,7 +39,7 @@ class GraphQLRequestContext:
 
 
 # noinspection PyShadowingBuiltins
-def decorate(
+def tag_value(
     value,
     type: str,
     schema: "GraphQLAPI" = None,
@@ -47,9 +47,9 @@ def decorate(
     directives: List = None,
     root: bool = False
 ):
-    value._graphql = True
-    value._defined_on = value
-    value._directives = directives
+    setattr(value, "_graphql", True)
+    setattr(value, "_defined_on", value)
+    setattr(value, "_directives", directives)
 
     if not meta:
         meta = {}
@@ -76,18 +76,40 @@ def decorate(
     return value
 
 
-# noinspection PyShadowingBuiltins,PyTypeChecker
-def decorator(a, b, type, directives: List = None, root=False):
+# noinspection PyShadowingBuiltins
+def build_decorator(a, b, type, mutable=None, interface=None, abstract=None, directives: List = None, root=None):
+    if type == "object":
+        if interface:
+            type = "interface"
+        elif abstract:
+            type = "abstract"
+
+    if type == "field":
+        if mutable:
+            type = "mutable_field"
+
     func = a if callable(a) else b if callable(b) else None
     meta = a if isinstance(a, dict) else b if isinstance(b, dict) else None
     schema = a if isinstance(a, GraphQLAPI) else b if isinstance(b, GraphQLAPI) else None
 
     if func:
-        return decorate(value=func, type=type, schema=schema, meta=meta, directives=directives, root=root)
+        return tag_value(
+            value=func,
+            type=type,
+            schema=schema,
+            meta=meta,
+            directives=directives,
+            root=root
+        )
 
-    def _decorate(_func):
-        return decorate(value=_func, type=type, schema=schema, meta=meta, directives=directives, root=root)
-    return _decorate
+    return lambda f: tag_value(
+        value=f,
+        type=type,
+        schema=schema,
+        meta=meta,
+        directives=directives,
+        root=root
+    )
 
 
 class GraphQLRootTypeDelegate:
@@ -105,13 +127,12 @@ class GraphQLRootTypeDelegate:
 
 
 class GraphQLAPI(GraphQLBaseExecutor):
+
     def field(self=None, meta=None, mutable=False, directives: List = None):
-        from graphql_api.decorators import field as _field
-        return _field(meta=meta, mutable=mutable, directives=directives)
+        return build_decorator(self, meta, type="field", mutable=mutable, directives=directives)
 
     def type(self=None, meta=None, abstract=False, interface=False, root=False, directives: List = None):
-        from graphql_api.decorators import type as _type
-        return _type(meta=meta, abstract=abstract, interface=interface, root=root, directives=directives)
+        return build_decorator(self, meta, type="object", abstract=abstract, interface=interface, directives=directives, root=root)
 
     def set_root(self, root_type):
         self.root_type = root_type

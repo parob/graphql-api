@@ -72,7 +72,7 @@ class GraphQLSchemaReducer:
         for type_, key, field in iterate_fields(mutation):
             field_type = field.type
             meta = mapper.meta.get((type_.name, to_snake_case(key)), {})
-            field_definition_type = meta.get("type", "query")
+            field_definition_type = meta.get("type", "field")
 
             wraps = []
             while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
@@ -83,7 +83,7 @@ class GraphQLSchemaReducer:
                 # Flagged as mutable
                 continue
 
-            if field_definition_type == "query":
+            if field_definition_type == "field":
                 if (
                     mapper.suffix in str(field_type)
                     or field_type in filtered_mutation_types
