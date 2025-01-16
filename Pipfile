@@ -10,17 +10,17 @@ typing-inspect = "*"
 aiohttp = "*"
 pytest-asyncio = "*"
 docstring-parser = "*"
+unstructured = "*"
+graphene = "*"
+graphene-federation = "*"
 
 [dev-packages]
-# Testing
 pytest = "*"
 pytest-cov = "*"
 pytest-asyncio = "*"
 coverage = "*"
 faker = "*"
-# Linting
 flake8 = "*"
-# Documentation
 sphinx = "*"
 sphinxcontrib-fulltoc = "*"
 guzzle_sphinx_theme = "*"

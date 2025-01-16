@@ -930,7 +930,7 @@ class TestGraphQL:
         @api.type(root=True)
         class Root:
             @api.field
-            def value(self, a_int: int | None = 50) -> Optional[int]:
+            def value(self, a_int: Optional[int] = 50) -> Optional[int]:
                 return a_int
 
         executor = api.executor()
@@ -1380,11 +1380,13 @@ class TestGraphQL:
             def hello(self, person: Person) -> str:
                 raise NotImplementedError()
 
+        # noinspection PyRedeclaration
         class Person(Person):
             def __hash__(self):
                 return hash(self.name)
 
         class Implementation(GreetInterface):
+
             def hello(self, person: Person) -> str:
                 return f"hello {hash(person)}"
 

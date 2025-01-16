@@ -9,11 +9,11 @@ def field(meta=None, mutable=False, directives=None):
     return decorator(None, meta, type=_type, directives=directives)
 
 
-def type(meta=None, abstract=False, interface=False, directives=None):
+def type(meta=None, abstract=False, interface=False, root=False, directives=None):
     _type = "object"
     if interface:
         _type = "interface"
     elif abstract:
         _type = "abstract"
 
-    return decorator(None, meta, type=_type, directives=directives)
+    return decorator(None, meta, type=_type, root=root, directives=directives)

@@ -12,6 +12,7 @@ from graphql import (
 )
 
 from graphql_api import GraphQLError
+from graphql_api.directives import SchemaDirective
 
 from graphql_api.executor import GraphQLExecutor, GraphQLBaseExecutor
 from graphql_api.context import GraphQLContext
@@ -39,53 +40,53 @@ class GraphQLRequestContext:
 
 # noinspection PyShadowingBuiltins
 def decorate(
-    func: Callable,
+    value,
     type: str,
     schema: "GraphQLAPI" = None,
     meta: Dict = None,
     directives: List = None,
     root: bool = False
 ):
-    func._graphql = True
-    func._defined_on = func
-    func._directives = directives
+    value._graphql = True
+    value._defined_on = value
+    value._directives = directives
 
     if not meta:
         meta = {}
 
-    if not hasattr(func, "_schemas"):
-        func._schemas = {}
+    if not hasattr(value, "_schemas"):
+        value._schemas = {}
 
-    if hasattr(func, "_schemas"):
+    if hasattr(value, "_schemas"):
         # noinspection PyProtectedMember
-        func._schemas[schema] = {
-            "defined_on": func,
+        value._schemas[schema] = {
+            "defined_on": value,
             "meta": meta,
             "type": type,
             "schema": schema
         }
-    meta["directives"] = directives
 
-    if schema and directives:
-        schema.directives.update(directives)
+    if root:
+        if type != "object":
+            raise TypeError(f"Cannot set '{value}' of type '{type}' as a root.")
 
-    if root and schema:
-        schema.set_root(func)
+        if schema:
+            schema.set_root(value)
 
-    return func
+    return value
 
 
-# noinspection PyShadowingBuiltins
-def decorator(a, b, type, directives, root=None):
+# noinspection PyShadowingBuiltins,PyTypeChecker
+def decorator(a, b, type, directives: List = None, root=False):
     func = a if callable(a) else b if callable(b) else None
     meta = a if isinstance(a, dict) else b if isinstance(b, dict) else None
     schema = a if isinstance(a, GraphQLAPI) else b if isinstance(b, GraphQLAPI) else None
 
     if func:
-        return decorate(func=func, type=type, schema=schema, meta=meta, directives=directives, root=root)
+        return decorate(value=func, type=type, schema=schema, meta=meta, directives=directives, root=root)
 
     def _decorate(_func):
-        return decorate(func=_func, type=type, schema=schema, meta=meta, directives=directives, root=root)
+        return decorate(value=_func, type=type, schema=schema, meta=meta, directives=directives, root=root)
     return _decorate
 
 
@@ -105,20 +106,12 @@ class GraphQLRootTypeDelegate:
 
 class GraphQLAPI(GraphQLBaseExecutor):
     def field(self=None, meta=None, mutable=False, directives: List = None):
-        _type = "query"
-        if mutable:
-            _type = "mutation"
-
-        return decorator(self, meta, type=_type, directives=directives)
+        from graphql_api.decorators import field as _field
+        return _field(meta=meta, mutable=mutable, directives=directives)
 
     def type(self=None, meta=None, abstract=False, interface=False, root=False, directives: List = None):
-        _type = "object"
-        if interface:
-            _type = "interface"
-        elif abstract:
-            _type = "abstract"
-
-        return decorator(self, meta, type=_type, directives=directives, root=root)
+        from graphql_api.decorators import type as _type
+        return _type(meta=meta, abstract=abstract, interface=interface, root=root, directives=directives)
 
     def set_root(self, root_type):
         self.root_type = root_type
@@ -126,7 +119,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
     def __init__(
         self,
-        root: Type = None,
+        root=None,
         middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
         directives: List[GraphQLDirective] = None,
         filters: List[GraphQLFilter] = None,
@@ -212,6 +205,17 @@ class GraphQLAPI(GraphQLBaseExecutor):
             schema_args["query"] = GraphQLObjectType(
                 name="PlaceholderQuery", fields={"placeholder": placeholder}
             )
+
+        schema_directives = [
+            *self.query_mapper.schema_directives_map.values(),
+            *self.mutation_mapper.schema_directives_map.values()
+        ]
+        for schema_directives in schema_directives:
+            for schema_directive in schema_directives:
+                schema_directive: SchemaDirective
+                directive = schema_directive.directive
+                self.directives[directive.name] = directive
+
         schema_args["directives"] = self.directives.values()
 
         schema = GraphQLSchema(**schema_args)

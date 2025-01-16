@@ -1,15 +1,16 @@
 # noinspection PyPep8Naming,DuplicatedCode
 import dataclasses
 from dataclasses import dataclass
-from typing import Generic, List, Optional, Callable, TypeVar
+from typing import Generic, List, Optional, Callable, TypeVar, Dict
 
 from graphql import DirectiveLocation, GraphQLDirective, GraphQLString, GraphQLArgument, GraphQLSkipDirective, \
     GraphQLDirectiveKwargs, print_introspection_schema, print_schema
 
 from graphql_api import GraphQLAPI, type, field
+from graphql_api.directives import SchemaDirective
 
 
-class TestGraphQL:
+class TestGraphQLSchema:
     def test_decorators_no_schema(self):
         @type
         class ObjectNoSchema:
@@ -110,7 +111,7 @@ class TestGraphQL:
 
         assert schema
 
-    def test_predefined_operation_directive(self):
+    def test_operation_directive(self):
         class TestSchema:
 
             @field
@@ -137,8 +138,8 @@ class TestGraphQL:
         assert not result.errors
         assert result.data == {"test": 2}
 
-    def test_schema_directive(self):
-        schema_directive_definition = GraphQLDirective(
+    def test_custom_directive(self):
+        custom_directive_definition = GraphQLDirective(
             name="test1",
             locations=[DirectiveLocation.SCHEMA, DirectiveLocation.OBJECT, DirectiveLocation.FIELD_DEFINITION],
             args={"arg": GraphQLArgument(GraphQLString, description="arg description")},
@@ -146,25 +147,51 @@ class TestGraphQL:
             is_repeatable=True,
         )
 
-        @dataclass
-        class Key:
-            fields: str
-
-        @dataclass
-        class Tag:
-            name: str
-
-        @type(directives=Key(fields="test"))
+        @type
         class TestSchema:
 
-            @field(directives=[Tag(name="test_tag")])
+            @field
             def test(self, a: int) -> int:
                 return a + 1
 
-        api = GraphQLAPI(root=TestSchema, directives=[schema_directive_definition])
+        api = GraphQLAPI(root=TestSchema, directives=[custom_directive_definition])
 
         schema, _ = api.graphql_schema()
         printed_schema = print_schema(schema)
 
         assert "directive @test1" in printed_schema
 
+    def test_schema_directives(self):
+
+        key_directive = GraphQLDirective(
+            name="key",
+            locations=[DirectiveLocation.OBJECT],
+            args={"fields": GraphQLArgument(GraphQLString, description="arg description")},
+            description="Key Directive Description",
+            is_repeatable=True,
+        )
+
+        tag_directive = GraphQLDirective(
+            name="tag",
+            locations=[DirectiveLocation.FIELD_DEFINITION],
+            args={"name": GraphQLArgument(GraphQLString, description="tag name")},
+            description="Tag Directive Description",
+            is_repeatable=True,
+        )
+
+        @type(directives=[SchemaDirective(directive=key_directive, args={"fields": "test"})])
+        class TestSchema:
+
+            @field(directives=[SchemaDirective(directive=tag_directive, args={"name": "test_tag"})])
+            def test(self, a: int) -> int:
+                return a + 1
+
+        api = GraphQLAPI(root=TestSchema)
+
+        schema, _ = api.graphql_schema()
+        printed_schema = print_schema(schema)
+
+        query_directives_map = api.query_mapper.schema_directives_map
+        mutation_directives_map = api.mutation_mapper.schema_directives_map
+
+        assert "directive @key" in printed_schema
