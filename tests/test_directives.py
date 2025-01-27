@@ -361,7 +361,7 @@ class TestGraphQLDirectives:
     #         name="key",
     #         locations=[DirectiveLocation.OBJECT],
     #         args={"fields": GraphQLArgument(
-    #               GraphQLString, 
+    #               GraphQLString,
     #               description="arg description"
     #         )},
     #         description="Key Directive Description",
