@@ -11,7 +11,7 @@ with io.open("VERSION") as version_file:
         version = version[1:]
 
 setup(
-    name="graphql-api",
+    name="graphql_api",
     version=version,
     license="MIT",
     packages=find_packages(),
