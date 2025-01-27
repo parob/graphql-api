@@ -7,3 +7,5 @@ from graphql_api.api import GraphQLAPI
 from graphql_api.reduce import GraphQLFilter, TagFilter
 
 from graphql_api.decorators import field, type
+
+from graphql_api.directives import LocatedSchemaDirective

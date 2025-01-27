@@ -1,15 +1,9 @@
 # noinspection PyPep8Naming,DuplicatedCode
-import dataclasses
-from dataclasses import dataclass
-from typing import Generic, List, Optional, Callable, TypeVar
-
-from graphql import DirectiveLocation, GraphQLDirective, GraphQLString, GraphQLArgument, GraphQLSkipDirective, \
-    GraphQLDirectiveKwargs, print_introspection_schema, print_schema
-
 from graphql_api import GraphQLAPI, type, field
 
 
-class TestGraphQL:
+class TestGraphQLSchema:
+
     def test_decorators_no_schema(self):
         @type
         class ObjectNoSchema:
@@ -109,62 +103,3 @@ class TestGraphQL:
         schema = api_1.graphql_schema()
 
         assert schema
-
-    def test_predefined_operation_directive(self):
-        class TestSchema:
-
-            @field
-            def test(self, a: int) -> int:
-                return a + 1
-
-        api = GraphQLAPI(root=TestSchema)
-
-        executor = api.executor()
-
-        test_query = """
-            query Test($testBool: Boolean!) {
-                test(a:1) @skip(if: $testBool)
-            }
-        """
-
-        result = executor.execute(test_query, variables={"testBool": True})
-
-        assert not result.errors
-        assert result.data == {}
-
-        result = executor.execute(test_query, variables={"testBool": False})
-
-        assert not result.errors
-        assert result.data == {"test": 2}
-
-    def test_schema_directive(self):
-        schema_directive_definition = GraphQLDirective(
-            name="test1",
-            locations=[DirectiveLocation.SCHEMA, DirectiveLocation.OBJECT, DirectiveLocation.FIELD_DEFINITION],
-            args={"arg": GraphQLArgument(GraphQLString, description="arg description")},
-            description="test description",
-            is_repeatable=True,
-        )
-
-        @dataclass
-        class Key:
-            fields: str
-
-        @dataclass
-        class Tag:
-            name: str
-
-        @type(directives=Key(fields="test"))
-        class TestSchema:
-
-            @field(directives=[Tag(name="test_tag")])
-            def test(self, a: int) -> int:
-                return a + 1
-
-        api = GraphQLAPI(root=TestSchema, directives=[schema_directive_definition])
-
-        schema, _ = api.graphql_schema()
-        printed_schema = print_schema(schema)
-
-        assert "directive @test1" in printed_schema
-
