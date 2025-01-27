@@ -20,7 +20,7 @@ setup(
     author_email="rob@parob.com",
     url="https://gitlab.com/parob/graphql-api",
     download_url=f"https://gitlab.com/parob/graphql/-/archive/v{version}"
-    f"/graphql-api-v{version}.tar.gz",
+    f"/graphql_api-v{version}.tar.gz",
     keywords=["GraphQL", "GraphQL-API", "GraphQLAPI", "Server"],
     description="A framework for building Python GraphQL APIs.",
     long_description=readme,
