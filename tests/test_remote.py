@@ -75,7 +75,7 @@ class TestGraphQLRemote:
 
         assert heights_2 == {3, 5}
         assert woods_2 == {"oak"}
-        assert tags_2 == [['oak', 'white', 'solid'], ['oak', 'white', 'solid']]
+        assert tags_2 == [["oak", "white", "solid"], ["oak", "white", "solid"]]
 
     def test_remote_query_list_nested(self):
         api = GraphQLAPI()
@@ -799,15 +799,11 @@ class TestGraphQLRemote:
 
         @api.type(root=True)
         class StudentRoll:
-
             @api.field
             def students(self) -> List[str]:
                 return ["alice", "bob"]
 
-        roll: StudentRoll = GraphQLRemoteObject(
-            executor=api.executor(),
-            api=api
-        )
+        roll: StudentRoll = GraphQLRemoteObject(executor=api.executor(), api=api)
         roll.fetch()
 
         assert roll.students() == ["alice", "bob"]

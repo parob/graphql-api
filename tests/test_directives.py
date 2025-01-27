@@ -11,10 +11,8 @@ from graphql_api.print_directives import print_schema
 
 
 class TestGraphQLDirectives:
-
     def test_operation_directive(self):
         class TestSchema:
-
             @field
             def test(self, a: int) -> int:
                 return a + 1
@@ -39,11 +37,14 @@ class TestGraphQLDirectives:
         assert not result.errors
         assert result.data == {"test": 2}
 
-
     def test_custom_directive(self):
         custom_directive_definition = GraphQLDirective(
             name="test1",
-            locations=[DirectiveLocation.SCHEMA, DirectiveLocation.OBJECT, DirectiveLocation.FIELD_DEFINITION],
+            locations=[
+                DirectiveLocation.SCHEMA,
+                DirectiveLocation.OBJECT,
+                DirectiveLocation.FIELD_DEFINITION,
+            ],
             args={"arg": GraphQLArgument(GraphQLString, description="arg description")},
             description="test description",
             is_repeatable=True,
@@ -51,7 +52,6 @@ class TestGraphQLDirectives:
 
         @type
         class TestSchema:
-
             @field
             def test(self, a: int) -> int:
                 return a + 1
@@ -67,13 +67,19 @@ class TestGraphQLDirectives:
         key = SchemaDirective(
             name="key",
             locations=[DirectiveLocation.OBJECT],
-            args={"fields": GraphQLArgument(GraphQLString, description="arg description")},
+            args={
+                "fields": GraphQLArgument(GraphQLString, description="arg description")
+            },
             description="Key Directive Description",
             is_repeatable=True,
         )
-        @type(directives=[LocatedSchemaDirective(directive=key, args={"fields": "object_key"})])
-        class Person:
 
+        @type(
+            directives=[
+                LocatedSchemaDirective(directive=key, args={"fields": "object_key"})
+            ]
+        )
+        class Person:
             @field
             def name(self) -> str:
                 return "rob"
@@ -81,7 +87,6 @@ class TestGraphQLDirectives:
         @key(fields="object_decorator_key")
         @type
         class TestSchema:
-
             @field
             def person(self) -> Person:
                 return Person()
@@ -96,19 +101,25 @@ class TestGraphQLDirectives:
         assert "object_key" in printed_schema
 
     def test_schema_directive_field(self):
-
         tag = SchemaDirective(
             name="tag",
             locations=[DirectiveLocation.FIELD_DEFINITION],
-            args={"name": GraphQLArgument(GraphQLString, description="tag name description")},
+            args={
+                "name": GraphQLArgument(
+                    GraphQLString, description="tag name description"
+                )
+            },
             description="Tag Directive Description",
             is_repeatable=True,
         )
 
         @type
         class TestSchema:
-
-            @field(directives=[LocatedSchemaDirective(directive=tag, args={"name": "field_tag"})])
+            @field(
+                directives=[
+                    LocatedSchemaDirective(directive=tag, args={"name": "field_tag"})
+                ]
+            )
             def test(self, a: int) -> int:
                 return a + 1
 
@@ -121,7 +132,6 @@ class TestGraphQLDirectives:
             @field(mutable=True)
             def add(self, a: int) -> int:
                 return a + 1
-
 
         api = GraphQLAPI(root=TestSchema)
 
@@ -139,13 +149,11 @@ class TestGraphQLDirectives:
 
     @pytest.mark.skip(reason="Union directives not yet supported")
     def test_schema_directive_union(self):
-
         big = SchemaDirective(
             name="big",
             locations=[DirectiveLocation.UNION],
             description="Big Directive Description",
         )
-
 
         class Customer:
             @field
@@ -163,7 +171,6 @@ class TestGraphQLDirectives:
             def owner_or_customer(self) -> Optional[big(Union[Owner, Customer])]:
                 return Customer()
 
-
         api = GraphQLAPI(root=Bank)
 
         schema, _ = api.graphql_schema()
@@ -173,9 +180,7 @@ class TestGraphQLDirectives:
 
         assert "directive @big" in printed_schema
 
-
     def test_schema_directive_interface(self):
-
         interface_directive = SchemaDirective(
             name="interface_directive",
             locations=[DirectiveLocation.INTERFACE, DirectiveLocation.OBJECT],
@@ -213,7 +218,6 @@ class TestGraphQLDirectives:
         assert "Interface directive description" in printed_schema
 
     def test_schema_directive_enum(self):
-
         enum_directive = SchemaDirective(
             name="enum_directive",
             locations=[DirectiveLocation.ENUM],
@@ -255,10 +259,8 @@ class TestGraphQLDirectives:
         assert "Enum directive description" in printed_schema
 
     def test_schema_directive_invalid_location(self):
-
         object_directive = SchemaDirective(
-            name="object_directive",
-            locations=[DirectiveLocation.OBJECT]
+            name="object_directive", locations=[DirectiveLocation.OBJECT]
         )
 
         @object_directive
@@ -278,12 +280,13 @@ class TestGraphQLDirectives:
         with pytest.raises(TypeError, match="Directive '@object_directive' only supp"):
             schema, _ = api.graphql_schema()
 
-
     def test_multiple_schema_directives(self):
         key = SchemaDirective(
             name="key",
             locations=[DirectiveLocation.OBJECT],
-            args={"fields": GraphQLArgument(GraphQLString, description="arg description")},
+            args={
+                "fields": GraphQLArgument(GraphQLString, description="arg description")
+            },
             description="Key Directive Description",
             is_repeatable=True,
         )
@@ -296,12 +299,16 @@ class TestGraphQLDirectives:
             is_repeatable=True,
         )
 
-
         @key(fields="schema_decorator_test")
         @type
         class TestSchema:
-
-            @field(directives=[LocatedSchemaDirective(directive=tag, args={"name": "field_declarative_tag"})])
+            @field(
+                directives=[
+                    LocatedSchemaDirective(
+                        directive=tag, args={"name": "field_declarative_tag"}
+                    )
+                ]
+            )
             def test(self, a: int) -> int:
                 return a + 1
 
@@ -320,7 +327,6 @@ class TestGraphQLDirectives:
             def add(self, a: int) -> int:
                 return a + 1
 
-
         api = GraphQLAPI(root=TestSchema)
 
         schema, _ = api.graphql_schema()
@@ -334,20 +340,21 @@ class TestGraphQLDirectives:
         assert "field_declarative_tag" in printed_schema
         assert "field_decorator_tag" in printed_schema
 
-        schema_no_whitespace = printed_schema.replace(" ", "").replace("\n", "")
+        schema_nw = printed_schema.replace(" ", "").replace("\n", "")
 
-        assert "test3(a:Int!):Int!@tag}" in schema_no_whitespace
-
+        assert "test3(a:Int!):Int!@tag}" in schema_nw
 
     @staticmethod
     def get_directives(mapper: GraphQLTypeMapper):
         query_schema_directives = mapper.schema_directives
         query_directives = []
         for _key, value, directives in query_schema_directives:
-            query_directives: List[LocatedSchemaDirective] = [*query_directives, *directives]
+            query_directives: List[LocatedSchemaDirective] = [
+                *query_directives,
+                *directives,
+            ]
 
         return [query_directive.directive for query_directive in query_directives]
-
 
     # def test_schema_directives_locations(self):
     #     key = SchemaDirective(
