@@ -8,7 +8,7 @@ import typing_inspect
 
 from uuid import UUID
 
-from typing import List, Union, Type, Callable, Tuple, Any, Dict, Set
+from typing import List, Union, Type, Callable, Tuple, Any, Dict, Set, Optional
 
 from typing_inspect import get_origin
 from datetime import datetime, date
@@ -20,7 +20,7 @@ from graphql import (
     GraphQLList,
     GraphQLBoolean,
     GraphQLInt,
-    GraphQLFloat,
+    GraphQLFloat, GraphQLType, DirectiveLocation, is_union_type,
 )
 
 from graphql.type.definition import (
@@ -29,11 +29,15 @@ from graphql.type.definition import (
     GraphQLInterfaceType,
     GraphQLArgument,
     GraphQLInputObjectType,
-    is_input_type,
     GraphQLEnumType,
     GraphQLScalarType,
     GraphQLNonNull,
     GraphQLInputField,
+    is_object_type,
+    is_interface_type,
+    is_enum_type,
+    is_input_type,
+    is_scalar_type, is_abstract_type,
 )
 
 from graphql.pyutils import Undefined, UndefinedType
@@ -120,6 +124,7 @@ class GraphQLTypeMapper:
         self.meta = {}
         self.input_type_mapper = None
         self.schema = schema
+        self.schema_directives = []
 
     def types(self) -> Set[GraphQLType]:
         return set(self.registry.values())
@@ -182,9 +187,9 @@ class GraphQLTypeMapper:
 
         include_context = False
 
-        for key, hint in type_hints.items():
+        for _key, hint in type_hints.items():
             if (
-                key == "context"
+                _key == "context"
                 and inspect.isclass(hint)
                 and issubclass(hint, GraphQLContext)
             ):
@@ -194,14 +199,14 @@ class GraphQLTypeMapper:
             arg_type = input_type_mapper.map(hint)
 
             if isinstance(arg_type, GraphQLEnumType):
-                enum_arguments[key] = hint
+                enum_arguments[_key] = hint
 
-            nullable = key in default_args
+            nullable = _key in default_args
             if not nullable:
                 arg_type = GraphQLNonNull(arg_type)
 
-            arguments[to_camel_case(key)] = GraphQLArgument(
-                type_=arg_type, default_value=default_args.get(key, Undefined)
+            arguments[to_camel_case(_key)] = GraphQLArgument(
+                type_=arg_type, default_value=default_args.get(_key, Undefined)
             )
 
         # noinspection PyUnusedLocal
@@ -244,12 +249,15 @@ class GraphQLTypeMapper:
 
         field_class = GraphQLField
         func_type = get_value(function_type, self.schema, "type")
-        if func_type == "mutation":
+        if func_type == "mutable_field":
             field_class = GraphQLMutableField
 
-        return field_class(
+        field = field_class(
             return_graphql_type, arguments, resolve, description=description
         )
+
+        self.add_schema_directives(field, f"{name}.{key}", function_type)
+        return field
 
     def map_to_union(self, union_type: Union) -> GraphQLType:
         union_args = typing_inspect.get_args(union_type, evaluate=True)
@@ -278,9 +286,12 @@ class GraphQLTypeMapper:
         names = [arg.__name__ for arg in union_args]
         name = f"{''.join(names)}{self.suffix}Union"
 
-        return GraphQLUnionType(
+        union = GraphQLUnionType(
             name, types=[*union_map.values()], resolve_type=resolve_type
         )
+        self.add_schema_directives(union, name, union_type)
+
+        return union
 
     def map_to_list(self, type_: List) -> GraphQLList:
         list_subtype = typing_inspect.get_args(type_)[0]
@@ -301,6 +312,7 @@ class GraphQLTypeMapper:
     def map_to_enum(self, type_: Type[enum.Enum]) -> GraphQLEnumType:
         enum_type = type_
         name = f"{type_.__name__}Enum"
+
         # Enums don't include a suffix as they are immutable
         description = to_camel_case_text(inspect.getdoc(type_))
         default_description = to_camel_case_text(inspect.getdoc(GraphQLGenericEnum))
@@ -330,6 +342,8 @@ class GraphQLTypeMapper:
 
         enum_type.serialize = types.MethodType(serialize, enum_type)
 
+        self.add_schema_directives(enum_type, name, type_)
+
         return enum_type
 
     scalar_map = [
@@ -353,9 +367,13 @@ class GraphQLTypeMapper:
         return classes
 
     def map_to_scalar(self, class_type: Type) -> GraphQLScalarType:
+        name = class_type.__name__
         for test_types, graphql_type in self.scalar_map:
             for test_type in test_types:
                 if issubclass(class_type, test_type):
+
+
+                    self.add_schema_directives(graphql_type, name, class_type)
                     return graphql_type
 
     def map_to_interface(
@@ -373,6 +391,7 @@ class GraphQLTypeMapper:
 
         interface_name = f"{name}{self.suffix}Interface"
         description = to_camel_case_text(inspect.getdoc(class_type))
+
 
         def local_resolve_type():
             local_self = self
@@ -404,12 +423,15 @@ class GraphQLTypeMapper:
 
             return fields
 
-        return GraphQLInterfaceType(
+        interface = GraphQLInterfaceType(
             interface_name,
             fields=local_fields(),
             resolve_type=local_resolve_type(),
             description=description,
         )
+
+        self.add_schema_directives(interface, interface_name, class_type)
+        return interface
 
     def map_to_input(self, class_type: Type) -> GraphQLType:
         name = f"{class_type.__name__}{self.suffix}Input"
@@ -488,12 +510,67 @@ class GraphQLTypeMapper:
 
             return container_type
 
-        return GraphQLInputObjectType(
+
+        input_object = GraphQLInputObjectType(
             name,
             fields=local_fields(),
             out_type=local_container_type(),
             description=description,
         )
+
+        self.add_schema_directives(input_object, name, class_type)
+
+        return input_object
+
+    def add_schema_directives(self, graphql_type: GraphQLType | GraphQLField, key: str, value):
+        if hasattr(value, "_schema_directives"):
+            schema_directives = getattr(value, "_schema_directives")
+            if schema_directives is not None:
+                self.schema_directives.append((key, graphql_type, schema_directives))
+
+                existing_schema_directives = getattr(graphql_type, "_schema_directives", [])
+                new_directives = existing_schema_directives + schema_directives
+                setattr(graphql_type, "_schema_directives", new_directives)
+                location: Optional[DirectiveLocation] = None
+                type_str: str
+                if is_object_type(graphql_type):
+                    location = DirectiveLocation.OBJECT
+                    type_str = "Object"
+                elif is_interface_type(graphql_type):
+                    location = DirectiveLocation.INTERFACE
+                    type_str = "Interface"
+                elif is_enum_type(graphql_type):
+                    location = DirectiveLocation.ENUM
+                    type_str = "Enum"
+                elif is_input_type(graphql_type):
+                    location = DirectiveLocation.INPUT_OBJECT
+                    type_str = "Input Object"
+                elif is_union_type(graphql_type):
+                    location = DirectiveLocation.UNION
+                    type_str = "Union"
+                elif is_scalar_type(graphql_type):
+                    location = DirectiveLocation.SCALAR
+                    type_str = "Scalar"
+                elif is_abstract_type(graphql_type):
+                    type_str = "Abstract"
+                    # unsupported
+                    raise TypeError("Abstract types do not currently support directives")
+                elif isinstance(graphql_type, GraphQLField):
+                    location = DirectiveLocation.FIELD_DEFINITION
+                    type_str = "Field"
+
+                for located_directive in new_directives:
+                    from graphql_api import LocatedSchemaDirective
+                    located_directive: LocatedSchemaDirective
+
+                    if location not in located_directive.directive.locations:
+                        raise TypeError(
+                            f"Directive '{located_directive.directive}' only supports "
+                            f"{located_directive.directive.locations} locations but was"
+                            f" used on '{key}' which is a '{type_str}' and does not "
+                            f"support {location} types, "
+                        )
+
 
     def map_to_object(self, class_type: Type) -> GraphQLType:
         name = f"{class_type.__name__}{self.suffix}"
@@ -538,9 +615,11 @@ class GraphQLTypeMapper:
                 for key_, func_ in local_class_funcs:
                     local_class_type_name = local_class_type.__name__
                     func_.__globals__[local_class_type_name] = local_class_type
-                    fields_[to_camel_case(key_)] = local_self.map_to_field(
+                    _field = local_self.map_to_field(
                         func_, local_name, key_
                     )
+
+                    fields_[to_camel_case(key_)] = _field
 
                 return fields_
 
@@ -554,6 +633,7 @@ class GraphQLTypeMapper:
             extensions={}
         )
 
+        self.add_schema_directives(obj, name, class_type)
         return obj
 
     def rmap(self, graphql_type: GraphQLType) -> Type:
@@ -562,7 +642,7 @@ class GraphQLTypeMapper:
 
         return self.reverse_registry.get(graphql_type)
 
-    def map(self, type_, use_graphql_type=True) -> GraphQLType:
+    def map(self, type_, use_graphql_type=True) -> GraphQLType | None:
         def _map(type__) -> GraphQLType:
             if type_ == JsonType:
                 return GraphQLJSON
@@ -690,7 +770,7 @@ def get_class_funcs(class_type, schema, mutable=False) -> List[Tuple[Any, Any]]:
 
     def matches_criterion(func):
         func_type = get_value(func, schema, "type")
-        return func_type == "query" or (mutable and func_type == "mutation")
+        return func_type == "field" or (mutable and func_type == "mutable_field")
 
     callable_funcs = []
 
@@ -752,7 +832,6 @@ def is_graphql(type_, schema):
     graphql = getattr(type_, "_graphql", None)
     schemas = getattr(type_, "_schemas", {})
     valid_schema = schema in schemas.keys() or None in schemas.keys()
-
     return graphql and schemas and valid_schema
 
 
@@ -760,7 +839,6 @@ def is_interface(type_, schema):
     if is_graphql(type_, schema):
         type_type = get_value(type_, schema, "type")
         type_defined_on = get_value(type_, schema, "defined_on")
-
         return type_type == "interface" and type_defined_on == type_
 
 
@@ -768,7 +846,6 @@ def is_abstract(type_, schema):
     if is_graphql(type_, schema):
         type_type = get_value(type_, schema, "type")
         type_defined_on = get_value(type_, schema, "defined_on")
-
         return type_type == "abstract" and type_defined_on == type_
 
 
