@@ -8,7 +8,9 @@ from graphql import (
     GraphQLString,
     is_named_type,
     ExecutionResult,
-    GraphQLType, specified_directives, GraphQLDirective,
+    GraphQLType,
+    specified_directives,
+    GraphQLDirective,
 )
 
 from graphql_api import GraphQLError
@@ -36,6 +38,7 @@ class GraphQLRequestContext:
         self.args = args
         self.info = info
 
+
 def add_schema_directives(value, directives):
     if directives:
         if hasattr(value, "_schema_directives"):
@@ -44,6 +47,7 @@ def add_schema_directives(value, directives):
         value._schema_directives = directives
     return value
 
+
 # noinspection PyShadowingBuiltins
 def tag_value(
     value,
@@ -51,7 +55,7 @@ def tag_value(
     schema: "GraphQLAPI" = None,
     meta: Dict = None,
     directives: List = None,
-    root: bool = False
+    root: bool = False,
 ):
     value._graphql = True
     value._defined_on = value
@@ -66,7 +70,7 @@ def tag_value(
         "defined_on": value,
         "meta": meta or {},
         "type": type,
-        "schema": schema
+        "schema": schema,
     }
 
     if root:
@@ -80,7 +84,16 @@ def tag_value(
 
 
 # noinspection PyShadowingBuiltins
-def build_decorator(a, b, type, mutable=None, interface=None, abstract=None, directives: List = None, root=None):
+def build_decorator(
+    a,
+    b,
+    type,
+    mutable=None,
+    interface=None,
+    abstract=None,
+    directives: List = None,
+    root=None,
+):
     if type == "object":
         if interface:
             type = "interface"
@@ -93,7 +106,9 @@ def build_decorator(a, b, type, mutable=None, interface=None, abstract=None, dir
 
     func = a if callable(a) else b if callable(b) else None
     meta = a if isinstance(a, dict) else b if isinstance(b, dict) else None
-    schema = a if isinstance(a, GraphQLAPI) else b if isinstance(b, GraphQLAPI) else None
+    schema = (
+        a if isinstance(a, GraphQLAPI) else b if isinstance(b, GraphQLAPI) else None
+    )
 
     if func:
         return tag_value(
@@ -102,16 +117,11 @@ def build_decorator(a, b, type, mutable=None, interface=None, abstract=None, dir
             schema=schema,
             meta=meta,
             directives=directives,
-            root=root
+            root=root,
         )
 
     return lambda f: tag_value(
-        value=f,
-        type=type,
-        schema=schema,
-        meta=meta,
-        directives=directives,
-        root=root
+        value=f, type=type, schema=schema, meta=meta, directives=directives, root=root
     )
 
 
@@ -130,12 +140,28 @@ class GraphQLRootTypeDelegate:
 
 
 class GraphQLAPI(GraphQLBaseExecutor):
-
     def field(self=None, meta=None, mutable=False, directives: List = None):
-        return build_decorator(self, meta, type="field", mutable=mutable, directives=directives)
+        return build_decorator(
+            self, meta, type="field", mutable=mutable, directives=directives
+        )
 
-    def type(self=None, meta=None, abstract=False, interface=False, root=False, directives: List = None):
-        return build_decorator(self, meta, type="object", abstract=abstract, interface=interface, directives=directives, root=root)
+    def type(
+        self=None,
+        meta=None,
+        abstract=False,
+        interface=False,
+        root=False,
+        directives: List = None,
+    ):
+        return build_decorator(
+            self,
+            meta,
+            type="object",
+            abstract=abstract,
+            interface=interface,
+            directives=directives,
+            root=root,
+        )
 
     def set_root(self, root_type):
         self.root_type = root_type
@@ -232,7 +258,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
         schema_directives = [
             *self.query_mapper.schema_directives,
-            *self.mutation_mapper.schema_directives
+            *self.mutation_mapper.schema_directives,
         ]
         for key, graphql_type, schema_directives in schema_directives:
             key: str
@@ -241,7 +267,6 @@ class GraphQLAPI(GraphQLBaseExecutor):
             for schema_directive in schema_directives:
                 graphql_directive = schema_directive.directive
                 self.directives[graphql_directive.name] = graphql_directive
-
 
         schema_args["directives"] = self.directives.values()
 

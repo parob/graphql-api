@@ -3,7 +3,6 @@ from graphql_api import GraphQLAPI, type, field
 
 
 class TestGraphQLSchema:
-
     def test_decorators_no_schema(self):
         @type
         class ObjectNoSchema:

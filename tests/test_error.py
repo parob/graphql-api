@@ -99,7 +99,7 @@ class TestError:
             def math_error(self, error: bool = True) -> Optional[int]:
                 raise Exception("error 1")
 
-        with pytest.raises(Exception, match='error 1'):
+        with pytest.raises(Exception, match="error 1"):
             api.execute(
                 """
                 query {

@@ -20,7 +20,9 @@ from graphql import (
     GraphQLList,
     GraphQLBoolean,
     GraphQLInt,
-    GraphQLFloat, GraphQLType, DirectiveLocation, is_union_type,
+    GraphQLFloat,
+    DirectiveLocation,
+    is_union_type,
 )
 
 from graphql.type.definition import (
@@ -37,7 +39,8 @@ from graphql.type.definition import (
     is_interface_type,
     is_enum_type,
     is_input_type,
-    is_scalar_type, is_abstract_type,
+    is_scalar_type,
+    is_abstract_type,
 )
 
 from graphql.pyutils import Undefined, UndefinedType
@@ -371,8 +374,6 @@ class GraphQLTypeMapper:
         for test_types, graphql_type in self.scalar_map:
             for test_type in test_types:
                 if issubclass(class_type, test_type):
-
-
                     self.add_schema_directives(graphql_type, name, class_type)
                     return graphql_type
 
@@ -391,7 +392,6 @@ class GraphQLTypeMapper:
 
         interface_name = f"{name}{self.suffix}Interface"
         description = to_camel_case_text(inspect.getdoc(class_type))
-
 
         def local_resolve_type():
             local_self = self
@@ -510,7 +510,6 @@ class GraphQLTypeMapper:
 
             return container_type
 
-
         input_object = GraphQLInputObjectType(
             name,
             fields=local_fields(),
@@ -522,13 +521,17 @@ class GraphQLTypeMapper:
 
         return input_object
 
-    def add_schema_directives(self, graphql_type: GraphQLType | GraphQLField, key: str, value):
+    def add_schema_directives(
+        self, graphql_type: GraphQLType | GraphQLField, key: str, value
+    ):
         if hasattr(value, "_schema_directives"):
             schema_directives = getattr(value, "_schema_directives")
             if schema_directives is not None:
                 self.schema_directives.append((key, graphql_type, schema_directives))
 
-                existing_schema_directives = getattr(graphql_type, "_schema_directives", [])
+                existing_schema_directives = getattr(
+                    graphql_type, "_schema_directives", []
+                )
                 new_directives = existing_schema_directives + schema_directives
                 setattr(graphql_type, "_schema_directives", new_directives)
                 location: Optional[DirectiveLocation] = None
@@ -554,13 +557,16 @@ class GraphQLTypeMapper:
                 elif is_abstract_type(graphql_type):
                     type_str = "Abstract"
                     # unsupported
-                    raise TypeError("Abstract types do not currently support directives")
+                    raise TypeError(
+                        "Abstract types do not currently support directives"
+                    )
                 elif isinstance(graphql_type, GraphQLField):
                     location = DirectiveLocation.FIELD_DEFINITION
                     type_str = "Field"
 
                 for located_directive in new_directives:
                     from graphql_api import LocatedSchemaDirective
+
                     located_directive: LocatedSchemaDirective
 
                     if location not in located_directive.directive.locations:
@@ -570,7 +576,6 @@ class GraphQLTypeMapper:
                             f" used on '{key}' which is a '{type_str}' and does not "
                             f"support {location} types, "
                         )
-
 
     def map_to_object(self, class_type: Type) -> GraphQLType:
         name = f"{class_type.__name__}{self.suffix}"
@@ -615,9 +620,7 @@ class GraphQLTypeMapper:
                 for key_, func_ in local_class_funcs:
                     local_class_type_name = local_class_type.__name__
                     func_.__globals__[local_class_type_name] = local_class_type
-                    _field = local_self.map_to_field(
-                        func_, local_name, key_
-                    )
+                    _field = local_self.map_to_field(func_, local_name, key_)
 
                     fields_[to_camel_case(key_)] = _field
 
@@ -630,7 +633,7 @@ class GraphQLTypeMapper:
             local_fields(),
             local_interfaces(),
             description=description,
-            extensions={}
+            extensions={},
         )
 
         self.add_schema_directives(obj, name, class_type)
