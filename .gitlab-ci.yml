@@ -3,8 +3,10 @@ include:
     file: "python.yml"
     
 variables:
-  AUTO_RELEASE: "true"
+  FLAKE8: "true"
+  BLACK: "true"
   PYTEST: "true"
+  AUTO_RELEASE: "true"
   PYPI_PUBLISH: "true"
   PYPI_PUBLISH_USERNAME: ${PYPI_USERNAME}
   PYPI_PUBLISH_PASSWORD: ${PYPI_PASSWORD}
