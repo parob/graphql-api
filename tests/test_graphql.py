@@ -1152,7 +1152,6 @@ class TestGraphQL:
         # noinspection PyUnusedLocal
         @api.type(root=True)
         class Root:
-
             @api.field
             def pokemon(self, context: GraphQLContext) -> RemoteAPI:
                 operation = context.request.info.operation.operation
@@ -1386,7 +1385,6 @@ class TestGraphQL:
                 return hash(self.name)
 
         class Implementation(GreetInterface):
-
             def hello(self, person: Person) -> str:
                 return f"hello {hash(person)}"
 
