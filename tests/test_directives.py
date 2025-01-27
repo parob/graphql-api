@@ -360,7 +360,10 @@ class TestGraphQLDirectives:
     #     key = SchemaDirective(
     #         name="key",
     #         locations=[DirectiveLocation.OBJECT],
-    #         args={"fields": GraphQLArgument(GraphQLString, description="arg description")},
+    #         args={"fields": GraphQLArgument(
+    #               GraphQLString, 
+    #               description="arg description"
+    #         )},
     #         description="Key Directive Description",
     #         is_repeatable=True,
     #     )
