@@ -251,7 +251,7 @@ class GraphQLTypeMapper:
             return response
 
         field_class = GraphQLField
-        func_type = get_value(function_type, self.schema, "type")
+        func_type = get_value(function_type, self.schema, "graphql_type")
         if func_type == "mutable_field":
             field_class = GraphQLMutableField
 
@@ -585,7 +585,7 @@ class GraphQLTypeMapper:
 
         for key, func in class_funcs:
             func_meta = get_value(func, self.schema, "meta")
-            func_meta["type"] = get_value(func, self.schema, "type")
+            func_meta["graphql_type"] = get_value(func, self.schema, "graphql_type")
 
             self.meta[(name, to_snake_case(key))] = func_meta
 
@@ -772,7 +772,7 @@ def get_class_funcs(class_type, schema, mutable=False) -> List[Tuple[Any, Any]]:
             func_members.append((key, member))
 
     def matches_criterion(func):
-        func_type = get_value(func, schema, "type")
+        func_type = get_value(func, schema, "graphql_type")
         return func_type == "field" or (mutable and func_type == "mutable_field")
 
     callable_funcs = []
@@ -805,7 +805,7 @@ def get_class_funcs(class_type, schema, mutable=False) -> List[Tuple[Any, Any]]:
                     func._schemas = {
                         schema: {
                             "meta": local_member._meta,
-                            "type": local_member._type,
+                            "graphql_type": local_member._graphql_type,
                             "defined_on": local_member._defined_on,
                             "schema": schema,
                         }
@@ -840,14 +840,14 @@ def is_graphql(type_, schema):
 
 def is_interface(type_, schema):
     if is_graphql(type_, schema):
-        type_type = get_value(type_, schema, "type")
+        type_type = get_value(type_, schema, "graphql_type")
         type_defined_on = get_value(type_, schema, "defined_on")
         return type_type == "interface" and type_defined_on == type_
 
 
 def is_abstract(type_, schema):
     if is_graphql(type_, schema):
-        type_type = get_value(type_, schema, "type")
+        type_type = get_value(type_, schema, "graphql_type")
         type_defined_on = get_value(type_, schema, "defined_on")
         return type_type == "abstract" and type_defined_on == type_
 

@@ -106,7 +106,7 @@ class TestSubscriptions:
             user: str
             comment: str
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             # async

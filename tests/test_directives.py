@@ -17,7 +17,7 @@ class TestGraphQLDirectives:
             def test(self, a: int) -> int:
                 return a + 1
 
-        api = GraphQLAPI(root=TestSchema)
+        api = GraphQLAPI(root_type=TestSchema)
 
         executor = api.executor()
 
@@ -56,7 +56,7 @@ class TestGraphQLDirectives:
             def test(self, a: int) -> int:
                 return a + 1
 
-        api = GraphQLAPI(root=TestSchema, directives=[custom_directive_definition])
+        api = GraphQLAPI(root_type=TestSchema, directives=[custom_directive_definition])
 
         schema, _ = api.graphql_schema()
         printed_schema = print_schema(schema)
@@ -91,7 +91,7 @@ class TestGraphQLDirectives:
             def person(self) -> Person:
                 return Person()
 
-        api = GraphQLAPI(root=TestSchema)
+        api = GraphQLAPI(root_type=TestSchema)
 
         schema, _ = api.graphql_schema()
         printed_schema = print_schema(schema)
@@ -133,7 +133,7 @@ class TestGraphQLDirectives:
             def add(self, a: int) -> int:
                 return a + 1
 
-        api = GraphQLAPI(root=TestSchema)
+        api = GraphQLAPI(root_type=TestSchema)
 
         schema, _ = api.graphql_schema()
         printed_schema = print_schema(schema)
@@ -171,7 +171,7 @@ class TestGraphQLDirectives:
             def owner_or_customer(self) -> Optional[big(Union[Owner, Customer])]:
                 return Customer()
 
-        api = GraphQLAPI(root=Bank)
+        api = GraphQLAPI(root_type=Bank)
 
         schema, _ = api.graphql_schema()
         printed_schema = print_schema(schema)
@@ -206,7 +206,7 @@ class TestGraphQLDirectives:
             def animal(self) -> Animal:
                 return Dog()
 
-        api = GraphQLAPI(root=Root)
+        api = GraphQLAPI(root_type=Root)
 
         schema, _ = api.graphql_schema()
         printed_schema = print_schema(schema)
@@ -248,7 +248,7 @@ class TestGraphQLDirectives:
 
                 return AnimalType.dog
 
-        api = GraphQLAPI(root=Root)
+        api = GraphQLAPI(root_type=Root)
 
         schema, _ = api.graphql_schema()
         printed_schema = print_schema(schema)
@@ -275,7 +275,7 @@ class TestGraphQLDirectives:
             def animal(self) -> Animal:
                 return Animal()
 
-        api = GraphQLAPI(root=Root)
+        api = GraphQLAPI(root_type=Root)
 
         with pytest.raises(TypeError, match="Directive '@object_directive' only supp"):
             schema, _ = api.graphql_schema()
@@ -327,7 +327,7 @@ class TestGraphQLDirectives:
             def add(self, a: int) -> int:
                 return a + 1
 
-        api = GraphQLAPI(root=TestSchema)
+        api = GraphQLAPI(root_type=TestSchema)
 
         schema, _ = api.graphql_schema()
         printed_schema = print_schema(schema)

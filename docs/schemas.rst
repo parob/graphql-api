@@ -91,7 +91,7 @@ The ``@field`` decorator is used to label a **method** that should be exposed as
 
     schema = GraphQLAPI()
 
-    @schema.type(root=True)
+    @schema.type(is_root_type=True)
     class ExampleQueryDecorator:
 
         @schema.field
@@ -315,7 +315,7 @@ Here is an example to see exactly how the **Root class** gets mapped into two **
             pass
 
 
-    @schema.type(root=True)
+    @schema.type(is_root_type=True)
     class Root:
 
         @schema.field

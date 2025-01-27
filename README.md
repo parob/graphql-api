@@ -42,7 +42,7 @@ from graphql_api import GraphQLAPI
 
 api = GraphQLAPI()
 
-@api.type(root=True)
+@api.type(is_root_type=True)
 class MathService:
 
     @api.field

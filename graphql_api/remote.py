@@ -84,33 +84,33 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
             return info[key_]
 
         # noinspection PyProtectedMember
-        for name, type in ast_schema.type_map.items():
+        for name, graphql_type in ast_schema.type_map.items():
             if (
-                isinstance(type, GraphQLObjectType)
-                or isinstance(type, GraphQLInputObjectType)
-            ) and not type.name.startswith("__"):
-                for key, field in type.fields.items():
+                isinstance(graphql_type, GraphQLObjectType)
+                or isinstance(graphql_type, GraphQLInputObjectType)
+            ) and not graphql_type.name.startswith("__"):
+                for key, field in graphql_type.fields.items():
                     field.resolver = resolver
-            elif isinstance(type, GraphQLEnumType):
+            elif isinstance(graphql_type, GraphQLEnumType):
                 if not self.ignore_unsupported:
                     raise GraphQLError(
-                        f"GraphQLScalarType '{type}' type is not supported "
+                        f"GraphQLScalarType '{graphql_type}' type is not supported "
                         f"in a remote executor '{self.url}'."
                     )
-            elif isinstance(type, (GraphQLInterfaceType, GraphQLUnionType)):
+            elif isinstance(graphql_type, (GraphQLInterfaceType, GraphQLUnionType)):
                 super_type = (
                     "GraphQLInterface"
-                    if isinstance(type, GraphQLInterfaceType)
+                    if isinstance(graphql_type, GraphQLInterfaceType)
                     else "GraphQLUnionType"
                 )
 
                 if not self.ignore_unsupported:
                     raise GraphQLError(
-                        f"{super_type} '{type}' type is not supported"
+                        f"{super_type} '{graphql_type}' type is not supported"
                         f" from remote executor '{self.url}'."
                     )
-            elif isinstance(type, GraphQLScalarType):
-                if type not in [
+            elif isinstance(graphql_type, GraphQLScalarType):
+                if graphql_type not in [
                     GraphQLID,
                     GraphQLString,
                     GraphQLFloat,
@@ -119,14 +119,14 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
                 ]:
                     if not self.ignore_unsupported:
                         raise GraphQLError(
-                            f"GraphQLScalarType '{type}' type is not "
+                            f"GraphQLScalarType '{graphql_type}' type is not "
                             f"supported in a remote executor '{self.url}'."
                         )
-            elif str(type).startswith("__"):
+            elif str(graphql_type).startswith("__"):
                 continue
             else:
                 raise GraphQLError(
-                    f"Unknown GraphQLType '{type}' type is not supported in "
+                    f"Unknown GraphQLType '{graphql_type}' type is not supported in "
                     f"a remote executor '{self.url}'."
                 )
 

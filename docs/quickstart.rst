@@ -67,7 +67,7 @@ But we need to slightly change ``HelloGraphQLAPI`` to make it suitable for creat
 
     schema = GraphQLAPI()
 
-    @schema.type(root=True)
+    @schema.type(is_root_type=True)
     class HelloGraphQLAPI:
 
         @schema.field
@@ -91,7 +91,7 @@ What was changed?:
 
     schema = GraphQLAPI()
 
-    @schema.type(root=True)
+    @schema.type(is_root_type=True)
     class HelloGraphQLAPI:
 
         @schema.field
@@ -110,7 +110,7 @@ Now we can run a GraphQL query on the ``GraphQLExecutor``:
 
     schema = GraphQLAPI()
 
-    @schema.type(root=True)
+    @schema.type(is_root_type=True)
     class HelloGraphQLAPI:
 
         @schema.field
@@ -208,7 +208,7 @@ For example a single class (with both queryable and mutable fields)::
 
     schema = GraphQLAPI()
 
-    @schema.type(root=True)
+    @schema.type(is_root_type=True)
     class Example:
 
         @schema.field
@@ -296,7 +296,7 @@ Here is an example::
 
     schema = GraphQLAPI()
 
-    @schema.type(root=True)
+    @schema.type(is_root_type=True)
     class Folder:
 
         @schema.field
@@ -353,7 +353,7 @@ For example here is a set of Python classes that will produce a **Schema** for a
         def author() -> User:
             pass
 
-    @schema.type(root=True)
+    @schema.type(is_root_type=True)
     class MainController:
 
         @schema.field
@@ -389,7 +389,7 @@ One of the simplest ways to serve a **Schema** is with ``Werkzeug`` and `werkzeu
 
     schema = GraphQLAPI()
 
-    @schema.type(root=True)
+    @schema.type(is_root_type=True)
     class HelloWorld:
 
         @schema.field
@@ -415,7 +415,7 @@ If you are using ``Flask`` you could use `flask-graphql <https://github.com/grap
 
     schema = GraphQLAPI()
 
-    @schema.type(root=True)
+    @schema.type(is_root_type=True)
     class HelloWorld:
 
         @schema.field

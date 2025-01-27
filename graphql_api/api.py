@@ -51,34 +51,38 @@ def add_schema_directives(value, directives):
 # noinspection PyShadowingBuiltins
 def tag_value(
     value,
-    type: str,
+    graphql_type: str,
     schema: "GraphQLAPI" = None,
     meta: Dict = None,
     directives: List = None,
-    root: bool = False,
+    is_root_type: bool = False,
 ):
-    value._graphql = True
-    value._defined_on = value
+    if not hasattr(value, "_graphql"):
+        value._graphql = True
 
-    add_schema_directives(value, directives)
+    if not hasattr(value, "_defined_on"):
+        value._defined_on = value
 
     if not hasattr(value, "_schemas"):
         value._schemas = {}
 
-    # noinspection PyProtectedMember
-    value._schemas[schema] = {
-        "defined_on": value,
-        "meta": meta or {},
-        "type": type,
-        "schema": schema,
-    }
+    if hasattr(value, "_schemas"):
+        # noinspection PyProtectedMember
+        value._schemas[schema] = {
+            "defined_on": value,
+            "meta": meta or {},
+            "graphql_type": graphql_type,
+            "schema": schema,
+        }
 
-    if root:
-        if type != "object":
-            raise TypeError(f"Cannot set '{value}' of type '{type}' as a root.")
+    add_schema_directives(value, directives)
+
+    if is_root_type:
+        if graphql_type != "object":
+            raise TypeError(f"Cannot set '{value}' of type '{graphql_type}' as a root.")
 
         if schema:
-            schema.set_root(value)
+            schema.set_root_type(value)
 
     return value
 
@@ -87,22 +91,22 @@ def tag_value(
 def build_decorator(
     a,
     b,
-    type,
+    graphql_type,
     mutable=None,
     interface=None,
     abstract=None,
     directives: List = None,
-    root=None,
+    is_root_type: bool = False,
 ):
-    if type == "object":
+    if graphql_type == "object":
         if interface:
-            type = "interface"
+            graphql_type = "interface"
         elif abstract:
-            type = "abstract"
+            graphql_type = "abstract"
 
-    if type == "field":
+    if graphql_type == "field":
         if mutable:
-            type = "mutable_field"
+            graphql_type = "mutable_field"
 
     func = a if callable(a) else b if callable(b) else None
     meta = a if isinstance(a, dict) else b if isinstance(b, dict) else None
@@ -113,15 +117,20 @@ def build_decorator(
     if func:
         return tag_value(
             value=func,
-            type=type,
+            graphql_type=graphql_type,
             schema=schema,
             meta=meta,
             directives=directives,
-            root=root,
+            is_root_type=is_root_type,
         )
 
     return lambda f: tag_value(
-        value=f, type=type, schema=schema, meta=meta, directives=directives, root=root
+        value=f,
+        graphql_type=graphql_type,
+        schema=schema,
+        meta=meta,
+        directives=directives,
+        is_root_type=is_root_type,
     )
 
 
@@ -142,7 +151,7 @@ class GraphQLRootTypeDelegate:
 class GraphQLAPI(GraphQLBaseExecutor):
     def field(self=None, meta=None, mutable=False, directives: List = None):
         return build_decorator(
-            self, meta, type="field", mutable=mutable, directives=directives
+            self, meta, graphql_type="field", mutable=mutable, directives=directives
         )
 
     def type(
@@ -150,30 +159,31 @@ class GraphQLAPI(GraphQLBaseExecutor):
         meta=None,
         abstract=False,
         interface=False,
-        root=False,
+        is_root_type=False,
         directives: List = None,
     ):
         return build_decorator(
             self,
             meta,
-            type="object",
+            graphql_type="object",
             abstract=abstract,
             interface=interface,
             directives=directives,
-            root=root,
+            is_root_type=is_root_type,
         )
 
-    def set_root(self, root_type):
+    def set_root_type(self, root_type):
         self.root_type = root_type
         return root_type
 
     def __init__(
         self,
-        root=None,
+        root_type=None,
         middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
         directives: List[GraphQLDirective] = None,
         filters: List[GraphQLFilter] = None,
         error_protection=True,
+        ignore_middleware_during_introspection: bool = True,
     ):
         super().__init__()
         if middleware is None:
@@ -182,7 +192,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
         if directives is None:
             directives = []
 
-        self.root_type = root
+        self.root_type = root_type
         self.middleware = middleware
         self.directives = {
             directive.name: directive
@@ -192,6 +202,9 @@ class GraphQLAPI(GraphQLBaseExecutor):
         self.query_mapper = None
         self.mutation_mapper = None
         self.error_protection = error_protection
+        self.ignore_middleware_during_introspection = (
+            ignore_middleware_during_introspection
+        )
 
     def graphql_schema(self) -> Tuple[GraphQLSchema, Dict]:
         schema_args = {}
@@ -283,16 +296,8 @@ class GraphQLAPI(GraphQLBaseExecutor):
         variables=None,
         operation_name=None,
         root_value: Any = None,
-        middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
-        middleware_on_introspection: bool = False,
-        error_protection: bool = None,
     ) -> ExecutionResult:
-        return self.executor(
-            root_value=root_value,
-            middleware=middleware,
-            middleware_on_introspection=middleware_on_introspection,
-            error_protection=error_protection,
-        ).execute(
+        return self.executor(root_value=root_value).execute(
             query=query,
             variables=variables,
             operation_name=operation_name,
@@ -301,22 +306,21 @@ class GraphQLAPI(GraphQLBaseExecutor):
     def executor(
         self,
         root_value: Any = None,
-        middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
-        middleware_on_introspection: bool = False,
-        error_protection: bool = None,
     ) -> GraphQLExecutor:
         schema, meta = self.graphql_schema()
 
         if callable(self.root_type) and root_value is None:
             root_value = self.root_type()
 
+        ignore_middleware = self.ignore_middleware_during_introspection
+
         return GraphQLExecutor(
             schema=schema,
             meta=meta,
             root_value=root_value,
-            middleware=middleware,
-            middleware_on_introspection=middleware_on_introspection,
-            error_protection=error_protection
-            if error_protection is not None
+            middleware=self.middleware,
+            ignore_middleware_during_introspection=ignore_middleware,
+            error_protection=self.error_protection
+            if self.error_protection is not None
             else self.error_protection,
         )

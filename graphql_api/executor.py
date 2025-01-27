@@ -76,7 +76,7 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         meta: Dict = None,
         root_value: Any = None,
         middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
-        middleware_on_introspection: bool = False,
+        ignore_middleware_during_introspection: bool = True,
         error_protection: bool = True,
     ):
         super().__init__()
@@ -98,7 +98,9 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         self.schema = schema
         self.middleware = middleware
         self.root_value = root_value
-        self.middleware_on_introspection = middleware_on_introspection
+        self.ignore_middleware_during_introspection = (
+            ignore_middleware_during_introspection
+        )
         self.execution_context_class = (
             ErrorProtectionExecutionContext
             if error_protection
@@ -146,7 +148,9 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         return value
 
     @staticmethod
-    def adapt_middleware(middleware, middleware_on_introspection: bool = False):
+    def adapt_middleware(
+        middleware, ignore_middleware_during_introspection: bool = True
+    ):
         def simplify(_middleware: Callable[[Callable, GraphQLContext], Any]):
             def graphql_middleware(next, root, info, **args):
                 kwargs = {}
@@ -175,7 +179,7 @@ class GraphQLExecutor(GraphQLBaseExecutor):
 
         adapters = [simplify]
 
-        if middleware_on_introspection is False:
+        if ignore_middleware_during_introspection is True:
             adapters.append(skip_if_introspection)
 
         adapted_middleware = []

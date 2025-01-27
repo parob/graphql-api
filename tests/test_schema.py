@@ -84,7 +84,7 @@ class TestGraphQLSchema:
     def test_decorators_schema_meta(self):
         api_1 = GraphQLAPI()
 
-        @api_1.type(meta={"test1": "test2"}, root=True)
+        @api_1.type(meta={"test1": "test2"}, is_root_type=True)
         class ObjectSchemaMeta:
             @api_1.field(meta={"test3": "test4"})
             def test_query_schema_meta(self, a: int) -> int:

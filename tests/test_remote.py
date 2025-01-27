@@ -23,7 +23,7 @@ class TestGraphQLRemote:
     def test_remote_query(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class House:
             @api.field
             def number_of_doors(self) -> int:
@@ -54,7 +54,7 @@ class TestGraphQLRemote:
             def tags(self) -> List[str]:
                 return ["oak", "white", "solid"]
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class House:
             @api.field
             def doors(self) -> List[Door]:
@@ -100,7 +100,7 @@ class TestGraphQLRemote:
             def owner(self) -> Person:
                 return Person(name="Rob")
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class House:
             @api.field
             def doors(self) -> List[Door]:
@@ -120,7 +120,7 @@ class TestGraphQLRemote:
             bungalow = "bungalow"
             flat = "flat"
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class House:
             @api.field
             def type(self) -> HouseType:
@@ -150,7 +150,7 @@ class TestGraphQLRemote:
             def room_type(self) -> RoomType:
                 return self._room_type
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class House:
             @api.field
             def get_room(self) -> Room:
@@ -165,7 +165,7 @@ class TestGraphQLRemote:
 
         person_id = uuid.uuid4()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Person:
             @api.field
             def id(self) -> UUID:
@@ -181,7 +181,7 @@ class TestGraphQLRemote:
         a_value = b"hello "
         b_value = b"world"
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class BytesUtils:
             @api.field
             def add_bytes(self, a: bytes, b: bytes) -> bytes:
@@ -197,7 +197,7 @@ class TestGraphQLRemote:
     def test_remote_query_list_parameter(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Tags:
             @api.field
             def join_tags(self, tags: List[str] = None) -> str:
@@ -212,7 +212,7 @@ class TestGraphQLRemote:
     def test_remote_mutation(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Counter:
             def __init__(self):
                 self._value = 0
@@ -241,7 +241,7 @@ class TestGraphQLRemote:
     def test_remote_positional_args(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Multiplier:
             @api.field
             def calculate(self, value_one: int = 1, value_two: int = 1) -> int:
@@ -264,7 +264,7 @@ class TestGraphQLRemote:
             def name(self) -> str:
                 return "rob"
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Bank:
             @api.field
             def owner(self, respond_none: bool = False) -> Optional[Person]:
@@ -282,7 +282,7 @@ class TestGraphQLRemote:
     def test_remote_mutation_with_input(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Counter:
             def __init__(self):
                 self.value = 0
@@ -300,7 +300,7 @@ class TestGraphQLRemote:
     def test_remote_query_with_input(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Calculator:
             @api.field
             def square(self, value: int) -> int:
@@ -313,7 +313,7 @@ class TestGraphQLRemote:
     def test_remote_query_with_enumerable_input(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Calculator:
             @api.field
             def add(self, values: List[int]) -> int:
@@ -340,7 +340,7 @@ class TestGraphQLRemote:
             def size(self) -> int:
                 return self._size
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class House:
             @api.field
             def value(self, garden: Garden, rooms: int = 7) -> int:
@@ -378,7 +378,7 @@ class TestGraphQLRemote:
             def animal_age(self) -> int:
                 return self.animal.age
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class House:
             @api.field
             def value(self, garden: Garden, rooms: int = 7) -> int:
@@ -404,7 +404,7 @@ class TestGraphQLRemote:
         class Door:
             height: int
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class House:
             @api.field
             def doors(self) -> List[Door]:
@@ -427,7 +427,7 @@ class TestGraphQLRemote:
             height: int
             weight: int
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class House:
             def __init__(self):
                 self.api_calls = 0
@@ -484,7 +484,7 @@ class TestGraphQLRemote:
             def rand(self, max: int = 100) -> int:
                 return random.randint(0, max)
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class House:
             @api.field
             def front_door(self, id: str) -> Door:
@@ -527,7 +527,7 @@ class TestGraphQLRemote:
 
         global_flopper = Flopper()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Flipper:
             def __init__(self):
                 self._flip = True
@@ -613,7 +613,7 @@ class TestGraphQLRemote:
 
                 return self
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             def __init__(self):
                 self._rob = Person(name="rob", age=10, height=183.0)
@@ -645,7 +645,7 @@ class TestGraphQLRemote:
     def test_remote_with_local_property(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Person:
             @api.field
             def age(self) -> int:
@@ -663,7 +663,7 @@ class TestGraphQLRemote:
     def test_remote_with_local_method(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Person:
             @api.field
             def age(self) -> int:
@@ -681,7 +681,7 @@ class TestGraphQLRemote:
     def test_remote_with_local_static_method(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Person:
             @api.field
             def age(self) -> int:
@@ -699,7 +699,7 @@ class TestGraphQLRemote:
     def test_remote_with_local_class_method(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Person:
             @api.field
             def age(self) -> int:
@@ -727,7 +727,7 @@ class TestGraphQLRemote:
 
         remote_executor = GraphQLRemoteExecutor(url=self.utc_time_api_url)
 
-        @utc_time_api.type(root=True)
+        @utc_time_api.type(is_root_type=True)
         class UTCTimeAPI:
             @utc_time_api.field
             def now(self) -> str:
@@ -776,7 +776,7 @@ class TestGraphQLRemote:
 
         remote_executor = GraphQLRemoteExecutor(url=self.utc_time_api_url)
 
-        @utc_time_api.type(root=True)
+        @utc_time_api.type(is_root_type=True)
         class UTCTimeAPI:
             @utc_time_api.field
             def now(self) -> str:
@@ -797,7 +797,7 @@ class TestGraphQLRemote:
     def test_remote_query_fetch_str_list(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class StudentRoll:
             @api.field
             def students(self) -> List[str]:

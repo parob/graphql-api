@@ -61,8 +61,8 @@ class TestGraphQL:
                 return number * number * number
 
         # noinspection PyUnusedLocal
-        @api_1.type(root=True)
-        @api_2.type(root=True)
+        @api_1.type(is_root_type=True)
+        @api_2.type(is_root_type=True)
         class Root:
             @api_1.field
             @api_2.field
@@ -121,7 +121,7 @@ class TestGraphQL:
                 return number * number
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def math(self) -> Math:
@@ -150,7 +150,7 @@ class TestGraphQL:
                 self.name = name
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def get_name(self, person: Person) -> str:
@@ -287,8 +287,8 @@ class TestGraphQL:
             def social_security_number(self) -> int:
                 return 56
 
-        api = GraphQLAPI(root=Root, filters=[TagFilter(tags=["admin"])])
-        admin_api = GraphQLAPI(root=Root)
+        api = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=["admin"])])
+        admin_api = GraphQLAPI(root_type=Root)
 
         api_executor = api.executor()
         admin_api_executor = admin_api.executor()
@@ -314,7 +314,7 @@ class TestGraphQL:
         api = GraphQLAPI()
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             def __init__(self):
                 self._test_property = 5
@@ -460,7 +460,7 @@ class TestGraphQL:
                 return 20
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def animal(self) -> Animal:
@@ -493,7 +493,7 @@ class TestGraphQL:
         api = GraphQLAPI()
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         @dataclass
         class Root:
             hello_world: str = "hello world"
@@ -518,7 +518,7 @@ class TestGraphQL:
         api = GraphQLAPI()
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field(mutable=True)
             def hello_world(self) -> str:
@@ -551,7 +551,7 @@ class TestGraphQL:
                 return number * number
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def math(self) -> Math:
@@ -589,7 +589,7 @@ class TestGraphQL:
                 return number * number
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def math(self) -> Math:
@@ -633,7 +633,7 @@ class TestGraphQL:
 
         was_called = []
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field({"test_meta": "hello_meta"})
             def test_query(self, test_string: str = None) -> str:
@@ -651,9 +651,9 @@ class TestGraphQL:
             was_called.append(True)
             return next_()
 
-        middleware = [test_middleware, test_simple_middleware]
+        api.middleware = [test_middleware, test_simple_middleware]
 
-        executor = api.executor(middleware=middleware)
+        executor = api.executor()
 
         test_mutation = """
             query TestMiddlewareQuery {
@@ -698,7 +698,7 @@ class TestGraphQL:
             def value_squared(self) -> int:
                 return self._value * self._value
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def square(self, value: TestInputObject) -> TestInputObject:
@@ -728,7 +728,7 @@ class TestGraphQL:
             dog = "dog"
             cat = "cat"
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def opposite(self, animal: AnimalType) -> AnimalType:
@@ -760,7 +760,7 @@ class TestGraphQL:
             dog = "dog"
             cat = "cat"
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def all(self, animals: List[AnimalType]) -> List[AnimalType]:
@@ -788,7 +788,7 @@ class TestGraphQL:
             dog = "dog"
             cat = "cat"
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def opposite(
@@ -822,7 +822,7 @@ class TestGraphQL:
 
         AnimalType = enum.Enum("AnimalType", ["dog", "cat"])
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def opposite(self, animal: AnimalType) -> AnimalType:
@@ -852,7 +852,7 @@ class TestGraphQL:
 
         Period = Literal["1d", "5d", "1mo", "3mo", "6mo", "1y"]
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def get_count(self, period: Period) -> int:
@@ -878,7 +878,7 @@ class TestGraphQL:
     def test_required(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def value(self, a_int: int) -> Optional[int]:
@@ -903,7 +903,7 @@ class TestGraphQL:
     def test_optional(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def value(self, a_int: int = 50) -> int:
@@ -927,7 +927,7 @@ class TestGraphQL:
     def test_optional_311(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def value(self, a_int: Optional[int] = 50) -> Optional[int]:
@@ -961,7 +961,7 @@ class TestGraphQL:
             def name(self) -> str:
                 return "rob"
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Bank:
             @api.field
             def owner_or_customer(
@@ -1029,7 +1029,7 @@ class TestGraphQL:
     def test_non_null(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def non_nullable(self) -> int:
@@ -1068,7 +1068,7 @@ class TestGraphQL:
     def test_context(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def has_context(self, context: GraphQLContext) -> bool:
@@ -1101,7 +1101,7 @@ class TestGraphQL:
 
         RemoteAPI = GraphQLRemoteExecutor(url=self.star_wars_api_url)
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def star_wars(self, context: GraphQLContext) -> RemoteAPI:
@@ -1150,7 +1150,7 @@ class TestGraphQL:
         )
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def pokemon(self, context: GraphQLContext) -> RemoteAPI:
@@ -1199,7 +1199,7 @@ class TestGraphQL:
         )
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def graphql(self, context: GraphQLContext) -> RemoteAPI:
@@ -1231,7 +1231,7 @@ class TestGraphQL:
     def test_executor_to_ast(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def hello(self) -> str:
@@ -1249,7 +1249,7 @@ class TestGraphQL:
 
         updated_schema = GraphQLSchema()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root(GraphQLRootTypeDelegate):
             was_called = False
             input_schema = None
@@ -1299,7 +1299,7 @@ class TestGraphQL:
             def hello_changed(self) -> str:
                 return "hello world"
 
-        api = GraphQLAPI(root=Implementation)
+        api = GraphQLAPI(root_type=Implementation)
 
         executor = api.executor()
 
@@ -1354,7 +1354,7 @@ class TestGraphQL:
             def hello(self, person: HashablePerson) -> str:
                 return f"hello {hash(person)}"
 
-        api = GraphQLAPI(root=Implementation)
+        api = GraphQLAPI(root_type=Implementation)
 
         executor = api.executor()
 
@@ -1388,7 +1388,7 @@ class TestGraphQL:
             def hello(self, person: Person) -> str:
                 return f"hello {hash(person)}"
 
-        api = GraphQLAPI(root=Implementation)
+        api = GraphQLAPI(root_type=Implementation)
 
         executor = api.executor()
 

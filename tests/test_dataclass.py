@@ -8,7 +8,7 @@ class TestDataclass:
         api = GraphQLAPI()
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         @dataclass
         class Root:
             hello_world: str = "hello world"
@@ -43,7 +43,7 @@ class TestDataclass:
             embedding: List[float]
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         @dataclass
         class Root:
             person: Person

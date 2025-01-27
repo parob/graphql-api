@@ -7,7 +7,7 @@ class TestMiddleware:
     def test_middleware_local_proxy(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class House:
             @api.field
             def number_of_doors(self) -> int:

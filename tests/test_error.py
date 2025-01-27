@@ -12,7 +12,7 @@ class TestError:
     def test_raise(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def math(self) -> int:
@@ -32,7 +32,7 @@ class TestError:
     def test_nullable_raise(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def math(self) -> Optional[int]:
@@ -52,7 +52,7 @@ class TestError:
     def test_partial_raise(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def math(self, error: bool = True) -> Optional[int]:
@@ -93,7 +93,7 @@ class TestError:
     def test_error_protection(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field({GraphQLMetaKey.error_protection: False})
             def math_error(self, error: bool = True) -> Optional[int]:
@@ -111,7 +111,7 @@ class TestError:
     def test_api_error_protection(self):
         api = GraphQLAPI(error_protection=False)
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def math_error(self, error: bool = True) -> Optional[int]:
@@ -129,7 +129,7 @@ class TestError:
     def test_execute_error_protection(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def math_error(self, error: bool = True) -> Optional[int]:

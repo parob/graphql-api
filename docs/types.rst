@@ -81,7 +81,7 @@ It can be used to wrap type types, scalars and enums and other modifiers.
 
     schema = GraphQLAPI()
 
-    @schema.type(root=True)
+    @schema.type(is_root_type=True)
     class RootType:
 
         @schema.field
@@ -103,7 +103,7 @@ It can be used to wrap type types, scalars and enums and other modifiers.
 
     schema = GraphQLAPI()
 
-    @schema.type(root=True)
+    @schema.type(is_root_type=True)
     class RootType:
 
         @schema.field
@@ -126,7 +126,7 @@ It can be used to wrap multiple type types.
 
     schema = GraphQLAPI()
 
-    @schema.type(root=True)
+    @schema.type(is_root_type=True)
     class RootType:
 
         @schema.field

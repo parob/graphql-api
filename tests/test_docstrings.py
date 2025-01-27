@@ -21,7 +21,7 @@ class TestGraphQL:
                 """
                 return test * test
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             """
             ROOT_DOCSTRING
@@ -65,7 +65,7 @@ class TestGraphQL:
             VALUE_A = "value_a"
             VALUE_B = "value_b"
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def enum_field_a(self) -> TestEnumA:
@@ -104,7 +104,7 @@ class TestGraphQL:
                 """
                 return test * test
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             """
             ROOT_DOCSTRING
@@ -154,7 +154,7 @@ class TestGraphQL:
                 """
                 return test * test
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             """
             ROOT_DOCSTRING
@@ -210,7 +210,7 @@ class TestGraphQL:
                 """
                 return test * test
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def root_field(self) -> Node:

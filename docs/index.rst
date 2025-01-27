@@ -39,7 +39,7 @@ With GraphQL-API, the following Python class::
 
     schema = GraphQLAPI()
 
-    @schema.type(root=True)
+    @schema.type(is_root_type=True)
     class Calculator:
 
       @schema.field
@@ -82,7 +82,7 @@ Simple Example:
 
     schema = GraphQLAPI()
 
-    @schema.type(root=True)
+    @schema.type(is_root_type=True)
     class Math:
 
         @schema.field

@@ -15,7 +15,7 @@ class TestAsync:
                 return number * number
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def math(self) -> Math:

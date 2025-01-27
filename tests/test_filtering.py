@@ -16,7 +16,7 @@ class TestSchemaFiltering:
                 return self
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def person(self) -> Person:
@@ -59,7 +59,7 @@ class TestSchemaFiltering:
                 return self
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def person(self) -> Person:
@@ -113,7 +113,7 @@ class TestSchemaFiltering:
         bob_employee = Employee()
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def person(self) -> Person:
@@ -181,7 +181,7 @@ class TestSchemaFiltering:
                 return self
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def person(self) -> Person:

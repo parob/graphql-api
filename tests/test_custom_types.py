@@ -13,7 +13,7 @@ class TestCustomTypes:
         user_id = uuid.uuid4()
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def name(self, id: UUID) -> str:
@@ -55,7 +55,7 @@ class TestCustomTypes:
 
         now = datetime.now()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def add_one_hour(self, time: datetime) -> datetime:
@@ -76,7 +76,7 @@ class TestCustomTypes:
 
         now = date.today()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def add_one_day(self, date: date) -> date:
@@ -95,7 +95,7 @@ class TestCustomTypes:
     def test_json_type(self):
         api = GraphQLAPI()
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def adapt_profile(self, profile: dict) -> dict:
@@ -167,7 +167,7 @@ class TestCustomTypes:
         data_output = b"b3V0cHV0X2J5dGVz"
         non_utf_output = "A".encode("utf-32")
 
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def byte_data(self, value: bytes) -> bytes:

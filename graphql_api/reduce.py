@@ -72,7 +72,7 @@ class GraphQLSchemaReducer:
         for type_, key, field in iterate_fields(mutation):
             field_type = field.type
             meta = mapper.meta.get((type_.name, to_snake_case(key)), {})
-            field_definition_type = meta.get("type", "field")
+            field_definition_type = meta.get("graphql_type", "field")
 
             wraps = []
             while isinstance(field_type, (GraphQLNonNull, GraphQLList)):

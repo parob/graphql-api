@@ -41,7 +41,7 @@ class TestRelay:
                     if end_index < len(cursors) - 1:
                         self.has_next_page = True
 
-                self.filtered_cursors = cursors[start_index : end_index + 1]
+                self.filtered_cursors = cursors[start_index: end_index + 1]
 
                 self.people = people
 
@@ -49,7 +49,7 @@ class TestRelay:
                     self.filtered_cursors = self.filtered_cursors[: self._first]
 
                 elif self._last is not None:
-                    self.filtered_cursors = self.filtered_cursors[-self._last :]
+                    self.filtered_cursors = self.filtered_cursors[-self._last:]
 
             @api.field
             def edges(self) -> List[Edge]:
@@ -68,7 +68,7 @@ class TestRelay:
                 )
 
         # noinspection PyUnusedLocal
-        @api.type(root=True)
+        @api.type(is_root_type=True)
         class Root:
             @api.field
             def people(
