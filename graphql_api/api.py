@@ -12,7 +12,6 @@ from graphql import (
 )
 
 from graphql_api import GraphQLError
-from graphql_api.directives import SchemaDirective
 
 from graphql_api.executor import GraphQLExecutor, GraphQLBaseExecutor
 from graphql_api.context import GraphQLContext
@@ -37,6 +36,13 @@ class GraphQLRequestContext:
         self.args = args
         self.info = info
 
+def add_schema_directives(value, directives):
+    if directives:
+        if hasattr(value, "_schema_directives"):
+            directives = [*directives, *getattr(value, "_schema_directives", [])]
+
+        value._schema_directives = directives
+    return value
 
 # noinspection PyShadowingBuiltins
 def tag_value(
@@ -47,24 +53,21 @@ def tag_value(
     directives: List = None,
     root: bool = False
 ):
-    setattr(value, "_graphql", True)
-    setattr(value, "_defined_on", value)
-    setattr(value, "_directives", directives)
+    value._graphql = True
+    value._defined_on = value
 
-    if not meta:
-        meta = {}
+    add_schema_directives(value, directives)
 
     if not hasattr(value, "_schemas"):
         value._schemas = {}
 
-    if hasattr(value, "_schemas"):
-        # noinspection PyProtectedMember
-        value._schemas[schema] = {
-            "defined_on": value,
-            "meta": meta,
-            "type": type,
-            "schema": schema
-        }
+    # noinspection PyProtectedMember
+    value._schemas[schema] = {
+        "defined_on": value,
+        "meta": meta or {},
+        "type": type,
+        "schema": schema
+    }
 
     if root:
         if type != "object":
@@ -228,14 +231,17 @@ class GraphQLAPI(GraphQLBaseExecutor):
             )
 
         schema_directives = [
-            *self.query_mapper.schema_directives_map.values(),
-            *self.mutation_mapper.schema_directives_map.values()
+            *self.query_mapper.schema_directives,
+            *self.mutation_mapper.schema_directives
         ]
-        for schema_directives in schema_directives:
+        for key, graphql_type, schema_directives in schema_directives:
+            key: str
+            graphql_type: GraphQLType
+
             for schema_directive in schema_directives:
-                schema_directive: SchemaDirective
-                directive = schema_directive.directive
-                self.directives[directive.name] = directive
+                graphql_directive = schema_directive.directive
+                self.directives[graphql_directive.name] = graphql_directive
+
 
         schema_args["directives"] = self.directives.values()
 
