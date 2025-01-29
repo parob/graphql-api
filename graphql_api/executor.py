@@ -20,7 +20,7 @@ from graphql_api.middleware import (
     middleware_local_proxy,
     middleware_adapt_enum,
     middleware_catch_exception,
-    middleware_call_coroutine,
+    middleware_call_coroutine, GraphQLMiddleware,
 )
 
 
@@ -75,7 +75,7 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         schema: GraphQLSchema,
         meta: Dict = None,
         root_value: Any = None,
-        middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
+        middleware: List[GraphQLMiddleware] = None,
         ignore_middleware_during_introspection: bool = True,
         error_protection: bool = True,
     ):
@@ -87,16 +87,16 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         if middleware is None:
             middleware = []
 
-        middleware.insert(0, middleware_catch_exception)
-        middleware.insert(0, middleware_field_context)
-        middleware.insert(0, middleware_request_context)
-        middleware.insert(0, middleware_local_proxy)
-        middleware.insert(0, middleware_adapt_enum)
-        middleware.insert(0, middleware_call_coroutine)
-
         self.meta = meta
         self.schema = schema
-        self.middleware = middleware
+        self.middleware = [
+            middleware_call_coroutine,
+            middleware_adapt_enum,
+            middleware_local_proxy,
+            middleware_request_context,
+            middleware_field_context,
+            middleware_catch_exception
+        ] + middleware
         self.root_value = root_value
         self.ignore_middleware_during_introspection = (
             ignore_middleware_during_introspection
@@ -108,7 +108,7 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         )
 
     def execute(
-        self, query, variables=None, operation_name=None, root_value=None, context=None
+        self, query, variables=None, operation_name=None, root_value=None
     ) -> ExecutionResult:
         context = GraphQLContext(schema=self.schema, meta=self.meta, executor=self)
 
@@ -128,7 +128,7 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         return value
 
     async def execute_async(
-        self, query, variables=None, operation_name=None, root_value=None, context=None
+        self, query, variables=None, operation_name=None, root_value=None
     ) -> ExecutionResult:
         context = GraphQLContext(schema=self.schema, meta=self.meta, executor=self)
 
@@ -151,36 +151,10 @@ class GraphQLExecutor(GraphQLBaseExecutor):
     def adapt_middleware(
         middleware, ignore_middleware_during_introspection: bool = True
     ):
-        def simplify(_middleware: Callable[[Callable, GraphQLContext], Any]):
-            def graphql_middleware(next, root, info, **args):
-                kwargs = {}
-                if "context" in inspect.signature(_middleware).parameters:
-                    context: GraphQLContext = info.context
-                    kwargs["context"] = context
-                    context.resolve_args["root"] = root
-                    context.resolve_args["info"] = info
-                    context.resolve_args["args"] = args
+        adapters = [adapter_middleware_simplify_args]
 
-                return _middleware(lambda: next(root, info, **args), **kwargs)
-
-            return graphql_middleware
-
-        def skip_if_introspection(_middleware):
-            def middleware_with_skip(next, root, info, **args):
-                skip = (
-                    info.operation.name
-                    and info.operation.name.value == "IntrospectionQuery"
-                )
-                if skip:
-                    return next(root, info, **args)
-                return _middleware(next, root, info, **args)
-
-            return middleware_with_skip
-
-        adapters = [simplify]
-
-        if ignore_middleware_during_introspection is True:
-            adapters.append(skip_if_introspection)
+        if ignore_middleware_during_introspection:
+            adapters.append(adapter_ignore_middleware_during_introspection)
 
         adapted_middleware = []
 
@@ -190,3 +164,30 @@ class GraphQLExecutor(GraphQLBaseExecutor):
             adapted_middleware.append(middleware)
 
         return adapted_middleware
+
+
+def adapter_ignore_middleware_during_introspection(middleware: GraphQLMiddleware):
+    def middleware_with_skip(next, root, info, **args):
+        skip = (
+                info.operation.name
+                and info.operation.name.value == "IntrospectionQuery"
+        )
+        if skip:
+            return next(root, info, **args)
+        return middleware(next, root, info, **args)
+
+    return middleware_with_skip
+
+
+def adapter_middleware_simplify_args(middleware: GraphQLMiddleware):
+    def graphql_middleware(next, root, info, **args):
+        kwargs = {}
+        context: GraphQLContext = info.context
+        kwargs["context"] = context
+        context.resolve_args["root"] = root
+        context.resolve_args["info"] = info
+        context.resolve_args["args"] = args
+
+        return middleware(lambda: next(root, info, **args), context)
+
+    return graphql_middleware

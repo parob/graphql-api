@@ -1,4 +1,4 @@
-from typing import List, Callable, Any, Dict, Tuple
+from typing import List, Callable, Any, Dict, Tuple, Optional
 
 # noinspection PyPackageRequirements
 from graphql import (
@@ -16,7 +16,7 @@ from graphql import (
 from graphql_api import GraphQLError
 
 from graphql_api.executor import GraphQLExecutor, GraphQLBaseExecutor
-from graphql_api.context import GraphQLContext
+from graphql_api.middleware import GraphQLMiddleware
 from graphql_api.reduce import GraphQLSchemaReducer, GraphQLFilter
 from graphql_api.mapper import GraphQLTypeMapper
 
@@ -179,7 +179,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
     def __init__(
         self,
         root_type=None,
-        middleware: List[Callable[[Callable, GraphQLContext], Any]] = None,
+        middleware: List[GraphQLMiddleware] = None,
         directives: List[GraphQLDirective] = None,
         filters: List[GraphQLFilter] = None,
         error_protection=True,

@@ -4,6 +4,7 @@ import inspect
 import asyncio
 import sys
 import traceback
+from typing import Callable, Any
 
 from graphql import GraphQLObjectType, GraphQLNonNull, GraphQLResolveInfo
 
@@ -14,7 +15,13 @@ from graphql_api.context import GraphQLContext
 from graphql_api.utils import to_snake_case
 
 
+GraphQLMiddleware = Callable[[Callable, GraphQLContext], Any]
+
+
 def middleware_catch_exception(next, context: GraphQLContext):
+    """
+    GraphQL middleware, unwrap the LocalProxy if using Werkzeug.
+    """
     try:
         value = next()
     except Exception as err:
@@ -44,10 +51,11 @@ def middleware_catch_exception(next, context: GraphQLContext):
     return value
 
 
-def middleware_local_proxy(next):
+def middleware_local_proxy(next, _):
+    """
+    GraphQL middleware, unwrap the LocalProxy if using Werkzeug.
+    """
     value = next()
-
-    # Compatibility with LocalProxy from Werkzeug
     try:
         if hasattr(value, "_get_current_object"):
             value = value._get_current_object()
@@ -62,7 +70,7 @@ def middleware_local_proxy(next):
     return value
 
 
-def middleware_call_coroutine(next):
+def middleware_call_coroutine(next, _):
     """
     GraphQL middleware, call coroutine
     """
@@ -73,7 +81,7 @@ def middleware_call_coroutine(next):
     return value
 
 
-def middleware_adapt_enum(next):
+def middleware_adapt_enum(next, _):
     """
     GraphQL middleware, by default enums return the value
     """
@@ -85,6 +93,9 @@ def middleware_adapt_enum(next):
 
 
 def middleware_request_context(next, context: GraphQLContext):
+    """
+    GraphQL middleware, add the GraphQLRequestContext
+    """
     from graphql_api.api import GraphQLRequestContext
 
     info = context.resolve_args.get("info")
@@ -107,6 +118,9 @@ def middleware_request_context(next, context: GraphQLContext):
 
 
 def middleware_field_context(next, context: GraphQLContext):
+    """
+    GraphQL middleware, add the GraphQLFieldContext
+    """
     from graphql_api.api import GraphQLFieldContext
 
     info = context.resolve_args.get("info")
