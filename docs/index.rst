@@ -37,12 +37,12 @@ GraphQL-API uses Python **classes**, **methods** and **typehints** to create the
 
 With GraphQL-API, the following Python class::
 
-    schema = GraphQLAPI()
+    api = GraphQLAPI()
 
-    @schema.type(is_root_type=True)
+    @api.type(is_root_type=True)
     class Calculator:
 
-      @schema.field
+      @api.field
       def add(self, number_one: float, number_two: float) -> float:
           return number_1 + number_2
 
@@ -80,12 +80,12 @@ Simple Example:
 
     from graphql_api import GraphQLAPI
 
-    schema = GraphQLAPI()
+    api = GraphQLAPI()
 
-    @schema.type(is_root_type=True)
+    @api.type(is_root_type=True)
     class Math:
 
-        @schema.field
+        @api.field
         def square_number(self, number: int) -> int:
             return number * number
 

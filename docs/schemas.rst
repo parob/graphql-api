@@ -34,22 +34,22 @@ For example:
 
         from graphql_api import GraphQLAPI
 
-        schema = GraphQLAPI()
+        api = GraphQLAPI()
 
         class Human:
 
-            @schema.field
+            @api.field
             def name(self) -> str:
                 return "Tom"
 
-        @schema.root
+        @api.root
         class Root:
 
-            @schema.field
+            @api.field
             def hello_world(self) -> str:
                 return "Hello world!"
 
-            @schema.field
+            @api.field
             def a_person(self) -> Human:
                 return Human()
 
@@ -89,12 +89,12 @@ The ``@field`` decorator is used to label a **method** that should be exposed as
 
     from graphql_api import GraphQLAPI
 
-    schema = GraphQLAPI()
+    api = GraphQLAPI()
 
-    @schema.type(is_root_type=True)
+    @api.type(is_root_type=True)
     class ExampleQueryDecorator:
 
-        @schema.field
+        @api.field
         def hello(self, name: str) -> str:
             return self.hidden_hello(name)
 
@@ -114,7 +114,7 @@ The ``@field(mutable=True)`` labels a **method** that should be exposed as a **m
 
 |
 
-    Its **very important** to only use the ``@schema.field`` decorator for **methods** that fetch data and the ``@schema.field(mutable=True)`` decorator for
+    Its **very important** to only use the ``@api.field`` decorator for **methods** that fetch data and the ``@api.field(mutable=True)`` decorator for
     **methods** that mutate data. The reasons why are explained in the **Schema Filtering** section below.
 
 |
@@ -124,17 +124,17 @@ Class Decorators
 
 There are 2 additional decorators that are used to label classes.
 
-    - ``@schema.type(interface=True)``
-    - ``@schema.type(abstract=True)``
+    - ``@api.type(interface=True)``
+    - ``@api.type(abstract=True)``
 
 Interface
 `````````
 
-The ``@schema.type(interface=True)`` decorator can be used on a **class** to create a GraphQL interface type (instead of an type type).
+The ``@api.type(interface=True)`` decorator can be used on a **class** to create a GraphQL interface type (instead of an type type).
 
 The interface functionality closely mirrors `GraphQL interfaces <http://graphql.github.io/learn/schema/#interfaces>`_.
 
-For example the ``@schema.type(interface=True)`` decorator is being used here:
+For example the ``@api.type(interface=True)`` decorator is being used here:
 
 .. code-block:: python
 

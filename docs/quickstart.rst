@@ -65,12 +65,12 @@ But we need to slightly change ``HelloGraphQLAPI`` to make it suitable for creat
 
     from graphql_api import GraphQLAPI
 
-    schema = GraphQLAPI()
+    api = GraphQLAPI()
 
-    @schema.type(is_root_type=True)
+    @api.type(is_root_type=True)
     class HelloGraphQLAPI:
 
-        @schema.field
+        @api.field
         def hello(self, name: str) -> str:
             return "hello " + name + "!"
 
@@ -89,12 +89,12 @@ What was changed?:
 
     from graphql_api import GraphQLAPI
 
-    schema = GraphQLAPI()
+    api = GraphQLAPI()
 
-    @schema.type(is_root_type=True)
+    @api.type(is_root_type=True)
     class HelloGraphQLAPI:
 
-        @schema.field
+        @api.field
         def hello(self, name: str) -> str:
             return "hello " + name + "!"
 
@@ -108,12 +108,12 @@ Now we can run a GraphQL query on the ``GraphQLExecutor``:
 
     from graphql_api import GraphQLAPI
 
-    schema = GraphQLAPI()
+    api = GraphQLAPI()
 
-    @schema.type(is_root_type=True)
+    @api.type(is_root_type=True)
     class HelloGraphQLAPI:
 
-        @schema.field
+        @api.field
         def hello(self, name: str) -> str:
             return "hello " + name + "!"
 
@@ -206,16 +206,16 @@ For example a single class (with both queryable and mutable fields)::
 
     from graphql_api import GraphQLAPI
 
-    schema = GraphQLAPI()
+    api = GraphQLAPI()
 
-    @schema.type(is_root_type=True)
+    @api.type(is_root_type=True)
     class Example:
 
-        @schema.field
+        @api.field
         def example_query_field() -> str:
             return "query complete"
 
-        @schema.field(mutable=True)
+        @api.field(mutable=True)
         def example_mutable_field() -> str:
             # do something with the database
             return "mutation complete"
@@ -247,15 +247,15 @@ In GraphQL-API this is done using `typehints <https://mypy.readthedocs.io/en/lat
 
     from graphql_api import GraphQLAPI
 
-    schema = GraphQLAPI()
+    api = GraphQLAPI()
 
     class ExampleModifiers:
 
-    @schema.field
+    @api.field
     def example_list() -> List[str]:
         return ["hello", "world"]
 
-    @schema.field(mutable=True)
+    @api.field(mutable=True)
     def example_nullable() -> Optional[str]:
         return None
 
@@ -294,16 +294,16 @@ Here is an example::
 
     from graphql_api import GraphQLAPI
 
-    schema = GraphQLAPI()
+    api = GraphQLAPI()
 
-    @schema.type(is_root_type=True)
+    @api.type(is_root_type=True)
     class Folder:
 
-        @schema.field
+        @api.field
         def name() -> str:
             pass
 
-        @schema.field
+        @api.field
         def children(self) -> List[Folder]:
             pass
 
@@ -331,36 +331,36 @@ For example here is a set of Python classes that will produce a **Schema** for a
 
     from graphql_api import GraphQLAPI
 
-    schema = GraphQLAPI()
+    api = GraphQLAPI()
 
     class User:
 
-        @schema.field
+        @api.field
         def id() -> int:
             pass
 
-        @schema.field
+        @api.field
         def name() -> str:
             pass
 
     class Comment:
 
-        @schema.field
+        @api.field
         def message() -> str:
             pass
 
-        @schema.field
+        @api.field
         def author() -> User:
             pass
 
-    @schema.type(is_root_type=True)
+    @api.type(is_root_type=True)
     class MainController:
 
-        @schema.field
+        @api.field
         def users() -> List[User]:
             pass
 
-        @schema.field
+        @api.field
         def comments() -> List[Comments]:
             pass
 
@@ -387,16 +387,16 @@ One of the simplest ways to serve a **Schema** is with ``Werkzeug`` and `werkzeu
 
     from graphql_api import GraphQLAPI
 
-    schema = GraphQLAPI()
+    api = GraphQLAPI()
 
-    @schema.type(is_root_type=True)
+    @api.type(is_root_type=True)
     class HelloWorld:
 
-        @schema.field
+        @api.field
         def hello(self) -> str:
             return "Hello World!"
 
-    server = GraphQLHTTPServer.from_schema(schema=schema)
+    server = GraphQLHTTPServer.from_api(api=api)
 
     if __name__ == "__main__":
         server.run()
@@ -413,16 +413,16 @@ If you are using ``Flask`` you could use `flask-graphql <https://github.com/grap
 
     app = Flask(__name__)
 
-    schema = GraphQLAPI()
+    api = GraphQLAPI()
 
-    @schema.type(is_root_type=True)
+    @api.type(is_root_type=True)
     class HelloWorld:
 
-        @schema.field
+        @api.field
         def hello(self) -> str:
             return "Hello World!"
 
-    graphql_schema, _, _ = schema.graphql_schema()
+    graphql_schema, _, _ = api.graphql_schema()
     root_value = HelloWorld()
 
     app.add_url_rule('/graphql', view_func=GraphQLView.as_view('graphql', schema=graphql_schema, root_value=root_value, graphiql=True))
