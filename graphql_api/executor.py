@@ -1,6 +1,4 @@
-import inspect
-
-from typing import Any, List, Dict, Callable
+from typing import Any, List, Dict
 
 from graphql import (
     graphql,
@@ -20,7 +18,8 @@ from graphql_api.middleware import (
     middleware_local_proxy,
     middleware_adapt_enum,
     middleware_catch_exception,
-    middleware_call_coroutine, GraphQLMiddleware,
+    middleware_call_coroutine,
+    GraphQLMiddleware,
 )
 
 
@@ -95,7 +94,7 @@ class GraphQLExecutor(GraphQLBaseExecutor):
             middleware_local_proxy,
             middleware_request_context,
             middleware_field_context,
-            middleware_catch_exception
+            middleware_catch_exception,
         ] + middleware
         self.root_value = root_value
         self.ignore_middleware_during_introspection = (
@@ -121,7 +120,7 @@ class GraphQLExecutor(GraphQLBaseExecutor):
             context_value=context,
             variable_values=variables,
             operation_name=operation_name,
-            middleware=self.adapt_middleware(self.middleware),
+            middleware=adapt_middleware(self.middleware),
             root_value=root_value,
             execution_context_class=self.execution_context_class,
         )
@@ -141,37 +140,32 @@ class GraphQLExecutor(GraphQLBaseExecutor):
             context_value=context,
             variable_values=variables,
             operation_name=operation_name,
-            middleware=self.adapt_middleware(self.middleware),
+            middleware=adapt_middleware(self.middleware),
             root_value=root_value,
             execution_context_class=self.execution_context_class,
         )
         return value
 
-    @staticmethod
-    def adapt_middleware(
-        middleware, ignore_middleware_during_introspection: bool = True
-    ):
-        adapters = [adapter_middleware_simplify_args]
 
-        if ignore_middleware_during_introspection:
-            adapters.append(adapter_ignore_middleware_during_introspection)
+def adapt_middleware(middleware, ignore_middleware_during_introspection: bool = True):
+    adapters = [adapter_middleware_simplify_args]
 
-        adapted_middleware = []
+    if ignore_middleware_during_introspection:
+        adapters.append(adapter_ignore_middleware_during_introspection)
 
-        for middleware in reversed(middleware):
-            for adapter in adapters:
-                middleware = adapter(middleware)
-            adapted_middleware.append(middleware)
+    adapted_middleware = []
 
-        return adapted_middleware
+    for middleware in reversed(middleware):
+        for adapter in adapters:
+            middleware = adapter(middleware)
+        adapted_middleware.append(middleware)
+
+    return adapted_middleware
 
 
 def adapter_ignore_middleware_during_introspection(middleware: GraphQLMiddleware):
     def middleware_with_skip(next, root, info, **args):
-        skip = (
-                info.operation.name
-                and info.operation.name.value == "IntrospectionQuery"
-        )
+        skip = info.operation.name and info.operation.name.value == "IntrospectionQuery"
         if skip:
             return next(root, info, **args)
         return middleware(next, root, info, **args)

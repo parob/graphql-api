@@ -1,4 +1,4 @@
-from typing import List, Callable, Any, Dict, Tuple, Optional
+from typing import List, Any, Dict, Tuple
 
 # noinspection PyPackageRequirements
 from graphql import (

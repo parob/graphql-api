@@ -111,13 +111,13 @@ class GraphQLGenericEnum(enum.Enum):
 
 class GraphQLTypeMapper:
     def __init__(
-            self,
-            as_mutable=False,
-            as_input=False,
-            registry=None,
-            reverse_registry=None,
-            suffix="",
-            schema=None,
+        self,
+        as_mutable=False,
+        as_input=False,
+        registry=None,
+        reverse_registry=None,
+        suffix="",
+        schema=None,
     ):
         self.as_mutable = as_mutable
         self.as_input = as_input
@@ -192,9 +192,9 @@ class GraphQLTypeMapper:
 
         for _key, hint in type_hints.items():
             if (
-                    _key == "context"
-                    and inspect.isclass(hint)
-                    and issubclass(hint, GraphQLContext)
+                _key == "context"
+                and inspect.isclass(hint)
+                and issubclass(hint, GraphQLContext)
             ):
                 include_context = True
                 continue
@@ -378,8 +378,8 @@ class GraphQLTypeMapper:
                     return graphql_type
 
     def map_to_interface(
-            self,
-            class_type: Type,
+        self,
+        class_type: Type,
     ) -> GraphQLType:
         subclasses = class_type.__subclasses__()
         name = class_type.__name__
@@ -522,7 +522,7 @@ class GraphQLTypeMapper:
         return input_object
 
     def add_schema_directives(
-            self, graphql_type: GraphQLType | GraphQLField, key: str, value
+        self, graphql_type: GraphQLType | GraphQLField, key: str, value
     ):
         if hasattr(value, "_schema_directives"):
             schema_directives = getattr(value, "_schema_directives")
@@ -666,7 +666,7 @@ class GraphQLTypeMapper:
             origin_type = get_origin(type__)
 
             if inspect.isclass(origin_type) and issubclass(
-                    get_origin(type__), (List, Set)
+                get_origin(type__), (List, Set)
             ):
                 return self.map_to_list(type__)
 
@@ -755,7 +755,7 @@ def get_class_funcs(class_type, schema, mutable=False) -> List[Tuple[Any, Any]]:
         if "unbound method" in str(e):
             raise ImportError(
                 str(e) + ". This could be because type decorator is not correctly being"
-                         " imported from the graphql_api package."
+                " imported from the graphql_api package."
             )
         else:
             raise e
