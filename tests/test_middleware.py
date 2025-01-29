@@ -24,7 +24,7 @@ class TestMiddleware:
         # Testing a bug where this would throw a GraphQLError
         # exception if a function returning a GraphQLRemoteObject
         # was passed
-        value = middleware_local_proxy(remote_iterable)
+        value = middleware_local_proxy(remote_iterable, None)
 
         assert value == house
 

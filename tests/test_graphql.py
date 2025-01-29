@@ -644,14 +644,11 @@ class TestGraphQL:
         def test_middleware(next_, context):
             if context.field.meta.get("test_meta") == "hello_meta":
                 if context.request.args.get("test_string") == "hello":
+                    was_called.append(True)
                     return next_()
             return "possible"
 
-        def test_simple_middleware(next_):
-            was_called.append(True)
-            return next_()
-
-        api.middleware = [test_middleware, test_simple_middleware]
+        api.middleware = [test_middleware]
 
         executor = api.executor()
 
