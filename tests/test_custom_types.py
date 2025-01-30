@@ -2,6 +2,8 @@ import uuid
 from datetime import datetime, timedelta, date
 from uuid import UUID
 
+from graphql import GraphQLScalarType, StringValueNode, ValueNode
+
 from graphql_api.api import GraphQLAPI
 from graphql_api.types import JsonType
 
@@ -196,3 +198,44 @@ class TestCustomTypes:
         expected = {"nonUtfByteData": "UTF-8 ENCODED PREVIEW: \x00\x00A\x00\x00\x00"}
         assert not result.errors
         assert result.data == expected
+
+    def test_custom_scalar_type(self):
+        api = GraphQLAPI()
+
+
+        def parse_value(value):
+            return str(value) + "_parsed_value"
+
+        def parse_literal(node):
+            if isinstance(node, StringValueNode):
+                return parse_value(node.value)
+
+        GraphQLKey = GraphQLScalarType(
+            name="Key",
+            description="The `Key` scalar type represents a key.",
+            serialize=lambda value: str(value) + "_serialized",
+            parse_value=parse_value,
+            parse_literal=parse_literal
+        )
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def return_key(self) -> GraphQLKey:
+                return "a_key_value"
+
+            @api.field
+            def set_key(self, key: GraphQLKey) -> str:
+                return key
+
+        executor = api.executor()
+
+        result = executor.execute('query { returnKey }')
+        assert not result.errors
+        assert result.data == {'returnKey': 'a_key_value_serialized'}
+
+        result = executor.execute('query { setKey(key: "test123") }')
+
+        assert not result.errors
+        assert result.data == {'setKey': 'test123_parsed_value'}
+

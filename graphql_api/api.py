@@ -10,7 +10,7 @@ from graphql import (
     ExecutionResult,
     GraphQLType,
     specified_directives,
-    GraphQLDirective,
+    GraphQLDirective, GraphQLNamedType,
 )
 
 from graphql_api import GraphQLError
@@ -50,12 +50,12 @@ def add_schema_directives(value, directives):
 
 # noinspection PyShadowingBuiltins
 def tag_value(
-    value,
-    graphql_type: str,
-    schema: "GraphQLAPI" = None,
-    meta: Dict = None,
-    directives: List = None,
-    is_root_type: bool = False,
+        value,
+        graphql_type: str,
+        schema: "GraphQLAPI" = None,
+        meta: Dict = None,
+        directives: List = None,
+        is_root_type: bool = False,
 ):
     if not hasattr(value, "_graphql"):
         value._graphql = True
@@ -89,14 +89,14 @@ def tag_value(
 
 # noinspection PyShadowingBuiltins
 def build_decorator(
-    a,
-    b,
-    graphql_type,
-    mutable=None,
-    interface=None,
-    abstract=None,
-    directives: List = None,
-    is_root_type: bool = False,
+        a,
+        b,
+        graphql_type,
+        mutable=None,
+        interface=None,
+        abstract=None,
+        directives: List = None,
+        is_root_type: bool = False,
 ):
     if graphql_type == "object":
         if interface:
@@ -155,12 +155,12 @@ class GraphQLAPI(GraphQLBaseExecutor):
         )
 
     def type(
-        self=None,
-        meta=None,
-        abstract=False,
-        interface=False,
-        is_root_type=False,
-        directives: List = None,
+            self=None,
+            meta=None,
+            abstract=False,
+            interface=False,
+            is_root_type=False,
+            directives: List = None,
     ):
         return build_decorator(
             self,
@@ -177,13 +177,14 @@ class GraphQLAPI(GraphQLBaseExecutor):
         return root_type
 
     def __init__(
-        self,
-        root_type=None,
-        middleware: List[GraphQLMiddleware] = None,
-        directives: List[GraphQLDirective] = None,
-        filters: List[GraphQLFilter] = None,
-        error_protection=True,
-        ignore_middleware_during_introspection: bool = True,
+            self,
+            root_type=None,
+            middleware: List[GraphQLMiddleware] = None,
+            directives: List[GraphQLDirective] = None,
+            types: List[GraphQLNamedType] = None,
+            filters: List[GraphQLFilter] = None,
+            error_protection=True,
+            ignore_middleware_during_introspection: bool = True,
     ):
         super().__init__()
         if middleware is None:
@@ -198,6 +199,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
             directive.name: directive
             for directive in [*specified_directives, *directives]
         }
+        self.types = set(types) if types else set()
         self.filters = filters
         self.query_mapper = None
         self.mutation_mapper = None
@@ -252,7 +254,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
             else:
                 mutation_types = set()
 
-            schema_args["types"] = list(query_types | mutation_types)
+            schema_args["types"] = list(query_types | mutation_types | self.types)
             schema_args["types"] = [
                 type_ for type_ in schema_args["types"] if is_named_type(type_)
             ]
@@ -291,11 +293,11 @@ class GraphQLAPI(GraphQLBaseExecutor):
         return schema, meta
 
     def execute(
-        self,
-        query,
-        variables=None,
-        operation_name=None,
-        root_value: Any = None,
+            self,
+            query,
+            variables=None,
+            operation_name=None,
+            root_value: Any = None,
     ) -> ExecutionResult:
         return self.executor(root_value=root_value).execute(
             query=query,
@@ -304,8 +306,8 @@ class GraphQLAPI(GraphQLBaseExecutor):
         )
 
     def executor(
-        self,
-        root_value: Any = None,
+            self,
+            root_value: Any = None,
     ) -> GraphQLExecutor:
         schema, meta = self.graphql_schema()
 
