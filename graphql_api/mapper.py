@@ -60,7 +60,8 @@ from graphql_api.utils import (
     to_camel_case,
     to_snake_case,
     to_input_value,
-    to_camel_case_text, has_single_type_union_return,
+    to_camel_case_text,
+    has_single_type_union_return,
 )
 from graphql_api.exception import GraphQLBaseException
 from graphql_api.dataclass_mapping import type_is_dataclass, type_from_dataclass
@@ -79,8 +80,10 @@ class AnyObject:
 
 """
 
+
 class UnionFlagType:
     pass
+
 
 class GraphQLTypeMapInvalid(GraphQLBaseException):
     pass

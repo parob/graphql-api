@@ -214,7 +214,8 @@ async def http_query(
 
 def get_function_def_node(func):
     """
-    Parse the source of `func` and return its `ast.FunctionDef` or `ast.AsyncFunctionDef` node.
+    Parse the source of `func` and return its `ast.FunctionDef` or
+    `ast.AsyncFunctionDef` node.
     Raises ValueError if we can't find it.
     """
     source = textwrap.dedent(inspect.getsource(func))
@@ -223,12 +224,14 @@ def get_function_def_node(func):
     for node in module_node.body:
         # Check for either a normal def or an async def
         if (
-                isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
-                and node.name == func.__name__
+            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name == func.__name__
         ):
             return node
 
-    raise ValueError(f"Could not find AST FunctionDef/AsyncFunctionDef for {func.__name__}")
+    raise ValueError(
+        f"Could not find AST FunctionDef/AsyncFunctionDef for {func.__name__}"
+    )
 
 
 def has_single_type_union_return(func) -> bool:
@@ -263,9 +266,9 @@ def is_union_of_single_type(annotation_node) -> bool:
     elif isinstance(annotation_node.value, ast.Attribute):
         # e.g. "typing.Union"
         if (
-                isinstance(annotation_node.value.value, ast.Name)
-                and annotation_node.value.value.id == "typing"
-                and annotation_node.value.attr == "Union"
+            isinstance(annotation_node.value.value, ast.Name)
+            and annotation_node.value.value.id == "typing"
+            and annotation_node.value.attr == "Union"
         ):
             union_name = "typing.Union"
 

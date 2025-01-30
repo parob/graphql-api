@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timedelta, date
 from uuid import UUID
 
-from graphql import GraphQLScalarType, StringValueNode, ValueNode
+from graphql import GraphQLScalarType, StringValueNode
 
 from graphql_api.api import GraphQLAPI
 from graphql_api.types import JsonType
@@ -202,7 +202,6 @@ class TestCustomTypes:
     def test_custom_scalar_type(self):
         api = GraphQLAPI()
 
-
         def parse_value(value):
             return str(value) + "_parsed_value"
 
@@ -215,7 +214,7 @@ class TestCustomTypes:
             description="The `Key` scalar type represents a key.",
             serialize=lambda value: str(value) + "_serialized",
             parse_value=parse_value,
-            parse_literal=parse_literal
+            parse_literal=parse_literal,
         )
 
         @api.type(is_root_type=True)
@@ -230,12 +229,11 @@ class TestCustomTypes:
 
         executor = api.executor()
 
-        result = executor.execute('query { returnKey }')
+        result = executor.execute("query { returnKey }")
         assert not result.errors
-        assert result.data == {'returnKey': 'a_key_value_serialized'}
+        assert result.data == {"returnKey": "a_key_value_serialized"}
 
         result = executor.execute('query { setKey(key: "test123") }')
 
         assert not result.errors
-        assert result.data == {'setKey': 'test123_parsed_value'}
-
+        assert result.data == {"setKey": "test123_parsed_value"}
