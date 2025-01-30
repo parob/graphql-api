@@ -207,10 +207,13 @@ class GraphQLAPI(GraphQLBaseExecutor):
         self.ignore_middleware_during_introspection = (
             ignore_middleware_during_introspection
         )
+        self._cached_graphql_schema = None
 
-    def graphql_schema(self) -> Tuple[GraphQLSchema, Dict]:
+    def graphql_schema(self, ignore_cache: bool = False) -> Tuple[GraphQLSchema, Dict]:
         schema_args = {}
         meta = {}
+        if not ignore_cache and self._cached_graphql_schema:
+            return self._cached_graphql_schema
 
         if self.root_type:
             # Create the root query
@@ -289,6 +292,8 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
         if self.root_type and issubclass(self.root_type, GraphQLRootTypeDelegate):
             schema = self.root_type.validate_graphql_schema(schema)
+
+        self._cached_graphql_schema = schema, meta
 
         return schema, meta
 

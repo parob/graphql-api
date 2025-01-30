@@ -972,6 +972,10 @@ class TestGraphQL:
 
                 return Customer()
 
+            @api.field
+            def owner(self) -> Union[Owner]:
+                return Owner()
+
         executor = api.executor()
 
         test_owner_query = """
@@ -1021,6 +1025,28 @@ class TestGraphQL:
         none_result = executor.execute(test_none_query)
         assert not none_result.errors
         assert none_result.data == none_expected
+
+
+        test_union_single_type_query = """
+            query TestOwnerUnion {
+                owner {
+                    ... on Owner {
+                      name
+                    }
+                }
+            }
+        """
+
+        single_type_query_expected = {'owner': {'name': 'rob'}}
+
+        single_type_query_result = executor.execute(test_union_single_type_query)
+        assert not single_type_query_result.errors
+        assert single_type_query_result.data == single_type_query_expected
+
+        schema,_ = api.graphql_schema()
+
+        # Check that single type unions was sucesfully created as a union type.
+        assert schema.query_type.fields["owner"].type.of_type.name == 'OwnerUnion'
 
     # noinspection PyUnusedLocal
     def test_non_null(self):

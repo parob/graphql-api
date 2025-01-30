@@ -60,7 +60,7 @@ from graphql_api.utils import (
     to_camel_case,
     to_snake_case,
     to_input_value,
-    to_camel_case_text,
+    to_camel_case_text, has_single_type_union_return,
 )
 from graphql_api.exception import GraphQLBaseException
 from graphql_api.dataclass_mapping import type_is_dataclass, type_from_dataclass
@@ -79,6 +79,8 @@ class AnyObject:
 
 """
 
+class UnionFlagType:
+    pass
 
 class GraphQLTypeMapInvalid(GraphQLBaseException):
     pass
@@ -137,6 +139,10 @@ class GraphQLTypeMapper:
         description = to_camel_case_text(inspect.getdoc(function_type))
 
         return_type = type_hints.pop("return", None)
+
+        # This is a bit nasty - looking up the function source code to determine this
+        if has_single_type_union_return(function_type):
+            return_type = Union[return_type, UnionFlagType]
 
         if not return_type:
             raise GraphQLTypeMapInvalid(
@@ -264,12 +270,13 @@ class GraphQLTypeMapper:
 
     def map_to_union(self, union_type: Union) -> GraphQLType:
         union_args = typing_inspect.get_args(union_type, evaluate=True)
+        union_args = [arg for arg in union_args if arg != UnionFlagType]
         none_type = type(None)
         union_map: Dict[type, GraphQLType] = {
             arg: self.map(arg) for arg in union_args if arg and arg != none_type
         }
 
-        if len(union_map) == 1:
+        if len(union_map) == 1 and none_type in union_args:
             _, mapped_type = union_map.popitem()
             return mapped_type
 
@@ -286,7 +293,7 @@ class GraphQLTypeMapper:
                 if issubclass(value_type, arg) and hasattr(_mapped_type, "name"):
                     return _mapped_type.name
 
-        names = [arg.__name__ for arg in union_args]
+        names = [arg.__name__ for arg in union_args if arg.__name__ != "NoneType"]
         name = f"{''.join(names)}{self.suffix}Union"
 
         union = GraphQLUnionType(

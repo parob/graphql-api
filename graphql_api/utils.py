@@ -1,6 +1,10 @@
+import ast
 import asyncio
 import enum
+import inspect
 import re
+import textwrap
+
 import aiohttp
 
 from json.decoder import JSONDecodeError
@@ -206,3 +210,83 @@ async def http_query(
             text = await r.text()
             raise ValueError(f"{e}, unable to decode JSON from response: `{str(text)}`")
     return json
+
+
+def get_function_def_node(func):
+    """
+    Parse the source of `func` and return its `ast.FunctionDef` or `ast.AsyncFunctionDef` node.
+    Raises ValueError if we can't find it.
+    """
+    source = textwrap.dedent(inspect.getsource(func))
+    module_node = ast.parse(source)
+
+    for node in module_node.body:
+        # Check for either a normal def or an async def
+        if (
+                isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and node.name == func.__name__
+        ):
+            return node
+
+    raise ValueError(f"Could not find AST FunctionDef/AsyncFunctionDef for {func.__name__}")
+
+
+def has_single_type_union_return(func) -> bool:
+    """
+    Returns True if `func`'s return type annotation *literally* uses `Union[...]`
+    with exactly one argument (e.g. `Union[int]`).
+    """
+    func_def = get_function_def_node(func)
+    annotation_node = func_def.returns  # This is the AST node for the return annotation
+
+    # If there's no return annotation at all, we can stop
+    if annotation_node is None:
+        return False
+
+    return is_union_of_single_type(annotation_node)
+
+
+def is_union_of_single_type(annotation_node) -> bool:
+    """
+    Returns True if `annotation_node` is an AST node of the form:
+    `Union[<single_type>]`
+    """
+    # Must be a Subscript node, like Union[int] or Union[int, str]
+    if not isinstance(annotation_node, ast.Subscript):
+        return False
+
+    # Check if the 'value' part is "Union" or "typing.Union"
+    union_name = None
+    if isinstance(annotation_node.value, ast.Name):
+        # e.g. "Union"
+        union_name = annotation_node.value.id
+    elif isinstance(annotation_node.value, ast.Attribute):
+        # e.g. "typing.Union"
+        if (
+                isinstance(annotation_node.value.value, ast.Name)
+                and annotation_node.value.value.id == "typing"
+                and annotation_node.value.attr == "Union"
+        ):
+            union_name = "typing.Union"
+
+    # If it's not recognized as Union, bail out
+    if union_name not in ("Union", "typing.Union"):
+        return False
+
+    # Extract the subscript part. In older Python versions (<=3.8),
+    # it might be wrapped in an ast.Index node.
+    slice_node = annotation_node.slice
+    if isinstance(slice_node, ast.Index):  # <= Python 3.8
+        slice_value = slice_node.value
+    else:
+        # Python 3.9+: "slice" is used directly
+        slice_value = slice_node
+
+    # If the user wrote Union[int, str], we get an ast.Tuple in `slice_value`.
+    # If it's just Union[int], we typically get a single name node.
+    if isinstance(slice_value, ast.Tuple):
+        # Means multiple arguments in the Union: e.g. Union[int, str]
+        return False
+    else:
+        # A single argument in the Union
+        return True
