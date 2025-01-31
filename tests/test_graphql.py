@@ -6,7 +6,7 @@ import pytest
 from dataclasses import dataclass
 from typing import Union, Optional, Literal, List
 
-from graphql import GraphQLSchema
+from graphql import GraphQLSchema, GraphQLUnionType
 from requests.api import request
 from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
 
@@ -1017,6 +1017,12 @@ class TestGraphQL:
             def owner(self) -> Union[Owner]:
                 return Owner()
 
+            @api.field
+            def optional_owner_or_customer(
+                self,
+            ) -> List[Optional[Union[Owner, Customer]]]:
+                return [None]
+
         executor = api.executor()
 
         test_owner_query = """
@@ -1087,6 +1093,28 @@ class TestGraphQL:
 
         # Check that single type unions was sucesfully created as a union type.
         assert schema.query_type.fields["owner"].type.of_type.name == "OwnerUnion"
+
+        test_optional_list_union_query = """
+            query TestOwnerUnion {
+                optionalOwnerOrCustomer {
+                    ... on Owner {
+                      name
+                    }
+                }
+            }
+        """
+        return_type = schema.query_type.fields[
+            "optionalOwnerOrCustomer"
+        ].type.of_type.of_type
+        assert isinstance(return_type, GraphQLUnionType)
+
+        optional_list_union_query_result = executor.execute(
+            test_optional_list_union_query
+        )
+        assert not optional_list_union_query_result.errors
+        assert optional_list_union_query_result.data == {
+            "optionalOwnerOrCustomer": [None]
+        }
 
     # noinspection PyUnusedLocal
     def test_non_null(self):

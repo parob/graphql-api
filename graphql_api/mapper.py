@@ -313,7 +313,9 @@ class GraphQLTypeMapper:
         args = typing.get_args(list_subtype)
         nullable = False
         if origin == Union and type(None) in args:
-            list_subtype = tuple(a for a in args if not isinstance(a, type(None)))[0]
+            args = tuple(a for a in args if not isinstance(a, type(None)))
+            if len(args) == 1:
+                list_subtype = [0]
             nullable = True
 
         subtype = self.map(list_subtype)
