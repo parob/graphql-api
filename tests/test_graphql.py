@@ -749,6 +749,47 @@ class TestGraphQL:
 
         assert result.data == expected
 
+    def test_list(self):
+        api = GraphQLAPI()
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def a_list(self) -> List[str]:
+                return ["a", "b", "c"]
+
+            @api.field
+            def a_optional_list(self) -> Optional[List[str]]:
+                return None
+
+            @api.field
+            def a_list_of_optionals(self) -> List[Optional[str]]:
+                return [None, None]
+
+            @api.field
+            def a_optional_list_of_optionals(self) -> Optional[List[Optional[str]]]:
+                return None
+
+        executor = api.executor()
+
+        test_enum_query = """
+            query TestEnum {
+                aList
+                aOptionalList
+                aListOfOptionals
+                aOptionalListOfOptionals
+            }
+        """
+
+        result = executor.execute(test_enum_query)
+
+        assert result.data == {
+            "aList": ["a", "b", "c"],
+            "aOptionalList": None,
+            "aListOfOptionals": [None, None],
+            "aOptionalListOfOptionals": None,
+        }
+
     # noinspection PyUnusedLocal
     def test_enum_list(self):
         api = GraphQLAPI()

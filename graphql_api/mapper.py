@@ -309,9 +309,18 @@ class GraphQLTypeMapper:
     def map_to_list(self, type_: List) -> GraphQLList:
         list_subtype = typing_inspect.get_args(type_)[0]
 
-        list_type = GraphQLList(type_=self.map(list_subtype))
+        origin = typing.get_origin(list_subtype)
+        args = typing.get_args(list_subtype)
+        nullable = False
+        if origin == Union and type(None) in args:
+            list_subtype = tuple(a for a in args if not isinstance(a, type(None)))[0]
+            nullable = True
 
-        return list_type
+        subtype = self.map(list_subtype)
+        if not nullable:
+            subtype = GraphQLNonNull(type_=subtype)
+
+        return GraphQLList(type_=subtype)
 
     def map_to_literal(self, type__) -> GraphQLType:
         literal_args = typing_inspect.get_args(type__, evaluate=True)
