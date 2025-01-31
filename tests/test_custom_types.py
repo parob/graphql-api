@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime, timedelta, date
+from typing import List
 from uuid import UUID
 
 from graphql import GraphQLScalarType, StringValueNode
@@ -226,6 +227,10 @@ class TestCustomTypes:
             @api.field
             def set_key(self, key: GraphQLKey) -> str:
                 return key
+
+            @api.field
+            def test(self, key: List[GraphQLKey]) -> str:
+                return str(key)
 
         executor = api.executor()
 

@@ -1,0 +1,110 @@
+from typing import List, Optional, Union
+
+from graphql import print_schema as graphql_print_schema
+
+from graphql_api import GraphQLAPI, field, type
+
+from graphql_api.federation import key, _Any
+
+
+class TestFederation:
+    def test_federation_schema(self):
+        @key(fields="id")
+        @type
+        class User:
+            def __init__(self, id: str, name: str):
+                self._id = id
+                self._name = name
+
+            @field
+            def id(self) -> str:
+                return self._id
+
+            @field
+            def name(self) -> str:
+                return self._name
+
+        @type
+        class Food:
+            def __init__(self, name: str):
+                self._name = name
+
+            @field
+            def name(self) -> str:
+                return self._name
+
+        users_db = [User(id="1", name="Rob"), User(id="2", name="Tom")]
+
+        _Entities = Union[User, Food]
+
+        @type
+        class Root:
+            @field
+            def users(self) -> List[User]:
+                return users_db
+
+            @field
+            def _entities(
+                self, representations: List[_Any]
+            ) -> List[Optional[_Entities]]:
+                entities = []
+                for representation in representations:
+                    _typename = representation.get("__typename")
+
+                    if _typename == "User":
+                        user_id = representation.get("id")
+                        user = next((x for x in users_db if x._id == user_id), None)
+                        entities.append(user)
+
+                    elif _typename == "Food":
+                        food_name = representation.get("name")
+                        entities.append(Food(name=food_name))
+
+                    else:
+                        # Unhandled representation requested
+                        entities.append(None)
+
+                return entities
+
+        api = GraphQLAPI(root_type=Root, federation=True)
+        schema, _ = api.graphql_schema()
+
+        response = api.execute("{users{id,name}}")
+
+        assert response.data == {
+            "users": [{"id": "1", "name": "Rob"}, {"id": "2", "name": "Tom"}]
+        }
+
+        response = api.execute(
+            '{_entities(representations:["{\\"__typename\\": \\"User\\",\\"id\\": '
+            '\\"1\\"}"]) { ... on User { id name } } }'
+        )
+        assert response.data == {"_entities": [{"id": "1", "name": "Rob"}]}
+
+        printed_schema = graphql_print_schema(schema)
+        assert printed_schema
+
+        assert "scalar FieldSet" in printed_schema
+        assert "directive @tag" in printed_schema
+        assert "directive @key" in printed_schema
+        assert "scalar _Any" in printed_schema
+        assert "_entities(representations: [_Any!]!): [_Entity]!" in printed_schema
+        assert "_service: _Service!" in printed_schema
+        assert "type_Service{sdl:String!}" in printed_schema.replace("\n", "").replace(
+            " ", ""
+        )
+
+        response = api.execute("{_service{ sdl }}")
+
+        sdl = response.data["_service"]["sdl"]
+
+        assert sdl
+
+        assert "scalar FieldSet" not in sdl
+        assert "directive @tag" not in sdl
+        assert "directive @key" not in sdl
+        assert "scalar _Any" not in sdl
+        assert "_entities(representations: [_Any!]!): [_Entity]!" in printed_schema
+        assert "_service: _Service!" not in sdl
+        assert "type_Service{sdl:String!}" not in sdl
+        assert "extend schema" in sdl

@@ -2,8 +2,16 @@ import json
 from typing import Dict
 from graphql import GraphQLDirective
 
-from graphql_api.api import add_schema_directives
 from graphql_api.utils import to_camel_case
+
+
+def add_schema_directives(value, directives):
+    if directives:
+        if hasattr(value, "_schema_directives"):
+            directives = [*directives, *getattr(value, "_schema_directives", [])]
+
+        value._schema_directives = directives
+    return value
 
 
 class LocatedSchemaDirective:

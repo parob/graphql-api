@@ -12,6 +12,7 @@ from graphql import (
     specified_directives,
     GraphQLDirective,
     GraphQLNamedType,
+    GraphQLScalarType,
 )
 
 from graphql_api import GraphQLError
@@ -40,13 +41,14 @@ class GraphQLRequestContext:
         self.info = info
 
 
-def add_schema_directives(value, directives):
-    if directives:
-        if hasattr(value, "_schema_directives"):
-            directives = [*directives, *getattr(value, "_schema_directives", [])]
+# Workaround to allow GraphQLScalarType to be used in typehints in Python 3.10
 
-        value._schema_directives = directives
-    return value
+
+def call(self, *args, **kwargs):
+    raise NotImplementedError()
+
+
+setattr(GraphQLScalarType, "__call__", call)
 
 
 # noinspection PyShadowingBuiltins
@@ -75,6 +77,8 @@ def tag_value(
             "graphql_type": graphql_type,
             "schema": schema,
         }
+
+    from graphql_api.directives import add_schema_directives
 
     add_schema_directives(value, directives)
 
@@ -184,8 +188,9 @@ class GraphQLAPI(GraphQLBaseExecutor):
         directives: List[GraphQLDirective] = None,
         types: List[GraphQLNamedType] = None,
         filters: List[GraphQLFilter] = None,
-        error_protection=True,
+        error_protection: bool = True,
         ignore_middleware_during_introspection: bool = True,
+        federation: bool = False,
     ):
         super().__init__()
         if middleware is None:
@@ -209,6 +214,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
             ignore_middleware_during_introspection
         )
         self._cached_graphql_schema = None
+        self.federation = federation
 
     def graphql_schema(self, ignore_cache: bool = False) -> Tuple[GraphQLSchema, Dict]:
         schema_args = {}
@@ -217,6 +223,11 @@ class GraphQLAPI(GraphQLBaseExecutor):
             return self._cached_graphql_schema
 
         if self.root_type:
+            if self.federation:
+                from graphql_api.federation import _service
+
+                self.root_type._service = _service
+
             # Create the root query
             query_mapper = GraphQLTypeMapper(schema=self)
             query: GraphQLType = query_mapper.map(self.root_type)
@@ -258,10 +269,14 @@ class GraphQLAPI(GraphQLBaseExecutor):
             else:
                 mutation_types = set()
 
-            schema_args["types"] = list(query_types | mutation_types | self.types)
-            schema_args["types"] = [
-                type_ for type_ in schema_args["types"] if is_named_type(type_)
-            ]
+            types = list(query_types | mutation_types | self.types)
+
+            if self.federation:
+                from graphql_api.federation import federation_types
+
+                types += federation_types
+
+            schema_args["types"] = [type_ for type_ in types if is_named_type(type_)]
 
             meta = {**query_mapper.meta, **mutation_mapper.meta}
 
@@ -287,12 +302,35 @@ class GraphQLAPI(GraphQLBaseExecutor):
                 graphql_directive = schema_directive.directive
                 self.directives[graphql_directive.name] = graphql_directive
 
-        schema_args["directives"] = self.directives.values()
+        directives = list(self.directives.values())
+        if self.federation:
+            from graphql_api.federation import federation_directives
+
+            directives += federation_directives
+
+        schema_args["directives"] = directives
 
         schema = GraphQLSchema(**schema_args)
 
         if self.root_type and issubclass(self.root_type, GraphQLRootTypeDelegate):
             schema = self.root_type.validate_graphql_schema(schema)
+
+        if self.federation:
+            if (
+                schema.query_type
+                and schema.query_type.fields
+                and schema.query_type.fields.get("_entities")
+            ):
+                try:
+                    schema.query_type.fields[
+                        "_entities"
+                    ].type.of_type.of_type.name = "_Entity"
+                except Exception as err:
+                    raise GraphQLError(
+                        f"{err} _entities field is reserved for federated apis and the "
+                        f"return type must be a List of Optional Unions, for example"
+                        f" List[Optional[Entities]]. "
+                    )
 
         self._cached_graphql_schema = schema, meta
 
