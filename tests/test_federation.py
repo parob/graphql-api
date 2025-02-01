@@ -9,16 +9,22 @@ from graphql_api.federation.directives import key
 
 class TestFederation:
     def test_federation_schema(self):
+
+        names = {
+            "1": "Rob",
+            "2": "Tom"
+        }
+
         @key(fields="id")
         @type
         class User:
             @classmethod
             def _resolve_reference(cls, reference):
-                return User(id="1", name="Rob")
+                return User(id=reference["id"])
 
-            def __init__(self, id: str, name: str):
+            def __init__(self, id: str):
                 self._id = id
-                self._name = name
+                self._name = names[id]
 
             @field
             def id(self) -> str:
@@ -38,13 +44,11 @@ class TestFederation:
             def name(self) -> str:
                 return self._name
 
-        users_db = [User(id="1", name="Rob"), User(id="2", name="Tom")]
-
         @type
         class Root:
             @field
             def users(self) -> List[User]:
-                return users_db
+                return [User(id="1"), User(id="2")]
 
 
         api = GraphQLAPI(root_type=Root, types=[Food], federation=True)
