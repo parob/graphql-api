@@ -1,121 +1,27 @@
-from graphql_api.decorators import type, field
-from graphql_api.context import GraphQLContext
-from graphql_api.directives import SchemaDirective
-
 from graphql import (
+    DirectiveLocation,
     GraphQLArgument,
+    GraphQLNonNull,
     GraphQLBoolean,
     GraphQLString,
     GraphQLList,
-    GraphQLNonNull,
-    DirectiveLocation,
-    GraphQLEnumType,
-    GraphQLEnumValue,
-    GraphQLScalarType,
 )
 
-from graphql_api.print_directives import (
-    print_filtered_schema,
-    is_defined_type,
-    is_specified_directive,
-)
-from graphql_api.types import serialize_json, parse_json_value, parse_json_literal
-
-
-# scalar _Any
-_Any = GraphQLScalarType(
-    name="_Any",
-    description="The `_Any` scalar type can represent any JSON-based value.",
-    serialize=serialize_json,
-    parse_value=parse_json_value,
-    parse_literal=parse_json_literal,
-)
-
-
-# scalar FieldSet
-FieldSet = GraphQLScalarType(
-    name="FieldSet",
-    description="The `FieldSet` scalar type represents a set of fields "
-    "(used in Federation).",
-)
-
-
-# scalar link__Import
-LinkImport = GraphQLScalarType(
-    name="link__Import",
-    description="The `link__Import` scalar type represents an import specification for"
-    " the @link directive (used in Federation).",
-)
-
-
-# scalar federation__ContextFieldValue
-FederationContextFieldValue = GraphQLScalarType(
-    name="federation__ContextFieldValue",
-    description="Represents a field value extracted from a GraphQL context "
-    "(used in Federation).",
-)
-
-
-# scalar federation__Scope
-FederationScope = GraphQLScalarType(
-    name="federation__Scope",
-    description="Represents an OAuth (or similar) scope (used in Federation).",
-)
-
-
-# scalar federation__Policy
-FederationPolicy = GraphQLScalarType(
-    name="federation__Policy",
-    description="Represents a policy definition in Federation.",
-)
-
-# enum link__Purpose {
-# """
-# `SECURITY` features provide metadata necessary to securely resolve fields.
-# """
-# SECURITY
-#
-# """
-# `EXECUTION` features provide metadata necessary for operation execution.
-# """
-# EXECUTION
-# }
-LinkPurposeEnum = GraphQLEnumType(
-    name="link__Purpose",
-    values={
-        "SECURITY": GraphQLEnumValue(
-            value="SECURITY",
-            description="`SECURITY` features provide metadata necessary to securely "
-            "resolve fields (used in Federation).",
-        ),
-        "EXECUTION": GraphQLEnumValue(
-            value="EXECUTION",
-            description="`EXECUTION` features provide metadata necessary for operation"
-            " execution (used in Federation).",
-        ),
-    },
-)
-
-federation_types = [
-    _Any,
+from graphql_api.directives import SchemaDirective
+from graphql_api.federation.types import (
     FieldSet,
     LinkImport,
     FederationContextFieldValue,
     FederationScope,
     FederationPolicy,
     LinkPurposeEnum,
-]
+)
 
-
-# @external on FIELD_DEFINITION | OBJECT
 external = SchemaDirective(
     name="external",
     locations=[DirectiveLocation.FIELD_DEFINITION, DirectiveLocation.OBJECT],
     description="Marks a field or type as defined in another service",
 )
-
-
-# @requires(fields: FieldSet!) on FIELD_DEFINITION
 requires = SchemaDirective(
     name="requires",
     locations=[DirectiveLocation.FIELD_DEFINITION],
@@ -127,9 +33,6 @@ requires = SchemaDirective(
         )
     },
 )
-
-
-# @provides(fields: FieldSet!) on FIELD_DEFINITION
 provides = SchemaDirective(
     name="provides",
     locations=[DirectiveLocation.FIELD_DEFINITION],
@@ -142,9 +45,6 @@ provides = SchemaDirective(
         )
     },
 )
-
-
-# @key(fields: FieldSet!, resolvable: Boolean = true) repeatable on OBJECT | INTERFACE
 key = SchemaDirective(
     name="key",
     locations=[DirectiveLocation.OBJECT, DirectiveLocation.INTERFACE],
@@ -163,10 +63,6 @@ key = SchemaDirective(
     },
     is_repeatable=True,
 )
-
-
-# @link(url: String!, as: String, for: link__Purpose, import: [link__Import])
-#    repeatable on SCHEMA
 link = SchemaDirective(
     name="link",
     locations=[DirectiveLocation.SCHEMA],
@@ -193,9 +89,6 @@ link = SchemaDirective(
     },
     is_repeatable=True,
 )
-
-
-# @shareable repeatable on OBJECT | FIELD_DEFINITION
 shareable = SchemaDirective(
     name="shareable",
     locations=[DirectiveLocation.OBJECT, DirectiveLocation.FIELD_DEFINITION],
@@ -203,11 +96,6 @@ shareable = SchemaDirective(
     "subgraphs (used in Federation).",
     is_repeatable=True,
 )
-
-
-# @inaccessible on FIELD_DEFINITION | OBJECT | INTERFACE | UNION
-#                | ARGUMENT_DEFINITION | SCALAR | ENUM | ENUM_VALUE
-#                | INPUT_OBJECT | INPUT_FIELD_DEFINITION
 inaccessible = SchemaDirective(
     name="inaccessible",
     locations=[
@@ -224,11 +112,6 @@ inaccessible = SchemaDirective(
     ],
     description="Excludes the annotated schema element from the public API",
 )
-
-
-# @tag(name: String!) repeatable on FIELD_DEFINITION | INTERFACE | OBJECT
-#                     | UNION | ARGUMENT_DEFINITION | SCALAR | ENUM
-#                     | ENUM_VALUE | INPUT_OBJECT | INPUT_FIELD_DEFINITION
 tag = SchemaDirective(
     name="tag",
     locations=[
@@ -251,9 +134,6 @@ tag = SchemaDirective(
     },
     is_repeatable=True,
 )
-
-
-# @override(from: String!) on FIELD_DEFINITION
 override = SchemaDirective(
     name="override",
     locations=[DirectiveLocation.FIELD_DEFINITION],
@@ -266,9 +146,6 @@ override = SchemaDirective(
         )
     },
 )
-
-
-# @composeDirective(name: String!) repeatable on SCHEMA
 composeDirective = SchemaDirective(
     name="composeDirective",
     locations=[DirectiveLocation.SCHEMA],
@@ -282,17 +159,11 @@ composeDirective = SchemaDirective(
     },
     is_repeatable=True,
 )
-
-
-# @interfaceObject on OBJECT
 interfaceObject = SchemaDirective(
     name="interfaceObject",
     locations=[DirectiveLocation.OBJECT],
     description="Marks an object type as an interface object (used in Federation).",
 )
-
-
-# @authenticated on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
 authenticated = SchemaDirective(
     name="authenticated",
     locations=[
@@ -304,10 +175,6 @@ authenticated = SchemaDirective(
     ],
     description="Marks that an authentication check is required (used in Federation).",
 )
-
-
-# @requiresScopes(scopes: [[federation__Scope!]!]!)
-#     on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
 requiresScopes = SchemaDirective(
     name="requiresScopes",
     locations=[
@@ -330,10 +197,6 @@ requiresScopes = SchemaDirective(
         )
     },
 )
-
-
-# @policy(policies: [[federation__Policy!]!]!)
-#     on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
 policy = SchemaDirective(
     name="policy",
     locations=[
@@ -357,9 +220,6 @@ policy = SchemaDirective(
         )
     },
 )
-
-
-# @context(name: String!) repeatable on INTERFACE | OBJECT | UNION
 context = SchemaDirective(
     name="context",
     locations=[
@@ -376,11 +236,6 @@ context = SchemaDirective(
     },
     is_repeatable=True,
 )
-
-
-# @fromContext(field: ContextFieldValue) on ARGUMENT_DEFINITION
-#  or
-# @fromContext(field: federation__ContextFieldValue) on ARGUMENT_DEFINITION
 fromContext = SchemaDirective(
     name="fromContext",
     locations=[DirectiveLocation.ARGUMENT_DEFINITION],
@@ -394,17 +249,12 @@ fromContext = SchemaDirective(
         )
     },
 )
-
-
-# @extends on OBJECT | INTERFACE
-#    (Only needed if your library doesn't support the built-in `extend` keyword)
 extends = SchemaDirective(
     name="extends",
     locations=[DirectiveLocation.OBJECT, DirectiveLocation.INTERFACE],
     description="Indicates that this type is an extension of a type defined elsewhere "
     "(used in Federation).",
 )
-
 federation_directives = [
     external,
     requires,
@@ -424,40 +274,3 @@ federation_directives = [
     fromContext,
     extends,
 ]
-
-
-@type
-class _Service:
-    @field
-    def sdl(self, context: GraphQLContext) -> str:
-        def directive_filter(n):
-            return not is_specified_directive(n) and n not in federation_directives
-
-        def type_filter(n):
-            return (
-                is_defined_type(n)
-                and n not in federation_types
-                and not n.name == "_Service"
-            )
-
-        printed_directives = []
-
-        schema = print_filtered_schema(
-            context.schema, directive_filter, type_filter, printed_directives
-        )
-
-        schema = schema.replace(" _service: _Service!\n", "")
-        imported_directives = str(
-            ["@" + directive.directive.name for directive in printed_directives]
-        ).replace("'", '"')
-
-        extends_schema = (f'\n\nextend schema @link(url: '
-                          f'"https://specs.apollo.dev/federation/v2.3", '
-                          f'import: {imported_directives})')
-
-        return schema + extends_schema
-
-
-@field
-def _service(self) -> _Service:
-    return _Service()

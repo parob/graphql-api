@@ -1023,6 +1023,12 @@ class TestGraphQL:
             ) -> List[Optional[Union[Owner, Customer]]]:
                 return [None]
 
+            @api.field
+            def optional_owner(
+                self,
+            ) -> List[Optional[Union[Owner]]]:
+                return [None]
+
         executor = api.executor()
 
         test_owner_query = """

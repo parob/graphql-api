@@ -4,7 +4,7 @@ from graphql import print_schema as graphql_print_schema
 
 from graphql_api import GraphQLAPI, field, type
 
-from graphql_api.federation import key, _Any
+from graphql_api.federation.directives import key
 
 
 class TestFederation:
@@ -12,6 +12,10 @@ class TestFederation:
         @key(fields="id")
         @type
         class User:
+            @classmethod
+            def _resolve_reference(cls, reference):
+                return User(id="1", name="Rob")
+
             def __init__(self, id: str, name: str):
                 self._id = id
                 self._name = name
@@ -24,6 +28,7 @@ class TestFederation:
             def name(self) -> str:
                 return self._name
 
+        @key(fields="name")
         @type
         class Food:
             def __init__(self, name: str):
@@ -35,38 +40,14 @@ class TestFederation:
 
         users_db = [User(id="1", name="Rob"), User(id="2", name="Tom")]
 
-        _Entities = Union[User, Food]
-
         @type
         class Root:
             @field
             def users(self) -> List[User]:
                 return users_db
 
-            @field
-            def _entities(
-                self, representations: List[_Any]
-            ) -> List[Optional[_Entities]]:
-                entities = []
-                for representation in representations:
-                    _typename = representation.get("__typename")
 
-                    if _typename == "User":
-                        user_id = representation.get("id")
-                        user = next((x for x in users_db if x._id == user_id), None)
-                        entities.append(user)
-
-                    elif _typename == "Food":
-                        food_name = representation.get("name")
-                        entities.append(Food(name=food_name))
-
-                    else:
-                        # Unhandled representation requested
-                        entities.append(None)
-
-                return entities
-
-        api = GraphQLAPI(root_type=Root, federation=True)
+        api = GraphQLAPI(root_type=Root, types=[Food], federation=True)
         schema, _ = api.graphql_schema()
 
         response = api.execute("{users{id,name}}")

@@ -4,10 +4,9 @@ from typing import List, Optional, Union
 import pytest
 from graphql import DirectiveLocation, GraphQLDirective, GraphQLString, GraphQLArgument
 
-from graphql_api import GraphQLAPI, type, field
-from graphql_api.directives import LocatedSchemaDirective, SchemaDirective
+from graphql_api import GraphQLAPI, type, field, LocatedSchemaDirective
+from graphql_api.directives import SchemaDirective, print_schema
 from graphql_api.mapper import GraphQLTypeMapper
-from graphql_api.print_directives import print_schema
 
 
 class TestGraphQLDirectives:
@@ -346,7 +345,7 @@ class TestGraphQLDirectives:
 
     @staticmethod
     def get_directives(mapper: GraphQLTypeMapper):
-        query_schema_directives = mapper.schema_directives
+        query_schema_directives = mapper.located_schema_directives
         query_directives = []
         for _key, value, directives in query_schema_directives:
             query_directives: List[LocatedSchemaDirective] = [
