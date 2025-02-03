@@ -45,7 +45,6 @@ from graphql.type.definition import (
 
 from graphql.pyutils import Undefined, UndefinedType
 
-import graphql_api.federation.directives
 from graphql_api.context import GraphQLContext
 from graphql_api.schema import get_schema_directives
 from graphql_api.types import (
@@ -552,9 +551,7 @@ class GraphQLTypeMapper:
             self.applied_schema_directives.append(
                 (key, graphql_type, schema_directives)
             )
-            existing_schema_directives = getattr(
-                graphql_type, "_schema_directives", []
-            )
+            existing_schema_directives = getattr(graphql_type, "_schema_directives", [])
             new_directives = existing_schema_directives + schema_directives
             setattr(graphql_type, "_schema_directives", new_directives)
             location: Optional[DirectiveLocation] = None

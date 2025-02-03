@@ -6,7 +6,9 @@ from graphql import (
     GraphQLArgument,
     GraphQLList,
     GraphQLNonNull,
-    GraphQLType, GraphQLNamedType, is_interface_type, is_object_type, GraphQLDirective,
+    GraphQLType,
+    is_specified_scalar_type,
+    is_introspection_type,
 )
 
 from graphql_api import GraphQLAPI
@@ -14,53 +16,68 @@ from graphql_api.mapper import UnionFlagType
 from graphql_api.decorators import type, field
 from graphql_api.context import GraphQLContext
 
-from graphql_api.directives import is_defined_type, print_filtered_schema, \
-    is_specified_directive, SchemaDirective
+from graphql_api.directives import (
+    print_filtered_schema,
+    is_specified_directive,
+)
 
-from graphql_api.federation.directives import federation_directives, key, authenticated, \
-    link
+from graphql_api.federation.directives import (
+    federation_directives,
+    key,
+    link,
+)
 from graphql_api.federation.types import federation_types, _Any
-from graphql_api.schema import get_schema_directives, get_directives, \
-    add_schema_directives
+from graphql_api.schema import get_schema_directives, get_directives
 
 
-@type
-class _Service:
-    @field
-    def sdl(self, context: GraphQLContext) -> str:
-        def directive_filter(n):
-            return not is_specified_directive(n) and n not in federation_directives
+def apply_federation_api(api: GraphQLAPI, strip_federation_definitions: bool = True):
+    @type
+    class _Service:
+        @field
+        def sdl(self, context: GraphQLContext) -> str:
+            def directive_filter(n):
+                return not is_specified_directive(n) and (
+                    not strip_federation_definitions or n not in federation_directives
+                )
 
-        def type_filter(n):
-            return ( is_defined_type(n)
-                # and n not in federation_types
-                # and not n.name == "_Service"
+            def type_filter(n):
+                return (
+                    not is_specified_scalar_type(n)
+                    and not is_introspection_type(n)
+                    and (
+                        not strip_federation_definitions
+                        or (n not in federation_types and n.name != "_Service")
+                    )
+                )
+
+            directives = {}
+
+            for _type in context.schema.type_map.values():
+                directives.update(get_directives(_type))
+
+            kwargs = {
+                "url": "https://specs.apollo.dev/federation/v2.7",
+                "import": [("@" + d.name) for d in directives.values()],
+            }
+
+            link(**kwargs)(context.schema)
+
+            schema = print_filtered_schema(
+                context.schema, directive_filter, type_filter
             )
-        directives = {}
 
-        for _type in context.schema.type_map.values():
-            directives.update(get_directives(_type))
+            # remove the federation types from the SDL
+            schema = schema.replace(
+                "  _entities(representations: [_Any!]!): [_Entity]!\n", ""
+            )
+            schema = schema.replace("  _service: _Service!\n", "")
 
-        kwargs = {
-            "url":"https://specs.apollo.dev/federation/v2.7",
-            "import": [ ("@" + d.name) for d in directives.values()]
-        }
+            return schema
 
-        link(**kwargs)(context.schema)
+    @field
+    def _service(self) -> _Service:
+        return _Service()
 
-        return print_filtered_schema(
-            context.schema,
-            directive_filter,
-            type_filter
-        )
-
-
-@field
-def _service(self) -> _Service:
-    return _Service()
-
-
-def apply_federation_api(api: GraphQLAPI):
     api.root_type._service = _service
     api.types |= set(federation_types)
     api.directives += federation_directives
@@ -72,7 +89,7 @@ def apply_federation_schema(api: GraphQLAPI, schema: GraphQLSchema):
     def resolve_entities(root, info, representations: List[Dict]):
         _entities = []
         for representation in representations:
-            entity_name = representation.get(("__typename"))
+            entity_name = representation.get("__typename")
             entity_type = schema.type_map.get(entity_name)
             entity_python_type = type_registry.get(entity_type)
 

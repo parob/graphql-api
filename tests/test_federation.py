@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List
 
 from graphql import print_schema as graphql_print_schema
 
@@ -9,11 +9,7 @@ from graphql_api.federation.directives import key
 
 class TestFederation:
     def test_federation_schema(self):
-
-        names = {
-            "1": "Rob",
-            "2": "Tom"
-        }
+        names = {"1": "Rob", "2": "Tom"}
 
         @key(fields="id")
         @type
@@ -50,9 +46,8 @@ class TestFederation:
             def users(self) -> List[User]:
                 return [User(id="1"), User(id="2")]
 
-
         api = GraphQLAPI(root_type=Root, types=[Food], federation=True)
-        schema, _ = api.graphql_schema()
+        schema, _ = api.build_schema()
 
         response = api.execute("{users{id,name}}")
 
@@ -89,6 +84,8 @@ class TestFederation:
         assert "directive @tag" not in sdl
         assert "directive @key" not in sdl
         assert "scalar _Any" not in sdl
-        assert "_entities(representations: [_Any!]!): [_Entity]!" in printed_schema
-        assert "type_Service{sdl:String!}" not in sdl
-        assert "extend schema" in sdl
+        assert "_entities(representations: [_Any!]!): [_Entity]!" not in sdl
+        assert "_service: _Service!" not in sdl
+        assert "type _Service" not in sdl
+        assert "@link(url:" in sdl
+        assert 'import: ["@key"])' in sdl

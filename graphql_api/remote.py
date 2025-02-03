@@ -287,7 +287,7 @@ class GraphQLRemoteObject:
         if self.mappers is None:
             api = self.api
 
-            api.graphql_schema()
+            api.build_schema()
 
             self.mappers = GraphQLMappers(
                 query_mapper=api.query_mapper, mutable_mapper=api.mutation_mapper

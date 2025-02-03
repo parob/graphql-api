@@ -1,8 +1,16 @@
 import json
 from typing import Dict, List
 
-from graphql import GraphQLDirective, GraphQLNamedType, GraphQLNonNull, GraphQLList, \
-    is_object_type, is_interface_type, GraphQLField, GraphQLType
+from graphql import (
+    GraphQLDirective,
+    GraphQLNamedType,
+    GraphQLNonNull,
+    GraphQLList,
+    is_object_type,
+    is_interface_type,
+    GraphQLField,
+    GraphQLType,
+)
 
 from graphql_api.utils import to_camel_case
 
@@ -32,6 +40,7 @@ class AppliedSchemaDirective:
         # Construct the directive string
         return f"{directive_name}({', '.join(formatted_args)})"
 
+
 def add_schema_directives(value, directives):
     if directives:
         if hasattr(value, "_schema_directives"):
@@ -40,12 +49,16 @@ def add_schema_directives(value, directives):
         value._schema_directives = directives
     return value
 
+
 def get_schema_directives(value) -> List[AppliedSchemaDirective]:
     if hasattr(value, "_schema_directives"):
         return getattr(value, "_schema_directives")
     return []
 
-def get_directives(graphql_type: GraphQLType, _fetched_types: List[GraphQLNamedType] = None) -> Dict[str, GraphQLDirective]:
+
+def get_directives(
+    graphql_type: GraphQLType, _fetched_types: List[GraphQLNamedType] = None
+) -> Dict[str, GraphQLDirective]:
     _directives = {}
     if not _fetched_types:
         _fetched_types = []

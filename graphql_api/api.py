@@ -210,15 +210,16 @@ class GraphQLAPI(GraphQLBaseExecutor):
             ignore_middleware_during_introspection
         )
         self.federation = federation
-        self._cached_graphql_schema = None
+        self._cached_schema = None
+
+    def build_schema(self, ignore_cache: bool = False) -> Tuple[GraphQLSchema, Dict]:
+        if not ignore_cache and self._cached_schema:
+            return self._cached_schema
 
         if self.federation:
             from graphql_api.federation.federation import apply_federation_api
-            apply_federation_api(self)
 
-    def graphql_schema(self, ignore_cache: bool = False) -> Tuple[GraphQLSchema, Dict]:
-        if not ignore_cache and self._cached_graphql_schema:
-            return self._cached_graphql_schema
+            apply_federation_api(self)
 
         meta = {}
 
@@ -308,9 +309,10 @@ class GraphQLAPI(GraphQLBaseExecutor):
         if self.root_type and issubclass(self.root_type, GraphQLRootTypeDelegate):
             schema = self.root_type.validate_graphql_schema(schema)
 
-        self._cached_graphql_schema = schema, meta
+        self._cached_schema = schema, meta
         if self.federation:
             from graphql_api.federation.federation import apply_federation_schema
+
             schema = apply_federation_schema(self, schema)
 
         return schema, meta
@@ -332,7 +334,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
         self,
         root_value: Any = None,
     ) -> GraphQLExecutor:
-        schema, meta = self.graphql_schema()
+        schema, meta = self.build_schema()
 
         if callable(self.root_type) and root_value is None:
             root_value = self.root_type()

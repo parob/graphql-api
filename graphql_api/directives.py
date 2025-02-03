@@ -36,12 +36,14 @@ from graphql_api.schema import add_schema_directives, get_schema_directives
 
 
 class SchemaDirective(GraphQLDirective):
-
     def __call__(self, *args, **kwargs):
         from graphql_api import AppliedSchemaDirective
+
         if len(args) > 0:
             func = args[0]
-            if func and isinstance(func, GraphQLSchema) or isfunction(func):
+            if func and (
+                isinstance(func, GraphQLSchema) or isfunction(func) or callable(func)
+            ):
                 add_schema_directives(
                     func, [AppliedSchemaDirective(directive=self, args=kwargs)]
                 )
@@ -101,7 +103,9 @@ def print_filtered_schema(
     )
 
 
-def print_schema_definition(schema: GraphQLSchema, printed_directives: list = None) -> Optional[str]:
+def print_schema_definition(
+    schema: GraphQLSchema, printed_directives: list = None
+) -> Optional[str]:
     if schema.description is None and is_schema_of_common_names(schema):
         return None
 
@@ -119,9 +123,15 @@ def print_schema_definition(schema: GraphQLSchema, printed_directives: list = No
     if subscription_type:
         operation_types.append(f"  subscription: {subscription_type.name}")
 
-    return (print_description(schema) + "schema" +
-            print_schema_directives(schema, printed_directives=printed_directives) + " " +
-            "{\n" + "\n".join(operation_types) + "\n}")
+    return (
+        print_description(schema)
+        + "schema"
+        + print_schema_directives(schema, printed_directives=printed_directives)
+        + " "
+        + "{\n"
+        + "\n".join(operation_types)
+        + "\n}"
+    )
 
 
 def is_schema_of_common_names(schema: GraphQLSchema) -> bool:

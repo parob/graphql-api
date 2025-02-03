@@ -34,7 +34,7 @@ class TestGraphQL:
                 """
                 return Node()
 
-        schema = api.graphql_schema()[0]
+        schema = api.build_schema()[0]
 
         assert schema.query_type.description == "ROOT_DOCSTRING"
 
@@ -75,7 +75,7 @@ class TestGraphQL:
             def enum_field_b(self) -> TestEnumB:
                 return TestEnumB.VALUE_A
 
-        schema = api.graphql_schema()[0]
+        schema = api.build_schema()[0]
 
         enum_field = schema.query_type.fields["enumFieldA"]
 
@@ -117,7 +117,7 @@ class TestGraphQL:
                 """
                 return Node()
 
-        schema = api.graphql_schema()[0]
+        schema = api.build_schema()[0]
 
         assert schema.query_type.description == "ROOT_DOCSTRING"
 
@@ -167,7 +167,7 @@ class TestGraphQL:
                 """
                 return Node()
 
-        schema = api.graphql_schema()[0]
+        schema = api.build_schema()[0]
 
         assert schema.query_type.description == "ROOT_DOCSTRING"
 
@@ -216,7 +216,7 @@ class TestGraphQL:
             def root_field(self) -> Node:
                 return Node()
 
-        schema = api.graphql_schema()[0]
+        schema = api.build_schema()[0]
         root_field = schema.query_type.fields["rootField"]
         root_field_type = root_field.type.of_type
 

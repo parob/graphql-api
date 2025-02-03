@@ -595,7 +595,7 @@ class TestGraphQL:
             def math(self) -> Math:
                 return Math()
 
-        schema, _ = api.graphql_schema()
+        schema, _ = api.build_schema()
 
         schema_str = print_schema(schema)
         schema_str = schema_str.strip().replace(" ", "")
@@ -1095,7 +1095,7 @@ class TestGraphQL:
         assert not single_type_query_result.errors
         assert single_type_query_result.data == single_type_query_expected
 
-        schema, _ = api.graphql_schema()
+        schema, _ = api.build_schema()
 
         # Check that single type unions was sucesfully created as a union type.
         assert schema.query_type.fields["owner"].type.of_type.name == "OwnerUnion"
@@ -1362,7 +1362,7 @@ class TestGraphQL:
             def hello(self) -> str:
                 return "hello world"
 
-        schema = api.graphql_schema()[0]
+        schema = api.build_schema()[0]
 
         assert Root.was_called
         assert Root.input_schema
