@@ -1,3 +1,4 @@
+from inspect import isfunction
 from typing import Dict, Callable, Optional, cast, Union, List, Any
 from graphql import (
     GraphQLDirective,
@@ -31,29 +32,29 @@ from graphql import (
 from graphql.language.block_string import is_printable_as_block_string
 from graphql.pyutils import inspect
 
-from graphql_api.schema import add_schema_directives
+from graphql_api.schema import add_schema_directives, get_schema_directives
 
 
 class SchemaDirective(GraphQLDirective):
 
     def __call__(self, *args, **kwargs):
-        from graphql_api import LocatedSchemaDirective
+        from graphql_api import AppliedSchemaDirective
         if len(args) > 0:
             func = args[0]
-            if callable(func):
+            if func and isinstance(func, GraphQLSchema) or isfunction(func):
                 add_schema_directives(
-                    func, [LocatedSchemaDirective(directive=self, args=kwargs)]
+                    func, [AppliedSchemaDirective(directive=self, args=kwargs)]
                 )
                 return func
         else:
             return lambda t: add_schema_directives(
-                t, [LocatedSchemaDirective(directive=self, args=kwargs)]
+                t, [AppliedSchemaDirective(directive=self, args=kwargs)]
             )
 
 
 def print_schema_directives(value, printed_directives: list = None):
-    if hasattr(value, "_schema_directives"):
-        schema_directives = getattr(value, "_schema_directives")
+    schema_directives = get_schema_directives(value)
+    if schema_directives:
         directives_str = " ".join(sd.print() for sd in schema_directives)
         if printed_directives is not None:
             printed_directives.extend(schema_directives)
@@ -93,14 +94,14 @@ def print_filtered_schema(
 
     return "\n\n".join(
         (
-            *filter(None, (print_schema_definition(schema),)),
+            *filter(None, (print_schema_definition(schema, printed_directives),)),
             *map(print_directive, directives),
             *map(lambda _type: print_type(_type, printed_directives), types),
         )
     )
 
 
-def print_schema_definition(schema: GraphQLSchema) -> Optional[str]:
+def print_schema_definition(schema: GraphQLSchema, printed_directives: list = None) -> Optional[str]:
     if schema.description is None and is_schema_of_common_names(schema):
         return None
 
@@ -118,7 +119,9 @@ def print_schema_definition(schema: GraphQLSchema) -> Optional[str]:
     if subscription_type:
         operation_types.append(f"  subscription: {subscription_type.name}")
 
-    return print_description(schema) + "schema {\n" + "\n".join(operation_types) + "\n}"
+    return (print_description(schema) + "schema" +
+            print_schema_directives(schema, printed_directives=printed_directives) + " " +
+            "{\n" + "\n".join(operation_types) + "\n}")
 
 
 def is_schema_of_common_names(schema: GraphQLSchema) -> bool:
@@ -225,6 +228,7 @@ def print_enum(type_: GraphQLEnumType, printed_directives: list = None) -> str:
     values = [
         print_description(value, "  ", not i)
         + f"  {name}"
+        + print_schema_directives(value, printed_directives)
         + print_deprecated(value.deprecation_reason)
         for i, (name, value) in enumerate(type_.values.items())
     ]

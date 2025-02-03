@@ -4,7 +4,7 @@ from typing import List, Optional, Union
 import pytest
 from graphql import DirectiveLocation, GraphQLDirective, GraphQLString, GraphQLArgument
 
-from graphql_api import GraphQLAPI, type, field, LocatedSchemaDirective
+from graphql_api import GraphQLAPI, type, field, AppliedSchemaDirective
 from graphql_api.directives import SchemaDirective, print_schema
 from graphql_api.mapper import GraphQLTypeMapper
 
@@ -75,7 +75,7 @@ class TestGraphQLDirectives:
 
         @type(
             directives=[
-                LocatedSchemaDirective(directive=key, args={"fields": "object_key"})
+                AppliedSchemaDirective(directive=key, args={"fields": "object_key"})
             ]
         )
         class Person:
@@ -116,7 +116,7 @@ class TestGraphQLDirectives:
         class TestSchema:
             @field(
                 directives=[
-                    LocatedSchemaDirective(directive=tag, args={"name": "field_tag"})
+                    AppliedSchemaDirective(directive=tag, args={"name": "field_tag"})
                 ]
             )
             def test(self, a: int) -> int:
@@ -303,7 +303,7 @@ class TestGraphQLDirectives:
         class TestSchema:
             @field(
                 directives=[
-                    LocatedSchemaDirective(
+                    AppliedSchemaDirective(
                         directive=tag, args={"name": "field_declarative_tag"}
                     )
                 ]
@@ -345,10 +345,10 @@ class TestGraphQLDirectives:
 
     @staticmethod
     def get_directives(mapper: GraphQLTypeMapper):
-        query_schema_directives = mapper.located_schema_directives
+        query_schema_directives = mapper.applied_schema_directives
         query_directives = []
         for _key, value, directives in query_schema_directives:
-            query_directives: List[LocatedSchemaDirective] = [
+            query_directives: List[AppliedSchemaDirective] = [
                 *query_directives,
                 *directives,
             ]

@@ -6,7 +6,7 @@ from graphql import (
     GraphQLArgument,
     GraphQLList,
     GraphQLNonNull,
-    GraphQLType,
+    GraphQLType, GraphQLNamedType, is_interface_type, is_object_type, GraphQLDirective,
 )
 
 from graphql_api import GraphQLAPI
@@ -14,10 +14,14 @@ from graphql_api.mapper import UnionFlagType
 from graphql_api.decorators import type, field
 from graphql_api.context import GraphQLContext
 
-from graphql_api.directives import is_defined_type, print_filtered_schema, is_specified_directive
+from graphql_api.directives import is_defined_type, print_filtered_schema, \
+    is_specified_directive, SchemaDirective
 
-from graphql_api.federation.directives import federation_directives, key
+from graphql_api.federation.directives import federation_directives, key, authenticated, \
+    link
 from graphql_api.federation.types import federation_types, _Any
+from graphql_api.schema import get_schema_directives, get_directives, \
+    add_schema_directives
 
 
 @type
@@ -28,30 +32,27 @@ class _Service:
             return not is_specified_directive(n) and n not in federation_directives
 
         def type_filter(n):
-            return (
-                is_defined_type(n)
-                and n not in federation_types
-                and not n.name == "_Service"
+            return ( is_defined_type(n)
+                # and n not in federation_types
+                # and not n.name == "_Service"
             )
+        directives = {}
 
-        printed_directives = []
+        for _type in context.schema.type_map.values():
+            directives.update(get_directives(_type))
 
-        schema = print_filtered_schema(
-            context.schema, directive_filter, type_filter, printed_directives
+        kwargs = {
+            "url":"https://specs.apollo.dev/federation/v2.7",
+            "import": [ ("@" + d.name) for d in directives.values()]
+        }
+
+        link(**kwargs)(context.schema)
+
+        return print_filtered_schema(
+            context.schema,
+            directive_filter,
+            type_filter
         )
-
-        schema = schema.replace("  _service: _Service!\n", "")
-        imported_directives = str(
-            ["@" + directive.directive.name for directive in printed_directives]
-        ).replace("'", '"')
-
-        extends_schema = (
-            f"\n\nextend schema @link(url: "
-            f'"https://specs.apollo.dev/federation/v2.3", '
-            f"import: {imported_directives})"
-        )
-
-        return schema + extends_schema
 
 
 @field
@@ -84,8 +85,7 @@ def apply_federation_schema(api: GraphQLAPI, schema: GraphQLSchema):
         return _entities
 
     def is_entity(_type: GraphQLType):
-        schema_directives = getattr(_type, "_schema_directives", [])
-        for schema_directive in schema_directives:
+        for schema_directive in get_schema_directives(_type):
             if schema_directive.directive == key:
                 return True
         return False

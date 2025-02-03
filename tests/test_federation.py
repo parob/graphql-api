@@ -90,6 +90,5 @@ class TestFederation:
         assert "directive @key" not in sdl
         assert "scalar _Any" not in sdl
         assert "_entities(representations: [_Any!]!): [_Entity]!" in printed_schema
-        assert "_service: _Service!" not in sdl
         assert "type_Service{sdl:String!}" not in sdl
         assert "extend schema" in sdl

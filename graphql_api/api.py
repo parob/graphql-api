@@ -295,11 +295,11 @@ class GraphQLAPI(GraphQLBaseExecutor):
                 },
             )
 
-        for _, _, located_schema_directives in (
-            self.query_mapper.located_schema_directives
-            + self.mutation_mapper.located_schema_directives
+        for _, _, applied_schema_directives in (
+            self.query_mapper.applied_schema_directives
+            + self.mutation_mapper.applied_schema_directives
         ):
-            self.directives += [d.directive for d in located_schema_directives]
+            self.directives += [d.directive for d in applied_schema_directives]
 
         schema = GraphQLSchema(
             query=query, mutation=mutation, types=types, directives=self.directives
