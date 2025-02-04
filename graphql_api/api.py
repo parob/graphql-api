@@ -82,9 +82,9 @@ def tag_value(
             "schema": schema,
         }
 
-    from graphql_api.schema import add_schema_directives
+    from graphql_api.schema import add_applied_directives
 
-    add_schema_directives(value, directives)
+    add_applied_directives(value, directives)
 
     if is_root_type:
         if graphql_type != "object":
@@ -364,9 +364,11 @@ class GraphQLAPI(GraphQLBaseExecutor):
                 self.query_mapper.applied_schema_directives
                 + self.mutation_mapper.applied_schema_directives
             ):
-                self.directives += [d.directive for d in applied_directives]
+                for d in applied_directives:
+                    if d.directive not in self.directives:
+                        self.directives.append(d.directive)
 
-        # Create the schema
+                                        # Create the schema
         schema = GraphQLSchema(
             query=query,
             mutation=mutation,

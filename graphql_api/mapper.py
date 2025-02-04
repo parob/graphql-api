@@ -21,6 +21,7 @@ from graphql import (
     GraphQLBoolean,
     GraphQLInt,
     GraphQLFloat,
+    GraphQLID,
     DirectiveLocation,
     is_union_type,
 )
@@ -46,7 +47,7 @@ from graphql.type.definition import (
 from graphql.pyutils import Undefined, UndefinedType
 
 from graphql_api.context import GraphQLContext
-from graphql_api.schema import get_schema_directives
+from graphql_api.schema import get_applied_directives, add_applied_directives
 from graphql_api.types import (
     GraphQLBytes,
     GraphQLUUID,
@@ -269,7 +270,7 @@ class GraphQLTypeMapper:
             return_graphql_type, arguments, resolve, description=description
         )
 
-        self.add_applied_schema_directives(field, f"{name}.{key}", function_type)
+        self.add_applied_directives(field, f"{name}.{key}", function_type)
         return field
 
     def map_to_union(self, union_type: Union) -> GraphQLType:
@@ -303,7 +304,7 @@ class GraphQLTypeMapper:
         union = GraphQLUnionType(
             name, types=[*union_map.values()], resolve_type=resolve_type
         )
-        self.add_applied_schema_directives(union, name, union_type)
+        self.add_applied_directives(union, name, union_type)
 
         return union
 
@@ -321,6 +322,7 @@ class GraphQLTypeMapper:
 
         subtype = self.map(list_subtype)
         if not nullable:
+            # noinspection PyTypeChecker
             subtype = GraphQLNonNull(type_=subtype)
 
         return GraphQLList(type_=subtype)
@@ -367,7 +369,7 @@ class GraphQLTypeMapper:
 
         enum_type.serialize = types.MethodType(serialize, enum_type)
 
-        self.add_applied_schema_directives(enum_type, name, type_)
+        self.add_applied_directives(enum_type, name, type_)
 
         return enum_type
 
@@ -396,7 +398,7 @@ class GraphQLTypeMapper:
         for test_types, graphql_type in self.scalar_map:
             for test_type in test_types:
                 if issubclass(class_type, test_type):
-                    self.add_applied_schema_directives(graphql_type, name, class_type)
+                    self.add_applied_directives(graphql_type, name, class_type)
                     return graphql_type
 
     def map_to_interface(
@@ -452,7 +454,7 @@ class GraphQLTypeMapper:
             description=description,
         )
 
-        self.add_applied_schema_directives(interface, interface_name, class_type)
+        self.add_applied_directives(interface, interface_name, class_type)
         return interface
 
     def map_to_input(self, class_type: Type) -> GraphQLType:
@@ -539,21 +541,19 @@ class GraphQLTypeMapper:
             description=description,
         )
 
-        self.add_applied_schema_directives(input_object, name, class_type)
+        self.add_applied_directives(input_object, name, class_type)
 
         return input_object
 
-    def add_applied_schema_directives(
+    def add_applied_directives(
         self, graphql_type: GraphQLType | GraphQLField, key: str, value
     ):
-        schema_directives = get_schema_directives(value)
-        if schema_directives:
+        applied_directives = get_applied_directives(value)
+        if applied_directives:
             self.applied_schema_directives.append(
-                (key, graphql_type, schema_directives)
+                (key, graphql_type, applied_directives)
             )
-            existing_schema_directives = getattr(graphql_type, "_schema_directives", [])
-            new_directives = existing_schema_directives + schema_directives
-            setattr(graphql_type, "_schema_directives", new_directives)
+            add_applied_directives(graphql_type, applied_directives)
             location: Optional[DirectiveLocation] = None
             type_str: Optional[str] = None
             if is_object_type(graphql_type):
@@ -582,10 +582,10 @@ class GraphQLTypeMapper:
                 location = DirectiveLocation.FIELD_DEFINITION
                 type_str = "Field"
 
-            for applied_directive in new_directives:
-                from graphql_api import AppliedSchemaDirective
+            for applied_directive in applied_directives:
+                from graphql_api import AppliedDirective
 
-                applied_directive: AppliedSchemaDirective
+                applied_directive: AppliedDirective
 
                 if location not in applied_directive.directive.locations:
                     raise TypeError(
@@ -654,7 +654,7 @@ class GraphQLTypeMapper:
             extensions={},
         )
 
-        self.add_applied_schema_directives(obj, name, class_type)
+        self.add_applied_directives(obj, name, class_type)
         return obj
 
     def rmap(self, graphql_type: GraphQLType) -> Type:

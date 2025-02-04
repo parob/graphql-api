@@ -27,7 +27,7 @@ from graphql_api.federation.directives import (
     link,
 )
 from graphql_api.federation.types import federation_types, _Any
-from graphql_api.schema import get_schema_directives, get_directives
+from graphql_api.schema import get_applied_directives, get_directives
 
 
 def apply_federation_api(api: GraphQLAPI, strip_federation_definitions: bool = True):
@@ -49,18 +49,6 @@ def apply_federation_api(api: GraphQLAPI, strip_federation_definitions: bool = T
                         or (n not in federation_types and n.name != "_Service")
                     )
                 )
-
-            directives = {}
-
-            for _type in context.schema.type_map.values():
-                directives.update(get_directives(_type))
-
-            kwargs = {
-                "url": "https://specs.apollo.dev/federation/v2.7",
-                "import": [("@" + d.name) for d in directives.values()],
-            }
-
-            link(**kwargs)(context.schema)
 
             schema = print_filtered_schema(
                 context.schema, directive_filter, type_filter
@@ -102,7 +90,7 @@ def apply_federation_schema(api: GraphQLAPI, schema: GraphQLSchema):
         return _entities
 
     def is_entity(_type: GraphQLType):
-        for schema_directive in get_schema_directives(_type):
+        for schema_directive in get_applied_directives(_type):
             if schema_directive.directive == key:
                 return True
         return False
@@ -125,4 +113,17 @@ def apply_federation_schema(api: GraphQLAPI, schema: GraphQLSchema):
         },
         resolve=resolve_entities,
     )
+
+    directives = {}
+
+    for _type in schema.type_map.values():
+        for name, directive in get_directives(_type).items():
+            if directive in federation_directives:
+                directives[name] = directive
+
+    link(**{
+        "url": "https://specs.apollo.dev/federation/v2.7",
+        "import": [("@" + d.name) for d in directives.values()],
+    })(schema)
+
     return schema

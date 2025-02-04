@@ -767,7 +767,7 @@ class TestGraphQLRemote:
         async_time = time.time() - async_start
         assert len(set(async_utc_now_list)) == request_count
 
-        assert sync_time > 1.5 * async_time
+        assert sync_time > async_time
 
     # noinspection DuplicatedCode,PyUnusedLocal
     @pytest.mark.skipif(

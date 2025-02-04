@@ -2,9 +2,10 @@ import binascii
 import datetime
 import json
 import uuid
-from typing import Dict, Union, List
+from typing import Dict, Union, List, Optional, Any
 
-from graphql import GraphQLScalarType, StringValueNode, Undefined, GraphQLEnumType
+from graphql import GraphQLScalarType, StringValueNode, Undefined, GraphQLEnumType, \
+    ValueNode
 from graphql.language import ast
 
 
@@ -15,10 +16,10 @@ class GraphQLMappedEnumType(GraphQLEnumType):
         return self.enum_type(result) if hasattr(self, "enum_type") else result
 
 
-def parse_uuid_literal(ast):
-    if isinstance(ast, StringValueNode):
+def parse_uuid_literal(value_node: ValueNode, _variables: Any = None) -> Optional[uuid.UUID]:
+    if isinstance(value_node, StringValueNode):
         try:
-            return uuid.UUID(ast.value)
+            return uuid.UUID(value_node.value)
         except ValueError:
             return Undefined
 
@@ -50,9 +51,9 @@ def parse_datetime_value(value):
     )
 
 
-def parse_datetime_literal(node):
-    if isinstance(node, StringValueNode):
-        return parse_datetime_value(node.value)
+def parse_datetime_literal(value_node: ValueNode, _variables: Any = None):
+    if isinstance(value_node, StringValueNode):
+        return parse_datetime_value(value_node.value)
 
 
 GraphQLDateTime = GraphQLScalarType(
@@ -81,9 +82,9 @@ def parse_date_value(value):
     raise ValueError(f"Date{value} did not fit any " f"of the formats {date_formats}.")
 
 
-def parse_date_literal(node):
-    if isinstance(node, StringValueNode):
-        return parse_date_value(node.value)
+def parse_date_literal(value_node: ValueNode, _variables: Any = None):
+    if isinstance(value_node, StringValueNode):
+        return parse_date_value(value_node.value)
 
 
 GraphQLDate = GraphQLScalarType(
@@ -107,13 +108,13 @@ def parse_json_value(value: str) -> JsonType:
     return json.loads(value)
 
 
-def parse_json_literal(node) -> JsonType:
-    if isinstance(node, ast.StringValueNode):
-        return parse_json_value(node.value)
-    if isinstance(node, ast.BooleanValueNode):
-        return node.value
-    if isinstance(node, ast.FloatValueNode):
-        return node.value
+def parse_json_literal(value_node: ValueNode, _variables: Any = None) -> JsonType:
+    if isinstance(value_node, ast.StringValueNode):
+        return parse_json_value(value_node.value)
+    if isinstance(value_node, ast.BooleanValueNode):
+        return value_node.value
+    if isinstance(value_node, ast.FloatValueNode):
+        return value_node.value
 
 
 GraphQLJSON = GraphQLScalarType(
@@ -140,9 +141,9 @@ def parse_bytes_value(value: str) -> bytes:
     return data
 
 
-def parse_bytes_literal(node):
-    if isinstance(node, ast.StringValueNode):
-        return parse_bytes_value(node.value)
+def parse_bytes_literal(value_node: ValueNode, _variables: Any = None):
+    if isinstance(value_node, ast.StringValueNode):
+        return parse_bytes_value(value_node.value)
 
 
 GraphQLBytes = GraphQLScalarType(

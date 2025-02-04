@@ -8,4 +8,4 @@ from graphql_api.reduce import GraphQLFilter, TagFilter
 
 from graphql_api.decorators import field, type
 
-from graphql_api.schema import AppliedSchemaDirective
+from graphql_api.schema import AppliedDirective

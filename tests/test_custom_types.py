@@ -3,13 +3,37 @@ from datetime import datetime, timedelta, date
 from typing import List
 from uuid import UUID
 
-from graphql import GraphQLScalarType, StringValueNode
+from graphql import GraphQLScalarType, StringValueNode, GraphQLID
 
 from graphql_api.api import GraphQLAPI
 from graphql_api.types import JsonType
 
 
 class TestCustomTypes:
+
+    def test_id_type(self):
+        api = GraphQLAPI()
+
+        # noinspection PyUnusedLocal
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def test(self, id: GraphQLID) -> GraphQLID:
+                return id
+
+        executor = api.executor()
+
+        test_name_query = f'query {{ test(id: "1") }}'
+
+        result = executor.execute(test_name_query)
+
+        expected = {"test": "1"}
+        assert not result.errors
+        assert result.data == expected
+
+        assert executor.schema.query_type.fields["test"].type.of_type == GraphQLID
+
+
     def test_uuid_type(self):
         api = GraphQLAPI()
 
