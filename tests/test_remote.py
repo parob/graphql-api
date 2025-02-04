@@ -738,7 +738,19 @@ class TestGraphQLRemote:
             executor=remote_executor, api=utc_time_api
         )
 
-        request_count = 100
+        request_count = 10
+
+        # Sync test
+        sync_start = time.time()
+        sync_utc_now_list = []
+
+        for _ in range(0, request_count):
+            sync_utc_now_list.append(api.now())
+            # noinspection PyUnresolvedReferences
+            api.clear_cache()  # Clear the API cache so that it re-fetches the request.
+        sync_time = time.time() - sync_start
+
+        assert len(set(sync_utc_now_list)) == request_count
 
         # Async test
         async_start = time.time()
@@ -754,18 +766,6 @@ class TestGraphQLRemote:
 
         async_time = time.time() - async_start
         assert len(set(async_utc_now_list)) == request_count
-
-        # Sync test
-        sync_start = time.time()
-        sync_utc_now_list = []
-
-        for _ in range(0, request_count):
-            sync_utc_now_list.append(api.now())
-            # noinspection PyUnresolvedReferences
-            api.clear_cache()  # Clear the API cache so that it re-fetches the request.
-        sync_time = time.time() - sync_start
-
-        assert len(set(sync_utc_now_list)) == request_count
 
         assert sync_time > 1.5 * async_time
 

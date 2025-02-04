@@ -12,12 +12,12 @@ from graphql import (
     GraphQLDirective,
     GraphQLNamedType,
     GraphQLScalarType,
+    Middleware,
 )
 
 from graphql_api import GraphQLError
 
 from graphql_api.executor import GraphQLExecutor, GraphQLBaseExecutor
-from graphql_api.middleware import GraphQLMiddleware
 from graphql_api.reduce import GraphQLSchemaReducer, GraphQLFilter
 from graphql_api.mapper import GraphQLTypeMapper
 
@@ -53,7 +53,6 @@ def _disable_scalar_type_call(*args, **kwargs):
 
 # Attach the no-op to the GraphQLScalarType class
 setattr(GraphQLScalarType, "__call__", _disable_scalar_type_call)
-
 
 
 # noinspection PyShadowingBuiltins
@@ -98,21 +97,21 @@ def tag_value(
 
 
 def build_decorator(
-        arg1: Any,
-        arg2: Any,
-        graphql_type: str,
-        mutable: bool = False,
-        interface: bool = False,
-        abstract: bool = False,
-        directives: Optional[List] = None,
-        is_root_type: bool = False,
+    arg1: Any,
+    arg2: Any,
+    graphql_type: str,
+    mutable: bool = False,
+    interface: bool = False,
+    abstract: bool = False,
+    directives: Optional[List] = None,
+    is_root_type: bool = False,
 ):
     """
     Creates a decorator that tags a function or class with GraphQL metadata.
 
     :param arg1: Possibly a function, a dict of metadata, or a `GraphQLAPI` instance.
     :param arg2: Possibly a function, a dict of metadata, or a `GraphQLAPI` instance.
-    :param graphql_type: The type of the GraphQL element (e.g., "object", "field", etc.).
+    :param graphql_type: The type of the GraphQL element (e.g. "object", "field", etc.).
     :param mutable: Whether this field should be considered "mutable_field".
     :param interface: If True, treat as a GraphQL interface.
     :param abstract: If True, treat as an abstract type.
@@ -132,8 +131,14 @@ def build_decorator(
 
     # Figure out which args are which
     func = arg1 if callable(arg1) else (arg2 if callable(arg2) else None)
-    meta_dict = arg1 if isinstance(arg1, dict) else (arg2 if isinstance(arg2, dict) else None)
-    schema_obj = arg1 if isinstance(arg1, GraphQLAPI) else (arg2 if isinstance(arg2, GraphQLAPI) else None)
+    meta_dict = (
+        arg1 if isinstance(arg1, dict) else (arg2 if isinstance(arg2, dict) else None)
+    )
+    schema_obj = (
+        arg1
+        if isinstance(arg1, GraphQLAPI)
+        else (arg2 if isinstance(arg2, GraphQLAPI) else None)
+    )
 
     # If a function is directly provided
     if func:
@@ -181,15 +186,14 @@ class GraphQLAPI(GraphQLBaseExecutor):
     """
 
     def __init__(
-            self,
-            root_type=None,
-            middleware: Optional[List[GraphQLMiddleware]] = None,
-            directives: Optional[List[GraphQLDirective]] = None,
-            types: Optional[List[Union[GraphQLNamedType, Type]]] = None,
-            filters: Optional[List[GraphQLFilter]] = None,
-            error_protection: bool = True,
-            ignore_middleware_during_introspection: bool = True,
-            federation: bool = False,
+        self,
+        root_type=None,
+        middleware: Optional[Middleware] = None,
+        directives: Optional[List[GraphQLDirective]] = None,
+        types: Optional[List[Union[GraphQLNamedType, Type]]] = None,
+        filters: Optional[List[GraphQLFilter]] = None,
+        error_protection: bool = True,
+        federation: bool = False,
     ):
         super().__init__()
         self.root_type = root_type
@@ -200,7 +204,6 @@ class GraphQLAPI(GraphQLBaseExecutor):
         self.query_mapper: Optional[GraphQLTypeMapper] = None
         self.mutation_mapper: Optional[GraphQLTypeMapper] = None
         self.error_protection = error_protection
-        self.ignore_middleware_during_introspection = ignore_middleware_during_introspection
         self.federation = federation
         self._cached_schema: Optional[Tuple[GraphQLSchema, Dict]] = None
 
@@ -208,10 +211,10 @@ class GraphQLAPI(GraphQLBaseExecutor):
     # DECORATORS
     # --------------------------------------------------------------------------
     def field(
-            self=None,
-            meta=None,
-            mutable: bool = False,
-            directives: Optional[List] = None,
+        self=None,
+        meta=None,
+        mutable: bool = False,
+        directives: Optional[List] = None,
     ):
         """
         Marks a function or method as a GraphQL field.
@@ -229,12 +232,12 @@ class GraphQLAPI(GraphQLBaseExecutor):
         )
 
     def type(
-            self=None,
-            meta=None,
-            abstract: bool = False,
-            interface: bool = False,
-            is_root_type: bool = False,
-            directives: Optional[List] = None,
+        self=None,
+        meta=None,
+        abstract: bool = False,
+        interface: bool = False,
+        is_root_type: bool = False,
+        directives: Optional[List] = None,
     ):
         """
         Marks a class or function as a GraphQL type (object, interface, or abstract).
@@ -265,9 +268,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
     # --------------------------------------------------------------------------
     def build_schema(self, ignore_cache: bool = False) -> Tuple[GraphQLSchema, Dict]:
         """
-        Builds (and optionally caches) the GraphQL schema using decorators,
-        directives, filters, etc.
-
+        Builds the GraphQL schema using decorators, directives, filters, etc.
         :param ignore_cache: If True, force rebuild the schema even if cached.
         :return: (GraphQLSchema, metadata_dict)
         """
@@ -277,6 +278,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
         # Federation support
         if self.federation:
             from graphql_api.federation.federation import apply_federation_api
+
             apply_federation_api(self)
 
         meta: Dict = {}
@@ -312,15 +314,14 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
             # Build root Mutation
             mutation_mapper = GraphQLTypeMapper(
-                as_mutable=True,
-                suffix="Mutable",
-                registry=registry,
-                schema=self
+                as_mutable=True, suffix="Mutable", registry=registry, schema=self
             )
             _mutation = mutation_mapper.map(self.root_type)
 
             if not isinstance(_mutation, GraphQLObjectType):
-                raise GraphQLError(f"Mutation {_mutation} was not a valid GraphQLObjectType.")
+                raise GraphQLError(
+                    f"Mutation {_mutation} was not a valid GraphQLObjectType."
+                )
 
             # Filter the Mutation
             filtered_mutation = GraphQLSchemaReducer.reduce_mutation(
@@ -352,8 +353,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
                 name="PlaceholderQuery",
                 fields={
                     "placeholder": GraphQLField(
-                        type_=GraphQLString,
-                        resolve=lambda *_: ""
+                        type_=GraphQLString, resolve=lambda *_: ""
                     )
                 },
             )
@@ -361,8 +361,8 @@ class GraphQLAPI(GraphQLBaseExecutor):
         # Include directives that may have been attached through the mappers
         if self.query_mapper and self.mutation_mapper:
             for _, _, applied_directives in (
-                    self.query_mapper.applied_schema_directives
-                    + self.mutation_mapper.applied_schema_directives
+                self.query_mapper.applied_schema_directives
+                + self.mutation_mapper.applied_schema_directives
             ):
                 self.directives += [d.directive for d in applied_directives]
 
@@ -383,6 +383,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
         # Post-federation modifications
         if self.federation:
             from graphql_api.federation.federation import apply_federation_schema
+
             apply_federation_schema(self, schema)
 
         return schema, meta
@@ -409,13 +410,10 @@ class GraphQLAPI(GraphQLBaseExecutor):
         if callable(self.root_type) and root_value is None:
             root_value = self.root_type()
 
-        ignore_middleware = self.ignore_middleware_during_introspection
-
         return GraphQLExecutor(
             schema=schema,
             meta=meta,
             root_value=root_value,
             middleware=self.middleware,
-            ignore_middleware_during_introspection=ignore_middleware,
             error_protection=self.error_protection,
         )

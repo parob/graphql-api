@@ -641,11 +641,11 @@ class TestGraphQL:
                     return "world"
                 return "not_possible"
 
-        def test_middleware(next_, context):
-            if context.field.meta.get("test_meta") == "hello_meta":
-                if context.request.args.get("test_string") == "hello":
+        def test_middleware(next_, root, info, **args):
+            if info.context.field.meta.get("test_meta") == "hello_meta":
+                if info.context.request.args.get("test_string") == "hello":
                     was_called.append(True)
-                    return next_()
+                    return next_(root, info, **args)
             return "possible"
 
         api.middleware = [test_middleware]
