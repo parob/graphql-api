@@ -58,7 +58,7 @@ def get_applied_directives(value) -> List[AppliedDirective]:
 
 
 def get_directives(
-    graphql_type: GraphQLType, _fetched_types: List[GraphQLNamedType] = None
+    graphql_type: Union[GraphQLType, GraphQLField], _fetched_types: List[Union[GraphQLNamedType, GraphQLField]] = None
 ) -> Dict[str, GraphQLDirective]:
     _directives = {}
     if not _fetched_types:
@@ -74,6 +74,7 @@ def get_directives(
         if is_object_type(graphql_type) or is_interface_type(graphql_type):
             for _field in graphql_type.fields.values():
                 _field: GraphQLField
+                _directives.update(get_directives(_field, _fetched_types))
                 _directives.update(get_directives(_field.type, _fetched_types))
 
     return _directives

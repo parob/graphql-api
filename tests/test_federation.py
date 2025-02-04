@@ -107,7 +107,6 @@ class TestFederation:
 
 
     def test_federation_example(self):
-        names = {"1": "Rob", "2": "Tom"}
 
         custom = SchemaDirective(
             name="custom",
@@ -204,7 +203,7 @@ class TestFederation:
 
             @field
             def created_by(self) -> Optional[User]:
-                return ""
+                return None
 
         @interfaceObject
         @key(fields="id")
@@ -243,16 +242,16 @@ class TestFederation:
 
             @field
             def variation(self) -> Optional[ProductVariation]:
-                return ""
+                return None
 
             @field
             def dimensions(self) -> Optional[ProductDimension]:
-                return ""
+                return None
 
             @provides(fields="totalProductsCreated")
             @field
             def created_by(self) -> Optional[User]:
-                return ""
+                return None
 
             @tag(name="internal")
             @field
@@ -261,7 +260,7 @@ class TestFederation:
 
             @field
             def research(self) -> List[ProductResearch]:
-                return ""
+                return []
 
         @type
         class Root:
