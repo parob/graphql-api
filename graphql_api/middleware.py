@@ -4,32 +4,25 @@ import inspect
 import asyncio
 import sys
 import traceback
-from typing import Callable, Any
 
-from graphql import GraphQLObjectType, GraphQLNonNull, GraphQLResolveInfo
+from graphql import GraphQLObjectType, GraphQLNonNull, TypeKind
 
 from graphql_api import GraphQLError
 from graphql_api.mapper import GraphQLMetaKey
 
-from graphql_api.context import GraphQLContext
 from graphql_api.utils import to_snake_case
 
 
-GraphQLMiddleware = Callable[[Callable, GraphQLContext], Any]
-
-
-def middleware_catch_exception(next, context: GraphQLContext):
+def middleware_catch_exception(next_, root, info, **args):
     """
     GraphQL middleware, unwrap the LocalProxy if using Werkzeug.
     """
     try:
-        value = next()
+        value = next_(root, info, **args)
     except Exception as err:
         from graphql_api.executor import ErrorProtectionExecutionContext
 
-        info: GraphQLResolveInfo = context.resolve_args.get("info")
-
-        field_meta = context.field.meta
+        field_meta = info.context.field.meta
         if field_meta.get(GraphQLMetaKey.error_protection) is not None:
             setattr(
                 err,
@@ -51,13 +44,14 @@ def middleware_catch_exception(next, context: GraphQLContext):
     return value
 
 
-def middleware_local_proxy(next, _):
+def middleware_local_proxy(next_, root, info, **args):
     """
     GraphQL middleware, unwrap the LocalProxy if using Werkzeug.
     """
-    value = next()
+    value = next_(root, info, **args)
     try:
         if hasattr(value, "_get_current_object"):
+            # noinspection PyProtectedMember
             value = value._get_current_object()
     except GraphQLError:
         # hasattr calls getattr and remote.getattr() can raise a GraphQLError if
@@ -70,60 +64,59 @@ def middleware_local_proxy(next, _):
     return value
 
 
-def middleware_call_coroutine(next, _):
+def middleware_call_coroutine(next_, root, info, **args):
     """
     GraphQL middleware, call coroutine
     """
-    value = next()
+    value = next_(root, info, **args)
     if inspect.iscoroutine(value):
         value = asyncio.run(value)
 
     return value
 
 
-def middleware_adapt_enum(next, _):
+def middleware_adapt_enum(next_, root, info, **args):
     """
     GraphQL middleware, by default enums return the value
     """
-    value = next()
+    value = next_(root, info, **args)
     if isinstance(value, enum.Enum):
-        value = value.value
+        if isinstance(value, TypeKind):
+            value = value
+        else:
+            value = value.value
 
     return value
 
 
-def middleware_request_context(next, context: GraphQLContext):
+def middleware_request_context(next_, root, info, **args):
     """
     GraphQL middleware, add the GraphQLRequestContext
     """
     from graphql_api.api import GraphQLRequestContext
 
-    info = context.resolve_args.get("info")
-    args = context.resolve_args.get("args")
-
     if info.context.request:
-        return next()
+        return next_(root, info, **args)
 
-    args = {to_snake_case(key): arg for key, arg in args.items()}
-    graphql_request = GraphQLRequestContext(args=args, info=info)
+    graphql_request = GraphQLRequestContext(
+        args={to_snake_case(key): arg for key, arg in args.items()}, info=info
+    )
 
     info.context.request = graphql_request
 
     try:
-        value = next()
+        value = next_(root, info, **args)
     finally:
         info.context.request = None
 
     return value
 
 
-def middleware_field_context(next, context: GraphQLContext):
+def middleware_field_context(next_, root, info, **args):
     """
     GraphQL middleware, add the GraphQLFieldContext
     """
     from graphql_api.api import GraphQLFieldContext
-
-    info = context.resolve_args.get("info")
 
     field_meta = info.context.meta.get(
         (info.parent_type.name, to_snake_case(info.field_name)), {}
@@ -144,7 +137,7 @@ def middleware_field_context(next, context: GraphQLContext):
     info.context.field = GraphQLFieldContext(meta=field_meta, **kwargs)
 
     try:
-        value = next()
+        value = next_(root, info, **args)
     finally:
         info.context.field = None
 

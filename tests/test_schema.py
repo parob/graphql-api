@@ -99,6 +99,6 @@ class TestGraphQLSchema:
         assert ObjectSchemaMeta.test_mutation_schema_meta._graphql
 
         # api_1.set_root(ObjectSchemaMeta)
-        schema = api_1.graphql_schema()
+        schema = api_1.build_schema()
 
         assert schema

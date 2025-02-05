@@ -4,10 +4,9 @@ from typing import List, Optional, Union
 import pytest
 from graphql import DirectiveLocation, GraphQLDirective, GraphQLString, GraphQLArgument
 
-from graphql_api import GraphQLAPI, type, field
-from graphql_api.directives import LocatedSchemaDirective, SchemaDirective
+from graphql_api import GraphQLAPI, type, field, AppliedDirective
+from graphql_api.directives import SchemaDirective, print_schema, deprecated
 from graphql_api.mapper import GraphQLTypeMapper
-from graphql_api.print_directives import print_schema
 
 
 class TestGraphQLDirectives:
@@ -58,10 +57,25 @@ class TestGraphQLDirectives:
 
         api = GraphQLAPI(root_type=TestSchema, directives=[custom_directive_definition])
 
-        schema, _ = api.graphql_schema()
+        schema, _ = api.build_schema()
         printed_schema = print_schema(schema)
 
         assert "directive @test1" in printed_schema
+
+    def test_builtin_directive(self):
+        @type
+        class TestSchema:
+            @deprecated(reason="deprecated reason")
+            @field
+            def test(self, a: int) -> int:
+                return a + 1
+
+        api = GraphQLAPI(root_type=TestSchema, directives=[deprecated])
+
+        schema, _ = api.build_schema()
+        printed_schema = print_schema(schema)
+
+        assert '@deprecated(reason: "deprecated reason")' in printed_schema
 
     def test_schema_directive_object(self):
         key = SchemaDirective(
@@ -75,9 +89,7 @@ class TestGraphQLDirectives:
         )
 
         @type(
-            directives=[
-                LocatedSchemaDirective(directive=key, args={"fields": "object_key"})
-            ]
+            directives=[AppliedDirective(directive=key, args={"fields": "object_key"})]
         )
         class Person:
             @field
@@ -93,7 +105,7 @@ class TestGraphQLDirectives:
 
         api = GraphQLAPI(root_type=TestSchema)
 
-        schema, _ = api.graphql_schema()
+        schema, _ = api.build_schema()
         printed_schema = print_schema(schema)
 
         assert "directive @key" in printed_schema
@@ -116,9 +128,7 @@ class TestGraphQLDirectives:
         @type
         class TestSchema:
             @field(
-                directives=[
-                    LocatedSchemaDirective(directive=tag, args={"name": "field_tag"})
-                ]
+                directives=[AppliedDirective(directive=tag, args={"name": "field_tag"})]
             )
             def test(self, a: int) -> int:
                 return a + 1
@@ -135,7 +145,7 @@ class TestGraphQLDirectives:
 
         api = GraphQLAPI(root_type=TestSchema)
 
-        schema, _ = api.graphql_schema()
+        schema, _ = api.build_schema()
         printed_schema = print_schema(schema)
 
         assert tag in self.get_directives(api.query_mapper)
@@ -173,7 +183,7 @@ class TestGraphQLDirectives:
 
         api = GraphQLAPI(root_type=Bank)
 
-        schema, _ = api.graphql_schema()
+        schema, _ = api.build_schema()
         printed_schema = print_schema(schema)
 
         assert big in self.get_directives(api.query_mapper)
@@ -208,7 +218,7 @@ class TestGraphQLDirectives:
 
         api = GraphQLAPI(root_type=Root)
 
-        schema, _ = api.graphql_schema()
+        schema, _ = api.build_schema()
         printed_schema = print_schema(schema)
 
         assert interface_directive in self.get_directives(api.query_mapper)
@@ -250,7 +260,7 @@ class TestGraphQLDirectives:
 
         api = GraphQLAPI(root_type=Root)
 
-        schema, _ = api.graphql_schema()
+        schema, _ = api.build_schema()
         printed_schema = print_schema(schema)
 
         assert enum_directive in self.get_directives(api.query_mapper)
@@ -278,7 +288,7 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=Root)
 
         with pytest.raises(TypeError, match="Directive '@object_directive' only supp"):
-            schema, _ = api.graphql_schema()
+            schema, _ = api.build_schema()
 
     def test_multiple_schema_directives(self):
         key = SchemaDirective(
@@ -304,7 +314,7 @@ class TestGraphQLDirectives:
         class TestSchema:
             @field(
                 directives=[
-                    LocatedSchemaDirective(
+                    AppliedDirective(
                         directive=tag, args={"name": "field_declarative_tag"}
                     )
                 ]
@@ -329,7 +339,7 @@ class TestGraphQLDirectives:
 
         api = GraphQLAPI(root_type=TestSchema)
 
-        schema, _ = api.graphql_schema()
+        schema, _ = api.build_schema()
         printed_schema = print_schema(schema)
 
         assert tag in self.get_directives(api.query_mapper)
@@ -346,10 +356,10 @@ class TestGraphQLDirectives:
 
     @staticmethod
     def get_directives(mapper: GraphQLTypeMapper):
-        query_schema_directives = mapper.schema_directives
+        query_applied_directives = mapper.applied_schema_directives
         query_directives = []
-        for _key, value, directives in query_schema_directives:
-            query_directives: List[LocatedSchemaDirective] = [
+        for _key, value, directives in query_applied_directives:
+            query_directives: List[AppliedDirective] = [
                 *query_directives,
                 *directives,
             ]

@@ -595,7 +595,7 @@ class TestGraphQL:
             def math(self) -> Math:
                 return Math()
 
-        schema, _ = api.graphql_schema()
+        schema, _ = api.build_schema()
 
         schema_str = print_schema(schema)
         schema_str = schema_str.strip().replace(" ", "")
@@ -641,11 +641,11 @@ class TestGraphQL:
                     return "world"
                 return "not_possible"
 
-        def test_middleware(next_, context):
-            if context.field.meta.get("test_meta") == "hello_meta":
-                if context.request.args.get("test_string") == "hello":
+        def test_middleware(next_, root, info, **args):
+            if info.context.field.meta.get("test_meta") == "hello_meta":
+                if info.context.request.args.get("test_string") == "hello":
                     was_called.append(True)
-                    return next_()
+                    return next_(root, info, **args)
             return "possible"
 
         api.middleware = [test_middleware]
@@ -1023,6 +1023,12 @@ class TestGraphQL:
             ) -> List[Optional[Union[Owner, Customer]]]:
                 return [None]
 
+            @api.field
+            def optional_owner(
+                self,
+            ) -> List[Optional[Union[Owner]]]:
+                return [None]
+
         executor = api.executor()
 
         test_owner_query = """
@@ -1089,7 +1095,7 @@ class TestGraphQL:
         assert not single_type_query_result.errors
         assert single_type_query_result.data == single_type_query_expected
 
-        schema, _ = api.graphql_schema()
+        schema, _ = api.build_schema()
 
         # Check that single type unions was sucesfully created as a union type.
         assert schema.query_type.fields["owner"].type.of_type.name == "OwnerUnion"
@@ -1356,7 +1362,7 @@ class TestGraphQL:
             def hello(self) -> str:
                 return "hello world"
 
-        schema = api.graphql_schema()[0]
+        schema = api.build_schema()[0]
 
         assert Root.was_called
         assert Root.input_schema
