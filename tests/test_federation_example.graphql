@@ -1,0 +1,83 @@
+schema @composeDirective(name: "@custom") @link(url: "https://myspecs.dev/myCustomDirective/v1.0", import: ["@custom"]) @link(url: "https://specs.apollo.dev/federation/v2.7", import: ["@shareable", "@inaccessible", "@key", "@requires", "@external", "@override", "@provides", "@tag", "@interfaceObject"]) {
+    query: Root
+}
+
+directive @custom on OBJECT
+
+"""Fields about a product’s physical dimensions."""
+type ProductDimension @shareable {
+    size: String
+    unit: String @inaccessible
+    weight: Float
+}
+
+"""
+The root Query type, including resolvers for:
+- product(id)
+- deprecatedProduct(Sku, package)
+"""
+type Root {
+
+    """
+    Resolver for the 'deprecatedProduct(Sku: String!, package: String!)' query.
+    """
+    deprecatedProduct(sku: String!, package: String!): DeprecatedProduct @deprecated(reason: "Use product query instead")
+
+    """Resolver for the 'product(id: ID!)' query."""
+    product(id: ID!): Product
+}
+
+type DeprecatedProduct @key(fields: "sku package") {
+    createdBy: User
+    package: String!
+    reason: String
+    sku: String!
+}
+
+"""
+A product entity with various fields and references (dimensions, user, research).
+"""
+type Product @custom @key(fields: "id") @key(fields: "sku package") @key(fields: "sku variation { id }") {
+    createdBy: User @provides(fields: "totalProductsCreated")
+    dimensions: ProductDimension
+    id: ID!
+    notes: String @tag(name: "internal")
+    package: String
+    research: [ProductResearch!]!
+    sku: String
+    variation: ProductVariation
+}
+
+"""A simple type to store caseNumber and description fields."""
+type CaseStudy {
+    caseNumber: ID!
+    description: String
+}
+
+"""An interface object representing some inventory entity."""
+type Inventory @interfaceObject @key(fields: "id") {
+    deprecatedProducts: [DeprecatedProduct!]!
+    id: ID!
+}
+
+"""A user entity that can be shared (federated) across multiple services."""
+type User @key(fields: "email") {
+    averageProductsCreatedPerYear: Int @requires(fields: "totalProductsCreated yearsOfEmployment")
+    email: ID! @external
+    name: String @override
+    totalProductsCreated: Int @external
+    yearsOfEmployment: Int! @external
+}
+
+"""A variation of a product, e.g., different configurations or versions."""
+type ProductVariation {
+    id: ID!
+}
+
+"""A type that references a CaseStudy and an outcome."""
+type ProductResearch @key(fields: "study { caseNumber }") {
+    outcome: String
+    study: CaseStudy!
+}
+
+union _Entity = DeprecatedProduct | Product | Inventory | User | ProductResearch

@@ -1,4 +1,4 @@
-from typing import List, Any, Dict, Tuple
+from typing import List, Any, Dict, Tuple, Optional, Type, Union
 
 # noinspection PyPackageRequirements
 from graphql import (
@@ -8,18 +8,19 @@ from graphql import (
     GraphQLString,
     is_named_type,
     ExecutionResult,
-    GraphQLType,
     specified_directives,
     GraphQLDirective,
     GraphQLNamedType,
+    GraphQLScalarType,
+    Middleware,
 )
 
 from graphql_api import GraphQLError
 
 from graphql_api.executor import GraphQLExecutor, GraphQLBaseExecutor
-from graphql_api.middleware import GraphQLMiddleware
 from graphql_api.reduce import GraphQLSchemaReducer, GraphQLFilter
 from graphql_api.mapper import GraphQLTypeMapper
+from graphql_api.schema import get_applied_directives, add_applied_directives
 
 
 class GraphQLFieldContext:
@@ -40,13 +41,19 @@ class GraphQLRequestContext:
         self.info = info
 
 
-def add_schema_directives(value, directives):
-    if directives:
-        if hasattr(value, "_schema_directives"):
-            directives = [*directives, *getattr(value, "_schema_directives", [])]
+# Workaround to allow GraphQLScalarType to be used in typehints in Python 3.10
 
-        value._schema_directives = directives
-    return value
+
+def _disable_scalar_type_call(*args, **kwargs):
+    """
+    A no-op placeholder to allow calling GraphQLScalarType
+    as if it were a function in Python 3.10+ type hints.
+    """
+    raise NotImplementedError("GraphQLScalarType cannot be called.")
+
+
+# Attach the no-op to the GraphQLScalarType class
+setattr(GraphQLScalarType, "__call__", _disable_scalar_type_call)
 
 
 # noinspection PyShadowingBuiltins
@@ -76,7 +83,9 @@ def tag_value(
             "schema": schema,
         }
 
-    add_schema_directives(value, directives)
+    from graphql_api.schema import add_applied_directives
+
+    add_applied_directives(value, directives)
 
     if is_root_type:
         if graphql_type != "object":
@@ -88,51 +97,73 @@ def tag_value(
     return value
 
 
-# noinspection PyShadowingBuiltins
 def build_decorator(
-    a,
-    b,
-    graphql_type,
-    mutable=None,
-    interface=None,
-    abstract=None,
-    directives: List = None,
+    arg1: Any,
+    arg2: Any,
+    graphql_type: str,
+    mutable: bool = False,
+    interface: bool = False,
+    abstract: bool = False,
+    directives: Optional[List] = None,
     is_root_type: bool = False,
 ):
+    """
+    Creates a decorator that tags a function or class with GraphQL metadata.
+
+    :param arg1: Possibly a function, a dict of metadata, or a `GraphQLAPI` instance.
+    :param arg2: Possibly a function, a dict of metadata, or a `GraphQLAPI` instance.
+    :param graphql_type: The type of the GraphQL element (e.g. "object", "field", etc.).
+    :param mutable: Whether this field should be considered "mutable_field".
+    :param interface: If True, treat as a GraphQL interface.
+    :param abstract: If True, treat as an abstract type.
+    :param directives: Any directives to be added.
+    :param is_root_type: Whether this should be the root (query) type in the schema.
+    """
+    # Adjust the graphql_type for interface or abstract usage
     if graphql_type == "object":
         if interface:
             graphql_type = "interface"
         elif abstract:
             graphql_type = "abstract"
 
-    if graphql_type == "field":
-        if mutable:
-            graphql_type = "mutable_field"
+    # Adjust the graphql_type if 'mutable' is requested
+    if graphql_type == "field" and mutable:
+        graphql_type = "mutable_field"
 
-    func = a if callable(a) else b if callable(b) else None
-    meta = a if isinstance(a, dict) else b if isinstance(b, dict) else None
-    schema = (
-        a if isinstance(a, GraphQLAPI) else b if isinstance(b, GraphQLAPI) else None
+    # Figure out which args are which
+    func = arg1 if callable(arg1) else (arg2 if callable(arg2) else None)
+    meta_dict = (
+        arg1 if isinstance(arg1, dict) else (arg2 if isinstance(arg2, dict) else None)
+    )
+    schema_obj = (
+        arg1
+        if isinstance(arg1, GraphQLAPI)
+        else (arg2 if isinstance(arg2, GraphQLAPI) else None)
     )
 
+    # If a function is directly provided
     if func:
         return tag_value(
             value=func,
             graphql_type=graphql_type,
-            schema=schema,
-            meta=meta,
+            schema=schema_obj,
+            meta=meta_dict,
             directives=directives,
             is_root_type=is_root_type,
         )
 
-    return lambda f: tag_value(
-        value=f,
-        graphql_type=graphql_type,
-        schema=schema,
-        meta=meta,
-        directives=directives,
-        is_root_type=is_root_type,
-    )
+    # Otherwise, return a decorator
+    def _decorator(f):
+        return tag_value(
+            value=f,
+            graphql_type=graphql_type,
+            schema=schema_obj,
+            meta=meta_dict,
+            directives=directives,
+            is_root_type=is_root_type,
+        )
+
+    return _decorator
 
 
 class GraphQLRootTypeDelegate:
@@ -150,22 +181,75 @@ class GraphQLRootTypeDelegate:
 
 
 class GraphQLAPI(GraphQLBaseExecutor):
-    def field(self=None, meta=None, mutable=False, directives: List = None):
+    """
+    Main GraphQL API class. Creates a schema from root types, decorators, etc.,
+    and provides an interface for query execution.
+    """
+
+    def __init__(
+        self,
+        root_type=None,
+        middleware: Optional[Middleware] = None,
+        directives: Optional[List[GraphQLDirective]] = None,
+        types: Optional[List[Union[GraphQLNamedType, Type]]] = None,
+        filters: Optional[List[GraphQLFilter]] = None,
+        error_protection: bool = True,
+        federation: bool = False,
+    ):
+        super().__init__()
+        self.root_type = root_type
+        self.middleware = middleware or []
+        self.directives = [*specified_directives] + (directives or [])
+        self.types = set(types or [])
+        self.filters = filters
+        self.query_mapper: Optional[GraphQLTypeMapper] = None
+        self.mutation_mapper: Optional[GraphQLTypeMapper] = None
+        self.error_protection = error_protection
+        self.federation = federation
+        self._cached_schema: Optional[Tuple[GraphQLSchema, Dict]] = None
+
+    # --------------------------------------------------------------------------
+    # DECORATORS
+    # --------------------------------------------------------------------------
+    def field(
+        self=None,
+        meta=None,
+        mutable: bool = False,
+        directives: Optional[List] = None,
+    ):
+        """
+        Marks a function or method as a GraphQL field.
+        Example usage:
+            @api.field(mutable=True)
+            def update_something(...):
+                ...
+        """
         return build_decorator(
-            self, meta, graphql_type="field", mutable=mutable, directives=directives
+            arg1=self,
+            arg2=meta,
+            graphql_type="field",
+            mutable=mutable,
+            directives=directives,
         )
 
     def type(
         self=None,
         meta=None,
-        abstract=False,
-        interface=False,
-        is_root_type=False,
-        directives: List = None,
+        abstract: bool = False,
+        interface: bool = False,
+        is_root_type: bool = False,
+        directives: Optional[List] = None,
     ):
+        """
+        Marks a class or function as a GraphQL type (object, interface, or abstract).
+        Example usage:
+            @api.type(abstract=True)
+            class MyBase:
+                ...
+        """
         return build_decorator(
-            self,
-            meta,
+            arg1=self,
+            arg2=meta,
             graphql_type="object",
             abstract=abstract,
             interface=interface,
@@ -174,127 +258,144 @@ class GraphQLAPI(GraphQLBaseExecutor):
         )
 
     def set_root_type(self, root_type):
+        """
+        Explicitly sets the root query type for this API instance.
+        """
         self.root_type = root_type
         return root_type
 
-    def __init__(
-        self,
-        root_type=None,
-        middleware: List[GraphQLMiddleware] = None,
-        directives: List[GraphQLDirective] = None,
-        types: List[GraphQLNamedType] = None,
-        filters: List[GraphQLFilter] = None,
-        error_protection=True,
-        ignore_middleware_during_introspection: bool = True,
-    ):
-        super().__init__()
-        if middleware is None:
-            middleware = []
+    # --------------------------------------------------------------------------
+    # SCHEMA BUILDING & EXECUTION
+    # --------------------------------------------------------------------------
+    def build_schema(self, ignore_cache: bool = False) -> Tuple[GraphQLSchema, Dict]:
+        """
+        Builds the GraphQL schema using decorators, directives, filters, etc.
+        :param ignore_cache: If True, force rebuild the schema even if cached.
+        :return: (GraphQLSchema, metadata_dict)
+        """
+        if not ignore_cache and self._cached_schema:
+            return self._cached_schema
 
-        if directives is None:
-            directives = []
+        # Federation support
+        if self.federation:
+            from graphql_api.federation.federation import add_federation_types
 
-        self.root_type = root_type
-        self.middleware = middleware
-        self.directives = {
-            directive.name: directive
-            for directive in [*specified_directives, *directives]
-        }
-        self.types = set(types) if types else set()
-        self.filters = filters
-        self.query_mapper = None
-        self.mutation_mapper = None
-        self.error_protection = error_protection
-        self.ignore_middleware_during_introspection = (
-            ignore_middleware_during_introspection
-        )
-        self._cached_graphql_schema = None
+            add_federation_types(self)
 
-    def graphql_schema(self, ignore_cache: bool = False) -> Tuple[GraphQLSchema, Dict]:
-        schema_args = {}
-        meta = {}
-        if not ignore_cache and self._cached_graphql_schema:
-            return self._cached_graphql_schema
+        meta: Dict = {}
+        query: Optional[GraphQLObjectType] = None
+        mutation: Optional[GraphQLObjectType] = None
+        collected_types: Optional[List[GraphQLNamedType]] = None
 
         if self.root_type:
-            # Create the root query
+            # Build root Query
             query_mapper = GraphQLTypeMapper(schema=self)
-            query: GraphQLType = query_mapper.map(self.root_type)
+            _query = query_mapper.map(self.root_type)
 
-            if not isinstance(query, GraphQLObjectType):
-                raise GraphQLError(f"Query {query} was not a valid ObjectType.")
+            # Map additional types that aren't native GraphQLNamedType
+            for typ in list(self.types):
+                if not is_named_type(typ):
+                    query_mapper.map(typ)
 
-            # Filter the root query
+            if not isinstance(_query, GraphQLObjectType):
+                raise GraphQLError(f"Query {_query} was not a valid GraphQLObjectType.")
+
+            # Filter the Query
             filtered_query = GraphQLSchemaReducer.reduce_query(
-                query_mapper, query, filters=self.filters
+                query_mapper, _query, filters=self.filters
             )
 
             if query_mapper.validate(filtered_query, evaluate=True):
-                schema_args["query"] = filtered_query
+                query = filtered_query
                 query_types = query_mapper.types()
                 registry = query_mapper.registry
-
             else:
                 query_types = set()
                 registry = None
 
-            # Create the root mutation
+            # Build root Mutation
             mutation_mapper = GraphQLTypeMapper(
                 as_mutable=True, suffix="Mutable", registry=registry, schema=self
             )
-            mutation: GraphQLType = mutation_mapper.map(self.root_type)
+            _mutation = mutation_mapper.map(self.root_type)
 
-            if not isinstance(mutation, GraphQLObjectType):
-                raise GraphQLError(f"Mutation {mutation} was not a valid ObjectType.")
+            if not isinstance(_mutation, GraphQLObjectType):
+                raise GraphQLError(
+                    f"Mutation {_mutation} was not a valid GraphQLObjectType."
+                )
 
-            # Filter the root mutation
+            # Filter the Mutation
             filtered_mutation = GraphQLSchemaReducer.reduce_mutation(
-                mutation_mapper, mutation
+                mutation_mapper, _mutation
             )
 
             if mutation_mapper.validate(filtered_mutation, evaluate=True):
-                schema_args["mutation"] = filtered_mutation
+                mutation = filtered_mutation
                 mutation_types = mutation_mapper.types()
             else:
+                mutation = None
                 mutation_types = set()
 
-            schema_args["types"] = list(query_types | mutation_types | self.types)
-            schema_args["types"] = [
-                type_ for type_ in schema_args["types"] if is_named_type(type_)
+            # Collect all types
+            collected_types = [
+                t
+                for t in list(query_types | mutation_types | self.types)
+                if is_named_type(t)
             ]
 
+            # Gather meta info from both mappers
             meta = {**query_mapper.meta, **mutation_mapper.meta}
-
             self.query_mapper = query_mapper
             self.mutation_mapper = mutation_mapper
 
-        # Create a placeholder query (every GraphQL schema must have a query)
-        if "query" not in schema_args:
-            placeholder = GraphQLField(type_=GraphQLString, resolve=lambda *_: "")
-            schema_args["query"] = GraphQLObjectType(
-                name="PlaceholderQuery", fields={"placeholder": placeholder}
+        # If there's no query, create a placeholder
+        if not query:
+            query = GraphQLObjectType(
+                name="PlaceholderQuery",
+                fields={
+                    "placeholder": GraphQLField(
+                        type_=GraphQLString, resolve=lambda *_: ""
+                    )
+                },
             )
 
-        schema_directives = [
-            *self.query_mapper.schema_directives,
-            *self.mutation_mapper.schema_directives,
-        ]
-        for key, graphql_type, schema_directives in schema_directives:
-            key: str
-            graphql_type: GraphQLType
+        # Include directives that may have been attached through the mappers
+        if self.query_mapper and self.mutation_mapper:
+            for _, _, applied_directives in (
+                self.query_mapper.applied_schema_directives
+                + self.mutation_mapper.applied_schema_directives
+            ):
+                for d in applied_directives:
+                    if d.directive not in self.directives:
+                        self.directives.append(d.directive)
 
-            for schema_directive in schema_directives:
-                graphql_directive = schema_directive.directive
-                self.directives[graphql_directive.name] = graphql_directive
+                        # Create the schema
+        schema = GraphQLSchema(
+            query=query,
+            mutation=mutation,
+            types=collected_types,
+            directives=self.directives,
+        )
 
-        schema_args["directives"] = self.directives.values()
+        api_directives = get_applied_directives(self)
+        if api_directives:
+            add_applied_directives(schema, api_directives)
 
-        schema = GraphQLSchema(**schema_args)
-
+        # If root_type implements GraphQLRootTypeDelegate, allow a final check
         if self.root_type and issubclass(self.root_type, GraphQLRootTypeDelegate):
             schema = self.root_type.validate_graphql_schema(schema)
 
-        self._cached_graphql_schema = schema, meta
+        self._cached_schema = (schema, meta)
+
+        # Post-federation modifications
+        if self.federation:
+            from graphql_api.federation.federation import (
+                add_entity_type,
+                link_directives,
+            )
+
+            add_entity_type(self, schema)
+            link_directives(schema)
 
         return schema, meta
 
@@ -315,20 +416,15 @@ class GraphQLAPI(GraphQLBaseExecutor):
         self,
         root_value: Any = None,
     ) -> GraphQLExecutor:
-        schema, meta = self.graphql_schema()
+        schema, meta = self.build_schema()
 
         if callable(self.root_type) and root_value is None:
             root_value = self.root_type()
-
-        ignore_middleware = self.ignore_middleware_during_introspection
 
         return GraphQLExecutor(
             schema=schema,
             meta=meta,
             root_value=root_value,
             middleware=self.middleware,
-            ignore_middleware_during_introspection=ignore_middleware,
-            error_protection=self.error_protection
-            if self.error_protection is not None
-            else self.error_protection,
+            error_protection=self.error_protection,
         )

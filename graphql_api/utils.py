@@ -26,7 +26,9 @@ from graphql.type.definition import GraphQLType, GraphQLInterfaceType
 # From this response in Stackoverflow
 # http://stackoverflow.com/a/19053800/1072990
 def to_camel_case(snake_str, title=False):
+    underscore_prefix = False
     if snake_str.startswith("_"):
+        underscore_prefix = True
         snake_str = snake_str[1:]
 
     components = snake_str.split("_")
@@ -36,7 +38,7 @@ def to_camel_case(snake_str, title=False):
         return ""
     prefix = components[0].title() if title else components[0]
     value = prefix + "".join(x.title() if x else "_" for x in components[1:])
-    return value
+    return ("_" if underscore_prefix else "") + value
 
 
 # From this response in Stackoverflow

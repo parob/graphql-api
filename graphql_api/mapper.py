@@ -46,6 +46,7 @@ from graphql.type.definition import (
 from graphql.pyutils import Undefined, UndefinedType
 
 from graphql_api.context import GraphQLContext
+from graphql_api.schema import get_applied_directives, add_applied_directives
 from graphql_api.types import (
     GraphQLBytes,
     GraphQLUUID,
@@ -132,7 +133,7 @@ class GraphQLTypeMapper:
         self.meta = {}
         self.input_type_mapper = None
         self.schema = schema
-        self.schema_directives = []
+        self.applied_schema_directives = []
 
     def types(self) -> Set[GraphQLType]:
         return set(self.registry.values())
@@ -268,7 +269,7 @@ class GraphQLTypeMapper:
             return_graphql_type, arguments, resolve, description=description
         )
 
-        self.add_schema_directives(field, f"{name}.{key}", function_type)
+        self.add_applied_directives(field, f"{name}.{key}", function_type)
         return field
 
     def map_to_union(self, union_type: Union) -> GraphQLType:
@@ -302,7 +303,7 @@ class GraphQLTypeMapper:
         union = GraphQLUnionType(
             name, types=[*union_map.values()], resolve_type=resolve_type
         )
-        self.add_schema_directives(union, name, union_type)
+        self.add_applied_directives(union, name, union_type)
 
         return union
 
@@ -320,6 +321,7 @@ class GraphQLTypeMapper:
 
         subtype = self.map(list_subtype)
         if not nullable:
+            # noinspection PyTypeChecker
             subtype = GraphQLNonNull(type_=subtype)
 
         return GraphQLList(type_=subtype)
@@ -366,7 +368,7 @@ class GraphQLTypeMapper:
 
         enum_type.serialize = types.MethodType(serialize, enum_type)
 
-        self.add_schema_directives(enum_type, name, type_)
+        self.add_applied_directives(enum_type, name, type_)
 
         return enum_type
 
@@ -395,7 +397,7 @@ class GraphQLTypeMapper:
         for test_types, graphql_type in self.scalar_map:
             for test_type in test_types:
                 if issubclass(class_type, test_type):
-                    self.add_schema_directives(graphql_type, name, class_type)
+                    self.add_applied_directives(graphql_type, name, class_type)
                     return graphql_type
 
     def map_to_interface(
@@ -451,7 +453,7 @@ class GraphQLTypeMapper:
             description=description,
         )
 
-        self.add_schema_directives(interface, interface_name, class_type)
+        self.add_applied_directives(interface, interface_name, class_type)
         return interface
 
     def map_to_input(self, class_type: Type) -> GraphQLType:
@@ -538,65 +540,59 @@ class GraphQLTypeMapper:
             description=description,
         )
 
-        self.add_schema_directives(input_object, name, class_type)
+        self.add_applied_directives(input_object, name, class_type)
 
         return input_object
 
-    def add_schema_directives(
+    def add_applied_directives(
         self, graphql_type: GraphQLType | GraphQLField, key: str, value
     ):
-        if hasattr(value, "_schema_directives"):
-            schema_directives = getattr(value, "_schema_directives")
-            if schema_directives is not None:
-                self.schema_directives.append((key, graphql_type, schema_directives))
+        applied_directives = get_applied_directives(value)
+        if applied_directives:
+            self.applied_schema_directives.append(
+                (key, graphql_type, applied_directives)
+            )
+            add_applied_directives(graphql_type, applied_directives)
+            location: Optional[DirectiveLocation] = None
+            type_str: Optional[str] = None
+            if is_object_type(graphql_type):
+                location = DirectiveLocation.OBJECT
+                type_str = "Object"
+            elif is_interface_type(graphql_type):
+                location = DirectiveLocation.INTERFACE
+                type_str = "Interface"
+            elif is_enum_type(graphql_type):
+                location = DirectiveLocation.ENUM
+                type_str = "Enum"
+            elif is_input_type(graphql_type):
+                location = DirectiveLocation.INPUT_OBJECT
+                type_str = "Input Object"
+            elif is_union_type(graphql_type):
+                location = DirectiveLocation.UNION
+                type_str = "Union"
+            elif is_scalar_type(graphql_type):
+                location = DirectiveLocation.SCALAR
+                type_str = "Scalar"
+            elif is_abstract_type(graphql_type):
+                type_str = "Abstract"
+                # unsupported
+                raise TypeError("Abstract types do not currently support directives")
+            elif isinstance(graphql_type, GraphQLField):
+                location = DirectiveLocation.FIELD_DEFINITION
+                type_str = "Field"
 
-                existing_schema_directives = getattr(
-                    graphql_type, "_schema_directives", []
-                )
-                new_directives = existing_schema_directives + schema_directives
-                setattr(graphql_type, "_schema_directives", new_directives)
-                location: Optional[DirectiveLocation] = None
-                type_str: str
-                if is_object_type(graphql_type):
-                    location = DirectiveLocation.OBJECT
-                    type_str = "Object"
-                elif is_interface_type(graphql_type):
-                    location = DirectiveLocation.INTERFACE
-                    type_str = "Interface"
-                elif is_enum_type(graphql_type):
-                    location = DirectiveLocation.ENUM
-                    type_str = "Enum"
-                elif is_input_type(graphql_type):
-                    location = DirectiveLocation.INPUT_OBJECT
-                    type_str = "Input Object"
-                elif is_union_type(graphql_type):
-                    location = DirectiveLocation.UNION
-                    type_str = "Union"
-                elif is_scalar_type(graphql_type):
-                    location = DirectiveLocation.SCALAR
-                    type_str = "Scalar"
-                elif is_abstract_type(graphql_type):
-                    type_str = "Abstract"
-                    # unsupported
+            for applied_directive in applied_directives:
+                from graphql_api import AppliedDirective
+
+                applied_directive: AppliedDirective
+
+                if location not in applied_directive.directive.locations:
                     raise TypeError(
-                        "Abstract types do not currently support directives"
+                        f"Directive '{applied_directive.directive}' only supports "
+                        f"{applied_directive.directive.locations} locations but was"
+                        f" used on '{key}' which is a '{type_str}' and does not "
+                        f"support {location} types, "
                     )
-                elif isinstance(graphql_type, GraphQLField):
-                    location = DirectiveLocation.FIELD_DEFINITION
-                    type_str = "Field"
-
-                for located_directive in new_directives:
-                    from graphql_api import LocatedSchemaDirective
-
-                    located_directive: LocatedSchemaDirective
-
-                    if location not in located_directive.directive.locations:
-                        raise TypeError(
-                            f"Directive '{located_directive.directive}' only supports "
-                            f"{located_directive.directive.locations} locations but was"
-                            f" used on '{key}' which is a '{type_str}' and does not "
-                            f"support {location} types, "
-                        )
 
     def map_to_object(self, class_type: Type) -> GraphQLType:
         name = f"{class_type.__name__}{self.suffix}"
@@ -657,7 +653,7 @@ class GraphQLTypeMapper:
             extensions={},
         )
 
-        self.add_schema_directives(obj, name, class_type)
+        self.add_applied_directives(obj, name, class_type)
         return obj
 
     def rmap(self, graphql_type: GraphQLType) -> Type:
