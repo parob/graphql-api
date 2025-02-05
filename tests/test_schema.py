@@ -34,14 +34,17 @@ class TestGraphQLSchema:
             def test_interface_mutation_no_schema(self, a: int) -> int:
                 pass
 
+        # noinspection PyUnresolvedReferences
         assert ObjectNoSchema._graphql
         assert ObjectNoSchema.test_query_no_schema._graphql
         assert ObjectNoSchema.test_mutation_no_schema._graphql
 
+        # noinspection PyUnresolvedReferences
         assert AbstractNoSchema._graphql
         assert AbstractNoSchema.test_abstract_query_no_schema._graphql
         assert AbstractNoSchema.test_abstract_mutation_no_schema._graphql
 
+        # noinspection PyUnresolvedReferences
         assert InterfaceNoSchema._graphql
         assert InterfaceNoSchema.test_interface_query_no_schema._graphql
         assert InterfaceNoSchema.test_interface_mutation_no_schema._graphql
@@ -59,6 +62,7 @@ class TestGraphQLSchema:
             def test_mutation_schema(self, a: int) -> int:
                 pass
 
+        # noinspection PyUnresolvedReferences
         assert ObjectSchema._graphql
         assert ObjectSchema.test_query_schema._graphql
         assert ObjectSchema.test_mutation_schema._graphql
@@ -76,9 +80,7 @@ class TestGraphQLSchema:
 
         # noinspection PyUnresolvedReferences
         assert ObjectNoSchemaMeta._graphql
-        # noinspection PyUnresolvedReferences
         assert ObjectNoSchemaMeta.test_query_no_schema_meta._graphql
-        # noinspection PyUnresolvedReferences
         assert ObjectNoSchemaMeta.test_mutation_no_schema_meta._graphql
 
     def test_decorators_schema_meta(self):
@@ -94,11 +96,11 @@ class TestGraphQLSchema:
             def test_mutation_schema_meta(self, a: int) -> int:
                 pass
 
+        # noinspection PyUnresolvedReferences
         assert ObjectSchemaMeta._graphql
         assert ObjectSchemaMeta.test_query_schema_meta._graphql
         assert ObjectSchemaMeta.test_mutation_schema_meta._graphql
 
-        # api_1.set_root(ObjectSchemaMeta)
         schema = api_1.build_schema()
 
         assert schema

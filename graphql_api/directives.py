@@ -49,7 +49,6 @@ class SchemaDirective(GraphQLDirective):
         directive: GraphQLDirective = None,
     ):
         if directive:
-            self.proxy = True
             self.directive = directive
         else:
             super().__init__(
@@ -61,12 +60,7 @@ class SchemaDirective(GraphQLDirective):
                 extensions=extensions,
                 ast_node=ast_node,
             )
-            self.proxy = False
             self.directive = self
-
-    def __getattr__(self, attr):
-        if self.proxy:
-            return getattr(self.directive, attr)
 
     def __call__(self, *args, **kwargs):
         from graphql_api import AppliedDirective

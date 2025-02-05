@@ -16,6 +16,7 @@ from graphql import (
 )
 
 from graphql_api import GraphQLError
+from graphql_api.directives import SchemaDirective
 
 from graphql_api.executor import GraphQLExecutor, GraphQLBaseExecutor
 from graphql_api.reduce import GraphQLSchemaReducer, GraphQLFilter
@@ -374,7 +375,10 @@ class GraphQLAPI(GraphQLBaseExecutor):
             query=query,
             mutation=mutation,
             types=collected_types,
-            directives=self.directives,
+            directives=[
+                d.directive if isinstance(d, SchemaDirective) else d
+                for d in self.directives
+            ],
         )
 
         api_directives = get_applied_directives(self)
