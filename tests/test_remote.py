@@ -751,7 +751,7 @@ class TestGraphQLRemote:
             for _ in range(0, request_count):
                 sync_utc_now_list.append(api.now())
                 # noinspection PyUnresolvedReferences
-                api.clear_cache()  # Clear the API cache so that it re-fetches the request.
+                api.clear_cache()  # Clear the API cache so it re-fetches the request.
             sync_time = time.time() - sync_start
 
             assert len(set(sync_utc_now_list)) == request_count

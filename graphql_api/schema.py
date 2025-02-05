@@ -18,7 +18,9 @@ from graphql_api.utils import to_camel_case
 
 class AppliedDirective:
     def __init__(self, directive: Union[GraphQLDirective, SchemaDirective], args: Dict):
-        self.directive = directive.directive if isinstance(directive, SchemaDirective) else directive
+        self.directive = (
+            directive.directive if isinstance(directive, SchemaDirective) else directive
+        )
         self.args = args
 
     def print(self) -> str:
@@ -58,7 +60,8 @@ def get_applied_directives(value) -> List[AppliedDirective]:
 
 
 def get_directives(
-    graphql_type: Union[GraphQLType, GraphQLField], _fetched_types: List[Union[GraphQLNamedType, GraphQLField]] = None
+    graphql_type: Union[GraphQLType, GraphQLField],
+    _fetched_types: List[Union[GraphQLNamedType, GraphQLField]] = None,
 ) -> Dict[str, GraphQLDirective]:
     _directives = {}
     if not _fetched_types:

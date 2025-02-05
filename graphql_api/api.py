@@ -279,6 +279,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
         # Federation support
         if self.federation:
             from graphql_api.federation.federation import add_federation_types
+
             add_federation_types(self)
 
         meta: Dict = {}
@@ -368,7 +369,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
                     if d.directive not in self.directives:
                         self.directives.append(d.directive)
 
-                                        # Create the schema
+                        # Create the schema
         schema = GraphQLSchema(
             query=query,
             mutation=mutation,
@@ -388,7 +389,10 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
         # Post-federation modifications
         if self.federation:
-            from graphql_api.federation.federation import add_entity_type, link_directives
+            from graphql_api.federation.federation import (
+                add_entity_type,
+                link_directives,
+            )
 
             add_entity_type(self, schema)
             link_directives(schema)

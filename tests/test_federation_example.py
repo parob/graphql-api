@@ -7,9 +7,19 @@ from graphql import DirectiveLocation, GraphQLID
 from graphql_api import field, type, GraphQLAPI
 from graphql_api.directives import SchemaDirective, deprecated
 
-from graphql_api.federation.directives import key, provides, \
-    tag, interfaceObject, external, requires, inaccessible, shareable, override, link, \
-    composeDirective
+from graphql_api.federation.directives import (
+    key,
+    provides,
+    tag,
+    interfaceObject,
+    external,
+    requires,
+    inaccessible,
+    shareable,
+    override,
+    link,
+    composeDirective,
+)
 
 dimension = {
     "size": "small",
@@ -71,15 +81,11 @@ products = [
 ]
 
 
-custom = SchemaDirective(
-    name="custom",
-    locations=[DirectiveLocation.OBJECT]
-)
+custom = SchemaDirective(name="custom", locations=[DirectiveLocation.OBJECT])
 
 
 @type
 class ProductVariation:
-
     def __init__(self, data: Dict[str, Any]):
         self.data = data
 
@@ -90,7 +96,6 @@ class ProductVariation:
 
 @type
 class CaseStudy:
-
     def __init__(self, data: Dict[str, Any]):
         self.data = data
 
@@ -106,7 +111,6 @@ class CaseStudy:
 @key(fields="study { caseNumber }")
 @type
 class ProductResearch:
-
     def __init__(self, data: Dict[str, Any]):
         self.data = data
 
@@ -122,7 +126,6 @@ class ProductResearch:
 @shareable
 @type
 class ProductDimension:
-
     def __init__(self, data: Dict[str, Any]):
         self.data = data
 
@@ -143,7 +146,6 @@ class ProductDimension:
 @key(fields="email")
 @type
 class User:
-
     def __init__(self, data: Dict[str, Any]):
         self.data = data
 
@@ -184,7 +186,6 @@ class User:
 @key(fields="sku package")
 @type
 class DeprecatedProduct:
-
     @classmethod
     def _resolve_reference(cls, reference: Dict[str, Any]):
         return DeprecatedProduct(deprecated_product)
@@ -216,13 +217,12 @@ class DeprecatedProduct:
 @key(fields="id")
 @type
 class Inventory:
-
     def __init__(self, data: Dict[str, Any]):
         self.data = data
 
     @classmethod
     def _resolve_reference(cls, reference: Dict[str, Any]):
-        return Inventory(data={"id":reference.get("id")})
+        return Inventory(data={"id": reference.get("id")})
 
     @field
     def id(self) -> GraphQLID:
@@ -240,7 +240,6 @@ class Inventory:
 @key(fields="sku variation { id }")
 @type
 class Product:
-
     def __init__(self, data: Dict[str, Any]):
         self.data = data
 
@@ -252,12 +251,13 @@ class Product:
         if "sku" in reference and "package" in reference:
             # Check if it matches either known product in the root
             for product_data in products:
-                if (product_data.get("sku") == reference["sku"]
-                        and product_data.get("package") == reference["package"]):
+                if (
+                    product_data.get("sku") == reference["sku"]
+                    and product_data.get("package") == reference["package"]
+                ):
                     return Product(product_data)
 
         return None
-
 
     @field
     def id(self) -> GraphQLID:
@@ -306,7 +306,6 @@ class Product:
 
 @type
 class Root:
-
     @field
     def product(self, id: GraphQLID) -> Optional[Product]:
         for product_data in products:
@@ -318,10 +317,10 @@ class Root:
     @field
     def deprecated_product(self, sku: str, package: str) -> Optional[DeprecatedProduct]:
         if (
-                sku == deprecated_product["sku"]
-                and package == deprecated_product["package"]
+            sku == deprecated_product["sku"]
+            and package == deprecated_product["package"]
         ):
-                return DeprecatedProduct(deprecated_product)
+            return DeprecatedProduct(deprecated_product)
         return None
 
 
@@ -330,10 +329,12 @@ def federation_example_api():
 
     schema, _ = api.build_schema()
 
-    link(**{
-        "url": "https://myspecs.dev/myCustomDirective/v1.0",
-        "import": ["@custom"],
-    })(schema)
+    link(
+        **{
+            "url": "https://myspecs.dev/myCustomDirective/v1.0",
+            "import": ["@custom"],
+        }
+    )(schema)
 
     composeDirective(name="@custom")(schema)
 

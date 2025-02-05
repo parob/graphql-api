@@ -21,7 +21,6 @@ from graphql import (
     GraphQLBoolean,
     GraphQLInt,
     GraphQLFloat,
-    GraphQLID,
     DirectiveLocation,
     is_union_type,
 )

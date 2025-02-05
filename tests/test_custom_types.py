@@ -10,7 +10,6 @@ from graphql_api.types import JsonType
 
 
 class TestCustomTypes:
-
     def test_id_type(self):
         api = GraphQLAPI()
 
@@ -23,7 +22,7 @@ class TestCustomTypes:
 
         executor = api.executor()
 
-        test_name_query = f'query {{ test(id: "1") }}'
+        test_name_query = 'query { test(id: "1") }'
 
         result = executor.execute(test_name_query)
 
@@ -32,7 +31,6 @@ class TestCustomTypes:
         assert result.data == expected
 
         assert executor.schema.query_type.fields["test"].type.of_type == GraphQLID
-
 
     def test_uuid_type(self):
         api = GraphQLAPI()

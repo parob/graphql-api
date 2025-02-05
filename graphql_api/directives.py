@@ -27,26 +27,27 @@ from graphql import (
     DEFAULT_DEPRECATION_REASON,
     StringValueNode,
     GraphQLEnumValue,
-    GraphQLInputType, GraphQLDeprecatedDirective, DirectiveLocation,
+    GraphQLInputType,
+    GraphQLDeprecatedDirective,
+    DirectiveLocation,
 )
 from graphql.language import ast
 from graphql.language.block_string import is_printable_as_block_string
 from graphql.pyutils import inspect
 
 
-
 class SchemaDirective(GraphQLDirective):
-
     def __init__(
-            self,
-            name: Optional[str] = None,
-            locations: Optional[Collection[DirectiveLocation]] = None,
-            args: Optional[Dict[str, GraphQLArgument]] = None,
-            is_repeatable: bool = False,
-            description: Optional[str] = None,
-            extensions: Optional[Dict[str, Any]] = None,
-            ast_node: Optional[ast.DirectiveDefinitionNode] = None,
-            directive: GraphQLDirective = None):
+        self,
+        name: Optional[str] = None,
+        locations: Optional[Collection[DirectiveLocation]] = None,
+        args: Optional[Dict[str, GraphQLArgument]] = None,
+        is_repeatable: bool = False,
+        description: Optional[str] = None,
+        extensions: Optional[Dict[str, Any]] = None,
+        ast_node: Optional[ast.DirectiveDefinitionNode] = None,
+        directive: GraphQLDirective = None,
+    ):
         if directive:
             self.proxy = True
             self.directive = directive
@@ -58,7 +59,7 @@ class SchemaDirective(GraphQLDirective):
                 is_repeatable=is_repeatable,
                 description=description,
                 extensions=extensions,
-                ast_node=ast_node
+                ast_node=ast_node,
             )
             self.proxy = False
             self.directive = self
@@ -71,6 +72,7 @@ class SchemaDirective(GraphQLDirective):
         from graphql_api import AppliedDirective
 
         from graphql_api.schema import add_applied_directives
+
         if len(args) > 0:
             func = args[0]
             if func and (
@@ -87,8 +89,8 @@ class SchemaDirective(GraphQLDirective):
 
 
 def print_applied_directives(value, printed_directives: list = None):
-
     from graphql_api.schema import get_applied_directives
+
     schema_directives = get_applied_directives(value)
     if schema_directives:
         directives_str = " ".join(sd.print() for sd in schema_directives)
@@ -158,13 +160,13 @@ def print_schema_definition(
         operation_types.append(f"  subscription: {subscription_type.name}")
 
     return (
-            print_description(schema)
-            + "schema"
-            + print_applied_directives(schema, printed_directives=printed_directives)
-            + " "
-            + "{\n"
-            + "\n".join(operation_types)
-            + "\n}"
+        print_description(schema)
+        + "schema"
+        + print_applied_directives(schema, printed_directives=printed_directives)
+        + " "
+        + "{\n"
+        + "\n".join(operation_types)
+        + "\n}"
     )
 
 
@@ -221,10 +223,10 @@ def print_type(type_: GraphQLNamedType, printed_directives: list = None) -> str:
 
 def print_scalar(type_: GraphQLScalarType, printed_directives: list = None) -> str:
     return (
-            print_description(type_)
-            + f"scalar {type_.name}"
-            + print_specified_by_url(type_)
-            + print_applied_directives(type_, printed_directives)  # ADDED
+        print_description(type_)
+        + f"scalar {type_.name}"
+        + print_specified_by_url(type_)
+        + print_applied_directives(type_, printed_directives)  # ADDED
     )
 
 
@@ -237,11 +239,11 @@ def print_implemented_interfaces(
 
 def print_object(type_: GraphQLObjectType, printed_directives: list = None) -> str:
     return (
-            print_description(type_)
-            + f"type {type_.name}"
-            + print_implemented_interfaces(type_)
-            + print_applied_directives(type_, printed_directives)  # ADDED
-            + print_fields(type_, printed_directives)
+        print_description(type_)
+        + f"type {type_.name}"
+        + print_implemented_interfaces(type_)
+        + print_applied_directives(type_, printed_directives)  # ADDED
+        + print_fields(type_, printed_directives)
     )
 
 
@@ -249,11 +251,11 @@ def print_interface(
     type_: GraphQLInterfaceType, printed_directives: list = None
 ) -> str:
     return (
-            print_description(type_)
-            + f"interface {type_.name}"
-            + print_implemented_interfaces(type_)
-            + print_applied_directives(type_, printed_directives)  # ADDED
-            + print_fields(type_, printed_directives)
+        print_description(type_)
+        + f"interface {type_.name}"
+        + print_implemented_interfaces(type_)
+        + print_applied_directives(type_, printed_directives)  # ADDED
+        + print_fields(type_, printed_directives)
     )
 
 
@@ -261,10 +263,10 @@ def print_union(type_: GraphQLUnionType, printed_directives: list = None) -> str
     types = type_.types
     possible_types = " = " + " | ".join(t.name for t in types) if types else ""
     return (
-            print_description(type_)
-            + f"union {type_.name}"
-            + possible_types
-            + print_applied_directives(type_, printed_directives)
+        print_description(type_)
+        + f"union {type_.name}"
+        + possible_types
+        + print_applied_directives(type_, printed_directives)
     )  # ADDED
 
 
@@ -277,10 +279,10 @@ def print_enum(type_: GraphQLEnumType, printed_directives: list = None) -> str:
         for i, (name, value) in enumerate(type_.values.items())
     ]
     return (
-            print_description(type_)
-            + f"enum {type_.name}"
-            + print_block(values)
-            + print_applied_directives(type_, printed_directives)
+        print_description(type_)
+        + f"enum {type_.name}"
+        + print_block(values)
+        + print_applied_directives(type_, printed_directives)
     )  # ADDED
 
 
@@ -294,10 +296,10 @@ def print_input_object(
         for i, (name, field) in enumerate(type_.fields.items())
     ]
     return (
-            print_description(type_)
-            + f"input {type_.name}"
-            + print_block(fields)
-            + print_applied_directives(type_, printed_directives)
+        print_description(type_)
+        + f"input {type_.name}"
+        + print_block(fields)
+        + print_applied_directives(type_, printed_directives)
     )  # ADDED
 
 
@@ -355,9 +357,9 @@ def print_input_value(
     if default_ast:
         arg_decl += f" = {print_ast(default_ast)}"
     return (
-            arg_decl
-            + print_deprecated(arg.deprecation_reason)
-            + print_applied_directives(arg, printed_directives)
+        arg_decl
+        + print_deprecated(arg.deprecation_reason)
+        + print_applied_directives(arg, printed_directives)
     )  # ADDED
 
 
@@ -419,5 +421,6 @@ def print_description(
 def print_value(value: Any, type_: GraphQLInputType) -> str:
     """@deprecated: Convenience function for printing a Python value"""
     return print_ast(ast_from_value(value, type_))  # type: ignore
+
 
 deprecated = SchemaDirective(directive=GraphQLDeprecatedDirective)

@@ -13,10 +13,7 @@ class TestFederation:
     def test_federation_schema(self):
         names = {"1": "Rob", "2": "Tom"}
 
-        custom = SchemaDirective(
-            name="custom",
-            locations=[DirectiveLocation.OBJECT]
-        )
+        custom = SchemaDirective(name="custom", locations=[DirectiveLocation.OBJECT])
 
         @custom
         @key(fields="name")
@@ -58,10 +55,12 @@ class TestFederation:
         api = GraphQLAPI(root_type=Root, types=[Food], federation=True)
         schema, _ = api.build_schema()
 
-        link(**{
-            "url": "https://myspecs.dev/myCustomDirective/v1.0",
-            "import": ["@custom"],
-        })(schema)
+        link(
+            **{
+                "url": "https://myspecs.dev/myCustomDirective/v1.0",
+                "import": ["@custom"],
+            }
+        )(schema)
 
         response = api.execute("{users{id,name}}")
 
@@ -110,19 +109,36 @@ class TestFederation:
         assert "@link(url:" in sdl
         assert 'import: ["@key"])' in sdl
 
-
     def test_federation_example(self):
-
         api = federation_example_api()
         schema, meta = api.build_schema()
 
-        response = api.execute('query { _entities(representations: ["{ \\"__typename\\": \\"User\\", \\"email\\": \\"support@apollographql.com\\" }"]) { ...on User { email name } } }')
+        response = api.execute(
+            'query { _entities(representations: ["{ \\"__typename\\": \\"User\\", '
+            '\\"email\\": \\"support@apollographql.com\\" }"]) '
+            "{ ...on User { email name } } }"
+        )
 
-        assert response.data == {'_entities': [{'email': 'support@apollographql.com', 'name': 'Jane Smith'}]}
+        assert response.data == {
+            "_entities": [{"email": "support@apollographql.com", "name": "Jane Smith"}]
+        }
 
-        response = api.execute('query { _entities(representations: ["{ \\"__typename\\": \\"DeprecatedProduct\\", \\"sku\\": \\"apollo-federation-v1\\", \\"package\\": \\"@apollo/federation-v1\\" }"]) { ...on DeprecatedProduct { sku package reason } } }')
+        response = api.execute(
+            'query { _entities(representations: ["{ \\"__typename\\": '
+            '\\"DeprecatedProduct\\", \\"sku\\": \\"apollo-federation-v1\\", '
+            '\\"package\\": \\"@apollo/federation-v1\\" }"]) '
+            "{ ...on DeprecatedProduct { sku package reason } } }"
+        )
 
-        assert response.data == {'_entities': [{'package': '@apollo/federation-v1', 'reason': 'Migrate to Federation V2', 'sku': 'apollo-federation-v1'}]}
+        assert response.data == {
+            "_entities": [
+                {
+                    "package": "@apollo/federation-v1",
+                    "reason": "Migrate to Federation V2",
+                    "sku": "apollo-federation-v1",
+                }
+            ]
+        }
 
         printed_schema = graphql_print_schema(schema)
         assert printed_schema

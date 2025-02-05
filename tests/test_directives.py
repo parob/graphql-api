@@ -63,10 +63,8 @@ class TestGraphQLDirectives:
         assert "directive @test1" in printed_schema
 
     def test_builtin_directive(self):
-
         @type
         class TestSchema:
-
             @deprecated(reason="deprecated reason")
             @field
             def test(self, a: int) -> int:
@@ -77,7 +75,7 @@ class TestGraphQLDirectives:
         schema, _ = api.build_schema()
         printed_schema = print_schema(schema)
 
-        assert "@deprecated(reason: \"deprecated reason\")" in printed_schema
+        assert '@deprecated(reason: "deprecated reason")' in printed_schema
 
     def test_schema_directive_object(self):
         key = SchemaDirective(
@@ -91,9 +89,7 @@ class TestGraphQLDirectives:
         )
 
         @type(
-            directives=[
-                AppliedDirective(directive=key, args={"fields": "object_key"})
-            ]
+            directives=[AppliedDirective(directive=key, args={"fields": "object_key"})]
         )
         class Person:
             @field
@@ -132,9 +128,7 @@ class TestGraphQLDirectives:
         @type
         class TestSchema:
             @field(
-                directives=[
-                    AppliedDirective(directive=tag, args={"name": "field_tag"})
-                ]
+                directives=[AppliedDirective(directive=tag, args={"name": "field_tag"})]
             )
             def test(self, a: int) -> int:
                 return a + 1

@@ -31,8 +31,7 @@ from graphql_api.schema import get_applied_directives, get_directives
 
 
 def add_federation_types(
-        api: GraphQLAPI,
-        sdl_strip_federation_definitions: bool = True
+    api: GraphQLAPI, sdl_strip_federation_definitions: bool = True
 ):
     @type
     class _Service:
@@ -40,7 +39,8 @@ def add_federation_types(
         def sdl(self, context: GraphQLContext) -> str:
             def directive_filter(n):
                 return not is_specified_directive(n) and (
-                        not sdl_strip_federation_definitions or n not in federation_directives
+                    not sdl_strip_federation_definitions
+                    or n not in federation_directives
                 )
 
             def type_filter(n):
@@ -103,10 +103,14 @@ def add_entity_type(api: GraphQLAPI, schema: GraphQLSchema):
                 return True
         return False
 
-    python_entities = [type_registry.get(t) for t in schema.type_map.values() if is_entity(t)]
+    python_entities = [
+        type_registry.get(t) for t in schema.type_map.values() if is_entity(t)
+    ]
     python_entities.append(UnionFlagType)
 
-    union_entity_type: GraphQLType = api.query_mapper.map_to_union(Union[tuple(python_entities)])
+    union_entity_type: GraphQLType = api.query_mapper.map_to_union(
+        Union[tuple(python_entities)]
+    )
     union_entity_type.name = "_Entity"
 
     # noinspection PyTypeChecker
@@ -133,7 +137,9 @@ def link_directives(schema: GraphQLSchema):
             if directive in federation_directives:
                 directives[name] = directive
 
-    link(**{
-        "url": "https://specs.apollo.dev/federation/v2.7",
-        "import": [("@" + d.name) for d in directives.values()],
-    })(schema)
+    link(
+        **{
+            "url": "https://specs.apollo.dev/federation/v2.7",
+            "import": [("@" + d.name) for d in directives.values()],
+        }
+    )(schema)
