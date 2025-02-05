@@ -20,6 +20,7 @@ from graphql_api import GraphQLError
 from graphql_api.executor import GraphQLExecutor, GraphQLBaseExecutor
 from graphql_api.reduce import GraphQLSchemaReducer, GraphQLFilter
 from graphql_api.mapper import GraphQLTypeMapper
+from graphql_api.schema import get_applied_directives, add_applied_directives
 
 
 class GraphQLFieldContext:
@@ -277,9 +278,8 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
         # Federation support
         if self.federation:
-            from graphql_api.federation.federation import apply_federation_api
-
-            apply_federation_api(self)
+            from graphql_api.federation.federation import add_federation_types
+            add_federation_types(self)
 
         meta: Dict = {}
         query: Optional[GraphQLObjectType] = None
@@ -376,6 +376,10 @@ class GraphQLAPI(GraphQLBaseExecutor):
             directives=self.directives,
         )
 
+        api_directives = get_applied_directives(self)
+        if api_directives:
+            add_applied_directives(schema, api_directives)
+
         # If root_type implements GraphQLRootTypeDelegate, allow a final check
         if self.root_type and issubclass(self.root_type, GraphQLRootTypeDelegate):
             schema = self.root_type.validate_graphql_schema(schema)
@@ -384,9 +388,10 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
         # Post-federation modifications
         if self.federation:
-            from graphql_api.federation.federation import apply_federation_schema
+            from graphql_api.federation.federation import add_entity_type, link_directives
 
-            apply_federation_schema(self, schema)
+            add_entity_type(self, schema)
+            link_directives(schema)
 
         return schema, meta
 

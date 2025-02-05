@@ -30,14 +30,17 @@ from graphql_api.federation.types import federation_types, _Any
 from graphql_api.schema import get_applied_directives, get_directives
 
 
-def apply_federation_api(api: GraphQLAPI, strip_federation_definitions: bool = True):
+def add_federation_types(
+        api: GraphQLAPI,
+        sdl_strip_federation_definitions: bool = True
+):
     @type
     class _Service:
         @field
         def sdl(self, context: GraphQLContext) -> str:
             def directive_filter(n):
                 return not is_specified_directive(n) and (
-                    not strip_federation_definitions or n not in federation_directives
+                        not sdl_strip_federation_definitions or n not in federation_directives
                 )
 
             def type_filter(n):
@@ -45,7 +48,7 @@ def apply_federation_api(api: GraphQLAPI, strip_federation_definitions: bool = T
                     not is_specified_scalar_type(n)
                     and not is_introspection_type(n)
                     and (
-                        not strip_federation_definitions
+                        not sdl_strip_federation_definitions
                         or (n not in federation_types and n.name != "_Service")
                     )
                 )
@@ -71,7 +74,7 @@ def apply_federation_api(api: GraphQLAPI, strip_federation_definitions: bool = T
     api.directives += federation_directives
 
 
-def apply_federation_schema(api: GraphQLAPI, schema: GraphQLSchema):
+def add_entity_type(api: GraphQLAPI, schema: GraphQLSchema):
     type_registry = api.query_mapper.reverse_registry
 
     def resolve_entities(root, info, representations: List[Dict]):
@@ -85,7 +88,12 @@ def apply_federation_schema(api: GraphQLAPI, schema: GraphQLSchema):
                 # noinspection PyProtectedMember
                 _entities.append(entity_python_type._resolve_reference(representation))
             else:
-                _entities.append(None)
+                raise NotImplementedError(
+                    f"Federation method '{entity_python_type.__name__}"
+                    f"._resolve_reference(representation: _Any!): _Entity' is not "
+                    f"implemented. Implement the '_resolve_reference' on class "
+                    f"'{entity_python_type.__name__}' to enable Entity support."
+                )
 
         return _entities
 
@@ -95,17 +103,17 @@ def apply_federation_schema(api: GraphQLAPI, schema: GraphQLSchema):
                 return True
         return False
 
-    entities = [type_registry.get(t) for t in schema.type_map.values() if is_entity(t)]
-    entities.append(UnionFlagType)
+    python_entities = [type_registry.get(t) for t in schema.type_map.values() if is_entity(t)]
+    python_entities.append(UnionFlagType)
 
-    union_type: GraphQLType = api.query_mapper.map_to_union(Union[tuple(entities)])
-    union_type.name = "_Entity"
+    union_entity_type: GraphQLType = api.query_mapper.map_to_union(Union[tuple(python_entities)])
+    union_entity_type.name = "_Entity"
 
     # noinspection PyTypeChecker
-    schema.type_map["_Entity"] = union_type
+    schema.type_map["_Entity"] = union_entity_type
 
     schema.query_type.fields["_entities"] = GraphQLField(
-        type_=GraphQLNonNull(GraphQLList(union_type)),
+        type_=GraphQLNonNull(GraphQLList(union_entity_type)),
         args={
             "representations": GraphQLArgument(
                 type_=GraphQLNonNull(GraphQLList(GraphQLNonNull(_Any)))
@@ -114,6 +122,10 @@ def apply_federation_schema(api: GraphQLAPI, schema: GraphQLSchema):
         resolve=resolve_entities,
     )
 
+    return schema
+
+
+def link_directives(schema: GraphQLSchema):
     directives = {}
 
     for _type in schema.type_map.values():
@@ -125,5 +137,3 @@ def apply_federation_schema(api: GraphQLAPI, schema: GraphQLSchema):
         "url": "https://specs.apollo.dev/federation/v2.7",
         "import": [("@" + d.name) for d in directives.values()],
     })(schema)
-
-    return schema

@@ -723,51 +723,58 @@ class TestGraphQLRemote:
         reason=f"The UTCTime API '{utc_time_api_url}' is unavailable",
     )
     def test_remote_get_async(self):
-        utc_time_api = GraphQLAPI()
+        sync_time = None
+        async_time = None
 
-        remote_executor = GraphQLRemoteExecutor(url=self.utc_time_api_url)
+        for _ in range(3):
+            utc_time_api = GraphQLAPI()
 
-        @utc_time_api.type(is_root_type=True)
-        class UTCTimeAPI:
-            @utc_time_api.field
-            def now(self) -> str:
-                pass
+            remote_executor = GraphQLRemoteExecutor(url=self.utc_time_api_url)
 
-        # noinspection PyTypeChecker
-        api: UTCTimeAPI = GraphQLRemoteObject(
-            executor=remote_executor, api=utc_time_api
-        )
+            @utc_time_api.type(is_root_type=True)
+            class UTCTimeAPI:
+                @utc_time_api.field
+                def now(self) -> str:
+                    pass
 
-        request_count = 10
+            # noinspection PyTypeChecker
+            api: UTCTimeAPI = GraphQLRemoteObject(
+                executor=remote_executor, api=utc_time_api
+            )
 
-        # Sync test
-        sync_start = time.time()
-        sync_utc_now_list = []
+            request_count = 5
 
-        for _ in range(0, request_count):
-            sync_utc_now_list.append(api.now())
-            # noinspection PyUnresolvedReferences
-            api.clear_cache()  # Clear the API cache so that it re-fetches the request.
-        sync_time = time.time() - sync_start
+            # Sync test
+            sync_start = time.time()
+            sync_utc_now_list = []
 
-        assert len(set(sync_utc_now_list)) == request_count
-
-        # Async test
-        async_start = time.time()
-
-        async def fetch():
-            tasks = []
             for _ in range(0, request_count):
+                sync_utc_now_list.append(api.now())
                 # noinspection PyUnresolvedReferences
-                tasks.append(api.call_async("now"))
-            return await asyncio.gather(*tasks)
+                api.clear_cache()  # Clear the API cache so that it re-fetches the request.
+            sync_time = time.time() - sync_start
 
-        async_utc_now_list = asyncio.run(fetch())
+            assert len(set(sync_utc_now_list)) == request_count
 
-        async_time = time.time() - async_start
-        assert len(set(async_utc_now_list)) == request_count
+            # Async test
+            async_start = time.time()
 
-        assert sync_time > async_time
+            async def fetch():
+                tasks = []
+                for _ in range(0, request_count):
+                    # noinspection PyUnresolvedReferences
+                    tasks.append(api.call_async("now"))
+                return await asyncio.gather(*tasks)
+
+            async_utc_now_list = asyncio.run(fetch())
+
+            async_time = time.time() - async_start
+            assert len(set(async_utc_now_list)) == request_count
+
+            if sync_time > async_time * 2:
+                break
+
+        assert sync_time > async_time * 2
 
     # noinspection DuplicatedCode,PyUnusedLocal
     @pytest.mark.skipif(

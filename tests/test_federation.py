@@ -1,13 +1,12 @@
-from typing import List, Optional
+from typing import List
 
-from graphql import print_schema as graphql_print_schema, DirectiveLocation, GraphQLID
+from graphql import print_schema as graphql_print_schema, DirectiveLocation
 
-from graphql_api import GraphQLAPI, field, type, AppliedDirective
-from graphql_api.directives import SchemaDirective, deprecated
+from graphql_api import GraphQLAPI, field, type
+from graphql_api.directives import SchemaDirective
 
-from graphql_api.federation.directives import key, link, composeDirective, provides, \
-    tag, interfaceObject, external, requires, inaccessible, shareable, override
-from graphql_api.schema import add_applied_directives
+from graphql_api.federation.directives import key, link
+from tests.test_federation_example import federation_example_api
 
 
 class TestFederation:
@@ -76,6 +75,12 @@ class TestFederation:
         )
         assert response.data == {"_entities": [{"id": "1", "name": "Rob"}]}
 
+        response = api.execute(
+            '{_entities(representations:["{\\"__typename\\": \\"Food\\",\\"name\\": '
+            '\\"apple\\"}"]) { ... on Food { name } } }'
+        )
+        assert "not implemented" in str(response.errors)
+
         printed_schema = graphql_print_schema(schema)
         assert printed_schema
 
@@ -108,187 +113,16 @@ class TestFederation:
 
     def test_federation_example(self):
 
-        custom = SchemaDirective(
-            name="custom",
-            locations=[DirectiveLocation.OBJECT]
-        )
+        api = federation_example_api()
+        schema, meta = api.build_schema()
 
+        response = api.execute('query { _entities(representations: ["{ \\"__typename\\": \\"User\\", \\"email\\": \\"support@apollographql.com\\" }"]) { ...on User { email name } } }')
 
-        @type
-        class ProductVariation:
-            @field
-            def id(self) -> GraphQLID:
-                return "1"
+        assert response.data == {'_entities': [{'email': 'support@apollographql.com', 'name': 'Jane Smith'}]}
 
-        @type
-        class CaseStudy:
-            @field
-            def case_number(self) -> GraphQLID:
-                return "1"
+        response = api.execute('query { _entities(representations: ["{ \\"__typename\\": \\"DeprecatedProduct\\", \\"sku\\": \\"apollo-federation-v1\\", \\"package\\": \\"@apollo/federation-v1\\" }"]) { ...on DeprecatedProduct { sku package reason } } }')
 
-            @field
-            def description(self) -> Optional[str]:
-                return ""
-
-        @key(fields="study { caseNumber }")
-        @type
-        class ProductResearch:
-            @field
-            def study(self) -> CaseStudy:
-                return CaseStudy()
-
-            @field
-            def outcome(self) -> Optional[str]:
-                return ""
-
-
-        @shareable
-        @type
-        class ProductDimension:
-            @field
-            def size(self) -> Optional[str]:
-                return ""
-
-            @field
-            def weight(self) -> Optional[float]:
-                return 0.0
-
-            @inaccessible
-            @field
-            def unit(self) -> Optional[str]:
-                return ""
-
-        @key(fields="email")
-        @type
-        class User:
-            @requires(fields="totalProductsCreated yearsOfEmployment")
-            @field
-            def average_products_created_per_year(self) -> Optional[int]:
-                return 0
-
-            @external
-            @field
-            def email(self) -> GraphQLID:
-                return ""
-
-            @override(from_="users")
-            @field
-            def name(self) -> Optional[str]:
-                return ""
-
-            @external
-            @field
-            def total_products_created(self) -> Optional[int]:
-                return 0
-
-            @external
-            @field
-            def years_of_employment(self) -> int:
-                return 0
-
-        @key(fields="sku package")
-        @type
-        class DeprecatedProduct:
-            @field
-            def sku(self) -> str:
-                return ""
-
-            @field
-            def package(self) -> str:
-                return ""
-
-            @field
-            def reason(self) -> Optional[str]:
-                return ""
-
-            @field
-            def created_by(self) -> Optional[User]:
-                return None
-
-        @interfaceObject
-        @key(fields="id")
-        @type
-        class Inventory:
-            @field
-            def id(self) -> GraphQLID:
-                return "1"
-
-            @field
-            def deprecated_products(self) -> List[DeprecatedProduct]:
-                return []
-
-
-        @custom
-        @key(fields="id")
-        @key(fields="sku package")
-        @key(fields="sku variation { id }")
-        @type
-        class Product:
-            @classmethod
-            def _resolve_reference(cls, reference):
-                return Product(id=reference["id"])
-
-            @field
-            def id(self) -> GraphQLID:
-                return "1"
-
-            @field
-            def sku(self) -> Optional[str]:
-                return ""
-
-            @field
-            def package(self) -> Optional[str]:
-                return ""
-
-            @field
-            def variation(self) -> Optional[ProductVariation]:
-                return None
-
-            @field
-            def dimensions(self) -> Optional[ProductDimension]:
-                return None
-
-            @provides(fields="totalProductsCreated")
-            @field
-            def created_by(self) -> Optional[User]:
-                return None
-
-            @tag(name="internal")
-            @field
-            def notes(self) -> Optional[str]:
-                return ""
-
-            @field
-            def research(self) -> List[ProductResearch]:
-                return []
-
-        @type
-        class Root:
-            @field
-            def product(self, id: GraphQLID) -> Product:
-                return Product()
-
-            @deprecated(reason="Use product query instead")
-            @field
-            def deprecated_product(self, sku: str, package: str) -> DeprecatedProduct:
-                return DeprecatedProduct()
-
-
-        api = GraphQLAPI(root_type=Root, federation=True)
-        schema, _ = api.build_schema()
-
-        link(**{
-            "url": "https://myspecs.dev/myCustomDirective/v1.0",
-            "import": ["@custom"],
-        })(schema)
-
-        composeDirective(name="@custom")(schema)
-
-        response = api.execute("{users{id,name}}")
-
-        # assert response.data == {
-        #     "users": [{"id": "1", "name": "Rob"}, {"id": "2", "name": "Tom"}]
-        # }
+        assert response.data == {'_entities': [{'package': '@apollo/federation-v1', 'reason': 'Migrate to Federation V2', 'sku': 'apollo-federation-v1'}]}
 
         printed_schema = graphql_print_schema(schema)
         assert printed_schema
