@@ -167,7 +167,7 @@ class User:
     def email(self) -> GraphQLID:
         return self.data.get("email")
 
-    @override(from_="users")
+    @override(**{"from": "users"})
     @field
     def name(self) -> Optional[str]:
         return self.data.get("name")
