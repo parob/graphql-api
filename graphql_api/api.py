@@ -385,12 +385,6 @@ class GraphQLAPI(GraphQLBaseExecutor):
         if api_directives:
             add_applied_directives(schema, api_directives)
 
-        # If root_type implements GraphQLRootTypeDelegate, allow a final check
-        if self.root_type and issubclass(self.root_type, GraphQLRootTypeDelegate):
-            schema = self.root_type.validate_graphql_schema(schema)
-
-        self._cached_schema = (schema, meta)
-
         # Post-federation modifications
         if self.federation:
             from graphql_api.federation.federation import (
@@ -400,6 +394,12 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
             add_entity_type(self, schema)
             link_directives(schema)
+
+        # If root_type implements GraphQLRootTypeDelegate, allow a final check
+        if self.root_type and issubclass(self.root_type, GraphQLRootTypeDelegate):
+            schema = self.root_type.validate_graphql_schema(schema)
+
+        self._cached_schema = (schema, meta)
 
         return schema, meta
 
