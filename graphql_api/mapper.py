@@ -861,7 +861,11 @@ def get_value(type_, schema, key):
 def is_graphql(type_, schema):
     graphql = getattr(type_, "_graphql", None)
     schemas = getattr(type_, "_schemas", {})
-    valid_schema = schema in schemas.keys() or None in schemas.keys()
+    # noinspection PyBroadException
+    try:
+        valid_schema = schema in schemas.keys() or None in schemas.keys()
+    except Exception:
+        valid_schema = False
     return graphql and schemas and valid_schema
 
 
