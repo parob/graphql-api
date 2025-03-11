@@ -43,7 +43,8 @@ def available(url, method="GET"):
 
     return False
 
-def available_v2(url, method="GET"):
+
+def unavailable(url, method="GET"):
     try:
         response = request(
             method,
@@ -63,6 +64,7 @@ def available_v2(url, method="GET"):
         return True
 
     return False
+
 
 # noinspection PyPep8Naming,DuplicatedCode
 class TestGraphQL:
