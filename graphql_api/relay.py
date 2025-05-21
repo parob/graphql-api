@@ -1,8 +1,7 @@
 from typing import List
-
 from uuid import UUID, uuid4
 
-from graphql_api import type, field
+from graphql_api import field, type
 
 
 @type(interface=True)

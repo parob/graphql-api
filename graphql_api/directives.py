@@ -1,36 +1,17 @@
 from inspect import isfunction
-from typing import Dict, Callable, Optional, cast, Union, List, Any, Collection
-from graphql import (
-    GraphQLDirective,
-    GraphQLSchema,
-    is_specified_directive,
-    is_introspection_type,
-    GraphQLNamedType,
-    is_specified_scalar_type,
-    is_scalar_type,
-    GraphQLScalarType,
-    is_object_type,
-    GraphQLObjectType,
-    is_interface_type,
-    GraphQLInterfaceType,
-    is_union_type,
-    GraphQLUnionType,
-    is_enum_type,
-    GraphQLEnumType,
-    is_input_object_type,
-    GraphQLInputObjectType,
-    GraphQLArgument,
-    GraphQLField,
-    GraphQLInputField,
-    ast_from_value,
-    print_ast,
-    DEFAULT_DEPRECATION_REASON,
-    StringValueNode,
-    GraphQLEnumValue,
-    GraphQLInputType,
-    GraphQLDeprecatedDirective,
-    DirectiveLocation,
-)
+from typing import Any, Callable, Collection, Dict, List, Optional, Union, cast
+
+from graphql import (DEFAULT_DEPRECATION_REASON, DirectiveLocation,
+                     GraphQLArgument, GraphQLDeprecatedDirective,
+                     GraphQLDirective, GraphQLEnumType, GraphQLEnumValue,
+                     GraphQLField, GraphQLInputField, GraphQLInputObjectType,
+                     GraphQLInputType, GraphQLInterfaceType, GraphQLNamedType,
+                     GraphQLObjectType, GraphQLScalarType, GraphQLSchema,
+                     GraphQLUnionType, StringValueNode, ast_from_value,
+                     is_enum_type, is_input_object_type, is_interface_type,
+                     is_introspection_type, is_object_type, is_scalar_type,
+                     is_specified_directive, is_specified_scalar_type,
+                     is_union_type, print_ast)
 from graphql.language import ast
 from graphql.language.block_string import is_printable_as_block_string
 from graphql.pyutils import inspect
@@ -64,7 +45,6 @@ class SchemaDirective(GraphQLDirective):
 
     def __call__(self, *args, **kwargs):
         from graphql_api import AppliedDirective
-
         from graphql_api.schema import add_applied_directives
 
         if len(args) > 0:
@@ -225,7 +205,7 @@ def print_scalar(type_: GraphQLScalarType, printed_directives: list = None) -> s
 
 
 def print_implemented_interfaces(
-    type_: Union[GraphQLObjectType, GraphQLInterfaceType]
+    type_: Union[GraphQLObjectType, GraphQLInterfaceType],
 ) -> str:
     interfaces = type_.interfaces
     return " implements " + " & ".join(i.name for i in interfaces) if interfaces else ""

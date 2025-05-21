@@ -1,16 +1,9 @@
 import json
 from typing import Dict, List, Union
 
-from graphql import (
-    GraphQLDirective,
-    GraphQLNamedType,
-    GraphQLNonNull,
-    GraphQLList,
-    is_object_type,
-    is_interface_type,
-    GraphQLField,
-    GraphQLType,
-)
+from graphql import (GraphQLDirective, GraphQLField, GraphQLList,
+                     GraphQLNamedType, GraphQLNonNull, GraphQLType,
+                     is_interface_type, is_object_type)
 
 from graphql_api.directives import SchemaDirective
 from graphql_api.utils import to_camel_case

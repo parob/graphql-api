@@ -1,71 +1,38 @@
+import collections.abc
 import enum
 import inspect
-import collections.abc
-
-import typing
 import types
-import typing_inspect
-
+import typing
+from datetime import date, datetime
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type, Union
 from uuid import UUID
 
-from typing import List, Union, Type, Callable, Tuple, Any, Dict, Set, Optional
-
-from typing_inspect import get_origin
-from datetime import datetime, date
-
-from graphql import (
-    GraphQLObjectType,
-    GraphQLField,
-    GraphQLString,
-    GraphQLList,
-    GraphQLBoolean,
-    GraphQLInt,
-    GraphQLFloat,
-    DirectiveLocation,
-    is_union_type,
-)
-
-from graphql.type.definition import (
-    GraphQLType,
-    GraphQLUnionType,
-    GraphQLInterfaceType,
-    GraphQLArgument,
-    GraphQLInputObjectType,
-    GraphQLEnumType,
-    GraphQLScalarType,
-    GraphQLNonNull,
-    GraphQLInputField,
-    is_object_type,
-    is_interface_type,
-    is_enum_type,
-    is_input_type,
-    is_scalar_type,
-    is_abstract_type,
-)
-
+import typing_inspect
+from graphql import (DirectiveLocation, GraphQLBoolean, GraphQLField,
+                     GraphQLFloat, GraphQLInt, GraphQLList, GraphQLObjectType,
+                     GraphQLString, is_union_type)
 from graphql.pyutils import Undefined, UndefinedType
+from graphql.type.definition import (GraphQLArgument, GraphQLEnumType,
+                                     GraphQLInputField, GraphQLInputObjectType,
+                                     GraphQLInterfaceType, GraphQLNonNull,
+                                     GraphQLScalarType, GraphQLType,
+                                     GraphQLUnionType, is_abstract_type,
+                                     is_enum_type, is_input_type,
+                                     is_interface_type, is_object_type,
+                                     is_scalar_type)
+from typing_inspect import get_origin
 
 from graphql_api.context import GraphQLContext
-from graphql_api.schema import get_applied_directives, add_applied_directives
-from graphql_api.types import (
-    GraphQLBytes,
-    GraphQLUUID,
-    GraphQLDateTime,
-    GraphQLJSON,
-    JsonType,
-    GraphQLMappedEnumType,
-    GraphQLDate,
-)
-
-from graphql_api.utils import (
-    to_camel_case,
-    to_snake_case,
-    to_input_value,
-    to_camel_case_text,
-    has_single_type_union_return,
-)
+from graphql_api.dataclass_mapping import (type_from_dataclass,
+                                           type_is_dataclass)
 from graphql_api.exception import GraphQLBaseException
-from graphql_api.dataclass_mapping import type_is_dataclass, type_from_dataclass
+from graphql_api.schema import add_applied_directives, get_applied_directives
+from graphql_api.types import (GraphQLBytes, GraphQLDate, GraphQLDateTime,
+                               GraphQLJSON, GraphQLMappedEnumType, GraphQLUUID,
+                               JsonType)
+from graphql_api.utils import (has_single_type_union_return, to_camel_case,
+                               to_camel_case_text, to_input_value,
+                               to_snake_case)
 
 """
 class AnyObject:

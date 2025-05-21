@@ -1,27 +1,17 @@
-from typing import List, Any, Dict, Tuple, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 # noinspection PyPackageRequirements
-from graphql import (
-    GraphQLSchema,
-    GraphQLObjectType,
-    GraphQLField,
-    GraphQLString,
-    is_named_type,
-    ExecutionResult,
-    specified_directives,
-    GraphQLDirective,
-    GraphQLNamedType,
-    GraphQLScalarType,
-    Middleware,
-)
+from graphql import (ExecutionResult, GraphQLDirective, GraphQLField,
+                     GraphQLNamedType, GraphQLObjectType, GraphQLScalarType,
+                     GraphQLSchema, GraphQLString, Middleware, is_named_type,
+                     specified_directives)
 
-from graphql_api import GraphQLError
+from graphql_api.error import GraphQLError
 from graphql_api.directives import SchemaDirective
-
-from graphql_api.executor import GraphQLExecutor, GraphQLBaseExecutor
-from graphql_api.reduce import GraphQLSchemaReducer, GraphQLFilter
+from graphql_api.executor import GraphQLBaseExecutor, GraphQLExecutor
 from graphql_api.mapper import GraphQLTypeMapper
-from graphql_api.schema import get_applied_directives, add_applied_directives
+from graphql_api.reduce import GraphQLFilter, GraphQLSchemaReducer
+from graphql_api.schema import add_applied_directives, get_applied_directives
 
 
 class GraphQLFieldContext:
@@ -61,9 +51,9 @@ setattr(GraphQLScalarType, "__call__", _disable_scalar_type_call)
 def tag_value(
     value,
     graphql_type: str,
-    schema: "GraphQLAPI" = None,
-    meta: Dict = None,
-    directives: List = None,
+    schema: Optional["GraphQLAPI"] = None,
+    meta: Optional[Dict] = None,
+    directives: Optional[List] = None,
     is_root_type: bool = False,
 ):
     if not hasattr(value, "_graphql"):
@@ -86,7 +76,7 @@ def tag_value(
 
     from graphql_api.schema import add_applied_directives
 
-    add_applied_directives(value, directives)
+    add_applied_directives(value, directives or [])
 
     if is_root_type:
         if graphql_type != "object":
@@ -338,7 +328,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
                 mutation_types = set()
 
             # Collect all types
-            collected_types = [
+            collected_types = [  # type: ignore[assignment]
                 t
                 for t in list(query_types | mutation_types | self.types)
                 if is_named_type(t)
@@ -387,10 +377,8 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
         # Post-federation modifications
         if self.federation:
-            from graphql_api.federation.federation import (
-                add_entity_type,
-                link_directives,
-            )
+            from graphql_api.federation.federation import (add_entity_type,
+                                                           link_directives)
 
             add_entity_type(self, schema)
             link_directives(schema)

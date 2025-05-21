@@ -1,21 +1,11 @@
-from graphql import (
-    DirectiveLocation,
-    GraphQLArgument,
-    GraphQLNonNull,
-    GraphQLBoolean,
-    GraphQLString,
-    GraphQLList,
-)
+from graphql import (DirectiveLocation, GraphQLArgument, GraphQLBoolean,
+                     GraphQLList, GraphQLNonNull, GraphQLString)
 
 from graphql_api.directives import SchemaDirective
-from graphql_api.federation.types import (
-    FieldSet,
-    LinkImport,
-    FederationContextFieldValue,
-    FederationScope,
-    FederationPolicy,
-    LinkPurposeEnum,
-)
+from graphql_api.federation.types import (FederationContextFieldValue,
+                                          FederationPolicy, FederationScope,
+                                          FieldSet, LinkImport,
+                                          LinkPurposeEnum)
 
 external = SchemaDirective(
     name="external",

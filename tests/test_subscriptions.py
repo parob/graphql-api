@@ -1,17 +1,10 @@
-from asyncio import sleep, create_task, wait
+from asyncio import create_task, sleep, wait
 from dataclasses import dataclass
 
 import pytest
-from graphql import (
-    GraphQLSchema,
-    GraphQLObjectType,
-    GraphQLField,
-    GraphQLInt,
-    subscribe,
-    parse,
-    MapAsyncIterator,
-    graphql,
-)
+from graphql import (GraphQLField, GraphQLInt, GraphQLObjectType,
+                     GraphQLSchema, MapAsyncIterator, graphql, parse,
+                     subscribe)
 from graphql.pyutils import SimplePubSub
 
 from graphql_api import GraphQLAPI

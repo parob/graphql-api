@@ -1,25 +1,17 @@
 from typing import Any, Dict, Optional
 
-from graphql import (
-    graphql,
-    graphql_sync,
-    ExecutionContext,
-    GraphQLError,
-    GraphQLOutputType,
-    Middleware,
-)
+from graphql import (ExecutionContext, GraphQLError, GraphQLOutputType,
+                     Middleware, graphql, graphql_sync)
 from graphql.execution import ExecutionResult
 from graphql.type.schema import GraphQLSchema
 
 from graphql_api.context import GraphQLContext
-from graphql_api.middleware import (
-    middleware_field_context,
-    middleware_request_context,
-    middleware_local_proxy,
-    middleware_adapt_enum,
-    middleware_catch_exception,
-    middleware_call_coroutine,
-)
+from graphql_api.middleware import (middleware_adapt_enum,
+                                    middleware_call_coroutine,
+                                    middleware_catch_exception,
+                                    middleware_field_context,
+                                    middleware_local_proxy,
+                                    middleware_request_context)
 
 
 class GraphQLBaseExecutor:

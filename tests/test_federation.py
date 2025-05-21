@@ -1,10 +1,10 @@
 from typing import List
 
-from graphql import print_schema as graphql_print_schema, DirectiveLocation
+from graphql import DirectiveLocation
+from graphql import print_schema as graphql_print_schema
 
 from graphql_api import GraphQLAPI, field, type
 from graphql_api.directives import SchemaDirective
-
 from graphql_api.federation.directives import key, link
 from tests.test_federation_example import federation_example_api
 

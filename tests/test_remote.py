@@ -1,21 +1,21 @@
 import asyncio
 import enum
 import random
+import time
 import uuid
 from dataclasses import dataclass
-
-from typing import Optional, List
+from typing import List, Optional
 from uuid import UUID
 
-import time
 import pytest
 
+from graphql_api.api import GraphQLAPI
 from graphql_api.error import GraphQLError
 from graphql_api.mapper import GraphQLMetaKey
-from graphql_api.api import GraphQLAPI
-from graphql_api.remote import GraphQLRemoteObject, GraphQLRemoteExecutor
-
+from graphql_api.remote import GraphQLRemoteExecutor, GraphQLRemoteObject
 # noinspection PyTypeChecker
+
+
 from tests.test_graphql import available
 
 

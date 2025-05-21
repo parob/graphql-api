@@ -1,15 +1,13 @@
+import asyncio
 import enum
 import inspect
-
-import asyncio
 import sys
 import traceback
 
-from graphql import GraphQLObjectType, GraphQLNonNull, TypeKind
+from graphql import GraphQLNonNull, GraphQLObjectType, TypeKind
 
-from graphql_api import GraphQLError
+from graphql_api.error import GraphQLError
 from graphql_api.mapper import GraphQLMetaKey
-
 from graphql_api.utils import to_snake_case
 
 
@@ -132,7 +130,7 @@ def middleware_field_context(next_, root, info, **args):
     kwargs = {}
     if return_type and isinstance(return_type, GraphQLObjectType):
         sub_loc = info.field_nodes[0].selection_set.loc
-        kwargs["query"] = sub_loc.source.body[sub_loc.start : sub_loc.end]
+        kwargs["query"] = sub_loc.source.body[sub_loc.start:sub_loc.end]
 
     info.context.field = GraphQLFieldContext(meta=field_meta, **kwargs)
 

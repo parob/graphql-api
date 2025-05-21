@@ -1,8 +1,8 @@
 import collections
 from typing import List
 
-from graphql_api.relay import Node, Connection, Edge, PageInfo
 from graphql_api.api import GraphQLAPI
+from graphql_api.relay import Connection, Edge, Node, PageInfo
 
 
 class TestRelay:
@@ -41,15 +41,15 @@ class TestRelay:
                     if end_index < len(cursors) - 1:
                         self.has_next_page = True
 
-                self.filtered_cursors = cursors[start_index : end_index + 1]
+                self.filtered_cursors = cursors[start_index:end_index + 1]
 
                 self.people = people
 
                 if self._first is not None:
-                    self.filtered_cursors = self.filtered_cursors[: self._first]
+                    self.filtered_cursors = self.filtered_cursors[:self._first]
 
                 elif self._last is not None:
-                    self.filtered_cursors = self.filtered_cursors[-self._last :]
+                    self.filtered_cursors = self.filtered_cursors[-self._last:]
 
             @api.field
             def edges(self) -> List[Edge]:

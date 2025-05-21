@@ -1,9 +1,9 @@
 import uuid
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from typing import List
 from uuid import UUID
 
-from graphql import GraphQLScalarType, StringValueNode, GraphQLID
+from graphql import GraphQLID, GraphQLScalarType, StringValueNode
 
 from graphql_api.api import GraphQLAPI
 from graphql_api.types import JsonType

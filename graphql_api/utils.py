@@ -4,23 +4,14 @@ import enum
 import inspect
 import re
 import textwrap
-
-import aiohttp
-
 from json.decoder import JSONDecodeError
 
+import aiohttp
 from aiohttp import ClientTimeout
-from graphql import (
-    GraphQLNonNull,
-    GraphQLList,
-    GraphQLObjectType,
-    GraphQLSchema,
-    GraphQLError,
-    build_client_schema,
-    get_introspection_query,
-)
-
-from graphql.type.definition import GraphQLType, GraphQLInterfaceType
+from graphql import (GraphQLError, GraphQLList, GraphQLNonNull,
+                     GraphQLObjectType, GraphQLSchema, build_client_schema,
+                     get_introspection_query)
+from graphql.type.definition import GraphQLInterfaceType, GraphQLType
 
 
 # From this response in Stackoverflow

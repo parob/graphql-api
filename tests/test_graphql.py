@@ -1,25 +1,28 @@
 import enum
 import sys
+from dataclasses import dataclass
+from typing import List, Literal, Optional, Union
 
 import pytest
-
-from dataclasses import dataclass
-from typing import Union, Optional, Literal, List
-
+import urllib3
 from graphql import GraphQLSchema, GraphQLUnionType
+from graphql.utilities import print_schema
 from requests.api import request
 from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
 
-# noinspection PyPackageRequirements
-from graphql.utilities import print_schema
+# Suppress InsecureRequestWarning
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-from graphql_api.utils import executor_to_ast
-from graphql_api.error import GraphQLError
-from graphql_api.context import GraphQLContext
+# noinspection PyPackageRequirements
+# from graphql.utilities import print_schema
+
 from graphql_api.api import GraphQLAPI, GraphQLRootTypeDelegate
+from graphql_api.context import GraphQLContext
+from graphql_api.decorators import field
+from graphql_api.error import GraphQLError
 from graphql_api.reduce import TagFilter
 from graphql_api.remote import GraphQLRemoteExecutor, remote_execute
-from graphql_api.decorators import field
+from graphql_api.utils import executor_to_ast
 
 
 def available(url, method="GET"):
@@ -641,14 +644,14 @@ class TestGraphQL:
                     return "world"
                 return "not_possible"
 
-        def test_middleware(next_, root, info, **args):
+        def _test_middleware(next_, root, info, **args):
             if info.context.field.meta.get("test_meta") == "hello_meta":
                 if info.context.request.args.get("test_string") == "hello":
                     was_called.append(True)
                     return next_(root, info, **args)
             return "possible"
 
-        api.middleware = [test_middleware]
+        api.middleware = [_test_middleware]
 
         executor = api.executor()
 

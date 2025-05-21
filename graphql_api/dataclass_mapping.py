@@ -1,14 +1,11 @@
-import typing_inspect
 from typing import Type, get_type_hints
 
+import typing_inspect
 from docstring_parser import parse_from_object
-from graphql.type.definition import (
-    GraphQLType,
-    GraphQLObjectType,
-    GraphQLField,
-    GraphQLInputField,
-    GraphQLNonNull,
-)
+from graphql.type.definition import (GraphQLField, GraphQLInputField,
+                                     GraphQLNonNull, GraphQLObjectType,
+                                     GraphQLType)
+
 from graphql_api.utils import to_camel_case, to_camel_case_text
 
 

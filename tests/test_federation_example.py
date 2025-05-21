@@ -1,25 +1,13 @@
-from typing import Dict, Any
-
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from graphql import DirectiveLocation, GraphQLID
 
-from graphql_api import field, type, GraphQLAPI
+from graphql_api import GraphQLAPI, field, type
 from graphql_api.directives import SchemaDirective, deprecated
-
-from graphql_api.federation.directives import (
-    key,
-    provides,
-    tag,
-    interfaceObject,
-    external,
-    requires,
-    inaccessible,
-    shareable,
-    override,
-    link,
-    composeDirective,
-)
+from graphql_api.federation.directives import (composeDirective, external,
+                                               inaccessible, interfaceObject,
+                                               key, link, override, provides,
+                                               requires, shareable, tag)
 
 dimension = {
     "size": "small",
@@ -330,12 +318,13 @@ def federation_example_api():
     schema, _ = api.build_schema()
 
     link(
+        schema,
         **{
             "url": "https://myspecs.dev/myCustomDirective/v1.0",
             "import": ["@custom"],
         }
-    )(schema)
+    )
 
-    composeDirective(name="@custom")(schema)
+    composeDirective(schema, name="@custom")
 
     return api

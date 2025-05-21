@@ -4,40 +4,27 @@ import inspect
 import json
 import sys
 import uuid
-from typing import List, Tuple, Dict, Type
+from dataclasses import fields as dataclasses_fields
+from dataclasses import is_dataclass
+from typing import Dict, List, Tuple, Type
 
-from dataclasses import fields as dataclasses_fields, is_dataclass
+from graphql import (GraphQLBoolean, GraphQLEnumType, GraphQLFloat, GraphQLID,
+                     GraphQLInputObjectType, GraphQLInt, GraphQLInterfaceType,
+                     GraphQLObjectType, GraphQLString, GraphQLUnionType)
+from graphql.execution import ExecutionResult
+from graphql.language import ast
+from graphql.type.definition import (GraphQLField, GraphQLList, GraphQLNonNull,
+                                     GraphQLScalarType, GraphQLType,
+                                     is_enum_type)
 from requests.exceptions import RequestException
 
-from graphql.language import ast
-from graphql import (
-    GraphQLInputObjectType,
-    GraphQLObjectType,
-    GraphQLEnumType,
-    GraphQLInterfaceType,
-    GraphQLUnionType,
-    GraphQLID,
-    GraphQLString,
-    GraphQLFloat,
-    GraphQLBoolean,
-    GraphQLInt,
-)
-from graphql.execution import ExecutionResult
-from graphql.type.definition import (
-    GraphQLField,
-    GraphQLScalarType,
-    GraphQLNonNull,
-    GraphQLList,
-    GraphQLType,
-    is_enum_type,
-)
-
+from graphql_api.api import GraphQLAPI
 from graphql_api.error import GraphQLError
 from graphql_api.executor import GraphQLBaseExecutor
-from graphql_api.mapper import GraphQLTypeMapper, GraphQLMetaKey
-from graphql_api.api import GraphQLAPI
+from graphql_api.mapper import GraphQLMetaKey, GraphQLTypeMapper
 from graphql_api.types import serialize_bytes
-from graphql_api.utils import to_camel_case, url_to_ast, to_snake_case, http_query
+from graphql_api.utils import (http_query, to_camel_case, to_snake_case,
+                               url_to_ast)
 
 
 class NullResponse(Exception):

@@ -2,15 +2,10 @@ import binascii
 import datetime
 import json
 import uuid
-from typing import Dict, Union, List, Optional, Any
+from typing import Any, Dict, List, Optional, Union
 
-from graphql import (
-    GraphQLScalarType,
-    StringValueNode,
-    Undefined,
-    GraphQLEnumType,
-    ValueNode,
-)
+from graphql import (GraphQLEnumType, GraphQLScalarType, StringValueNode,
+                     Undefined, ValueNode)
 from graphql.language import ast
 
 

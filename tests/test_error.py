@@ -2,9 +2,8 @@ from typing import Optional
 
 import pytest
 
-from graphql_api.mapper import GraphQLMetaKey
-
 from graphql_api.api import GraphQLAPI
+from graphql_api.mapper import GraphQLMetaKey
 
 
 # noinspection PyPep8Naming,DuplicatedCode

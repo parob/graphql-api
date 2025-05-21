@@ -1,9 +1,10 @@
 from typing import List
 
-from graphql import GraphQLNonNull, GraphQLList, GraphQLObjectType
+from graphql import GraphQLList, GraphQLNonNull, GraphQLObjectType
 from graphql.type.definition import GraphQLInterfaceType
 
-from graphql_api.mapper import GraphQLMutableField, GraphQLTypeMapError, GraphQLMetaKey
+from graphql_api.mapper import (GraphQLMetaKey, GraphQLMutableField,
+                                GraphQLTypeMapError)
 from graphql_api.utils import has_mutable, iterate_fields, to_snake_case
 
 

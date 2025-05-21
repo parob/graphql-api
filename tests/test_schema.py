@@ -1,5 +1,5 @@
 # noinspection PyPep8Naming,DuplicatedCode
-from graphql_api import GraphQLAPI, type, field
+from graphql_api import GraphQLAPI, field, type
 
 
 class TestGraphQLSchema:

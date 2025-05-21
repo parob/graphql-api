@@ -1,6 +1,7 @@
-from graphql import GraphQLScalarType, GraphQLEnumType, GraphQLEnumValue
+from graphql import GraphQLEnumType, GraphQLEnumValue, GraphQLScalarType
 
-from graphql_api.types import serialize_json, parse_json_value, parse_json_literal
+from graphql_api.types import (parse_json_literal, parse_json_value,
+                               serialize_json)
 
 _Any = GraphQLScalarType(
     name="_Any",
