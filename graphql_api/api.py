@@ -383,7 +383,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
             add_entity_type(self, schema)
             link_directives(schema)
 
-        # If root_type implements GraphQLRootTypeDelegate, allow a final check
+        # If root type implements GraphQLRootTypeDelegate, allow a final check
         if self.root_type and issubclass(self.root_type, GraphQLRootTypeDelegate):
             schema = self.root_type.validate_graphql_schema(schema)
 

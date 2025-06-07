@@ -24,6 +24,8 @@ from graphql_api.reduce import TagFilter
 from graphql_api.remote import GraphQLRemoteExecutor, remote_execute
 from graphql_api.utils import executor_to_ast
 
+# Define Period at module level
+Period = Literal["1d", "5d", "1mo", "3mo", "6mo", "1y"]
 
 def available(url, method="GET"):
     try:
@@ -178,25 +180,25 @@ class TestGraphQL:
             @classmethod
             def graphql_from_input(cls, age: int):
                 person = Person(name="hugh")
-                person.age = age
+                person._age = age
                 return person
 
             def __init__(self, name: str):
-                self.name = name
-                self.age = 20
+                self._name = name
+                self._age = 20
 
             @api.field
             def name(self) -> str:
-                return self.name
+                return self._name
 
             @api.field
             def age(self) -> int:
-                return self.age
+                return self._age
 
         class Root:
             @api.field
             def person_info(self, person: Person) -> str:
-                return person.name + " is " + str(person.age)
+                return person.name() + " is " + str(person.age())
 
         api.root_type = Root
         executor = api.executor()
@@ -639,7 +641,7 @@ class TestGraphQL:
         @api.type(is_root_type=True)
         class Root:
             @api.field({"test_meta": "hello_meta"})
-            def test_query(self, test_string: str = None) -> str:
+            def test_query(self, test_string: Optional[str] = None) -> str:
                 if test_string == "hello":
                     return "world"
                 return "not_possible"
@@ -891,8 +893,6 @@ class TestGraphQL:
     def test_literal(self):
         api = GraphQLAPI()
 
-        Period = Literal["1d", "5d", "1mo", "3mo", "6mo", "1y"]
-
         @api.type(is_root_type=True)
         class Root:
             @api.field
@@ -913,6 +913,7 @@ class TestGraphQL:
         result = executor.execute(test_literal_query)
         expected = {"getCount": 365}
 
+        assert not result.errors
         assert result.data == expected
 
     # noinspection PyUnusedLocal
@@ -1017,7 +1018,7 @@ class TestGraphQL:
                 return Customer()
 
             @api.field
-            def owner(self) -> Union[Owner]:
+            def owner(self) -> Union[Owner]: # type: ignore[type-arg]
                 return Owner()
 
             @api.field
@@ -1029,7 +1030,7 @@ class TestGraphQL:
             @api.field
             def optional_owner(
                 self,
-            ) -> List[Optional[Union[Owner]]]:
+            ) -> List[Optional[Union[Owner]]]: # type: ignore[type-arg]
                 return [None]
 
         executor = api.executor()
@@ -1101,7 +1102,8 @@ class TestGraphQL:
         schema, _ = api.build_schema()
 
         # Check that single type unions was sucesfully created as a union type.
-        assert schema.query_type.fields["owner"].type.of_type.name == "OwnerUnion"
+        assert schema is not None and schema.query_type is not None and \
+               schema.query_type.fields["owner"].type.of_type.name == "OwnerUnion"
 
         test_optional_list_union_query = """
             query TestOwnerUnion {
@@ -1112,6 +1114,7 @@ class TestGraphQL:
                 }
             }
         """
+        assert schema is not None and schema.query_type is not None # Add check here as well
         return_type = schema.query_type.fields[
             "optionalOwnerOrCustomer"
         ].type.of_type.of_type
@@ -1134,7 +1137,7 @@ class TestGraphQL:
             @api.field
             def non_nullable(self) -> int:
                 # noinspection PyTypeChecker
-                return None
+                return None  # type: ignore[return-value]
 
             @api.field
             def nullable(self) -> Optional[int]:
@@ -1204,10 +1207,12 @@ class TestGraphQL:
         @api.type(is_root_type=True)
         class Root:
             @api.field
-            def star_wars(self, context: GraphQLContext) -> RemoteAPI:
+            def star_wars(self, context: GraphQLContext) -> RemoteAPI: # type: ignore[valid-type]
+                assert context.request is not None, "GraphQLContext.request cannot be None"
+                assert context.field is not None, "GraphQLContext.field cannot be None"
                 operation = context.request.info.operation.operation
-                query = context.field.query
-                redirected_query = operation.value + " " + query
+                field_query_details = context.field.query
+                redirected_query = operation.value + " " + field_query_details
                 _result = RemoteAPI.execute(query=redirected_query)
 
                 if _result.errors:
@@ -1230,6 +1235,7 @@ class TestGraphQL:
         result = executor.execute(test_query)
 
         assert not result.errors
+        assert result.data is not None
         assert (
             result.data.get("starWars", {}).get("allFilms", {}).get("totalCount", {})
             >= 6
@@ -1253,10 +1259,12 @@ class TestGraphQL:
         @api.type(is_root_type=True)
         class Root:
             @api.field
-            def pokemon(self, context: GraphQLContext) -> RemoteAPI:
+            def pokemon(self, context: GraphQLContext) -> RemoteAPI: # type: ignore[valid-type]
+                assert context.request is not None, "GraphQLContext.request cannot be None"
+                assert context.field is not None, "GraphQLContext.field cannot be None"
                 operation = context.request.info.operation.operation
-                query = context.field.query
-                redirected_query = operation.value + " " + query
+                field_query_details = context.field.query
+                redirected_query = operation.value + " " + field_query_details
 
                 result_ = RemoteAPI.execute(query=redirected_query)
 
@@ -1282,8 +1290,12 @@ class TestGraphQL:
         result = executor.execute(test_query)
 
         assert not result.errors
+        assert result.data is not None
 
-        pokemon = result.data.get("pokemon").get("getPokemon")
+        pokemon_data = result.data.get("pokemon")
+        assert pokemon_data is not None, "Expected 'pokemon' key in result data"
+        pokemon = pokemon_data.get("getPokemon")
+        assert pokemon is not None, "Expected 'getPokemon' key in pokemon data"
 
         assert pokemon.get("types")[0].get("name") == "Electric"
 
@@ -1302,7 +1314,7 @@ class TestGraphQL:
         @api.type(is_root_type=True)
         class Root:
             @api.field
-            def graphql(self, context: GraphQLContext) -> RemoteAPI:
+            def graphql(self, context: GraphQLContext) -> RemoteAPI: # type: ignore[valid-type]
                 return remote_execute(executor=RemoteAPI, context=context)
 
         executor = api.executor()
@@ -1322,8 +1334,12 @@ class TestGraphQL:
         result = executor.execute(test_query)
 
         assert not result.errors
+        assert result.data is not None
 
-        pokemon = result.data.get("graphql").get("getPokemon")
+        graphql_data = result.data.get("graphql")
+        assert graphql_data is not None, "Expected 'graphql' key in result data"
+        pokemon = graphql_data.get("getPokemon")
+        assert pokemon is not None, "Expected 'getPokemon' key in graphql data"
 
         assert pokemon.get("types")[0].get("name") == "Electric"
 
@@ -1412,29 +1428,25 @@ class TestGraphQL:
         result = executor.execute(test_query)
 
         assert not result.errors
-        assert result.data["hello"] == "hello world"
+        assert result.data is not None and result.data["hello"] == "hello world"
 
         test_query = """
             mutation {
                 helloMutable
             }
         """
-
         result = executor.execute(test_query)
-
         assert not result.errors
-        assert result.data["helloMutable"] == "hello 1"
+        assert result.data is not None and result.data["helloMutable"] == "hello 1"
 
         test_query = """
             query {
                 helloChanged
             }
         """
-
         result = executor.execute(test_query)
-
         assert not result.errors
-        assert result.data["helloChanged"] == "hello world"
+        assert result.data is not None and result.data["helloChanged"] == "hello world"
 
     def test_class_update(self):
         @dataclass
@@ -1467,20 +1479,20 @@ class TestGraphQL:
         result = executor.execute(test_query)
 
         assert not result.errors
-        assert result.data["hello"] == f"hello {hash('rob')}"
+        assert result.data is not None and result.data["hello"] == f"hello {hash('rob')}"
 
     def test_class_update_same_name(self):
         @dataclass
-        class Person:
+        class PersonInterface:
             name: str
 
         class GreetInterface:
             @field
-            def hello(self, person: Person) -> str:
+            def hello(self, person: PersonInterface) -> str:
                 raise NotImplementedError()
 
         # noinspection PyRedeclaration
-        class Person(Person):
+        class Person(PersonInterface):
             def __hash__(self):
                 return hash(self.name)
 
@@ -1501,4 +1513,4 @@ class TestGraphQL:
         result = executor.execute(test_query)
 
         assert not result.errors
-        assert result.data["hello"] == f"hello {hash('rob')}"
+        assert result.data is not None and result.data["hello"] == f"hello {hash('rob')}"

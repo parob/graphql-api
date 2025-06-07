@@ -126,7 +126,7 @@ class TestError:
             )
 
     def test_execute_error_protection(self):
-        api = GraphQLAPI()
+        api = GraphQLAPI(error_protection=False)
 
         @api.type(is_root_type=True)
         class Root:
@@ -134,12 +134,11 @@ class TestError:
             def math_error(self, error: bool = True) -> Optional[int]:
                 raise Exception("error 1")
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception, match="error 1"):
             api.execute(
                 """
                 query {
                     mathError
                 }
-            """,
-                error_protection=False,
+            """
             )

@@ -1,5 +1,5 @@
 import collections
-from typing import List
+from typing import List, Optional
 
 from graphql_api.api import GraphQLAPI
 from graphql_api.relay import Connection, Edge, Node, PageInfo
@@ -10,13 +10,13 @@ class TestRelay:
         api = GraphQLAPI()
 
         class Person(Node):
-            def __init__(self, name: str = None, *args, **kwargs):
+            def __init__(self, name: Optional[str] = None, *args, **kwargs):
                 super().__init__(*args, **kwargs)
                 self._name = name
 
             @property
             @api.field
-            def name(self) -> str:
+            def name(self) -> Optional[str]:
                 return self._name
 
         class PersonConnection(Connection):
@@ -73,10 +73,10 @@ class TestRelay:
             @api.field
             def people(
                 self,
-                before: str = None,
-                after: str = None,
-                first: int = None,
-                last: int = None,
+                before: Optional[str] = None,
+                after: Optional[str] = None,
+                first: Optional[int] = None,
+                last: Optional[int] = None,
             ) -> Connection:
                 _people = collections.OrderedDict(
                     [

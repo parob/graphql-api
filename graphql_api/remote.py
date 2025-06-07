@@ -15,7 +15,8 @@ from graphql.execution import ExecutionResult
 from graphql.language import ast
 from graphql.type.definition import (GraphQLField, GraphQLList, GraphQLNonNull,
                                      GraphQLScalarType, GraphQLType,
-                                     is_enum_type)
+                                     is_enum_type, get_named_type,
+                                     is_wrapping_type)
 from requests.exceptions import RequestException
 
 from graphql_api.api import GraphQLAPI
@@ -75,12 +76,12 @@ def remote_execute(executor: GraphQLBaseExecutor, context):
 
 def is_list(graphql_type: GraphQLType) -> bool:
     """Return True if the GraphQLType is a list (potentially nested)."""
-    while hasattr(graphql_type, "of_type"):
-        if isinstance(graphql_type, GraphQLList):
+    current_type = graphql_type
+    while is_wrapping_type(current_type):  # type: ignore[arg-type]
+        if isinstance(current_type, GraphQLList):
             return True
-        if hasattr(graphql_type, "of_type"):
-            graphql_type = graphql_type.of_type
-    return False
+        current_type = current_type.of_type
+    return isinstance(current_type, GraphQLList)
 
 
 def is_scalar(graphql_type: GraphQLType) -> bool:
@@ -88,21 +89,17 @@ def is_scalar(graphql_type: GraphQLType) -> bool:
     Return True if the final unwrapped GraphQLType is a scalar or an enum.
     (ID, String, Float, Boolean, Int, or Enum).
     """
-    while hasattr(graphql_type, "of_type"):
-        graphql_type = graphql_type.of_type
-
-    if isinstance(graphql_type, (GraphQLScalarType, GraphQLEnumType)):
-        return True
-    return False
+    named_type = get_named_type(graphql_type)
+    return isinstance(named_type, (GraphQLScalarType, GraphQLEnumType))
 
 
 def is_nullable(graphql_type: GraphQLType) -> bool:
     """Return False if the type is NonNull at any level, otherwise True."""
-    while hasattr(graphql_type, "of_type"):
-        if isinstance(graphql_type, GraphQLNonNull):
+    current_type = graphql_type
+    while is_wrapping_type(current_type):  # type: ignore[arg-type]
+        if isinstance(current_type, GraphQLNonNull):
             return False
-        if hasattr(graphql_type, "of_type"):
-            graphql_type = graphql_type.of_type
+        current_type = current_type.of_type
     return True
 
 
@@ -892,10 +889,7 @@ class GraphQLRemoteField:
 
     def graphql_type(self) -> GraphQLType:
         """Get the final unwrapped GraphQLType."""
-        graphql_type = self.graphql_field.type
-        while hasattr(graphql_type, "of_type"):
-            graphql_type = graphql_type.of_type
-        return graphql_type
+        return get_named_type(self.graphql_field.type)
 
     def _convert_args_to_kwargs(self, args, kwargs):
         """
@@ -1028,20 +1022,42 @@ class GraphQLRemoteQueryBuilder:
             return str(value.value)
 
         # Unwrap the expected_graphql_type
-        while hasattr(expected_graphql_type, "of_type"):
-            expected_graphql_type = expected_graphql_type.of_type
+        if expected_graphql_type is not None:
+            expected_graphql_type = get_named_type(expected_graphql_type)
 
         # Possibly an input object
-        if expected_graphql_type is None:
-            expected_graphql_type = mappers.query_mapper.input_type_mapper.map(
-                type(value)
-            )
+        if expected_graphql_type is None and not isinstance(value, (str, bytes, bool, float, int, list, set, enum.Enum)):
+            # If expected_graphql_type was not provided and value is not a basic scalar/list,
+            # try to map it assuming it's an input object.
+            # This branch might need more robust type inference if expected_graphql_type is often None for objects.
+            py_type_to_map = type(value)
+            # Attempt to get the input type mapping
+            # Note: mappers.query_mapper.input_type_mapper might not exist or be the correct mapper.
+            # This part of the logic might need to be reviewed based on how mappers are structured
+            # and when expected_graphql_type is None.
+            if hasattr(mappers.query_mapper, 'input_type_mapper') and mappers.query_mapper.input_type_mapper is not None:
+                mapped_gql_type = mappers.query_mapper.input_type_mapper.map(py_type_to_map)
+                if mapped_gql_type:
+                    expected_graphql_type = get_named_type(mapped_gql_type)
+            elif hasattr(mappers.mutable_mapper, 'input_type_mapper') and mappers.mutable_mapper.input_type_mapper is not None: # Check mutable mapper as well
+                mapped_gql_type = mappers.mutable_mapper.input_type_mapper.map(py_type_to_map)
+                if mapped_gql_type:
+                     expected_graphql_type = get_named_type(mapped_gql_type)
+
 
         input_object_fields = getattr(expected_graphql_type, "fields", {})
-        if not input_object_fields:
+        if not input_object_fields and not isinstance(expected_graphql_type, (GraphQLScalarType, GraphQLEnumType)):
             raise GraphQLError(
-                f"Unable to map {value} to the expected GraphQL input type."
+                f"Unable to map {value} (type: {type(value)}) to the expected GraphQL input type '{expected_graphql_type}'. "
+                "No fields found or not a scalar/enum."
             )
+        elif not input_object_fields and isinstance(expected_graphql_type, (GraphQLScalarType, GraphQLEnumType)):
+            # This case should have been handled by earlier scalar checks if expected_graphql_type was a scalar.
+            # If it reaches here, it implies a mismatch or unhandled complex scalar.
+            raise GraphQLError(
+                f"Value {value} (type: {type(value)}) was expected to be scalar-like for {expected_graphql_type}, but mapping failed."
+            )
+
 
         input_values = {}
         for key, field in input_object_fields.items():

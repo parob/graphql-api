@@ -4,7 +4,9 @@ import typing_inspect
 from docstring_parser import parse_from_object
 from graphql.type.definition import (GraphQLField, GraphQLInputField,
                                      GraphQLNonNull, GraphQLObjectType,
-                                     GraphQLType)
+                                     GraphQLType, get_named_type,
+                                     is_nullable_type,
+                                     is_input_type, is_output_type)
 
 from graphql_api.utils import to_camel_case, to_camel_case_text
 
@@ -34,16 +36,32 @@ def type_from_dataclass(cls: Type, mapper) -> GraphQLType:
     # noinspection PyUnresolvedReferences
     dataclass_fields = dict(cls.__dataclass_fields__)
     dataclass_types = get_type_hints(cls)
-    base_type: GraphQLObjectType = mapper.map(cls, use_graphql_type=False)
+    
+    initial_mapped_type: GraphQLType = mapper.map(cls, use_graphql_type=False)
+
+    if mapper.as_input:
+        # If mapping for input, initial_mapped_type should be an input type.
+        # We can optionally assert this, then return it.
+        _unwrapped_input_type = get_named_type(initial_mapped_type)
+        if not is_input_type(_unwrapped_input_type):
+            # This would indicate an issue with how mapper.map handles dataclasses in input mode.
+            raise TypeError(
+                f"Internal Error: Dataclass {cls.__name__} when mapped as input "
+                f"should result in a GraphQLInputType, but got {type(_unwrapped_input_type)}."
+            )
+        return initial_mapped_type
+
+    # If not mapper.as_input, proceed to map as a GraphQLObjectType (output type).
     docstrings = parse_from_object(cls)
 
-    # Unwrap the base_type if it is wrapped by GraphQLNonNull or a list type
-    while hasattr(base_type, "of_type"):
-        base_type = base_type.of_type
-
-    # If we are generating input types, just return the base type
-    if mapper.as_input:
-        return base_type
+    # Unwrap to the named type and ensure it's an GraphQLObjectType for output processing
+    _unwrapped_object_type = get_named_type(initial_mapped_type)
+    if not isinstance(_unwrapped_object_type, GraphQLObjectType):
+        raise TypeError(
+            f"The GraphQL type for dataclass {cls.__name__} (as an output type) must be an GraphQLObjectType, "
+            f"but got {type(_unwrapped_object_type)} after unwrapping."
+        )
+    base_type: GraphQLObjectType = _unwrapped_object_type
 
     # Fields to exclude if the dataclass provides a `graphql_exclude_fields` method
     exclude_fields = []
@@ -62,8 +80,10 @@ def type_from_dataclass(cls: Type, mapper) -> GraphQLType:
     param_descriptions = {}
     for doc_param in docstrings.params:
         # key = param name, value = processed description text
-        param_descriptions[doc_param.arg_name] = to_camel_case_text(
-            doc_param.description
+        param_descriptions[doc_param.arg_name] = (
+            to_camel_case_text(doc_param.description)
+            if doc_param.description is not None
+            else None
         )
 
     # Define a function to create a single GraphQL field ---
@@ -84,21 +104,37 @@ def type_from_dataclass(cls: Type, mapper) -> GraphQLType:
 
         # Wrap in GraphQLNonNull if it is not nullable
         if not nullable:
-            # noinspection PyTypeChecker
-            graph_type = GraphQLNonNull(graph_type)
+            # Only wrap if graph_type is a type that can be made non-null
+            # and isn't already non-null.
+            if is_nullable_type(graph_type): # Check if it's a wrappable type
+                graph_type = GraphQLNonNull(graph_type)  # type: ignore[arg-type]
+            # If is_non_null_type(graph_type) is true, it's already non-null, so no change needed.
+            # If neither, it's not a type that can be wrapped by GraphQLNonNull (e.g. GraphQLSchema), so no change.
 
         # Create the appropriate GraphQL field
         if mapper.as_input:
-            # noinspection PyTypeChecker
-            return GraphQLInputField(type_=graph_type, description=doc_description)
+            if not is_input_type(graph_type):
+                raise TypeError(
+                    f"Type '{graph_type}' mapped for property '{property_name}' of dataclass '{cls.__name__}' "
+                    f"is not a valid GraphQLInputType."
+                )
+            # The is_input_type check should refine graph_type.
+            # If the type checker still complains, a specific ignore is needed.
+            return GraphQLInputField(type_=graph_type, description=doc_description)  # type: ignore[arg-type]
         else:
+            if not is_output_type(graph_type):
+                raise TypeError(
+                    f"Type '{graph_type}' mapped for property '{property_name}' of dataclass '{cls.__name__}' "
+                    f"is not a valid GraphQLOutputType."
+                )
             # For output fields, a resolver that returns the property from the instance
             def resolver(instance, info=None, context=None, *args, **kwargs):
                 return getattr(instance, property_name)
 
-            # noinspection PyTypeChecker
+            # The is_output_type check should refine graph_type.
+            # If the type checker still complains, a specific ignore is needed.
             return GraphQLField(
-                type_=graph_type, resolve=resolver, description=doc_description
+                type_=graph_type, resolve=resolver, description=doc_description  # type: ignore[arg-type]
             )
 
     # Define a factory function that returns a callable to generate all fields ---
@@ -106,9 +142,9 @@ def type_from_dataclass(cls: Type, mapper) -> GraphQLType:
         """
         Returns a callable that creates the final dictionary of fields for this type.
         """
-        existing_fields_fn = (
+        existing_fields_source = (
             base_type._fields
-        )  # This might be a function on some GraphQL implementations
+        )  # This might be a function or a direct mapping
 
         def generate_fields():
             """
@@ -131,15 +167,23 @@ def type_from_dataclass(cls: Type, mapper) -> GraphQLType:
                 new_fields[camel_case_name] = graph_field
 
             # Merge any existing fields on the base type (e.g., from inherited classes)
-            if existing_fields_fn:
+            if existing_fields_source:
                 try:
-                    existing_fields = (
-                        existing_fields_fn()
-                    )  # might raise AssertionError in some libs
+                    if callable(existing_fields_source):
+                        existing_fields = (
+                            existing_fields_source()
+                        )  # Call if it's a thunk
+                    else:
+                        existing_fields = (
+                            existing_fields_source
+                        )  # Use directly if it's a mapping
+
                     for existing_name, existing_field in existing_fields.items():
                         if existing_name not in new_fields:
                             new_fields[existing_name] = existing_field
-                except AssertionError:
+                except AssertionError: # pragma: no cover
+                    # This might still be needed if calling the thunk itself raises an AssertionError
+                    # in some edge cases or library versions.
                     pass
 
             return new_fields
