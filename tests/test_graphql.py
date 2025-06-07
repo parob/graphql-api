@@ -1018,7 +1018,7 @@ class TestGraphQL:
                 return Customer()
 
             @api.field
-            def owner(self) -> Union[Owner]: # type: ignore[type-arg]
+            def owner(self) -> Union[Owner]:  # type: ignore[type-arg]
                 return Owner()
 
             @api.field
@@ -1030,7 +1030,7 @@ class TestGraphQL:
             @api.field
             def optional_owner(
                 self,
-            ) -> List[Optional[Union[Owner]]]: # type: ignore[type-arg]
+            ) -> List[Optional[Union[Owner]]]:  # type: ignore[type-arg]
                 return [None]
 
         executor = api.executor()
@@ -1114,7 +1114,7 @@ class TestGraphQL:
                 }
             }
         """
-        assert schema is not None and schema.query_type is not None # Add check here as well
+        assert schema is not None and schema.query_type is not None  # Add check here as well
         return_type = schema.query_type.fields[
             "optionalOwnerOrCustomer"
         ].type.of_type.of_type
@@ -1207,7 +1207,7 @@ class TestGraphQL:
         @api.type(is_root_type=True)
         class Root:
             @api.field
-            def star_wars(self, context: GraphQLContext) -> RemoteAPI: # type: ignore[valid-type]
+            def star_wars(self, context: GraphQLContext) -> RemoteAPI:  # type: ignore[valid-type]
                 assert context.request is not None, "GraphQLContext.request cannot be None"
                 assert context.field is not None, "GraphQLContext.field cannot be None"
                 operation = context.request.info.operation.operation
@@ -1259,7 +1259,7 @@ class TestGraphQL:
         @api.type(is_root_type=True)
         class Root:
             @api.field
-            def pokemon(self, context: GraphQLContext) -> RemoteAPI: # type: ignore[valid-type]
+            def pokemon(self, context: GraphQLContext) -> RemoteAPI:  # type: ignore[valid-type]
                 assert context.request is not None, "GraphQLContext.request cannot be None"
                 assert context.field is not None, "GraphQLContext.field cannot be None"
                 operation = context.request.info.operation.operation
@@ -1314,7 +1314,7 @@ class TestGraphQL:
         @api.type(is_root_type=True)
         class Root:
             @api.field
-            def graphql(self, context: GraphQLContext) -> RemoteAPI: # type: ignore[valid-type]
+            def graphql(self, context: GraphQLContext) -> RemoteAPI:  # type: ignore[valid-type]
                 return remote_execute(executor=RemoteAPI, context=context)
 
         executor = api.executor()

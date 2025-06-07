@@ -36,7 +36,6 @@ def type_from_dataclass(cls: Type, mapper) -> GraphQLType:
     # noinspection PyUnresolvedReferences
     dataclass_fields = dict(cls.__dataclass_fields__)
     dataclass_types = get_type_hints(cls)
-    
     initial_mapped_type: GraphQLType = mapper.map(cls, use_graphql_type=False)
 
     if mapper.as_input:
@@ -106,7 +105,7 @@ def type_from_dataclass(cls: Type, mapper) -> GraphQLType:
         if not nullable:
             # Only wrap if graph_type is a type that can be made non-null
             # and isn't already non-null.
-            if is_nullable_type(graph_type): # Check if it's a wrappable type
+            if is_nullable_type(graph_type):  # Check if it's a wrappable type
                 graph_type = GraphQLNonNull(graph_type)  # type: ignore[arg-type]
             # If is_non_null_type(graph_type) is true, it's already non-null, so no change needed.
             # If neither, it's not a type that can be wrapped by GraphQLNonNull (e.g. GraphQLSchema), so no change.
@@ -127,6 +126,7 @@ def type_from_dataclass(cls: Type, mapper) -> GraphQLType:
                     f"Type '{graph_type}' mapped for property '{property_name}' of dataclass '{cls.__name__}' "
                     f"is not a valid GraphQLOutputType."
                 )
+
             # For output fields, a resolver that returns the property from the instance
             def resolver(instance, info=None, context=None, *args, **kwargs):
                 return getattr(instance, property_name)
@@ -181,7 +181,7 @@ def type_from_dataclass(cls: Type, mapper) -> GraphQLType:
                     for existing_name, existing_field in existing_fields.items():
                         if existing_name not in new_fields:
                             new_fields[existing_name] = existing_field
-                except AssertionError: # pragma: no cover
+                except AssertionError:  # pragma: no cover
                     # This might still be needed if calling the thunk itself raises an AssertionError
                     # in some edge cases or library versions.
                     pass

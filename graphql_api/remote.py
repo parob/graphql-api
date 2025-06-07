@@ -6,17 +6,16 @@ import sys
 import uuid
 from dataclasses import fields as dataclasses_fields
 from dataclasses import is_dataclass
-from typing import Dict, List, Tuple, Type
+from typing import Dict, List, Optional, Tuple, Type
 
 from graphql import (GraphQLBoolean, GraphQLEnumType, GraphQLFloat, GraphQLID,
                      GraphQLInputObjectType, GraphQLInt, GraphQLInterfaceType,
-                     GraphQLObjectType, GraphQLString, GraphQLUnionType)
+                     GraphQLObjectType, GraphQLString, GraphQLUnionType, GraphQLNamedType)
 from graphql.execution import ExecutionResult
 from graphql.language import ast
 from graphql.type.definition import (GraphQLField, GraphQLList, GraphQLNonNull,
                                      GraphQLScalarType, GraphQLType,
-                                     is_enum_type, get_named_type,
-                                     is_wrapping_type)
+                                     get_named_type, is_wrapping_type)
 from requests.exceptions import RequestException
 
 from graphql_api.api import GraphQLAPI
@@ -62,6 +61,8 @@ def remote_execute(executor: GraphQLBaseExecutor, context):
     Placeholder function for remote execution. Currently not used,
     but retained as requested.
     """
+    assert context.request is not None, "GraphQLContext.request cannot be None"
+    assert context.field is not None, "GraphQLContext.field cannot be None"
     operation = context.request.info.operation.operation
     query = context.field.query
     redirected_query = operation.value + " " + query
@@ -76,11 +77,11 @@ def remote_execute(executor: GraphQLBaseExecutor, context):
 
 def is_list(graphql_type: GraphQLType) -> bool:
     """Return True if the GraphQLType is a list (potentially nested)."""
-    current_type = graphql_type
-    while is_wrapping_type(current_type):  # type: ignore[arg-type]
+    current_type: GraphQLType = graphql_type
+    while is_wrapping_type(current_type):
         if isinstance(current_type, GraphQLList):
             return True
-        current_type = current_type.of_type
+        current_type = current_type.of_type  # type: ignore
     return isinstance(current_type, GraphQLList)
 
 
@@ -95,11 +96,11 @@ def is_scalar(graphql_type: GraphQLType) -> bool:
 
 def is_nullable(graphql_type: GraphQLType) -> bool:
     """Return False if the type is NonNull at any level, otherwise True."""
-    current_type = graphql_type
-    while is_wrapping_type(current_type):  # type: ignore[arg-type]
+    current_type: GraphQLType = graphql_type
+    while is_wrapping_type(current_type):
         if isinstance(current_type, GraphQLNonNull):
             return False
-        current_type = current_type.of_type
+        current_type = current_type.of_type  # type: ignore
     return True
 
 
@@ -120,40 +121,25 @@ def to_ast_value(value, graphql_type: GraphQLType):
     if value is None:
         return None
 
-    # Map Python scalars to their equivalent GraphQL AST node
-    type_map = {
-        (bool,): ast.BooleanValueNode,
-        (str,): ast.StringValueNode,
-        (float,): ast.FloatValueNode,
-        (int,): ast.IntValueNode,
-    }
+    if isinstance(value, bool):
+        return ast.BooleanValueNode(value=value)
+    if isinstance(value, int):
+        return ast.IntValueNode(value=str(value))
+    if isinstance(value, float):
+        return ast.FloatValueNode(value=str(value))
+    if isinstance(value, str):
+        if isinstance(graphql_type, GraphQLEnumType):
+            return ast.EnumValueNode(value=value)
+        return ast.StringValueNode(value=value)
 
-    ast_type = None
-    ast_value_node = None
-
-    for py_types, candidate_ast_type in type_map.items():
-        if isinstance(value, py_types):
-            ast_type = candidate_ast_type
-            ast_value_node = ast_type(value=value)
-            break
-
-    if isinstance(graphql_type, GraphQLEnumType) and ast_type == ast.StringValueNode:
-        # Convert a string value to an EnumValueNode if the type is an enum
-        enum_node = ast.EnumValueNode()
-        enum_node.value = value
-        ast_value_node = enum_node
-
-    if not ast_value_node:
-        raise TypeError(
-            f"Unable to map Python scalar type {type(value)} "
-            f"to a valid GraphQL AST type."
-        )
-    return ast_value_node
+    raise TypeError(
+        f"Unable to map Python scalar type {type(value)} to a valid GraphQL AST type."
+    )
 
 
 class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
     """
-    A GraphQL executor that forwards operations to a remote GraphQL service.
+    A GraphQL executor that forwards all operations to a remote GraphQL service.
     """
 
     def __init__(
@@ -191,10 +177,12 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
             self.url, http_method=self.http_method, http_headers=self.http_headers
         )
 
-        def resolver(info=None, context=None, *args, **kwargs):
-            field_ = context.field_nodes[0]
-            key_ = field_.alias.value if field_.alias else field_.name.value
-            return info[key_]
+        def resolver(root, info, *args, **kwargs):
+            key_ = info.field_nodes[0].alias.value if info.field_nodes[0].alias else info.field_nodes[0].name.value
+            return root[key_]
+
+        if not ast_schema.query_type:
+            return {}
 
         for name, graphql_type in ast_schema.type_map.items():
             if isinstance(
@@ -264,7 +252,7 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
                 operation_name=operation_name,
                 http_method=self.http_method,
                 http_headers=http_headers,
-                http_timeout=self.http_timeout,
+                http_timeout=int(self.http_timeout) if self.http_timeout is not None else 0,
                 verify=self.verify,
             )
         except RequestException as e:
@@ -298,7 +286,7 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
                     operation_name=operation_name,
                     http_method=self.http_method,
                     http_headers=http_headers,
-                    http_timeout=self.http_timeout,
+                    http_timeout=int(self.http_timeout) if self.http_timeout is not None else 0,
                     verify=self.verify,
                 )
             )
@@ -364,10 +352,10 @@ class GraphQLRemoteObject:
     def __init__(
         self,
         executor: GraphQLBaseExecutor,
-        api: GraphQLAPI = None,
-        mappers: GraphQLMappers = None,
-        python_type: Type = None,
-        call_history: List[Tuple["GraphQLRemoteField", Dict]] = None,
+        api: Optional[GraphQLAPI] = None,
+        mappers: Optional[GraphQLMappers] = None,
+        python_type: Optional[Type] = None,
+        call_history: Optional[List[Tuple["GraphQLRemoteField", Dict]]] = None,
         delay_mapping: bool = True,
     ):
         if not call_history:
@@ -375,18 +363,20 @@ class GraphQLRemoteObject:
 
         if not api and python_type:
             api = GraphQLAPI(root_type=python_type)
-        elif not python_type:
+        elif not python_type and api:
             python_type = api.root_type
+        elif not python_type and not api:
+            raise ValueError("Either `api` or `python_type` must be provided.")
 
         self.executor = executor
-        self.api = api
-        self.mappers = mappers
+        self.api: Optional[GraphQLAPI] = api
+        self.mappers: Optional[GraphQLMappers] = mappers
         self.call_history = call_history
         self.values: Dict[Tuple["GraphQLRemoteField", int], object] = {}
-        self.python_type = python_type
+        self.python_type: Optional[Type] = python_type
         self.mapped_types = False
-        self.graphql_query_type = None
-        self.graphql_mutable_type = None
+        self.graphql_query_type: Optional[GraphQLObjectType] = None
+        self.graphql_mutable_type: Optional[GraphQLObjectType] = None
 
         if not delay_mapping:
             self._initialize_type_mappers()
@@ -398,16 +388,27 @@ class GraphQLRemoteObject:
     def _initialize_type_mappers(self, force=False):
         """Ensure the Python type is mapped to its GraphQL query/mutation types."""
         if self.mappers is None:
+            if not self.api:
+                raise ValueError("Cannot initialize type mappers without a GraphQLAPI instance.")
             self.api.build_schema()
             self.mappers = GraphQLMappers(
-                query_mapper=self.api.query_mapper,
-                mutable_mapper=self.api.mutation_mapper,
+                query_mapper=self.api.query_mapper,  # type: ignore
+                mutable_mapper=self.api.mutation_mapper,  # type: ignore
             )
 
-        if not self.mapped_types:
+        if not self.mapped_types and self.python_type and self.mappers:
             self.mapped_types = True
             graphql_types = self.mappers.map(self.python_type)
-            self.graphql_query_type, self.graphql_mutable_type = graphql_types
+            if isinstance(graphql_types, tuple) and len(graphql_types) == 2:
+                query_type, mutable_type = graphql_types
+                if query_type and not isinstance(query_type, GraphQLObjectType):
+                    raise TypeError(f"Expected GraphQLObjectType for query type, got {type(query_type)}")
+                if mutable_type and not isinstance(mutable_type, GraphQLObjectType):
+                    raise TypeError(f"Expected GraphQLObjectType for mutable type, got {type(mutable_type)}")
+                self.graphql_query_type = query_type
+                self.graphql_mutable_type = mutable_type
+            else:
+                raise TypeError(f"Expected a tuple of 2 types from mappers, got {graphql_types}")
 
     def _gather_scalar_fields(self) -> List[Tuple["GraphQLRemoteField", Dict]]:
         """
@@ -424,6 +425,9 @@ class GraphQLRemoteObject:
                     return False
             return True
 
+        if not self.graphql_query_type:
+            return []
+
         valid_field_names = [
             name
             for name, field in self.graphql_query_type.fields.items()
@@ -431,30 +435,34 @@ class GraphQLRemoteObject:
         ]
         return [(self.get_field(name), {}) for name in valid_field_names]
 
-    def fetch(self, fields: List[Tuple["GraphQLRemoteField", Dict]] = None):
+    def fetch(self, fields: Optional[List[Tuple["GraphQLRemoteField", Dict]]] = None):
         """Fetch values for the given scalar fields from the remote API."""
         if fields is None:
             fields = self._gather_scalar_fields()
 
         field_values = self._perform_sync_fetch(fields=fields)
-        for field, args in fields:
-            field_value = field_values.get(to_camel_case(field.name))
-            arg_hash = self.hash(args)
-            self.values[(field, arg_hash)] = field_value
+        if isinstance(field_values, dict):
+            for field, args in fields:
+                field_value = field_values.get(to_camel_case(field.name))
+                arg_hash = self.hash(args)
+                self.values[(field, arg_hash)] = field_value
+        # If field_values is a list, it's handled by the caller, e.g., get_value
 
-    async def fetch_async(self, fields: List[Tuple["GraphQLRemoteField", Dict]] = None):
+    async def fetch_async(self, fields: Optional[List[Tuple["GraphQLRemoteField", Dict]]] = None):
         """Asynchronously fetch values for the given scalar fields."""
         if fields is None:
             fields = self._gather_scalar_fields()
 
         field_values = await self._perform_async_fetch(fields=fields)
-        for field, args in fields:
-            field_value = field_values.get(to_camel_case(field.name))
-            arg_hash = self.hash(args)
-            self.values[(field, arg_hash)] = field_value
+        if isinstance(field_values, dict):
+            for field, args in fields:
+                field_value = field_values.get(to_camel_case(field.name))
+                arg_hash = self.hash(args)
+                self.values[(field, arg_hash)] = field_value
+        # If field_values is a list, it's handled by the caller, e.g., get_value
 
     def _perform_sync_fetch(
-        self, fields: List[Tuple["GraphQLRemoteField", Dict]] = None
+        self, fields: Optional[List[Tuple["GraphQLRemoteField", Dict]]] = None
     ):
         """Internal synchronous fetch implementation."""
         if not fields:
@@ -465,7 +473,7 @@ class GraphQLRemoteObject:
         return self._process_fetch_result(query, result, fields)
 
     async def _perform_async_fetch(
-        self, fields: List[Tuple["GraphQLRemoteField", Dict]] = None
+        self, fields: Optional[List[Tuple["GraphQLRemoteField", Dict]]] = None
     ):
         """Internal asynchronous fetch implementation."""
         if not fields:
@@ -478,6 +486,9 @@ class GraphQLRemoteObject:
         """Builds the GraphQL query string for fetching the given fields."""
         self._initialize_type_mappers()
         mutable = any(f.mutable for f, _ in self.call_history + fields)
+
+        if not self.mappers:
+            raise ValueError("Mappers not initialized before building query.")
 
         query_builder = GraphQLRemoteQueryBuilder(
             call_stack=self.call_history,
@@ -499,7 +510,7 @@ class GraphQLRemoteObject:
         """
         if result.errors:
             raise GraphQLRemoteError(
-                query=query, result=result, message=result.errors[0].message
+                query=query, result=result, message=str(result.errors)
             )
 
         field_values = result.data
@@ -528,7 +539,7 @@ class GraphQLRemoteObject:
             if not field_obj:
                 raise KeyError(f"Could not find matching field for key {key}")
 
-            field_type = field_obj.graphql_type()
+            field_type = field_obj.graphql_field.type
 
             if value is None:
                 if not field_obj.nullable:
@@ -538,17 +549,19 @@ class GraphQLRemoteObject:
                     )
                 return None
 
-            if not is_scalar(field_type):
-                raise TypeError(f"Unable to parse non-scalar type {field_type}")
+            unwrapped_field_type = get_named_type(field_type)
+            if not is_scalar(unwrapped_field_type):
+                raise TypeError(f"Unable to parse non-scalar type {unwrapped_field_type}")
 
             def _to_value(val):
-                ast_val = to_ast_value(val, field_type)
-                if hasattr(field_type, "parse_literal"):
-                    parsed_val = field_type.parse_literal(ast_val)
+                ast_val = to_ast_value(val, unwrapped_field_type)
+                if isinstance(unwrapped_field_type, (GraphQLScalarType, GraphQLEnumType)) and hasattr(unwrapped_field_type, "parse_literal"):
+                    parsed_val = unwrapped_field_type.parse_literal(ast_val, None)  # type: ignore
                     # If the field is an enum, convert to the Python enum if available
-                    if is_enum_type(field_type) and hasattr(field_type, "enum_type"):
-                        return field_type.enum_type(parsed_val)
+                    if isinstance(unwrapped_field_type, GraphQLEnumType) and hasattr(unwrapped_field_type, "enum_type"):
+                        return unwrapped_field_type.enum_type(parsed_val)  # type: ignore
                     return parsed_val
+                return val  # Fallback for simple scalars
 
             if field_obj.list:
                 return [_to_value(v) for v in value]
@@ -631,30 +644,41 @@ class GraphQLRemoteObject:
             return self.values.get((field, arg_hash))
 
         # Non-scalar field: map to Python type or create sub-objects
+        if not self.mappers:
+            raise ValueError("Mappers not initialized")
         python_type = self.mappers.map(field.graphql_field.type, reverse=True)
+        if not python_type:
+            raise TypeError(f"Could not reverse map GraphQL type for field '{field.name}'")
+
         obj = GraphQLRemoteObject(
             executor=self.executor,
             api=self.api,
-            python_type=python_type,
+            python_type=python_type,  # type: ignore
             mappers=self.mappers,
             call_history=[*self.call_history, (field, args)],
         )
 
         if field.list:
             data = await obj._perform_async_fetch()
+            if not isinstance(data, list):
+                # This can happen if the query returns a single object instead of a list
+                # or if the response is otherwise not as expected.
+                # Depending on strictness, could raise an error or return an empty list.
+                return []
             fields = obj._gather_scalar_fields()
             remote_objects = []
             for item_data in data:
                 nested_obj = GraphQLRemoteObject(
                     executor=self.executor,
                     api=self.api,
-                    python_type=python_type,
+                    python_type=python_type,  # type: ignore
                     mappers=self.mappers,
                     call_history=[*self.call_history, (field, args)],
                 )
-                for sub_field, sub_args in fields:
-                    val = item_data.get(to_camel_case(sub_field.name))
-                    nested_obj.values[(sub_field, self.hash(sub_args))] = val
+                if isinstance(item_data, dict):
+                    for sub_field, sub_args in fields:
+                        val = item_data.get(to_camel_case(sub_field.name))
+                        nested_obj.values[(sub_field, self.hash(sub_args))] = val
                 remote_objects.append(nested_obj)
             return remote_objects
 
@@ -666,6 +690,9 @@ class GraphQLRemoteObject:
                 return None
 
         if field.mutable:
+            if not self.graphql_mutable_type or not self.mappers:
+                return obj
+
             meta = self.mappers.mutable_mapper.meta.get(
                 (self.graphql_mutable_type.name, field.name)
             )
@@ -699,30 +726,38 @@ class GraphQLRemoteObject:
             return self.values.get((field, arg_hash))
 
         # Non-scalar field: map to Python type or create sub-objects
+        if not self.mappers:
+            raise ValueError("Mappers not initialized")
         python_type = self.mappers.map(field.graphql_field.type, reverse=True)
+        if not python_type:
+            raise TypeError(f"Could not reverse map GraphQL type for field '{field.name}'")
+
         obj = GraphQLRemoteObject(
             executor=self.executor,
             api=self.api,
-            python_type=python_type,
+            python_type=python_type,  # type: ignore
             mappers=self.mappers,
             call_history=[*self.call_history, (field, args)],
         )
 
         if field.list:
             data = obj._perform_sync_fetch()
+            if not isinstance(data, list):
+                return []
             fields = obj._gather_scalar_fields()
             remote_objects = []
             for item_data in data:
                 nested_obj = GraphQLRemoteObject(
                     executor=self.executor,
                     api=self.api,
-                    python_type=python_type,
+                    python_type=python_type,  # type: ignore
                     mappers=self.mappers,
                     call_history=[*self.call_history, (field, args)],
                 )
-                for sub_field, sub_args in fields:
-                    val = item_data.get(to_camel_case(sub_field.name))
-                    nested_obj.values[(sub_field, self.hash(sub_args))] = val
+                if isinstance(item_data, dict):
+                    for sub_field, sub_args in fields:
+                        val = item_data.get(to_camel_case(sub_field.name))
+                        nested_obj.values[(sub_field, self.hash(sub_args))] = val
                 remote_objects.append(nested_obj)
             return remote_objects
 
@@ -734,6 +769,8 @@ class GraphQLRemoteObject:
                 return None
 
         if field.mutable:
+            if not self.graphql_mutable_type or not self.mappers:
+                return obj
             meta = self.mappers.mutable_mapper.meta.get(
                 (self.graphql_mutable_type.name, field.name)
             )
@@ -760,14 +797,13 @@ class GraphQLRemoteObject:
         # Check query type fields
         if self.graphql_query_type and camel_name in self.graphql_query_type.fields:
             field = self.graphql_query_type.fields.get(camel_name)
-        else:
-            # Check mutation type fields
-            if (
-                self.graphql_mutable_type
-                and camel_name in self.graphql_mutable_type.fields
-            ):
-                field = self.graphql_mutable_type.fields.get(camel_name)
-                mutable = True
+        # Check mutation type fields
+        elif (
+            self.graphql_mutable_type
+            and camel_name in self.graphql_mutable_type.fields
+        ):
+            field = self.graphql_mutable_type.fields.get(camel_name)
+            mutable = True
 
         if not field:
             raise GraphQLError(f"Field '{name}' does not exist on '{self}'.")
@@ -789,10 +825,20 @@ class GraphQLRemoteObject:
             # This object isn't intended to be awaited directly.
             raise AttributeError("Not Awaitable")
 
-        field, auto_call = self._resolve_attribute(name)
-        if auto_call:
-            return field()  # Immediately call if it's property-like
-        return field
+        try:
+            field, auto_call = self._resolve_attribute(name)
+            if auto_call:
+                return field()  # Immediately call if it's property-like
+            return field
+        except GraphQLError as e:
+            if "does not exist" in str(e):
+                # Fallback to python attribute if GraphQL field does not exist
+                if hasattr(self.python_type, name):
+                    return getattr(self.python_type, name)
+                else:
+                    raise AttributeError(f"'{self}' object has no attribute '{name}'") from e
+            else:
+                raise
 
     async def call_async(self, name, *args, **kwargs):
         """
@@ -800,7 +846,12 @@ class GraphQLRemoteObject:
         the field's name. (Equivalent to remote_obj.<field>(*args, **kwargs).)
         """
         field, _ = self._resolve_attribute(name, pass_through=False)
-        return await field.call_async(*args, **kwargs)
+        if isinstance(field, GraphQLRemoteField):
+            return await field.call_async(*args, **kwargs)
+        elif callable(field):
+            # for regular python methods
+            return field(*args, **kwargs)
+        return field  # for properties
 
     def _resolve_attribute(self, name, pass_through=True):
         """
@@ -809,6 +860,10 @@ class GraphQLRemoteObject:
         immediately (auto_call) if it's a property or dataclass field, etc.
         """
         self._initialize_type_mappers()
+
+        if not self.python_type:
+            raise ValueError("python_type not set on GraphQLRemoteObject")
+
         python_attr = getattr(self.python_type, name, None)
         is_dataclass_field = False
 
@@ -842,11 +897,10 @@ class GraphQLRemoteObject:
                         self.python_type, name
                     ):
                         return func, False
-                    else:
-                        # If it's a plain function, wrap it to provide self as first arg
-                        return (lambda *a, **kw: func(self, *a, **kw)), False
+                    # If it's a plain function, wrap it to provide self as first arg
+                    return (lambda *a, **kw: func(self, *a, **kw)), False
 
-                if is_property:
+                if is_property and python_attr.fget:
                     # Evaluate property
                     return python_attr.fget(self), False
             raise
@@ -855,7 +909,9 @@ class GraphQLRemoteObject:
 
     def __str__(self):
         self._initialize_type_mappers()
-        return f"<RemoteObject({self.graphql_query_type.name}) at {hex(id(self))}>"
+        if self.graphql_query_type:
+            return f"<RemoteObject({self.graphql_query_type.name}) at {hex(id(self))}>"
+        return f"<RemoteObject(Unmapped) at {hex(id(self))}>"
 
 
 class GraphQLRemoteField:
@@ -883,11 +939,15 @@ class GraphQLRemoteField:
         self.list = is_list(self.graphql_field.type)
 
         # For recursive field detection
-        self.recursive = self.parent.python_type == self.parent.mappers.map(
-            self.graphql_field.type, reverse=True
-        )
+        self.recursive = False
+        if self.parent.mappers:
+            reversed_type = self.parent.mappers.map(
+                self.graphql_field.type, reverse=True
+            )
+            if isinstance(reversed_type, type):
+                self.recursive = self.parent.python_type == reversed_type
 
-    def graphql_type(self) -> GraphQLType:
+    def graphql_type(self) -> GraphQLNamedType:
         """Get the final unwrapped GraphQLType."""
         return get_named_type(self.graphql_field.type)
 
@@ -923,7 +983,9 @@ class GraphQLRemoteField:
         return await self.parent.get_value_async(self, kwargs)
 
     def __hash__(self):
-        return hash((self.parent.python_type.__name__, self.name))
+        if self.parent.python_type:
+            return hash((self.parent.python_type.__name__, self.name))
+        return hash(self.name)
 
     def __eq__(self, other):
         if not isinstance(other, GraphQLRemoteField):
@@ -988,7 +1050,7 @@ class GraphQLRemoteQueryBuilder:
         self,
         value,
         mappers: GraphQLMappers,
-        expected_graphql_type: GraphQLType = None,
+        expected_graphql_type: Optional[GraphQLType] = None,
     ):
         """
         Convert a Python value to a GraphQL argument representation (string),
@@ -1021,12 +1083,10 @@ class GraphQLRemoteQueryBuilder:
         if isinstance(value, enum.Enum):
             return str(value.value)
 
-        # Unwrap the expected_graphql_type
-        if expected_graphql_type is not None:
-            expected_graphql_type = get_named_type(expected_graphql_type)
+        unwrapped_type = get_named_type(expected_graphql_type) if expected_graphql_type else None
 
         # Possibly an input object
-        if expected_graphql_type is None and not isinstance(value, (str, bytes, bool, float, int, list, set, enum.Enum)):
+        if unwrapped_type is None and not isinstance(value, (str, bytes, bool, float, int, list, set, enum.Enum)):
             # If expected_graphql_type was not provided and value is not a basic scalar/list,
             # try to map it assuming it's an input object.
             # This branch might need more robust type inference if expected_graphql_type is often None for objects.
@@ -1038,47 +1098,44 @@ class GraphQLRemoteQueryBuilder:
             if hasattr(mappers.query_mapper, 'input_type_mapper') and mappers.query_mapper.input_type_mapper is not None:
                 mapped_gql_type = mappers.query_mapper.input_type_mapper.map(py_type_to_map)
                 if mapped_gql_type:
-                    expected_graphql_type = get_named_type(mapped_gql_type)
-            elif hasattr(mappers.mutable_mapper, 'input_type_mapper') and mappers.mutable_mapper.input_type_mapper is not None: # Check mutable mapper as well
+                    unwrapped_type = get_named_type(mapped_gql_type)
+            elif hasattr(mappers.mutable_mapper, 'input_type_mapper') and mappers.mutable_mapper.input_type_mapper is not None:  # Check mutable mapper as well
                 mapped_gql_type = mappers.mutable_mapper.input_type_mapper.map(py_type_to_map)
                 if mapped_gql_type:
-                     expected_graphql_type = get_named_type(mapped_gql_type)
+                    unwrapped_type = get_named_type(mapped_gql_type)
 
-
-        input_object_fields = getattr(expected_graphql_type, "fields", {})
-        if not input_object_fields and not isinstance(expected_graphql_type, (GraphQLScalarType, GraphQLEnumType)):
+        input_object_fields = getattr(unwrapped_type, "fields", {})
+        if not input_object_fields and not isinstance(unwrapped_type, (GraphQLScalarType, GraphQLEnumType)):
             raise GraphQLError(
-                f"Unable to map {value} (type: {type(value)}) to the expected GraphQL input type '{expected_graphql_type}'. "
+                f"Unable to map {value} (type: {type(value)}) to the expected GraphQL input type '{unwrapped_type}'. "
                 "No fields found or not a scalar/enum."
             )
-        elif not input_object_fields and isinstance(expected_graphql_type, (GraphQLScalarType, GraphQLEnumType)):
+        elif not input_object_fields and isinstance(unwrapped_type, (GraphQLScalarType, GraphQLEnumType)):
             # This case should have been handled by earlier scalar checks if expected_graphql_type was a scalar.
             # If it reaches here, it implies a mismatch or unhandled complex scalar.
-            raise GraphQLError(
-                f"Value {value} (type: {type(value)}) was expected to be scalar-like for {expected_graphql_type}, but mapping failed."
-            )
-
+            pass
 
         input_values = {}
-        for key, field in input_object_fields.items():
-            try:
-                raw_input_value = getattr(value, to_snake_case(key))
-                if inspect.ismethod(raw_input_value):
-                    raw_input_value = raw_input_value()
-            except AttributeError:
-                if not is_nullable(field.type):
-                    raise GraphQLError(
-                        f"InputObject error: '{type(value)}' object has no attribute "
-                        f"'{to_snake_case(key)}'. Non-null field '{key}' is missing. "
-                        f"nested inputs must have matching attribute to field names"
-                    )
-                continue  # Skip nullable fields with no matching attribute
+        if input_object_fields:
+            for key, field in input_object_fields.items():
+                try:
+                    raw_input_value = getattr(value, to_snake_case(key))
+                    if inspect.ismethod(raw_input_value):
+                        raw_input_value = raw_input_value()
+                except AttributeError:
+                    if not is_nullable(field.type):
+                        raise GraphQLError(
+                            f"InputObject error: '{type(value)}' object has no attribute "
+                            f"'{to_snake_case(key)}'. Non-null field '{key}' is missing. "
+                            f"nested inputs must have matching attribute to field names"
+                        )
+                    continue  # Skip nullable fields with no matching attribute
 
-            nested_val = self.map_to_input_value(
-                raw_input_value, mappers=mappers, expected_graphql_type=field.type
-            )
-            if nested_val is not None:
-                input_values[key] = nested_val
+                nested_val = self.map_to_input_value(
+                    raw_input_value, mappers=mappers, expected_graphql_type=field.type
+                )
+                if nested_val is not None:
+                    input_values[key] = nested_val
 
         if not input_values:
             return None

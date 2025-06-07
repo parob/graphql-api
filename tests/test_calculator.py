@@ -13,7 +13,8 @@ class Operation(enum.Enum):
 
 api = GraphQLAPI()  # Define API instance at module level
 
-@api.type(is_root_type=True) # Decorate Root class at module level
+
+@api.type(is_root_type=True)  # Decorate Root class at module level
 class Root:
     @api.field
     def calculate(
@@ -97,7 +98,7 @@ class TestCalculator:
         assert result.data == expected
 
     def test_calculator_divide_by_zero(self):
-        executor = api.executor() # Use module-level api
+        executor = api.executor()
 
         test_query = """
             query TestDivideByZero {
@@ -106,7 +107,7 @@ class TestCalculator:
         """
 
         result = executor.execute(test_query)
+        expected = {"calculate": None}  # Or handle error appropriately
 
-        expected = {"calculate": None}
         assert not result.errors
         assert result.data == expected 
