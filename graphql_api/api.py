@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from __future__ import annotations
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union, cast
 
 # noinspection PyPackageRequirements
 from graphql import (ExecutionResult, GraphQLDirective, GraphQLField,
@@ -47,32 +48,38 @@ def _disable_scalar_type_call(*args, **kwargs):
 setattr(GraphQLScalarType, "__call__", _disable_scalar_type_call)
 
 
+T = TypeVar('T')
+
 # noinspection PyShadowingBuiltins
 def tag_value(
-    value,
+    value: T,
     graphql_type: str,
     schema: Optional["GraphQLAPI"] = None,
     meta: Optional[Dict] = None,
     directives: Optional[List] = None,
     is_root_type: bool = False,
-):
+) -> T:
+    # Ensure attributes exist before assignment, then use setattr
     if not hasattr(value, "_graphql"):
-        value._graphql = True
+        setattr(value, "_graphql", False) # Default initialization
+    setattr(value, "_graphql", True)
 
     if not hasattr(value, "_defined_on"):
-        value._defined_on = value
+        setattr(value, "_defined_on", None) # Default initialization
+    setattr(value, "_defined_on", value)
 
     if not hasattr(value, "_schemas"):
-        value._schemas = {}
+        setattr(value, "_schemas", {}) # Default initialization
 
-    if hasattr(value, "_schemas"):
-        # noinspection PyProtectedMember
-        value._schemas[schema] = {
-            "defined_on": value,
-            "meta": meta or {},
-            "graphql_type": graphql_type,
-            "schema": schema,
-        }
+    # For nested assignment, getattr -> modify -> setattr might be needed if type checker complains
+    current_schemas = getattr(value, "_schemas", {})
+    current_schemas[schema] = {
+        "defined_on": value,
+        "meta": meta or {},
+        "graphql_type": graphql_type,
+        "schema": schema,
+    }
+    setattr(value, "_schemas", current_schemas)
 
     from graphql_api.schema import add_applied_directives
 
@@ -88,6 +95,9 @@ def tag_value(
     return value
 
 
+WrapperCallable = Callable[[T], T]
+DecoratorResult = Union[T, WrapperCallable[T]]
+
 def build_decorator(
     arg1: Any,
     arg2: Any,
@@ -97,7 +107,7 @@ def build_decorator(
     abstract: bool = False,
     directives: Optional[List] = None,
     is_root_type: bool = False,
-):
+) -> DecoratorResult: # More precise would need ParamSpec & more TypeVars
     """
     Creates a decorator that tags a function or class with GraphQL metadata.
 
@@ -203,11 +213,11 @@ class GraphQLAPI(GraphQLBaseExecutor):
     # DECORATORS
     # --------------------------------------------------------------------------
     def field(
-        self=None,
-        meta=None,
+        self=None, # Actually 'fn_or_self' due to decorator pattern
+        meta=None, # Actually 'api_or_meta'
         mutable: bool = False,
         directives: Optional[List] = None,
-    ):
+    ) -> DecoratorResult:
         """
         Marks a function or method as a GraphQL field.
         Example usage:
@@ -224,13 +234,13 @@ class GraphQLAPI(GraphQLBaseExecutor):
         )
 
     def type(
-        self=None,
-        meta=None,
+        self=None, # Actually 'fn_or_self'
+        meta=None, # Actually 'api_or_meta'
         abstract: bool = False,
         interface: bool = False,
         is_root_type: bool = False,
         directives: Optional[List] = None,
-    ):
+    ) -> DecoratorResult:
         """
         Marks a class or function as a GraphQL type (object, interface, or abstract).
         Example usage:
@@ -328,11 +338,18 @@ class GraphQLAPI(GraphQLBaseExecutor):
                 mutation_types = set()
 
             # Collect all types
-            collected_types = [  # type: ignore[assignment]
-                t
-                for t in list(query_types | mutation_types | self.types)
-                if is_named_type(t)
-            ]
+            # Ensure query_types and mutation_types are sets of GraphQLNamedType
+            # Ensure self.types is set[Union[GraphQLNamedType, Type]]
+
+            temp_list: list[Any] = list(query_types | mutation_types | self.types)
+            # Initialize collected_types as an empty list of the correct type
+            collected_types_list: list[GraphQLNamedType] = []
+            for item in temp_list:
+                if is_named_type(item):
+                    # We've checked it's a GraphQLNamedType, so direct append or cast
+                    collected_types_list.append(cast(GraphQLNamedType, item))
+
+            collected_types = collected_types_list
 
             # Gather meta info from both mappers
             meta = {**query_mapper.meta, **mutation_mapper.meta}
@@ -352,15 +369,17 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
         # Include directives that may have been attached through the mappers
         if self.query_mapper and self.mutation_mapper:
-            for _, _, applied_directives in (
+            for _, _, applied_directives_list in (
                 self.query_mapper.applied_schema_directives
                 + self.mutation_mapper.applied_schema_directives
             ):
-                for d in applied_directives:
-                    if d.directive not in self.directives:
-                        self.directives.append(d.directive)
+                for d_item in applied_directives_list: # Iterate over the list of AppliedDirective objects
+                    if d_item.directive not in self.directives: # Access 'directive' attribute
+                        directive_to_add = d_item.directive
+                        # assert isinstance(directive_to_add, GraphQLDirective) # Optional: for runtime check
+                        self.directives.append(cast(GraphQLDirective, directive_to_add))
 
-                        # Create the schema
+
         schema = GraphQLSchema(
             query=query,
             mutation=mutation,

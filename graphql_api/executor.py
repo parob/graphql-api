@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any, Dict, Optional
 
 from graphql import (ExecutionContext, GraphQLError, GraphQLOutputType,
@@ -76,7 +77,7 @@ class ErrorProtectionExecutionContext(ExecutionContext):
 
         # If error protection is disabled, re-raise the original error
         if not error_protection:
-            raise error.original_error
+            raise original_error
 
         # Otherwise, call the default error handler
         return super().handle_field_error(error=error, return_type=return_type)

@@ -1,0 +1,381 @@
+{
+    "version": "1.1.401",
+    "time": "1749320224368",
+    "generalDiagnostics": [
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Function with declared return type \"GraphQLType\" must return value on all code paths\n  \"None\" is not assignable to \"GraphQLType\"",
+            "range": {
+                "start": {
+                    "line": 138,
+                    "character": 58
+                },
+                "end": {
+                    "line": 138,
+                    "character": 69
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"GraphQLNonNull[GraphQLNullableType] | GraphQLEnumType | GraphQLType\" cannot be assigned to parameter \"type_\" of type \"GraphQLOutputType\" in function \"__init__\"\n  Type \"GraphQLNonNull[GraphQLNullableType] | GraphQLEnumType | GraphQLType\" is not assignable to type \"GraphQLOutputType\"\n    Type \"GraphQLType\" is not assignable to type \"GraphQLOutputType\"\n      \"GraphQLType\" is not assignable to \"GraphQLScalarType\"\n      \"GraphQLType\" is not assignable to \"GraphQLObjectType\"\n      \"GraphQLType\" is not assignable to \"GraphQLInterfaceType\"\n      \"GraphQLType\" is not assignable to \"GraphQLUnionType\"\n      \"GraphQLType\" is not assignable to \"GraphQLEnumType\"\n      \"GraphQLType\" is not assignable to \"GraphQLWrappingType[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 315,
+                    "character": 12
+                },
+                "end": {
+                    "line": 315,
+                    "character": 31
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Union requires two or more type arguments",
+            "range": {
+                "start": {
+                    "line": 320,
+                    "character": 39
+                },
+                "end": {
+                    "line": 320,
+                    "character": 44
+                }
+            },
+            "rule": "reportInvalidTypeForm"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"Type[Unknown] | None\" cannot be assigned to parameter \"cls\" of type \"type\" in function \"issubclass\"\n  Type \"Type[Unknown] | None\" is not assignable to type \"type\"\n    \"None\" is not assignable to \"type\"",
+            "range": {
+                "start": {
+                    "line": 338,
+                    "character": 59
+                },
+                "end": {
+                    "line": 338,
+                    "character": 69
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"name\" for class \"GraphQLType\"\n  Attribute \"name\" is unknown",
+            "range": {
+                "start": {
+                    "line": 339,
+                    "character": 52
+                },
+                "end": {
+                    "line": 339,
+                    "character": 56
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Cannot assign to attribute \"enum_type\" for class \"GraphQLMappedEnumType\"\n  Attribute \"enum_type\" is unknown",
+            "range": {
+                "start": {
+                    "line": 405,
+                    "character": 25
+                },
+                "end": {
+                    "line": 405,
+                    "character": 34
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"name\" for class \"GraphQLType\"\n  Attribute \"name\" is unknown",
+            "range": {
+                "start": {
+                    "line": 463,
+                    "character": 106
+                },
+                "end": {
+                    "line": 463,
+                    "character": 110
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"name\" for class \"GraphQLType\"\n  Attribute \"name\" is unknown",
+            "range": {
+                "start": {
+                    "line": 464,
+                    "character": 40
+                },
+                "end": {
+                    "line": 464,
+                    "character": 44
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"str | None\" cannot be assigned to parameter \"text\" of type \"str\" in function \"to_camel_case_text\"\n  Type \"str | None\" is not assignable to type \"str\"\n    \"None\" is not assignable to \"str\"",
+            "range": {
+                "start": {
+                    "line": 612,
+                    "character": 41
+                },
+                "end": {
+                    "line": 612,
+                    "character": 67
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[Any] | Unknown\" cannot be assigned to parameter \"union_type\" of type \"Never\" in function \"map_to_union\"\n  Type \"type[Any] | Unknown\" is not assignable to type \"Never\"\n    Type \"type[Any]\" is not assignable to type \"Never\"",
+            "range": {
+                "start": {
+                    "line": 680,
+                    "character": 41
+                },
+                "end": {
+                    "line": 680,
+                    "character": 47
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[Any] | type[Generic] | type[Union] | type[Tuple[Unknown, ...]] | type[typing_extensions.Literal] | type[typing.Literal]\" cannot be assigned to parameter \"cls\" of type \"type\" in function \"issubclass\"\n  Type \"type[Any] | type[Generic] | type[Union] | type[Tuple[Unknown, ...]] | type[typing_extensions.Literal] | type[typing.Literal]\" is not assignable to type \"type\"",
+            "range": {
+                "start": {
+                    "line": 684,
+                    "character": 59
+                },
+                "end": {
+                    "line": 684,
+                    "character": 70
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[Any] | Unknown\" cannot be assigned to parameter \"type_\" of type \"List[Unknown]\" in function \"map_to_list\"\n  Type \"type[Any] | Unknown\" is not assignable to type \"List[Unknown]\"\n    Type \"type[Any]\" is not assignable to type \"List[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 685,
+                    "character": 40
+                },
+                "end": {
+                    "line": 685,
+                    "character": 46
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[Any]\" cannot be assigned to parameter \"cls\" of type \"type\" in function \"issubclass\"\n  Type \"type[Any]\" is not assignable to type \"type\"",
+            "range": {
+                "start": {
+                    "line": 687,
+                    "character": 30
+                },
+                "end": {
+                    "line": 687,
+                    "character": 36
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[GraphQLType] | type[Any]\" cannot be assigned to parameter \"class_type\" of type \"Type[Unknown]\" in function \"map_to_scalar\"\n  Type \"type[GraphQLType] | type[Any]\" is not assignable to type \"Type[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 690,
+                    "character": 56
+                },
+                "end": {
+                    "line": 690,
+                    "character": 62
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[GraphQLType] | type[Any]\" cannot be assigned to parameter \"cls\" of type \"type\" in function \"issubclass\"\n  Type \"type[GraphQLType] | type[Any]\" is not assignable to type \"type\"",
+            "range": {
+                "start": {
+                    "line": 692,
+                    "character": 30
+                },
+                "end": {
+                    "line": 692,
+                    "character": 36
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[GraphQLType] | type[Any]\" cannot be assigned to parameter \"type_\" of type \"Type[Unknown]\" in function \"is_interface\"\n  Type \"type[GraphQLType] | type[Any]\" is not assignable to type \"Type[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 693,
+                    "character": 32
+                },
+                "end": {
+                    "line": 693,
+                    "character": 38
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[GraphQLType] | type[Any]\" cannot be assigned to parameter \"class_type\" of type \"Type[Unknown]\" in function \"map_to_interface\"\n  Type \"type[GraphQLType] | type[Any]\" is not assignable to type \"Type[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 693,
+                    "character": 83
+                },
+                "end": {
+                    "line": 693,
+                    "character": 89
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[GraphQLType] | type[Any]\" cannot be assigned to parameter \"class_type\" of type \"Type[Unknown]\" in function \"map_to_input\"\n  Type \"type[GraphQLType] | type[Any]\" is not assignable to type \"Type[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 694,
+                    "character": 59
+                },
+                "end": {
+                    "line": 694,
+                    "character": 65
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[GraphQLType] | type[Any]\" cannot be assigned to parameter \"class_type\" of type \"Type[Unknown]\" in function \"map_to_object\"\n  Type \"type[GraphQLType] | type[Any]\" is not assignable to type \"Type[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 695,
+                    "character": 48
+                },
+                "end": {
+                    "line": 695,
+                    "character": 54
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Type \"type[Union] | Unknown | type[Generic] | type[Tuple[Unknown, ...]] | type[typing_extensions.Literal] | type[typing.Literal] | Type[Unknown]\" is not assignable to return type \"Type[Any] | None\"\n  Type \"type[Union] | Unknown | type[Generic] | type[Tuple[Unknown, ...]] | type[typing_extensions.Literal] | type[typing.Literal] | Type[Unknown]\" is not assignable to type \"Type[Any] | None\"\n    Type \"type[Generic]\" is not assignable to type \"Type[Any] | None\"\n      Type is not assignable to \"None\"",
+            "range": {
+                "start": {
+                    "line": 750,
+                    "character": 11
+                },
+                "end": {
+                    "line": 750,
+                    "character": 48
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[Any] | type[Generic] | type[Union] | type[Tuple[Unknown, ...]] | type[typing_extensions.Literal] | type[typing.Literal]\" cannot be assigned to parameter \"cls\" of type \"type\" in function \"issubclass\"\n  Type \"type[Any] | type[Generic] | type[Union] | type[Tuple[Unknown, ...]] | type[typing_extensions.Literal] | type[typing.Literal]\" is not assignable to type \"type\"",
+            "range": {
+                "start": {
+                    "line": 756,
+                    "character": 52
+                },
+                "end": {
+                    "line": 756,
+                    "character": 64
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"Type[Unknown]\" cannot be assigned to parameter \"type_\" of type \"List[Unknown]\" in function \"map_to_list\"\n  \"Type[Unknown]\" is not assignable to \"List[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 757,
+                    "character": 32
+                },
+                "end": {
+                    "line": 757,
+                    "character": 41
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[Any]\" cannot be assigned to parameter \"cls\" of type \"type\" in function \"issubclass\"\n  Type \"type[Any]\" is not assignable to type \"type\"",
+            "range": {
+                "start": {
+                    "line": 776,
+                    "character": 84
+                },
+                "end": {
+                    "line": 776,
+                    "character": 89
+                }
+            },
+            "rule": "reportArgumentType"
+        }
+    ],
+    "summary": {
+        "filesAnalyzed": 2,
+        "errorCount": 23,
+        "warningCount": 0,
+        "informationCount": 0,
+        "timeInSec": 2.14
+    }
+}

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Dict, List, Union
 
 from graphql import (GraphQLArgument, GraphQLField, GraphQLList,
@@ -54,12 +55,17 @@ def add_federation_types(
     def _service(self) -> _Service:
         return _Service()
 
-    api.root_type._service = _service
+    if api.root_type is not None: # Should always be true due to call site
+        setattr(api.root_type, '_service', _service)
+    # api.root_type._service = _service # Original line
     api.types |= set(federation_types)
     api.directives += federation_directives
 
 
 def add_entity_type(api: GraphQLAPI, schema: GraphQLSchema):
+    if api.query_mapper is None:
+        # Or raise an error, or handle appropriately
+        return schema
     type_registry = api.query_mapper.reverse_registry
 
     def resolve_entities(root, info, representations: List[Dict]):
@@ -69,16 +75,21 @@ def add_entity_type(api: GraphQLAPI, schema: GraphQLSchema):
             entity_type = schema.type_map.get(entity_name)
             entity_python_type = type_registry.get(entity_type)
 
-            if callable(getattr(entity_python_type, "_resolve_reference", None)):
-                # noinspection PyProtectedMember
-                _entities.append(entity_python_type._resolve_reference(representation))
+            if entity_python_type is not None:
+                if callable(getattr(entity_python_type, "_resolve_reference", None)):
+                    # noinspection PyProtectedMember
+                    _entities.append(entity_python_type._resolve_reference(representation))
+                else:
+                    raise NotImplementedError(
+                        f"Federation method '{entity_python_type.__name__}"
+                        f"._resolve_reference(representation: _Any!): _Entity' is not "
+                        f"implemented. Implement the '_resolve_reference' on class "
+                        f"'{entity_python_type.__name__}' to enable Entity support."
+                    )
             else:
-                raise NotImplementedError(
-                    f"Federation method '{entity_python_type.__name__}"
-                    f"._resolve_reference(representation: _Any!): _Entity' is not "
-                    f"implemented. Implement the '_resolve_reference' on class "
-                    f"'{entity_python_type.__name__}' to enable Entity support."
-                )
+                # Handle case where entity_python_type is None, if necessary
+                # For example, log a warning or raise an error
+                pass # Or raise error if entity_python_type is critical
 
         return _entities
 
@@ -93,15 +104,34 @@ def add_entity_type(api: GraphQLAPI, schema: GraphQLSchema):
     ]
     python_entities.append(UnionFlagType)
 
+    if api.query_mapper is None:
+        # This should ideally not happen if the first check passed,
+        # but defensively:
+        return schema
     union_entity_type: GraphQLType = api.query_mapper.map_to_union(
         Union[tuple(python_entities)]
     )
+    if union_entity_type is None: # If map_to_union can return None
+        # Handle this case: maybe raise error or return schema
+        # Consider raising a specific error if this state is unexpected
+        return schema # Or handle error appropriately
+
+    # Before assigning name, ensure it's a type that can have a name attribute (e.g., not a wrapper)
+    # However, map_to_union is expected to return a named type (GraphQLUnionType).
+    # For robustness, one might check isinstance, but for now, direct assignment.
     union_entity_type.name = "_Entity"
 
     # noinspection PyTypeChecker
     schema.type_map["_Entity"] = union_entity_type
 
-    schema.query_type.fields["_entities"] = GraphQLField(
+    # Guard access to schema.query_type and its fields attribute
+    if schema.query_type and hasattr(schema.query_type, 'fields'):
+        schema.query_type.fields["_entities"] = GraphQLField(
+    else:
+        # This case implies a severely misconfigured or unexpected schema state.
+        # Depending on application logic, either raise an error or handle gracefully.
+        # For now, let's assume this indicates a problem that should halt further processing.
+        raise TypeError("schema.query_type is None or does not have a fields attribute.")
         type_=GraphQLNonNull(GraphQLList(union_entity_type)),
         args={
             "representations": GraphQLArgument(

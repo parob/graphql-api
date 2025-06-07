@@ -30,7 +30,16 @@ class TestCustomTypes:
         assert not result.errors
         assert result.data == expected
 
-        assert executor.schema.query_type.fields["test"].type.of_type == GraphQLID
+        assert executor.schema is not None
+        query_type = executor.schema.query_type
+        assert query_type is not None
+        test_field = query_type.fields.get("test")
+        assert test_field is not None
+        # Assuming 'type' can be a wrapper like GraphQLNonNull
+        actual_type = test_field.type
+        if hasattr(actual_type, "of_type"):
+            actual_type = actual_type.of_type
+        assert actual_type == GraphQLID
 
     def test_uuid_type(self):
         api = GraphQLAPI()

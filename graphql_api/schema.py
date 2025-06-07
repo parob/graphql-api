@@ -1,3 +1,4 @@
+from __future__ import annotations
 import json
 from typing import Dict, List, Union
 
@@ -39,10 +40,16 @@ class AppliedDirective:
 
 def add_applied_directives(value, directives: List[AppliedDirective]):
     if directives:
-        if hasattr(value, "_applied_directives"):
-            directives = [*directives, *getattr(value, "_applied_directives", [])]
+        # Initialize if not present
+        if not hasattr(value, "_applied_directives"):
+            setattr(value, "_applied_directives", [])
 
-        value._applied_directives = directives
+        current_directives = getattr(value, "_applied_directives", [])
+        # Ensure both are lists before concatenation
+        # The 'directives' param is List[AppliedDirective]
+        # getattr default is []
+        new_directives = [*directives, *current_directives]
+        setattr(value, "_applied_directives", new_directives)
     return value
 
 

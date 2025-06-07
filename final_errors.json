@@ -1,0 +1,3499 @@
+{
+    "version": "1.1.401",
+    "time": "1749321422095",
+    "generalDiagnostics": [
+        {
+            "file": "/app/graphql_api/api.py",
+            "severity": "error",
+            "message": "Argument of type \"GraphQLNamedType | Type[Unknown]\" cannot be assigned to parameter \"type_\" of type \"Type[Unknown]\" in function \"map\"\n  Type \"GraphQLNamedType | Type[Unknown]\" is not assignable to type \"Type[Unknown]\"\n    \"GraphQLNamedType\" is not assignable to \"Type[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 298,
+                    "character": 37
+                },
+                "end": {
+                    "line": 298,
+                    "character": 40
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/dataclass_mapping.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | None\" cannot be assigned to parameter \"doc_description\" of type \"str\" in function \"create_graphql_field\"\n  Type \"Unknown | None\" is not assignable to type \"str\"\n    \"None\" is not assignable to \"str\"",
+            "range": {
+                "start": {
+                    "line": 162,
+                    "character": 69
+                },
+                "end": {
+                    "line": 162,
+                    "character": 84
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"GraphQLDirective\"\n  \"None\" is not assignable to \"GraphQLDirective\"",
+            "range": {
+                "start": {
+                    "line": 29,
+                    "character": 38
+                },
+                "end": {
+                    "line": 29,
+                    "character": 42
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"list[Unknown]\"\n  \"None\" is not assignable to \"list[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 64,
+                    "character": 63
+                },
+                "end": {
+                    "line": 64,
+                    "character": 67
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"list[Unknown]\"\n  \"None\" is not assignable to \"list[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 76,
+                    "character": 67
+                },
+                "end": {
+                    "line": 76,
+                    "character": 71
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"list[Unknown]\"\n  \"None\" is not assignable to \"list[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 86,
+                    "character": 54
+                },
+                "end": {
+                    "line": 86,
+                    "character": 58
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"list[Unknown]\"\n  \"None\" is not assignable to \"list[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 101,
+                    "character": 31
+                },
+                "end": {
+                    "line": 101,
+                    "character": 35
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"list[Unknown]\"\n  \"None\" is not assignable to \"list[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 116,
+                    "character": 54
+                },
+                "end": {
+                    "line": 116,
+                    "character": 58
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"list[Unknown]\"\n  \"None\" is not assignable to \"list[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 173,
+                    "character": 67
+                },
+                "end": {
+                    "line": 173,
+                    "character": 71
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"list[Unknown]\"\n  \"None\" is not assignable to \"list[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 197,
+                    "character": 70
+                },
+                "end": {
+                    "line": 197,
+                    "character": 74
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"list[Unknown]\"\n  \"None\" is not assignable to \"list[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 213,
+                    "character": 70
+                },
+                "end": {
+                    "line": 213,
+                    "character": 74
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"list[Unknown]\"\n  \"None\" is not assignable to \"list[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 224,
+                    "character": 60
+                },
+                "end": {
+                    "line": 224,
+                    "character": 64
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"list[Unknown]\"\n  \"None\" is not assignable to \"list[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 235,
+                    "character": 68
+                },
+                "end": {
+                    "line": 235,
+                    "character": 72
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"list[Unknown]\"\n  \"None\" is not assignable to \"list[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 246,
+                    "character": 66
+                },
+                "end": {
+                    "line": 246,
+                    "character": 70
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"list[Unknown]\"\n  \"None\" is not assignable to \"list[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 263,
+                    "character": 62
+                },
+                "end": {
+                    "line": 263,
+                    "character": 66
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"list[Unknown]\"\n  \"None\" is not assignable to \"list[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 281,
+                    "character": 31
+                },
+                "end": {
+                    "line": 281,
+                    "character": 35
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"list[Unknown]\"\n  \"None\" is not assignable to \"list[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 326,
+                    "character": 31
+                },
+                "end": {
+                    "line": 326,
+                    "character": 35
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"default_value\" for class \"GraphQLField\"\n  Attribute \"default_value\" is unknown",
+            "range": {
+                "start": {
+                    "line": 328,
+                    "character": 37
+                },
+                "end": {
+                    "line": 328,
+                    "character": 50
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/graphql_api/directives.py",
+            "severity": "error",
+            "message": "Argument of type \"GraphQLInputType | GraphQLOutputType\" cannot be assigned to parameter \"type_\" of type \"GraphQLInputType\" in function \"ast_from_value\"\n  Type \"GraphQLInputType | GraphQLOutputType\" is not assignable to type \"GraphQLInputType\"\n    Type \"GraphQLInterfaceType\" is not assignable to type \"GraphQLInputType\"\n      \"GraphQLInterfaceType\" is not assignable to \"GraphQLScalarType\"\n      \"GraphQLInterfaceType\" is not assignable to \"GraphQLEnumType\"\n      \"GraphQLInterfaceType\" is not assignable to \"GraphQLInputObjectType\"\n      \"GraphQLInterfaceType\" is not assignable to \"GraphQLWrappingType[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 328,
+                    "character": 52
+                },
+                "end": {
+                    "line": 328,
+                    "character": 60
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/executor.py",
+            "severity": "error",
+            "message": "Function with declared return type \"ExecutionResult\" must return value on all code paths\n  \"None\" is not assignable to \"ExecutionResult\"",
+            "range": {
+                "start": {
+                    "line": 32,
+                    "character": 69
+                },
+                "end": {
+                    "line": 32,
+                    "character": 84
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/graphql_api/executor.py",
+            "severity": "error",
+            "message": "Function with declared return type \"ExecutionResult\" must return value on all code paths\n  \"None\" is not assignable to \"ExecutionResult\"",
+            "range": {
+                "start": {
+                    "line": 41,
+                    "character": 9
+                },
+                "end": {
+                    "line": 41,
+                    "character": 24
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/graphql_api/executor.py",
+            "severity": "error",
+            "message": "Invalid exception class or object\n  \"None\" does not derive from BaseException",
+            "range": {
+                "start": {
+                    "line": 79,
+                    "character": 18
+                },
+                "end": {
+                    "line": 79,
+                    "character": 32
+                }
+            },
+            "rule": "reportGeneralTypeIssues"
+        },
+        {
+            "file": "/app/graphql_api/executor.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"Dict[Unknown, Unknown]\"\n  \"None\" is not assignable to \"Dict[Unknown, Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 103,
+                    "character": 21
+                },
+                "end": {
+                    "line": 103,
+                    "character": 25
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/executor.py",
+            "severity": "error",
+            "message": "\"MiddlewareManager\" is not iterable\n  \"__iter__\" method not defined",
+            "range": {
+                "start": {
+                    "line": 121,
+                    "character": 12
+                },
+                "end": {
+                    "line": 121,
+                    "character": 47
+                }
+            },
+            "rule": "reportGeneralTypeIssues"
+        },
+        {
+            "file": "/app/graphql_api/federation/federation.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | None\" cannot be assigned to parameter \"schema\" of type \"GraphQLSchema\" in function \"print_filtered_schema\"\n  Type \"Unknown | None\" is not assignable to type \"GraphQLSchema\"\n    \"None\" is not assignable to \"GraphQLSchema\"",
+            "range": {
+                "start": {
+                    "line": 42,
+                    "character": 16
+                },
+                "end": {
+                    "line": 42,
+                    "character": 30
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/federation/federation.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | None\" cannot be assigned to parameter \"key\" of type \"str\" in function \"get\"\n  Type \"Unknown | None\" is not assignable to type \"str\"\n    \"None\" is not assignable to \"str\"",
+            "range": {
+                "start": {
+                    "line": 74,
+                    "character": 46
+                },
+                "end": {
+                    "line": 74,
+                    "character": 57
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/federation/federation.py",
+            "severity": "error",
+            "message": "Argument of type \"GraphQLNamedType | None\" cannot be assigned to parameter \"key\" of type \"GraphQLType\" in function \"get\"\n  Type \"GraphQLNamedType | None\" is not assignable to type \"GraphQLType\"\n    \"None\" is not assignable to \"GraphQLType\"",
+            "range": {
+                "start": {
+                    "line": 75,
+                    "character": 51
+                },
+                "end": {
+                    "line": 75,
+                    "character": 62
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/federation/federation.py",
+            "severity": "error",
+            "message": "Type \"GraphQLType | None\" is not assignable to declared type \"GraphQLType\"\n  Type \"GraphQLType | None\" is not assignable to type \"GraphQLType\"\n    \"None\" is not assignable to \"GraphQLType\"",
+            "range": {
+                "start": {
+                    "line": 110,
+                    "character": 37
+                },
+                "end": {
+                    "line": 112,
+                    "character": 5
+                }
+            },
+            "rule": "reportAssignmentType"
+        },
+        {
+            "file": "/app/graphql_api/federation/federation.py",
+            "severity": "error",
+            "message": "Argument of type \"tuple[Type[Unknown] | None, ...]\" cannot be assigned to parameter \"union_type\" of type \"Never\" in function \"map_to_union\"\n  Type \"UnionType\" is not assignable to type \"Never\"",
+            "range": {
+                "start": {
+                    "line": 111,
+                    "character": 8
+                },
+                "end": {
+                    "line": 111,
+                    "character": 37
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/federation/federation.py",
+            "severity": "error",
+            "message": "Cannot assign to attribute \"name\" for class \"GraphQLType\"\n  Attribute \"name\" is unknown",
+            "range": {
+                "start": {
+                    "line": 121,
+                    "character": 22
+                },
+                "end": {
+                    "line": 121,
+                    "character": 26
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/graphql_api/federation/federation.py",
+            "severity": "error",
+            "message": "Argument of type \"GraphQLType\" cannot be assigned to parameter \"value\" of type \"GraphQLNamedType\" in function \"__setitem__\"\n  \"GraphQLType\" is not assignable to \"GraphQLNamedType\"",
+            "range": {
+                "start": {
+                    "line": 124,
+                    "character": 4
+                },
+                "end": {
+                    "line": 124,
+                    "character": 30
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/federation/federation.py",
+            "severity": "error",
+            "message": "\"(\" was not closed",
+            "range": {
+                "start": {
+                    "line": 128,
+                    "character": 60
+                },
+                "end": {
+                    "line": 128,
+                    "character": 61
+                }
+            }
+        },
+        {
+            "file": "/app/graphql_api/federation/federation.py",
+            "severity": "error",
+            "message": "Expected expression",
+            "range": {
+                "start": {
+                    "line": 129,
+                    "character": 4
+                },
+                "end": {
+                    "line": 129,
+                    "character": 8
+                }
+            }
+        },
+        {
+            "file": "/app/graphql_api/federation/federation.py",
+            "severity": "error",
+            "message": "Argument of type \"GraphQLSchema | GraphQLNamedType\" cannot be assigned to parameter \"graphql_type\" of type \"GraphQLType | GraphQLField\" in function \"get_directives\"\n  Type \"GraphQLSchema | GraphQLNamedType\" is not assignable to type \"GraphQLType | GraphQLField\"\n    Type \"GraphQLSchema\" is not assignable to type \"GraphQLType | GraphQLField\"\n      \"GraphQLSchema\" is not assignable to \"GraphQLType\"\n      \"GraphQLSchema\" is not assignable to \"GraphQLField\"",
+            "range": {
+                "start": {
+                    "line": 149,
+                    "character": 46
+                },
+                "end": {
+                    "line": 149,
+                    "character": 51
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/federation/federation.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 153,
+                    "character": 4
+                },
+                "end": {
+                    "line": 158,
+                    "character": 13
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/graphql_api/federation/federation.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 153,
+                    "character": 4
+                },
+                "end": {
+                    "line": 158,
+                    "character": 13
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Function with declared return type \"GraphQLType\" must return value on all code paths\n  \"None\" is not assignable to \"GraphQLType\"",
+            "range": {
+                "start": {
+                    "line": 138,
+                    "character": 58
+                },
+                "end": {
+                    "line": 138,
+                    "character": 69
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"GraphQLNonNull[GraphQLNullableType] | GraphQLEnumType | GraphQLType\" cannot be assigned to parameter \"type_\" of type \"GraphQLOutputType\" in function \"__init__\"\n  Type \"GraphQLNonNull[GraphQLNullableType] | GraphQLEnumType | GraphQLType\" is not assignable to type \"GraphQLOutputType\"\n    Type \"GraphQLType\" is not assignable to type \"GraphQLOutputType\"\n      \"GraphQLType\" is not assignable to \"GraphQLScalarType\"\n      \"GraphQLType\" is not assignable to \"GraphQLObjectType\"\n      \"GraphQLType\" is not assignable to \"GraphQLInterfaceType\"\n      \"GraphQLType\" is not assignable to \"GraphQLUnionType\"\n      \"GraphQLType\" is not assignable to \"GraphQLEnumType\"\n      \"GraphQLType\" is not assignable to \"GraphQLWrappingType[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 315,
+                    "character": 12
+                },
+                "end": {
+                    "line": 315,
+                    "character": 31
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Union requires two or more type arguments",
+            "range": {
+                "start": {
+                    "line": 320,
+                    "character": 39
+                },
+                "end": {
+                    "line": 320,
+                    "character": 44
+                }
+            },
+            "rule": "reportInvalidTypeForm"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"Type[Unknown] | None\" cannot be assigned to parameter \"cls\" of type \"type\" in function \"issubclass\"\n  Type \"Type[Unknown] | None\" is not assignable to type \"type\"\n    \"None\" is not assignable to \"type\"",
+            "range": {
+                "start": {
+                    "line": 338,
+                    "character": 59
+                },
+                "end": {
+                    "line": 338,
+                    "character": 69
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"name\" for class \"GraphQLType\"\n  Attribute \"name\" is unknown",
+            "range": {
+                "start": {
+                    "line": 339,
+                    "character": 52
+                },
+                "end": {
+                    "line": 339,
+                    "character": 56
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Cannot assign to attribute \"enum_type\" for class \"GraphQLMappedEnumType\"\n  Attribute \"enum_type\" is unknown",
+            "range": {
+                "start": {
+                    "line": 405,
+                    "character": 25
+                },
+                "end": {
+                    "line": 405,
+                    "character": 34
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"name\" for class \"GraphQLType\"\n  Attribute \"name\" is unknown",
+            "range": {
+                "start": {
+                    "line": 463,
+                    "character": 106
+                },
+                "end": {
+                    "line": 463,
+                    "character": 110
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"name\" for class \"GraphQLType\"\n  Attribute \"name\" is unknown",
+            "range": {
+                "start": {
+                    "line": 464,
+                    "character": 40
+                },
+                "end": {
+                    "line": 464,
+                    "character": 44
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"str | None\" cannot be assigned to parameter \"text\" of type \"str\" in function \"to_camel_case_text\"\n  Type \"str | None\" is not assignable to type \"str\"\n    \"None\" is not assignable to \"str\"",
+            "range": {
+                "start": {
+                    "line": 612,
+                    "character": 41
+                },
+                "end": {
+                    "line": 612,
+                    "character": 67
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[Any] | Unknown\" cannot be assigned to parameter \"union_type\" of type \"Never\" in function \"map_to_union\"\n  Type \"type[Any] | Unknown\" is not assignable to type \"Never\"\n    Type \"type[Any]\" is not assignable to type \"Never\"",
+            "range": {
+                "start": {
+                    "line": 680,
+                    "character": 41
+                },
+                "end": {
+                    "line": 680,
+                    "character": 47
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[Any] | type[Generic] | type[Union] | type[Tuple[Unknown, ...]] | type[typing_extensions.Literal] | type[typing.Literal]\" cannot be assigned to parameter \"cls\" of type \"type\" in function \"issubclass\"\n  Type \"type[Any] | type[Generic] | type[Union] | type[Tuple[Unknown, ...]] | type[typing_extensions.Literal] | type[typing.Literal]\" is not assignable to type \"type\"",
+            "range": {
+                "start": {
+                    "line": 684,
+                    "character": 59
+                },
+                "end": {
+                    "line": 684,
+                    "character": 70
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[Any] | Unknown\" cannot be assigned to parameter \"type_\" of type \"List[Unknown]\" in function \"map_to_list\"\n  Type \"type[Any] | Unknown\" is not assignable to type \"List[Unknown]\"\n    Type \"type[Any]\" is not assignable to type \"List[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 685,
+                    "character": 40
+                },
+                "end": {
+                    "line": 685,
+                    "character": 46
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[Any]\" cannot be assigned to parameter \"cls\" of type \"type\" in function \"issubclass\"\n  Type \"type[Any]\" is not assignable to type \"type\"",
+            "range": {
+                "start": {
+                    "line": 687,
+                    "character": 30
+                },
+                "end": {
+                    "line": 687,
+                    "character": 36
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[GraphQLType] | type[Any]\" cannot be assigned to parameter \"class_type\" of type \"Type[Unknown]\" in function \"map_to_scalar\"\n  Type \"type[GraphQLType] | type[Any]\" is not assignable to type \"Type[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 690,
+                    "character": 56
+                },
+                "end": {
+                    "line": 690,
+                    "character": 62
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[GraphQLType] | type[Any]\" cannot be assigned to parameter \"cls\" of type \"type\" in function \"issubclass\"\n  Type \"type[GraphQLType] | type[Any]\" is not assignable to type \"type\"",
+            "range": {
+                "start": {
+                    "line": 692,
+                    "character": 30
+                },
+                "end": {
+                    "line": 692,
+                    "character": 36
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[GraphQLType] | type[Any]\" cannot be assigned to parameter \"type_\" of type \"Type[Unknown]\" in function \"is_interface\"\n  Type \"type[GraphQLType] | type[Any]\" is not assignable to type \"Type[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 693,
+                    "character": 32
+                },
+                "end": {
+                    "line": 693,
+                    "character": 38
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[GraphQLType] | type[Any]\" cannot be assigned to parameter \"class_type\" of type \"Type[Unknown]\" in function \"map_to_interface\"\n  Type \"type[GraphQLType] | type[Any]\" is not assignable to type \"Type[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 693,
+                    "character": 83
+                },
+                "end": {
+                    "line": 693,
+                    "character": 89
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[GraphQLType] | type[Any]\" cannot be assigned to parameter \"class_type\" of type \"Type[Unknown]\" in function \"map_to_input\"\n  Type \"type[GraphQLType] | type[Any]\" is not assignable to type \"Type[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 694,
+                    "character": 59
+                },
+                "end": {
+                    "line": 694,
+                    "character": 65
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[GraphQLType] | type[Any]\" cannot be assigned to parameter \"class_type\" of type \"Type[Unknown]\" in function \"map_to_object\"\n  Type \"type[GraphQLType] | type[Any]\" is not assignable to type \"Type[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 695,
+                    "character": 48
+                },
+                "end": {
+                    "line": 695,
+                    "character": 54
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Type \"type[Union] | Unknown | type[Generic] | type[Tuple[Unknown, ...]] | type[typing_extensions.Literal] | type[typing.Literal] | Type[Unknown]\" is not assignable to return type \"Type[Any] | None\"\n  Type \"type[Union] | Unknown | type[Generic] | type[Tuple[Unknown, ...]] | type[typing_extensions.Literal] | type[typing.Literal] | Type[Unknown]\" is not assignable to type \"Type[Any] | None\"\n    Type \"type[Generic]\" is not assignable to type \"Type[Any] | None\"\n      Type is not assignable to \"None\"",
+            "range": {
+                "start": {
+                    "line": 750,
+                    "character": 11
+                },
+                "end": {
+                    "line": 750,
+                    "character": 48
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[Any] | type[Generic] | type[Union] | type[Tuple[Unknown, ...]] | type[typing_extensions.Literal] | type[typing.Literal]\" cannot be assigned to parameter \"cls\" of type \"type\" in function \"issubclass\"\n  Type \"type[Any] | type[Generic] | type[Union] | type[Tuple[Unknown, ...]] | type[typing_extensions.Literal] | type[typing.Literal]\" is not assignable to type \"type\"",
+            "range": {
+                "start": {
+                    "line": 756,
+                    "character": 52
+                },
+                "end": {
+                    "line": 756,
+                    "character": 64
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"Type[Unknown]\" cannot be assigned to parameter \"type_\" of type \"List[Unknown]\" in function \"map_to_list\"\n  \"Type[Unknown]\" is not assignable to \"List[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 757,
+                    "character": 32
+                },
+                "end": {
+                    "line": 757,
+                    "character": 41
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/mapper.py",
+            "severity": "error",
+            "message": "Argument of type \"type[Any]\" cannot be assigned to parameter \"cls\" of type \"type\" in function \"issubclass\"\n  Type \"type[Any]\" is not assignable to type \"type\"",
+            "range": {
+                "start": {
+                    "line": 776,
+                    "character": 84
+                },
+                "end": {
+                    "line": 776,
+                    "character": 89
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/reduce.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"List[str]\"\n  \"None\" is not assignable to \"List[str]\"",
+            "range": {
+                "start": {
+                    "line": 19,
+                    "character": 41
+                },
+                "end": {
+                    "line": 19,
+                    "character": 45
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/relay.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"UUID\"\n  \"None\" is not assignable to \"UUID\"",
+            "range": {
+                "start": {
+                    "line": 14,
+                    "character": 34
+                },
+                "end": {
+                    "line": 14,
+                    "character": 38
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/relay.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_count\" for class \"PageInfo*\"\n  Attribute \"_count\" is unknown",
+            "range": {
+                "start": {
+                    "line": 73,
+                    "character": 20
+                },
+                "end": {
+                    "line": 73,
+                    "character": 26
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/graphql_api/relay.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"str\"\n  \"None\" is not assignable to \"str\"",
+            "range": {
+                "start": {
+                    "line": 109,
+                    "character": 22
+                },
+                "end": {
+                    "line": 109,
+                    "character": 26
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/relay.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"str\"\n  \"None\" is not assignable to \"str\"",
+            "range": {
+                "start": {
+                    "line": 110,
+                    "character": 21
+                },
+                "end": {
+                    "line": 110,
+                    "character": 25
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/relay.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"int\"\n  \"None\" is not assignable to \"int\"",
+            "range": {
+                "start": {
+                    "line": 111,
+                    "character": 21
+                },
+                "end": {
+                    "line": 111,
+                    "character": 25
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/relay.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"int\"\n  \"None\" is not assignable to \"int\"",
+            "range": {
+                "start": {
+                    "line": 112,
+                    "character": 20
+                },
+                "end": {
+                    "line": 112,
+                    "character": 24
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/remote.py",
+            "severity": "error",
+            "message": "Method \"execute_async\" overrides class \"GraphQLBaseExecutor\" in an incompatible manner\n  Parameter 3 name mismatch: base parameter is named \"variables\", override parameter is named \"variable_values\"",
+            "range": {
+                "start": {
+                    "line": 233,
+                    "character": 14
+                },
+                "end": {
+                    "line": 233,
+                    "character": 27
+                }
+            },
+            "rule": "reportIncompatibleMethodOverride"
+        },
+        {
+            "file": "/app/graphql_api/remote.py",
+            "severity": "error",
+            "message": "Method \"execute\" overrides class \"GraphQLBaseExecutor\" in an incompatible manner\n  Parameter 3 name mismatch: base parameter is named \"variables\", override parameter is named \"variable_values\"",
+            "range": {
+                "start": {
+                    "line": 266,
+                    "character": 8
+                },
+                "end": {
+                    "line": 266,
+                    "character": 15
+                }
+            },
+            "rule": "reportIncompatibleMethodOverride"
+        },
+        {
+            "file": "/app/graphql_api/schema.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"List[GraphQLNamedType | GraphQLField]\"\n  \"None\" is not assignable to \"List[GraphQLNamedType | GraphQLField]\"",
+            "range": {
+                "start": {
+                    "line": 63,
+                    "character": 66
+                },
+                "end": {
+                    "line": 63,
+                    "character": 70
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/schema.py",
+            "severity": "error",
+            "message": "Argument of type \"GraphQLType | GraphQLField | Unknown\" cannot be assigned to parameter \"object\" of type \"GraphQLNamedType | GraphQLField\" in function \"append\"\n  Type \"GraphQLType | GraphQLField | Unknown\" is not assignable to type \"GraphQLNamedType | GraphQLField\"\n    Type \"GraphQLType\" is not assignable to type \"GraphQLNamedType | GraphQLField\"\n      \"GraphQLType\" is not assignable to \"GraphQLNamedType\"\n      \"GraphQLType\" is not assignable to \"GraphQLField\"",
+            "range": {
+                "start": {
+                    "line": 71,
+                    "character": 30
+                },
+                "end": {
+                    "line": 71,
+                    "character": 42
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/graphql_api/schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"fields\" for class \"GraphQLType\"\n  Attribute \"fields\" is unknown",
+            "range": {
+                "start": {
+                    "line": 77,
+                    "character": 39
+                },
+                "end": {
+                    "line": 77,
+                    "character": 45
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/graphql_api/schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"fields\" for class \"GraphQLField\"\n  Attribute \"fields\" is unknown",
+            "range": {
+                "start": {
+                    "line": 77,
+                    "character": 39
+                },
+                "end": {
+                    "line": 77,
+                    "character": 45
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/graphql_api/types.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"enum_type\" for class \"GraphQLMappedEnumType*\"\n  Attribute \"enum_type\" is unknown",
+            "range": {
+                "start": {
+                    "line": 16,
+                    "character": 20
+                },
+                "end": {
+                    "line": 16,
+                    "character": 29
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/graphql_api/types.py",
+            "severity": "error",
+            "message": "Type \"UndefinedType\" is not assignable to return type \"UUID | None\"\n  Type \"UndefinedType\" is not assignable to type \"UUID | None\"\n    \"UndefinedType\" is not assignable to \"UUID\"\n    \"UndefinedType\" is not assignable to \"None\"",
+            "range": {
+                "start": {
+                    "line": 26,
+                    "character": 19
+                },
+                "end": {
+                    "line": 26,
+                    "character": 28
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/graphql_api/utils.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"value\" for class \"<subclass of expr and Index>\"\n  Attribute \"value\" is unknown",
+            "range": {
+                "start": {
+                    "line": 275,
+                    "character": 33
+                },
+                "end": {
+                    "line": 275,
+                    "character": 38
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/tests/test_custom_types.py",
+            "severity": "error",
+            "message": "Variable not allowed in type expression",
+            "range": {
+                "start": {
+                    "line": 19,
+                    "character": 31
+                },
+                "end": {
+                    "line": 19,
+                    "character": 40
+                }
+            },
+            "rule": "reportInvalidTypeForm"
+        },
+        {
+            "file": "/app/tests/test_custom_types.py",
+            "severity": "error",
+            "message": "Variable not allowed in type expression",
+            "range": {
+                "start": {
+                    "line": 19,
+                    "character": 45
+                },
+                "end": {
+                    "line": 19,
+                    "character": 54
+                }
+            },
+            "rule": "reportInvalidTypeForm"
+        },
+        {
+            "file": "/app/tests/test_custom_types.py",
+            "severity": "error",
+            "message": "Argument of type \"(node: Unknown) -> (str | None)\" cannot be assigned to parameter \"parse_literal\" of type \"GraphQLScalarLiteralParser | None\" in function \"__init__\"\n  Type \"(node: Unknown) -> (str | None)\" is not assignable to type \"GraphQLScalarLiteralParser | None\"\n    Type \"(node: Unknown) -> (str | None)\" is not assignable to type \"GraphQLScalarLiteralParser\"\n      Function accepts too many positional parameters; expected 1 but received 2\n    \"FunctionType\" is not assignable to \"None\"",
+            "range": {
+                "start": {
+                    "line": 248,
+                    "character": 26
+                },
+                "end": {
+                    "line": 248,
+                    "character": 39
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/tests/test_custom_types.py",
+            "severity": "error",
+            "message": "Variable not allowed in type expression",
+            "range": {
+                "start": {
+                    "line": 254,
+                    "character": 36
+                },
+                "end": {
+                    "line": 254,
+                    "character": 46
+                }
+            },
+            "rule": "reportInvalidTypeForm"
+        },
+        {
+            "file": "/app/tests/test_custom_types.py",
+            "severity": "error",
+            "message": "Variable not allowed in type expression",
+            "range": {
+                "start": {
+                    "line": 258,
+                    "character": 35
+                },
+                "end": {
+                    "line": 258,
+                    "character": 45
+                }
+            },
+            "rule": "reportInvalidTypeForm"
+        },
+        {
+            "file": "/app/tests/test_custom_types.py",
+            "severity": "error",
+            "message": "Variable not allowed in type expression",
+            "range": {
+                "start": {
+                    "line": 262,
+                    "character": 37
+                },
+                "end": {
+                    "line": 262,
+                    "character": 47
+                }
+            },
+            "rule": "reportInvalidTypeForm"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 69,
+                    "character": 13
+                },
+                "end": {
+                    "line": 69,
+                    "character": 51
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 69,
+                    "character": 13
+                },
+                "end": {
+                    "line": 69,
+                    "character": 51
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 101,
+                    "character": 9
+                },
+                "end": {
+                    "line": 101,
+                    "character": 43
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 101,
+                    "character": 9
+                },
+                "end": {
+                    "line": 101,
+                    "character": 43
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 139,
+                    "character": 13
+                },
+                "end": {
+                    "line": 139,
+                    "character": 44
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 139,
+                    "character": 13
+                },
+                "end": {
+                    "line": 139,
+                    "character": 44
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 144,
+                    "character": 13
+                },
+                "end": {
+                    "line": 144,
+                    "character": 52
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 144,
+                    "character": 13
+                },
+                "end": {
+                    "line": 144,
+                    "character": 52
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Argument of type \"GraphQLTypeMapper | None\" cannot be assigned to parameter \"mapper\" of type \"GraphQLTypeMapper\" in function \"get_directives\"\n  Type \"GraphQLTypeMapper | None\" is not assignable to type \"GraphQLTypeMapper\"\n    \"None\" is not assignable to \"GraphQLTypeMapper\"",
+            "range": {
+                "start": {
+                    "line": 155,
+                    "character": 42
+                },
+                "end": {
+                    "line": 155,
+                    "character": 58
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Argument of type \"GraphQLTypeMapper | None\" cannot be assigned to parameter \"mapper\" of type \"GraphQLTypeMapper\" in function \"get_directives\"\n  Type \"GraphQLTypeMapper | None\" is not assignable to type \"GraphQLTypeMapper\"\n    \"None\" is not assignable to \"GraphQLTypeMapper\"",
+            "range": {
+                "start": {
+                    "line": 156,
+                    "character": 42
+                },
+                "end": {
+                    "line": 156,
+                    "character": 61
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Call expression not allowed in type expression",
+            "range": {
+                "start": {
+                    "line": 185,
+                    "character": 52
+                },
+                "end": {
+                    "line": 185,
+                    "character": 79
+                }
+            },
+            "rule": "reportInvalidTypeForm"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Argument of type \"GraphQLTypeMapper | None\" cannot be assigned to parameter \"mapper\" of type \"GraphQLTypeMapper\" in function \"get_directives\"\n  Type \"GraphQLTypeMapper | None\" is not assignable to type \"GraphQLTypeMapper\"\n    \"None\" is not assignable to \"GraphQLTypeMapper\"",
+            "range": {
+                "start": {
+                    "line": 194,
+                    "character": 42
+                },
+                "end": {
+                    "line": 194,
+                    "character": 58
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Argument to class must be a base class",
+            "range": {
+                "start": {
+                    "line": 214,
+                    "character": 18
+                },
+                "end": {
+                    "line": 214,
+                    "character": 24
+                }
+            },
+            "rule": "reportGeneralTypeIssues"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Expected class but received \"GraphQLSchema | FunctionType | ((...) -> object) | ((t: Unknown) -> Unknown) | None\"\n  \"GraphQLSchema\" is not a class\n  \"FunctionType\" is not a class\n  \"(...) -> object\" is not a class\n  \"(t: Unknown) -> Unknown\" is not a class\n  \"None\" is not a class",
+            "range": {
+                "start": {
+                    "line": 221,
+                    "character": 32
+                },
+                "end": {
+                    "line": 221,
+                    "character": 38
+                }
+            },
+            "rule": "reportGeneralTypeIssues"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Argument of type \"GraphQLTypeMapper | None\" cannot be assigned to parameter \"mapper\" of type \"GraphQLTypeMapper\" in function \"get_directives\"\n  Type \"GraphQLTypeMapper | None\" is not assignable to type \"GraphQLTypeMapper\"\n    \"None\" is not assignable to \"GraphQLTypeMapper\"",
+            "range": {
+                "start": {
+                    "line": 230,
+                    "character": 58
+                },
+                "end": {
+                    "line": 230,
+                    "character": 74
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Argument of type \"GraphQLTypeMapper | None\" cannot be assigned to parameter \"mapper\" of type \"GraphQLTypeMapper\" in function \"get_directives\"\n  Type \"GraphQLTypeMapper | None\" is not assignable to type \"GraphQLTypeMapper\"\n    \"None\" is not assignable to \"GraphQLTypeMapper\"",
+            "range": {
+                "start": {
+                    "line": 231,
+                    "character": 58
+                },
+                "end": {
+                    "line": 231,
+                    "character": 77
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 251,
+                    "character": 9
+                },
+                "end": {
+                    "line": 251,
+                    "character": 25
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 251,
+                    "character": 9
+                },
+                "end": {
+                    "line": 251,
+                    "character": 25
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Argument of type \"GraphQLTypeMapper | None\" cannot be assigned to parameter \"mapper\" of type \"GraphQLTypeMapper\" in function \"get_directives\"\n  Type \"GraphQLTypeMapper | None\" is not assignable to type \"GraphQLTypeMapper\"\n    \"None\" is not assignable to \"GraphQLTypeMapper\"",
+            "range": {
+                "start": {
+                    "line": 273,
+                    "character": 53
+                },
+                "end": {
+                    "line": 273,
+                    "character": 69
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Expected class but received \"GraphQLSchema | FunctionType | ((...) -> object) | ((t: Unknown) -> Unknown) | None\"\n  \"GraphQLSchema\" is not a class\n  \"FunctionType\" is not a class\n  \"(...) -> object\" is not a class\n  \"(t: Unknown) -> Unknown\" is not a class\n  \"None\" is not a class",
+            "range": {
+                "start": {
+                    "line": 292,
+                    "character": 32
+                },
+                "end": {
+                    "line": 292,
+                    "character": 38
+                }
+            },
+            "rule": "reportGeneralTypeIssues"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 293,
+                    "character": 23
+                },
+                "end": {
+                    "line": 293,
+                    "character": 31
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 293,
+                    "character": 23
+                },
+                "end": {
+                    "line": 293,
+                    "character": 31
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Argument missing for parameter \"t\"",
+            "range": {
+                "start": {
+                    "line": 293,
+                    "character": 23
+                },
+                "end": {
+                    "line": 293,
+                    "character": 31
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 319,
+                    "character": 9
+                },
+                "end": {
+                    "line": 319,
+                    "character": 44
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 319,
+                    "character": 9
+                },
+                "end": {
+                    "line": 319,
+                    "character": 44
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 332,
+                    "character": 13
+                },
+                "end": {
+                    "line": 332,
+                    "character": 44
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 332,
+                    "character": 13
+                },
+                "end": {
+                    "line": 332,
+                    "character": 44
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 342,
+                    "character": 13
+                },
+                "end": {
+                    "line": 342,
+                    "character": 52
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 342,
+                    "character": 13
+                },
+                "end": {
+                    "line": 342,
+                    "character": 52
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Argument of type \"GraphQLTypeMapper | None\" cannot be assigned to parameter \"mapper\" of type \"GraphQLTypeMapper\" in function \"get_directives\"\n  Type \"GraphQLTypeMapper | None\" is not assignable to type \"GraphQLTypeMapper\"\n    \"None\" is not assignable to \"GraphQLTypeMapper\"",
+            "range": {
+                "start": {
+                    "line": 353,
+                    "character": 42
+                },
+                "end": {
+                    "line": 353,
+                    "character": 58
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/tests/test_directives.py",
+            "severity": "error",
+            "message": "Argument of type \"GraphQLTypeMapper | None\" cannot be assigned to parameter \"mapper\" of type \"GraphQLTypeMapper\" in function \"get_directives\"\n  Type \"GraphQLTypeMapper | None\" is not assignable to type \"GraphQLTypeMapper\"\n    \"None\" is not assignable to \"GraphQLTypeMapper\"",
+            "range": {
+                "start": {
+                    "line": 354,
+                    "character": 42
+                },
+                "end": {
+                    "line": 354,
+                    "character": 61
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 18,
+                    "character": 9
+                },
+                "end": {
+                    "line": 18,
+                    "character": 27
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 18,
+                    "character": 9
+                },
+                "end": {
+                    "line": 18,
+                    "character": 27
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 19,
+                    "character": 9
+                },
+                "end": {
+                    "line": 19,
+                    "character": 25
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 19,
+                    "character": 9
+                },
+                "end": {
+                    "line": 19,
+                    "character": 25
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 24,
+                    "character": 23
+                },
+                "end": {
+                    "line": 24,
+                    "character": 47
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 24,
+                    "character": 23
+                },
+                "end": {
+                    "line": 24,
+                    "character": 47
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Argument missing for parameter \"t\"",
+            "range": {
+                "start": {
+                    "line": 24,
+                    "character": 23
+                },
+                "end": {
+                    "line": 24,
+                    "character": 47
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "No parameter named \"id\"",
+            "range": {
+                "start": {
+                    "line": 24,
+                    "character": 28
+                },
+                "end": {
+                    "line": 24,
+                    "character": 30
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 38,
+                    "character": 9
+                },
+                "end": {
+                    "line": 38,
+                    "character": 27
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 38,
+                    "character": 9
+                },
+                "end": {
+                    "line": 38,
+                    "character": 27
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Expected class but received \"GraphQLSchema | FunctionType | ((...) -> object) | ((t: Unknown) -> Unknown) | None\"\n  \"GraphQLSchema\" is not a class\n  \"FunctionType\" is not a class\n  \"(...) -> object\" is not a class\n  \"(t: Unknown) -> Unknown\" is not a class\n  \"None\" is not a class",
+            "range": {
+                "start": {
+                    "line": 51,
+                    "character": 36
+                },
+                "end": {
+                    "line": 51,
+                    "character": 40
+                }
+            },
+            "rule": "reportGeneralTypeIssues"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 52,
+                    "character": 24
+                },
+                "end": {
+                    "line": 52,
+                    "character": 36
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 52,
+                    "character": 24
+                },
+                "end": {
+                    "line": 52,
+                    "character": 36
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Argument missing for parameter \"t\"",
+            "range": {
+                "start": {
+                    "line": 52,
+                    "character": 24
+                },
+                "end": {
+                    "line": 52,
+                    "character": 36
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "No parameter named \"id\"",
+            "range": {
+                "start": {
+                    "line": 52,
+                    "character": 29
+                },
+                "end": {
+                    "line": 52,
+                    "character": 31
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 52,
+                    "character": 38
+                },
+                "end": {
+                    "line": 52,
+                    "character": 50
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 52,
+                    "character": 38
+                },
+                "end": {
+                    "line": 52,
+                    "character": 50
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Argument missing for parameter \"t\"",
+            "range": {
+                "start": {
+                    "line": 52,
+                    "character": 38
+                },
+                "end": {
+                    "line": 52,
+                    "character": 50
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "No parameter named \"id\"",
+            "range": {
+                "start": {
+                    "line": 52,
+                    "character": 43
+                },
+                "end": {
+                    "line": 52,
+                    "character": 45
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 57,
+                    "character": 8
+                },
+                "end": {
+                    "line": 62,
+                    "character": 17
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 57,
+                    "character": 8
+                },
+                "end": {
+                    "line": 62,
+                    "character": 17
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 97,
+                    "character": 14
+                },
+                "end": {
+                    "line": 97,
+                    "character": 27
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/app/tests/test_federation.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 147,
+                    "character": 14
+                },
+                "end": {
+                    "line": 147,
+                    "character": 27
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Variable not allowed in type expression",
+            "range": {
+                "start": {
+                    "line": 80,
+                    "character": 20
+                },
+                "end": {
+                    "line": 80,
+                    "character": 29
+                }
+            },
+            "rule": "reportInvalidTypeForm"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Variable not allowed in type expression",
+            "range": {
+                "start": {
+                    "line": 90,
+                    "character": 29
+                },
+                "end": {
+                    "line": 90,
+                    "character": 38
+                }
+            },
+            "rule": "reportInvalidTypeForm"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 98,
+                    "character": 1
+                },
+                "end": {
+                    "line": 98,
+                    "character": 35
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 98,
+                    "character": 1
+                },
+                "end": {
+                    "line": 98,
+                    "character": 35
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 133,
+                    "character": 1
+                },
+                "end": {
+                    "line": 133,
+                    "character": 20
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 133,
+                    "character": 1
+                },
+                "end": {
+                    "line": 133,
+                    "character": 20
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 143,
+                    "character": 5
+                },
+                "end": {
+                    "line": 143,
+                    "character": 62
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 143,
+                    "character": 5
+                },
+                "end": {
+                    "line": 143,
+                    "character": 62
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Variable not allowed in type expression",
+            "range": {
+                "start": {
+                    "line": 154,
+                    "character": 23
+                },
+                "end": {
+                    "line": 154,
+                    "character": 32
+                }
+            },
+            "rule": "reportInvalidTypeForm"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 157,
+                    "character": 5
+                },
+                "end": {
+                    "line": 157,
+                    "character": 34
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 157,
+                    "character": 5
+                },
+                "end": {
+                    "line": 157,
+                    "character": 34
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 173,
+                    "character": 1
+                },
+                "end": {
+                    "line": 173,
+                    "character": 26
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 173,
+                    "character": 1
+                },
+                "end": {
+                    "line": 173,
+                    "character": 26
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 204,
+                    "character": 1
+                },
+                "end": {
+                    "line": 204,
+                    "character": 17
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 204,
+                    "character": 1
+                },
+                "end": {
+                    "line": 204,
+                    "character": 17
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 212,
+                    "character": 15
+                },
+                "end": {
+                    "line": 212,
+                    "character": 58
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 212,
+                    "character": 15
+                },
+                "end": {
+                    "line": 212,
+                    "character": 58
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Argument missing for parameter \"t\"",
+            "range": {
+                "start": {
+                    "line": 212,
+                    "character": 15
+                },
+                "end": {
+                    "line": 212,
+                    "character": 58
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "No parameter named \"data\"",
+            "range": {
+                "start": {
+                    "line": 212,
+                    "character": 25
+                },
+                "end": {
+                    "line": 212,
+                    "character": 29
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Variable not allowed in type expression",
+            "range": {
+                "start": {
+                    "line": 215,
+                    "character": 20
+                },
+                "end": {
+                    "line": 215,
+                    "character": 29
+                }
+            },
+            "rule": "reportInvalidTypeForm"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 225,
+                    "character": 1
+                },
+                "end": {
+                    "line": 225,
+                    "character": 17
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 225,
+                    "character": 1
+                },
+                "end": {
+                    "line": 225,
+                    "character": 17
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 226,
+                    "character": 1
+                },
+                "end": {
+                    "line": 226,
+                    "character": 26
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 226,
+                    "character": 1
+                },
+                "end": {
+                    "line": 226,
+                    "character": 26
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 227,
+                    "character": 1
+                },
+                "end": {
+                    "line": 227,
+                    "character": 35
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 227,
+                    "character": 1
+                },
+                "end": {
+                    "line": 227,
+                    "character": 35
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 245,
+                    "character": 27
+                },
+                "end": {
+                    "line": 245,
+                    "character": 48
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 245,
+                    "character": 27
+                },
+                "end": {
+                    "line": 245,
+                    "character": 48
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Variable not allowed in type expression",
+            "range": {
+                "start": {
+                    "line": 250,
+                    "character": 20
+                },
+                "end": {
+                    "line": 250,
+                    "character": 29
+                }
+            },
+            "rule": "reportInvalidTypeForm"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Expected class but received \"GraphQLSchema | FunctionType | ((...) -> object) | ((t: Unknown) -> Unknown) | None\"\n  \"GraphQLSchema\" is not a class\n  \"FunctionType\" is not a class\n  \"(...) -> object\" is not a class\n  \"(t: Unknown) -> Unknown\" is not a class\n  \"None\" is not a class",
+            "range": {
+                "start": {
+                    "line": 269,
+                    "character": 37
+                },
+                "end": {
+                    "line": 269,
+                    "character": 53
+                }
+            },
+            "rule": "reportGeneralTypeIssues"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 272,
+                    "character": 19
+                },
+                "end": {
+                    "line": 272,
+                    "character": 41
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 272,
+                    "character": 19
+                },
+                "end": {
+                    "line": 272,
+                    "character": 41
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 275,
+                    "character": 5
+                },
+                "end": {
+                    "line": 275,
+                    "character": 44
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 275,
+                    "character": 5
+                },
+                "end": {
+                    "line": 275,
+                    "character": 44
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 283,
+                    "character": 5
+                },
+                "end": {
+                    "line": 283,
+                    "character": 25
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 283,
+                    "character": 5
+                },
+                "end": {
+                    "line": 283,
+                    "character": 25
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Variable not allowed in type expression",
+            "range": {
+                "start": {
+                    "line": 297,
+                    "character": 26
+                },
+                "end": {
+                    "line": 297,
+                    "character": 35
+                }
+            },
+            "rule": "reportInvalidTypeForm"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Expected class but received \"GraphQLSchema | FunctionType | ((...) -> object) | ((t: Unknown) -> Unknown) | None\"\n  \"GraphQLSchema\" is not a class\n  \"FunctionType\" is not a class\n  \"(...) -> object\" is not a class\n  \"(t: Unknown) -> Unknown\" is not a class\n  \"None\" is not a class",
+            "range": {
+                "start": {
+                    "line": 297,
+                    "character": 49
+                },
+                "end": {
+                    "line": 297,
+                    "character": 56
+                }
+            },
+            "rule": "reportGeneralTypeIssues"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 300,
+                    "character": 23
+                },
+                "end": {
+                    "line": 300,
+                    "character": 44
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 300,
+                    "character": 23
+                },
+                "end": {
+                    "line": 300,
+                    "character": 44
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"GraphQLSchema\" is not callable\n  Attribute \"__call__\" is unknown",
+            "range": {
+                "start": {
+                    "line": 303,
+                    "character": 5
+                },
+                "end": {
+                    "line": 303,
+                    "character": 51
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 303,
+                    "character": 5
+                },
+                "end": {
+                    "line": 303,
+                    "character": 51
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/app/tests/test_federation_example.py",
+            "severity": "error",
+            "message": "Argument of type \"list[GraphQLSchema | FunctionType | ((...) -> object) | ((t: Unknown) -> Unknown) | None]\" cannot be assigned to parameter \"types\" of type \"List[GraphQLNamedType | Type[Unknown]] | None\" in function \"__init__\"\n  Type \"GraphQLSchema | FunctionType | ((...) -> object) | ((t: Unknown) -> Unknown) | None\" is not assignable to type \"GraphQLNamedType | Type[Unknown]\"\n    Type \"FunctionType\" is not assignable to type \"GraphQLNamedType | Type[Unknown]\"\n      \"FunctionType\" is not assignable to \"GraphQLNamedType\"\n      \"FunctionType\" is not assignable to \"Type[Unknown]\"",
+            "range": {
+                "start": {
+                    "line": 315,
+                    "character": 44
+                },
+                "end": {
+                    "line": 315,
+                    "character": 53
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/tests/test_filtering.py",
+            "severity": "error",
+            "message": "Function with declared return type \"str\" must return value on all code paths\n  \"None\" is not assignable to \"str\"",
+            "range": {
+                "start": {
+                    "line": 92,
+                    "character": 30
+                },
+                "end": {
+                    "line": 92,
+                    "character": 33
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/tests/test_graphql.py",
+            "severity": "error",
+            "message": "Method \"hello\" overrides class \"GreetInterface\" in an incompatible manner\n  Parameter 2 type mismatch: base parameter is type \"Person\", override parameter is type \"HashablePerson\"\n    \"Person\" is not assignable to \"HashablePerson\"",
+            "range": {
+                "start": {
+                    "line": 1465,
+                    "character": 16
+                },
+                "end": {
+                    "line": 1465,
+                    "character": 21
+                }
+            },
+            "rule": "reportIncompatibleMethodOverride"
+        },
+        {
+            "file": "/app/tests/test_graphql.py",
+            "severity": "error",
+            "message": "Method \"hello\" overrides class \"GreetInterface\" in an incompatible manner\n  Parameter 2 type mismatch: base parameter is type \"PersonInterface\", override parameter is type \"Person\"\n    \"PersonInterface\" is not assignable to \"Person\"",
+            "range": {
+                "start": {
+                    "line": 1499,
+                    "character": 16
+                },
+                "end": {
+                    "line": 1499,
+                    "character": 21
+                }
+            },
+            "rule": "reportIncompatibleMethodOverride"
+        },
+        {
+            "file": "/app/tests/test_middleware.py",
+            "severity": "error",
+            "message": "Type \"GraphQLRemoteObject\" is not assignable to declared type \"House\"\n  \"GraphQLRemoteObject\" is not assignable to \"House\"",
+            "range": {
+                "start": {
+                    "line": 18,
+                    "character": 23
+                },
+                "end": {
+                    "line": 18,
+                    "character": 76
+                }
+            },
+            "rule": "reportAssignmentType"
+        },
+        {
+            "file": "/app/tests/test_remote.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"str\"\n  \"None\" is not assignable to \"str\"",
+            "range": {
+                "start": {
+                    "line": 613,
+                    "character": 41
+                },
+                "end": {
+                    "line": 613,
+                    "character": 45
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/tests/test_remote.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"float\"\n  \"None\" is not assignable to \"float\"",
+            "range": {
+                "start": {
+                    "line": 613,
+                    "character": 63
+                },
+                "end": {
+                    "line": 613,
+                    "character": 67
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/app/tests/test_remote.py",
+            "severity": "error",
+            "message": "Type \"GraphQLRemoteObject\" is not assignable to declared type \"Person\"\n  \"GraphQLRemoteObject\" is not assignable to \"Person\"",
+            "range": {
+                "start": {
+                    "line": 702,
+                    "character": 25
+                },
+                "end": {
+                    "line": 702,
+                    "character": 78
+                }
+            },
+            "rule": "reportAssignmentType"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Function with declared return type \"int\" must return value on all code paths\n  \"None\" is not assignable to \"int\"",
+            "range": {
+                "start": {
+                    "line": 9,
+                    "character": 54
+                },
+                "end": {
+                    "line": 9,
+                    "character": 57
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Function with declared return type \"int\" must return value on all code paths\n  \"None\" is not assignable to \"int\"",
+            "range": {
+                "start": {
+                    "line": 13,
+                    "character": 57
+                },
+                "end": {
+                    "line": 13,
+                    "character": 60
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Function with declared return type \"int\" must return value on all code paths\n  \"None\" is not assignable to \"int\"",
+            "range": {
+                "start": {
+                    "line": 19,
+                    "character": 63
+                },
+                "end": {
+                    "line": 19,
+                    "character": 66
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Function with declared return type \"int\" must return value on all code paths\n  \"None\" is not assignable to \"int\"",
+            "range": {
+                "start": {
+                    "line": 23,
+                    "character": 66
+                },
+                "end": {
+                    "line": 23,
+                    "character": 69
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Function with declared return type \"int\" must return value on all code paths\n  \"None\" is not assignable to \"int\"",
+            "range": {
+                "start": {
+                    "line": 29,
+                    "character": 64
+                },
+                "end": {
+                    "line": 29,
+                    "character": 67
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Function with declared return type \"int\" must return value on all code paths\n  \"None\" is not assignable to \"int\"",
+            "range": {
+                "start": {
+                    "line": 33,
+                    "character": 67
+                },
+                "end": {
+                    "line": 33,
+                    "character": 70
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"type[ObjectNoSchema]\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 37,
+                    "character": 30
+                },
+                "end": {
+                    "line": 37,
+                    "character": 38
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"FunctionType\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 38,
+                    "character": 51
+                },
+                "end": {
+                    "line": 38,
+                    "character": 59
+                }
+            },
+            "rule": "reportFunctionMemberAccess"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"FunctionType\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 39,
+                    "character": 54
+                },
+                "end": {
+                    "line": 39,
+                    "character": 62
+                }
+            },
+            "rule": "reportFunctionMemberAccess"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"type[AbstractNoSchema]\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 42,
+                    "character": 32
+                },
+                "end": {
+                    "line": 42,
+                    "character": 40
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"FunctionType\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 43,
+                    "character": 62
+                },
+                "end": {
+                    "line": 43,
+                    "character": 70
+                }
+            },
+            "rule": "reportFunctionMemberAccess"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"FunctionType\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 44,
+                    "character": 65
+                },
+                "end": {
+                    "line": 44,
+                    "character": 73
+                }
+            },
+            "rule": "reportFunctionMemberAccess"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"type[InterfaceNoSchema]\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 47,
+                    "character": 33
+                },
+                "end": {
+                    "line": 47,
+                    "character": 41
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"FunctionType\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 48,
+                    "character": 64
+                },
+                "end": {
+                    "line": 48,
+                    "character": 72
+                }
+            },
+            "rule": "reportFunctionMemberAccess"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"FunctionType\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 49,
+                    "character": 67
+                },
+                "end": {
+                    "line": 49,
+                    "character": 75
+                }
+            },
+            "rule": "reportFunctionMemberAccess"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Function with declared return type \"int\" must return value on all code paths\n  \"None\" is not assignable to \"int\"",
+            "range": {
+                "start": {
+                    "line": 57,
+                    "character": 51
+                },
+                "end": {
+                    "line": 57,
+                    "character": 54
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Function with declared return type \"int\" must return value on all code paths\n  \"None\" is not assignable to \"int\"",
+            "range": {
+                "start": {
+                    "line": 61,
+                    "character": 54
+                },
+                "end": {
+                    "line": 61,
+                    "character": 57
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"type[ObjectSchema]\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 65,
+                    "character": 28
+                },
+                "end": {
+                    "line": 65,
+                    "character": 36
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"FunctionType\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 66,
+                    "character": 46
+                },
+                "end": {
+                    "line": 66,
+                    "character": 54
+                }
+            },
+            "rule": "reportFunctionMemberAccess"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"FunctionType\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 67,
+                    "character": 49
+                },
+                "end": {
+                    "line": 67,
+                    "character": 57
+                }
+            },
+            "rule": "reportFunctionMemberAccess"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Function with declared return type \"int\" must return value on all code paths\n  \"None\" is not assignable to \"int\"",
+            "range": {
+                "start": {
+                    "line": 73,
+                    "character": 59
+                },
+                "end": {
+                    "line": 73,
+                    "character": 62
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Function with declared return type \"int\" must return value on all code paths\n  \"None\" is not assignable to \"int\"",
+            "range": {
+                "start": {
+                    "line": 77,
+                    "character": 62
+                },
+                "end": {
+                    "line": 77,
+                    "character": 65
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"type[ObjectNoSchemaMeta]\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 81,
+                    "character": 34
+                },
+                "end": {
+                    "line": 81,
+                    "character": 42
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"FunctionType\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 82,
+                    "character": 60
+                },
+                "end": {
+                    "line": 82,
+                    "character": 68
+                }
+            },
+            "rule": "reportFunctionMemberAccess"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"FunctionType\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 83,
+                    "character": 63
+                },
+                "end": {
+                    "line": 83,
+                    "character": 71
+                }
+            },
+            "rule": "reportFunctionMemberAccess"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Function with declared return type \"int\" must return value on all code paths\n  \"None\" is not assignable to \"int\"",
+            "range": {
+                "start": {
+                    "line": 91,
+                    "character": 56
+                },
+                "end": {
+                    "line": 91,
+                    "character": 59
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Function with declared return type \"int\" must return value on all code paths\n  \"None\" is not assignable to \"int\"",
+            "range": {
+                "start": {
+                    "line": 95,
+                    "character": 59
+                },
+                "end": {
+                    "line": 95,
+                    "character": 62
+                }
+            },
+            "rule": "reportReturnType"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"type[ObjectSchemaMeta]\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 99,
+                    "character": 32
+                },
+                "end": {
+                    "line": 99,
+                    "character": 40
+                }
+            },
+            "rule": "reportAttributeAccessIssue"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"FunctionType\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 100,
+                    "character": 55
+                },
+                "end": {
+                    "line": 100,
+                    "character": 63
+                }
+            },
+            "rule": "reportFunctionMemberAccess"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "error",
+            "message": "Cannot access attribute \"_graphql\" for class \"FunctionType\"\n  Attribute \"_graphql\" is unknown",
+            "range": {
+                "start": {
+                    "line": 101,
+                    "character": 58
+                },
+                "end": {
+                    "line": 101,
+                    "character": 66
+                }
+            },
+            "rule": "reportFunctionMemberAccess"
+        },
+        {
+            "file": "/app/tests/test_schema.py",
+            "severity": "warning",
+            "message": "Assert expression always evaluates to true",
+            "range": {
+                "start": {
+                    "line": 105,
+                    "character": 15
+                },
+                "end": {
+                    "line": 105,
+                    "character": 21
+                }
+            },
+            "rule": "reportAssertAlwaysTrue"
+        },
+        {
+            "file": "/app/tests/test_subscriptions.py",
+            "severity": "error",
+            "message": "\"ExecutionResult\" is not iterable\n  \"__aiter__\" method not defined",
+            "range": {
+                "start": {
+                    "line": 81,
+                    "character": 32
+                },
+                "end": {
+                    "line": 81,
+                    "character": 50
+                }
+            },
+            "rule": "reportGeneralTypeIssues"
+        },
+        {
+            "file": "/app/tests/test_subscriptions.py",
+            "severity": "error",
+            "message": "Expression of type \"None\" cannot be assigned to parameter of type \"str\"\n  \"None\" is not assignable to \"str\"",
+            "range": {
+                "start": {
+                    "line": 106,
+                    "character": 37
+                },
+                "end": {
+                    "line": 106,
+                    "character": 41
+                }
+            },
+            "rule": "reportArgumentType"
+        }
+    ],
+    "summary": {
+        "filesAnalyzed": 39,
+        "errorCount": 217,
+        "warningCount": 1,
+        "informationCount": 0,
+        "timeInSec": 6.783
+    }
+}

@@ -173,7 +173,9 @@ class GraphQLSchemaReducer:
 
                 field_name = to_snake_case(key)
 
-                field_meta = meta.get((root_type.name, field_name), {})
+                field_meta = {} # Default to empty dict
+                if meta is not None: # Guard against meta being None
+                    field_meta = meta.get((root_type.name, field_name), {})
 
                 if filters:
                     for field_filter in filters:

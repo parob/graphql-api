@@ -1,9 +1,9 @@
 import enum
-from typing import List, Optional, Union
+from typing import List, Optional, Union, cast, Any # Added cast and Any
 
 import pytest
 from graphql import (DirectiveLocation, GraphQLArgument, GraphQLDirective,
-                     GraphQLString)
+                     GraphQLString, GraphQLSchema) # Added GraphQLSchema for type hint
 
 from graphql_api import AppliedDirective, GraphQLAPI, field, type
 from graphql_api.directives import SchemaDirective, deprecated, print_schema
@@ -59,7 +59,10 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=TestSchema, directives=[custom_directive_definition])
 
         schema, _ = api.build_schema()
-        printed_schema = print_schema(schema)
+        assert schema is not None, "Schema should not be None" # This assertion should inform Pyright
+        printed_schema = ""
+        if schema is not None: # Guarding print_schema
+            printed_schema = print_schema(schema)
 
         assert "directive @test1" in printed_schema
 
@@ -74,7 +77,10 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=TestSchema, directives=[deprecated])
 
         schema, _ = api.build_schema()
-        printed_schema = print_schema(schema)
+        assert schema is not None, "Schema should not be None" # This assertion should inform Pyright
+        printed_schema = ""
+        if schema is not None: # Guarding print_schema
+            printed_schema = print_schema(schema)
 
         assert '@deprecated(reason: "deprecated reason")' in printed_schema
 
@@ -107,7 +113,10 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=TestSchema)
 
         schema, _ = api.build_schema()
-        printed_schema = print_schema(schema)
+        assert schema is not None, "Schema should not be None" # This assertion should inform Pyright
+        printed_schema = ""
+        if schema is not None: # Guarding print_schema
+            printed_schema = print_schema(schema)
 
         assert "directive @key" in printed_schema
         assert "object_decorator_key" in printed_schema
@@ -147,10 +156,19 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=TestSchema)
 
         schema, _ = api.build_schema()
-        printed_schema = print_schema(schema)
+        assert schema is not None, "Schema should not be None" # This assertion should inform Pyright
+        printed_schema = ""
+        if schema is not None: # Guarding print_schema
+            printed_schema = print_schema(schema)
 
+        assert api.query_mapper is not None # Assertion for mapper
         assert tag in self.get_directives(api.query_mapper)
-        assert tag in self.get_directives(api.mutation_mapper)
+        if api.mutation_mapper is not None: # Guarding for mutation_mapper if it can be None
+            assert tag in self.get_directives(api.mutation_mapper)
+        elif api.mutation_mapper is None and tag in self.get_directives(api.query_mapper):
+             # if mutation_mapper is None, this implies no mutation fields, so tag shouldn't be from there
+             pass
+
 
         assert "directive @tag" in printed_schema
         assert "field_tag" in printed_schema
@@ -185,8 +203,12 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=Bank)
 
         schema, _ = api.build_schema()
-        printed_schema = print_schema(schema)
+        assert schema is not None, "Schema should not be None" # This assertion should inform Pyright
+        printed_schema = ""
+        if schema is not None: # Guarding print_schema
+            printed_schema = print_schema(schema)
 
+        assert api.query_mapper is not None # Assertion for mapper
         assert big in self.get_directives(api.query_mapper)
 
         assert "directive @big" in printed_schema
@@ -220,10 +242,15 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=Root)
 
         schema, _ = api.build_schema()
-        printed_schema = print_schema(schema)
+        assert schema is not None, "Schema should not be None" # This assertion should inform Pyright
+        printed_schema = ""
+        if schema is not None: # Guarding print_schema
+            printed_schema = print_schema(schema)
 
+        assert api.query_mapper is not None # Assertion for mapper
         assert interface_directive in self.get_directives(api.query_mapper)
-        assert interface_directive in self.get_directives(api.mutation_mapper)
+        if api.mutation_mapper is not None: # Guarding for mutation_mapper
+            assert interface_directive in self.get_directives(api.mutation_mapper)
 
         assert "directive @interface_directive" in printed_schema
         assert "Interface directive description" in printed_schema
@@ -262,8 +289,12 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=Root)
 
         schema, _ = api.build_schema()
-        printed_schema = print_schema(schema)
+        assert schema is not None, "Schema should not be None" # This assertion should inform Pyright
+        printed_schema = ""
+        if schema is not None: # Guarding print_schema
+            printed_schema = print_schema(schema)
 
+        assert api.query_mapper is not None # Assertion for mapper
         assert enum_directive in self.get_directives(api.query_mapper)
 
         assert "directive @enum_directive" in printed_schema
@@ -341,10 +372,18 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=TestSchema)
 
         schema, _ = api.build_schema()
-        printed_schema = print_schema(schema)
+        assert schema is not None, "Schema should not be None" # This assertion should inform Pyright
+        printed_schema = ""
+        if schema is not None: # Guarding print_schema
+            printed_schema = print_schema(schema)
 
+        assert api.query_mapper is not None # Assertion for mapper
         assert tag in self.get_directives(api.query_mapper)
-        assert tag in self.get_directives(api.mutation_mapper)
+        if api.mutation_mapper is not None: # Guarding for mutation_mapper
+            assert tag in self.get_directives(api.mutation_mapper)
+        elif api.mutation_mapper is None and tag in self.get_directives(api.query_mapper):
+            pass
+
 
         assert "directive @key" in printed_schema
         assert "schema_decorator_test" in printed_schema

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import binascii
 import datetime
 import json
@@ -5,7 +6,7 @@ import uuid
 from typing import Any, Dict, List, Optional, Union
 
 from graphql import (GraphQLEnumType, GraphQLScalarType, StringValueNode,
-                     Undefined, ValueNode)
+                     Undefined, ValueNode, IntValueNode, ListValueNode, ObjectValueNode)
 from graphql.language import ast
 
 
@@ -111,12 +112,22 @@ def parse_json_value(value: str) -> JsonType:
 
 
 def parse_json_literal(value_node: ValueNode, _variables: Any = None) -> JsonType:
-    if isinstance(value_node, ast.StringValueNode):
+    if isinstance(value_node, StringValueNode):
         return parse_json_value(value_node.value)
     if isinstance(value_node, ast.BooleanValueNode):
         return value_node.value
     if isinstance(value_node, ast.FloatValueNode):
-        return value_node.value
+        return float(value_node.value)
+    if isinstance(value_node, IntValueNode):
+        return int(value_node.value)
+    if isinstance(value_node, ListValueNode):
+        return [parse_json_literal(v, _variables) for v in value_node.values]
+    if isinstance(value_node, ObjectValueNode):
+        return {
+            field.name.value: parse_json_literal(field.value, _variables)
+            for field in value_node.fields
+        }
+    return None
 
 
 GraphQLJSON = GraphQLScalarType(
