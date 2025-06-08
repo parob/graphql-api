@@ -53,7 +53,7 @@ class TestCalculator:
         assert result.data == expected
 
     def test_calculator_subtract(self):
-        executor = api.executor() # Use module-level api
+        executor = api.executor()  # Use module-level api
 
         test_query = """
             query TestSubtract {
@@ -68,7 +68,7 @@ class TestCalculator:
         assert result.data == expected
 
     def test_calculator_multiply(self):
-        executor = api.executor() # Use module-level api
+        executor = api.executor()  # Use module-level api
 
         test_query = """
             query TestMultiply {
@@ -83,7 +83,7 @@ class TestCalculator:
         assert result.data == expected
 
     def test_calculator_divide(self):
-        executor = api.executor() # Use module-level api
+        executor = api.executor()  # Use module-level api
 
         test_query = """
             query TestDivide {
@@ -110,4 +110,4 @@ class TestCalculator:
         expected = {"calculate": None}  # Or handle error appropriately
 
         assert not result.errors
-        assert result.data == expected 
+        assert result.data == expected

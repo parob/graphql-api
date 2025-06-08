@@ -27,6 +27,7 @@ from graphql_api.utils import executor_to_ast
 # Define Period at module level
 Period = Literal["1d", "5d", "1mo", "3mo", "6mo", "1y"]
 
+
 def available(url, method="GET"):
     try:
         response = request(
