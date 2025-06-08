@@ -1,0 +1,17 @@
+/app/tests/test_directives.py
+  /app/tests/test_directives.py:218:19 - error: Argument to class must be a base class (reportGeneralTypeIssues)
+  /app/tests/test_directives.py:225:33 - error: Expected class but received "GraphQLSchema | FunctionType | ((...) -> object) | ((t: Unknown) -> Unknown) | None"
+    "GraphQLSchema" is not a class
+    "FunctionType" is not a class
+    "(...) -> object" is not a class
+    "(t: Unknown) -> Unknown" is not a class
+    "None" is not a class (reportGeneralTypeIssues)
+  /app/tests/test_directives.py:299:33 - error: Expected class but received "GraphQLSchema | FunctionType | ((...) -> object) | ((t: Unknown) -> Unknown) | None"
+    "GraphQLSchema" is not a class
+    "FunctionType" is not a class
+    "(...) -> object" is not a class
+    "(t: Unknown) -> Unknown" is not a class
+    "None" is not a class (reportGeneralTypeIssues)
+3 errors, 0 warnings, 0 informations
+
+Return code: 1

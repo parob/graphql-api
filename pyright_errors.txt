@@ -1,0 +1,359 @@
+/app/tests/test_custom_types.py
+  /app/tests/test_custom_types.py:20:32 - error: Variable not allowed in type expression (reportInvalidTypeForm)
+  /app/tests/test_custom_types.py:20:46 - error: Variable not allowed in type expression (reportInvalidTypeForm)
+  /app/tests/test_custom_types.py:33:43 - error: "fields" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /app/tests/test_custom_types.py:240:27 - error: Argument of type "(node: Unknown) -> (str | None)" cannot be assigned to parameter "parse_literal" of type "GraphQLScalarLiteralParser | None" in function "__init__"
+    Type "(node: Unknown) -> (str | None)" is not assignable to type "GraphQLScalarLiteralParser | None"
+      Type "(node: Unknown) -> (str | None)" is not assignable to type "GraphQLScalarLiteralParser"
+        Function accepts too many positional parameters; expected 1 but received 2
+      "FunctionType" is not assignable to "None" (reportArgumentType)
+  /app/tests/test_custom_types.py:246:37 - error: Variable not allowed in type expression (reportInvalidTypeForm)
+  /app/tests/test_custom_types.py:250:36 - error: Variable not allowed in type expression (reportInvalidTypeForm)
+  /app/tests/test_custom_types.py:254:38 - error: Variable not allowed in type expression (reportInvalidTypeForm)
+/app/tests/test_directives.py
+  /app/tests/test_directives.py:69:14 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_directives.py:69:14 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_directives.py:100:10 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_directives.py:100:10 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_directives.py:137:14 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_directives.py:137:14 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_directives.py:142:14 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_directives.py:142:14 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_directives.py:152:43 - error: Argument of type "GraphQLTypeMapper | None" cannot be assigned to parameter "mapper" of type "GraphQLTypeMapper" in function "get_directives"
+    Type "GraphQLTypeMapper | None" is not assignable to type "GraphQLTypeMapper"
+      "None" is not assignable to "GraphQLTypeMapper" (reportArgumentType)
+  /app/tests/test_directives.py:153:43 - error: Argument of type "GraphQLTypeMapper | None" cannot be assigned to parameter "mapper" of type "GraphQLTypeMapper" in function "get_directives"
+    Type "GraphQLTypeMapper | None" is not assignable to type "GraphQLTypeMapper"
+      "None" is not assignable to "GraphQLTypeMapper" (reportArgumentType)
+  /app/tests/test_directives.py:182:53 - error: Call expression not allowed in type expression (reportInvalidTypeForm)
+  /app/tests/test_directives.py:190:43 - error: Argument of type "GraphQLTypeMapper | None" cannot be assigned to parameter "mapper" of type "GraphQLTypeMapper" in function "get_directives"
+    Type "GraphQLTypeMapper | None" is not assignable to type "GraphQLTypeMapper"
+      "None" is not assignable to "GraphQLTypeMapper" (reportArgumentType)
+  /app/tests/test_directives.py:210:19 - error: Argument to class must be a base class (reportGeneralTypeIssues)
+  /app/tests/test_directives.py:217:33 - error: Expected class but received "GraphQLSchema | FunctionType | ((...) -> object) | ((t: Unknown) -> Unknown) | None"
+    "GraphQLSchema" is not a class
+    "FunctionType" is not a class
+    "(...) -> object" is not a class
+    "(t: Unknown) -> Unknown" is not a class
+    "None" is not a class (reportGeneralTypeIssues)
+  /app/tests/test_directives.py:225:59 - error: Argument of type "GraphQLTypeMapper | None" cannot be assigned to parameter "mapper" of type "GraphQLTypeMapper" in function "get_directives"
+    Type "GraphQLTypeMapper | None" is not assignable to type "GraphQLTypeMapper"
+      "None" is not assignable to "GraphQLTypeMapper" (reportArgumentType)
+  /app/tests/test_directives.py:226:59 - error: Argument of type "GraphQLTypeMapper | None" cannot be assigned to parameter "mapper" of type "GraphQLTypeMapper" in function "get_directives"
+    Type "GraphQLTypeMapper | None" is not assignable to type "GraphQLTypeMapper"
+      "None" is not assignable to "GraphQLTypeMapper" (reportArgumentType)
+  /app/tests/test_directives.py:246:10 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_directives.py:246:10 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_directives.py:267:54 - error: Argument of type "GraphQLTypeMapper | None" cannot be assigned to parameter "mapper" of type "GraphQLTypeMapper" in function "get_directives"
+    Type "GraphQLTypeMapper | None" is not assignable to type "GraphQLTypeMapper"
+      "None" is not assignable to "GraphQLTypeMapper" (reportArgumentType)
+  /app/tests/test_directives.py:286:33 - error: Expected class but received "GraphQLSchema | FunctionType | ((...) -> object) | ((t: Unknown) -> Unknown) | None"
+    "GraphQLSchema" is not a class
+    "FunctionType" is not a class
+    "(...) -> object" is not a class
+    "(t: Unknown) -> Unknown" is not a class
+    "None" is not a class (reportGeneralTypeIssues)
+  /app/tests/test_directives.py:287:24 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_directives.py:287:24 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_directives.py:287:24 - error: Argument missing for parameter "t" (reportCallIssue)
+  /app/tests/test_directives.py:313:10 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_directives.py:313:10 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_directives.py:326:14 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_directives.py:326:14 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_directives.py:336:14 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_directives.py:336:14 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_directives.py:346:43 - error: Argument of type "GraphQLTypeMapper | None" cannot be assigned to parameter "mapper" of type "GraphQLTypeMapper" in function "get_directives"
+    Type "GraphQLTypeMapper | None" is not assignable to type "GraphQLTypeMapper"
+      "None" is not assignable to "GraphQLTypeMapper" (reportArgumentType)
+  /app/tests/test_directives.py:347:43 - error: Argument of type "GraphQLTypeMapper | None" cannot be assigned to parameter "mapper" of type "GraphQLTypeMapper" in function "get_directives"
+    Type "GraphQLTypeMapper | None" is not assignable to type "GraphQLTypeMapper"
+      "None" is not assignable to "GraphQLTypeMapper" (reportArgumentType)
+/app/tests/test_docstrings.py
+  /app/tests/test_docstrings.py:39:34 - error: "description" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /app/tests/test_docstrings.py:41:40 - error: "fields" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /app/tests/test_docstrings.py:80:40 - error: "fields" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /app/tests/test_docstrings.py:84:42 - error: "fields" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /app/tests/test_docstrings.py:122:34 - error: "description" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /app/tests/test_docstrings.py:124:40 - error: "fields" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /app/tests/test_docstrings.py:172:34 - error: "description" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /app/tests/test_docstrings.py:174:40 - error: "fields" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /app/tests/test_docstrings.py:220:40 - error: "fields" is not a known attribute of "None" (reportOptionalMemberAccess)
+/app/tests/test_federation.py
+  /app/tests/test_federation.py:19:10 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation.py:19:10 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation.py:20:10 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation.py:20:10 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation.py:25:24 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation.py:25:24 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation.py:25:24 - error: Argument missing for parameter "t" (reportCallIssue)
+  /app/tests/test_federation.py:25:29 - error: No parameter named "id" (reportCallIssue)
+  /app/tests/test_federation.py:39:10 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation.py:39:10 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation.py:52:37 - error: Expected class but received "GraphQLSchema | FunctionType | ((...) -> object) | ((t: Unknown) -> Unknown) | None"
+    "GraphQLSchema" is not a class
+    "FunctionType" is not a class
+    "(...) -> object" is not a class
+    "(t: Unknown) -> Unknown" is not a class
+    "None" is not a class (reportGeneralTypeIssues)
+  /app/tests/test_federation.py:53:25 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation.py:53:25 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation.py:53:25 - error: Argument missing for parameter "t" (reportCallIssue)
+  /app/tests/test_federation.py:53:30 - error: No parameter named "id" (reportCallIssue)
+  /app/tests/test_federation.py:53:39 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation.py:53:39 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation.py:53:39 - error: Argument missing for parameter "t" (reportCallIssue)
+  /app/tests/test_federation.py:53:44 - error: No parameter named "id" (reportCallIssue)
+  /app/tests/test_federation.py:58:9 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation.py:58:9 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation.py:98:15 - error: Object of type "None" is not subscriptable (reportOptionalSubscript)
+  /app/tests/test_federation.py:148:15 - error: Object of type "None" is not subscriptable (reportOptionalSubscript)
+/app/tests/test_federation_example.py
+  /app/tests/test_federation_example.py:81:21 - error: Variable not allowed in type expression (reportInvalidTypeForm)
+  /app/tests/test_federation_example.py:91:30 - error: Variable not allowed in type expression (reportInvalidTypeForm)
+  /app/tests/test_federation_example.py:99:2 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation_example.py:99:2 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation_example.py:134:2 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation_example.py:134:2 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation_example.py:144:6 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation_example.py:144:6 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation_example.py:155:24 - error: Variable not allowed in type expression (reportInvalidTypeForm)
+  /app/tests/test_federation_example.py:158:6 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation_example.py:158:6 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation_example.py:174:2 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation_example.py:174:2 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation_example.py:205:2 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation_example.py:205:2 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation_example.py:213:16 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation_example.py:213:16 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation_example.py:213:16 - error: Argument missing for parameter "t" (reportCallIssue)
+  /app/tests/test_federation_example.py:213:26 - error: No parameter named "data" (reportCallIssue)
+  /app/tests/test_federation_example.py:216:21 - error: Variable not allowed in type expression (reportInvalidTypeForm)
+  /app/tests/test_federation_example.py:226:2 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation_example.py:226:2 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation_example.py:227:2 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation_example.py:227:2 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation_example.py:228:2 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation_example.py:228:2 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation_example.py:246:28 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation_example.py:246:28 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation_example.py:251:21 - error: Variable not allowed in type expression (reportInvalidTypeForm)
+  /app/tests/test_federation_example.py:270:38 - error: Expected class but received "GraphQLSchema | FunctionType | ((...) -> object) | ((t: Unknown) -> Unknown) | None"
+    "GraphQLSchema" is not a class
+    "FunctionType" is not a class
+    "(...) -> object" is not a class
+    "(t: Unknown) -> Unknown" is not a class
+    "None" is not a class (reportGeneralTypeIssues)
+  /app/tests/test_federation_example.py:273:20 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation_example.py:273:20 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation_example.py:276:6 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation_example.py:276:6 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation_example.py:284:6 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation_example.py:284:6 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation_example.py:298:27 - error: Variable not allowed in type expression (reportInvalidTypeForm)
+  /app/tests/test_federation_example.py:298:50 - error: Expected class but received "GraphQLSchema | FunctionType | ((...) -> object) | ((t: Unknown) -> Unknown) | None"
+    "GraphQLSchema" is not a class
+    "FunctionType" is not a class
+    "(...) -> object" is not a class
+    "(t: Unknown) -> Unknown" is not a class
+    "None" is not a class (reportGeneralTypeIssues)
+  /app/tests/test_federation_example.py:301:24 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation_example.py:301:24 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation_example.py:304:6 - error: Object of type "GraphQLSchema" is not callable
+    Attribute "__call__" is unknown (reportCallIssue)
+  /app/tests/test_federation_example.py:304:6 - error: Object of type "None" cannot be called (reportOptionalCall)
+  /app/tests/test_federation_example.py:316:45 - error: Argument of type "list[GraphQLSchema | FunctionType | ((...) -> object) | ((t: Unknown) -> Unknown) | None]" cannot be assigned to parameter "types" of type "List[GraphQLNamedType | Type[Unknown]] | None" in function "__init__"
+    Type "GraphQLSchema | FunctionType | ((...) -> object) | ((t: Unknown) -> Unknown) | None" is not assignable to type "GraphQLNamedType | Type[Unknown]"
+      Type "FunctionType" is not assignable to type "GraphQLNamedType | Type[Unknown]"
+        "FunctionType" is not assignable to "GraphQLNamedType"
+        "FunctionType" is not assignable to "Type[Unknown]" (reportArgumentType)
+/app/tests/test_filtering.py
+  /app/tests/test_filtering.py:93:31 - error: Function with declared return type "str" must return value on all code paths
+    "None" is not assignable to "str" (reportReturnType)
+/app/tests/test_graphql.py
+  /app/tests/test_graphql.py:1467:17 - error: Method "hello" overrides class "GreetInterface" in an incompatible manner
+    Parameter 2 type mismatch: base parameter is type "Person", override parameter is type "HashablePerson"
+      "Person" is not assignable to "HashablePerson" (reportIncompatibleMethodOverride)
+  /app/tests/test_graphql.py:1501:17 - error: Method "hello" overrides class "GreetInterface" in an incompatible manner
+    Parameter 2 type mismatch: base parameter is type "PersonInterface", override parameter is type "Person"
+      "PersonInterface" is not assignable to "Person" (reportIncompatibleMethodOverride)
+/app/tests/test_middleware.py
+  /app/tests/test_middleware.py:19:24 - error: Type "GraphQLRemoteObject" is not assignable to declared type "House"
+    "GraphQLRemoteObject" is not assignable to "House" (reportAssignmentType)
+/app/tests/test_remote.py
+  /app/tests/test_remote.py:32:24 - error: Type "GraphQLRemoteObject" is not assignable to declared type "House"
+    "GraphQLRemoteObject" is not assignable to "House" (reportAssignmentType)
+  /app/tests/test_remote.py:63:24 - error: Type "GraphQLRemoteObject" is not assignable to declared type "House"
+    "GraphQLRemoteObject" is not assignable to "House" (reportAssignmentType)
+  /app/tests/test_remote.py:109:24 - error: Type "GraphQLRemoteObject" is not assignable to declared type "House"
+    "GraphQLRemoteObject" is not assignable to "House" (reportAssignmentType)
+  /app/tests/test_remote.py:129:24 - error: Type "GraphQLRemoteObject" is not assignable to declared type "House"
+    "GraphQLRemoteObject" is not assignable to "House" (reportAssignmentType)
+  /app/tests/test_remote.py:159:24 - error: Type "GraphQLRemoteObject" is not assignable to declared type "House"
+    "GraphQLRemoteObject" is not assignable to "House" (reportAssignmentType)
+  /app/tests/test_remote.py:174:26 - error: Type "GraphQLRemoteObject" is not assignable to declared type "Person"
+    "GraphQLRemoteObject" is not assignable to "Person" (reportAssignmentType)
+  /app/tests/test_remote.py:192:35 - error: Type "GraphQLRemoteObject" is not assignable to declared type "BytesUtils"
+    "GraphQLRemoteObject" is not assignable to "BytesUtils" (reportAssignmentType)
+  /app/tests/test_remote.py:203:51 - error: Expression of type "None" cannot be assigned to parameter of type "List[str]"
+    "None" is not assignable to "List[str]" (reportArgumentType)
+  /app/tests/test_remote.py:206:22 - error: Type "GraphQLRemoteObject" is not assignable to declared type "Tags"
+    "GraphQLRemoteObject" is not assignable to "Tags" (reportAssignmentType)
+  /app/tests/test_remote.py:230:28 - error: Type "GraphQLRemoteObject" is not assignable to declared type "Counter"
+    "GraphQLRemoteObject" is not assignable to "Counter" (reportAssignmentType)
+  /app/tests/test_remote.py:250:34 - error: Type "GraphQLRemoteObject" is not assignable to declared type "Multiplier"
+    "GraphQLRemoteObject" is not assignable to "Multiplier" (reportAssignmentType)
+  /app/tests/test_remote.py:276:22 - error: Type "GraphQLRemoteObject" is not assignable to declared type "Bank"
+    "GraphQLRemoteObject" is not assignable to "Bank" (reportAssignmentType)
+  /app/tests/test_remote.py:278:29 - error: "age" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /app/tests/test_remote.py:279:29 - error: "name" is not a known attribute of "None" (reportOptionalMemberAccess)
+  /app/tests/test_remote.py:295:28 - error: Type "GraphQLRemoteObject" is not assignable to declared type "Counter"
+    "GraphQLRemoteObject" is not assignable to "Counter" (reportAssignmentType)
+  /app/tests/test_remote.py:309:34 - error: Type "GraphQLRemoteObject" is not assignable to declared type "Calculator"
+    "GraphQLRemoteObject" is not assignable to "Calculator" (reportAssignmentType)
+  /app/tests/test_remote.py:327:34 - error: Type "GraphQLRemoteObject" is not assignable to declared type "Calculator"
+    "GraphQLRemoteObject" is not assignable to "Calculator" (reportAssignmentType)
+  /app/tests/test_remote.py:349:24 - error: Type "GraphQLRemoteObject" is not assignable to declared type "House"
+    "GraphQLRemoteObject" is not assignable to "House" (reportAssignmentType)
+  /app/tests/test_remote.py:387:24 - error: Type "GraphQLRemoteObject" is not assignable to declared type "House"
+    "GraphQLRemoteObject" is not assignable to "House" (reportAssignmentType)
+  /app/tests/test_remote.py:417:24 - error: Type "GraphQLRemoteObject" is not assignable to declared type "House"
+    "GraphQLRemoteObject" is not assignable to "House" (reportAssignmentType)
+  /app/tests/test_remote.py:447:24 - error: Type "GraphQLRemoteObject" is not assignable to declared type "House"
+    "GraphQLRemoteObject" is not assignable to "House" (reportAssignmentType)
+  /app/tests/test_remote.py:495:24 - error: Type "GraphQLRemoteObject" is not assignable to declared type "House"
+    "GraphQLRemoteObject" is not assignable to "House" (reportAssignmentType)
+  /app/tests/test_remote.py:553:28 - error: Type "GraphQLRemoteObject" is not assignable to declared type "Flipper"
+    "GraphQLRemoteObject" is not assignable to "Flipper" (reportAssignmentType)
+  /app/tests/test_remote.py:607:42 - error: Expression of type "None" cannot be assigned to parameter of type "str"
+    "None" is not assignable to "str" (reportArgumentType)
+  /app/tests/test_remote.py:607:64 - error: Expression of type "None" cannot be assigned to parameter of type "float"
+    "None" is not assignable to "float" (reportArgumentType)
+  /app/tests/test_remote.py:626:22 - error: Type "GraphQLRemoteObject" is not assignable to declared type "Root"
+    "GraphQLRemoteObject" is not assignable to "Root" (reportAssignmentType)
+  /app/tests/test_remote.py:658:26 - error: Type "GraphQLRemoteObject" is not assignable to declared type "Person"
+    "GraphQLRemoteObject" is not assignable to "Person" (reportAssignmentType)
+  /app/tests/test_remote.py:676:26 - error: Type "GraphQLRemoteObject" is not assignable to declared type "Person"
+    "GraphQLRemoteObject" is not assignable to "Person" (reportAssignmentType)
+  /app/tests/test_remote.py:694:26 - error: Type "GraphQLRemoteObject" is not assignable to declared type "Person"
+    "GraphQLRemoteObject" is not assignable to "Person" (reportAssignmentType)
+  /app/tests/test_remote.py:713:26 - error: Type "GraphQLRemoteObject" is not assignable to declared type "Person"
+    "GraphQLRemoteObject" is not assignable to "Person" (reportAssignmentType)
+  /app/tests/test_remote.py:737:34 - error: Function with declared return type "str" must return value on all code paths
+    "None" is not assignable to "str" (reportReturnType)
+  /app/tests/test_remote.py:741:31 - error: Type "GraphQLRemoteObject" is not assignable to declared type "UTCTimeAPI"
+    "GraphQLRemoteObject" is not assignable to "UTCTimeAPI" (reportAssignmentType)
+  /app/tests/test_remote.py:754:21 - error: Cannot access attribute "clear_cache" for class "UTCTimeAPI"
+    Attribute "clear_cache" is unknown (reportAttributeAccessIssue)
+  /app/tests/test_remote.py:766:38 - error: Cannot access attribute "call_async" for class "UTCTimeAPI"
+    Attribute "call_async" is unknown (reportAttributeAccessIssue)
+  /app/tests/test_remote.py:777:16 - error: Operator ">" not supported for "None" (reportOptionalOperand)
+  /app/tests/test_remote.py:777:28 - error: Operator "*" not supported for "None" (reportOptionalOperand)
+  /app/tests/test_remote.py:792:30 - error: Function with declared return type "str" must return value on all code paths
+    "None" is not assignable to "str" (reportReturnType)
+  /app/tests/test_remote.py:795:27 - error: Type "GraphQLRemoteObject" is not assignable to declared type "UTCTimeAPI"
+    "GraphQLRemoteObject" is not assignable to "UTCTimeAPI" (reportAssignmentType)
+  /app/tests/test_remote.py:800:30 - error: Cannot access attribute "call_async" for class "UTCTimeAPI"
+    Attribute "call_async" is unknown (reportAttributeAccessIssue)
+  /app/tests/test_remote.py:816:29 - error: Type "GraphQLRemoteObject" is not assignable to declared type "StudentRoll"
+    "GraphQLRemoteObject" is not assignable to "StudentRoll" (reportAssignmentType)
+  /app/tests/test_remote.py:817:14 - error: Cannot access attribute "fetch" for class "StudentRoll"
+    Attribute "fetch" is unknown (reportAttributeAccessIssue)
+/app/tests/test_schema.py
+  /app/tests/test_schema.py:10:55 - error: Function with declared return type "int" must return value on all code paths
+    "None" is not assignable to "int" (reportReturnType)
+  /app/tests/test_schema.py:14:58 - error: Function with declared return type "int" must return value on all code paths
+    "None" is not assignable to "int" (reportReturnType)
+  /app/tests/test_schema.py:20:64 - error: Function with declared return type "int" must return value on all code paths
+    "None" is not assignable to "int" (reportReturnType)
+  /app/tests/test_schema.py:24:67 - error: Function with declared return type "int" must return value on all code paths
+    "None" is not assignable to "int" (reportReturnType)
+  /app/tests/test_schema.py:30:65 - error: Function with declared return type "int" must return value on all code paths
+    "None" is not assignable to "int" (reportReturnType)
+  /app/tests/test_schema.py:34:68 - error: Function with declared return type "int" must return value on all code paths
+    "None" is not assignable to "int" (reportReturnType)
+  /app/tests/test_schema.py:38:31 - error: Cannot access attribute "_graphql" for class "type[ObjectNoSchema]"
+    Attribute "_graphql" is unknown (reportAttributeAccessIssue)
+  /app/tests/test_schema.py:39:52 - error: Cannot access attribute "_graphql" for class "FunctionType"
+    Attribute "_graphql" is unknown (reportFunctionMemberAccess)
+  /app/tests/test_schema.py:40:55 - error: Cannot access attribute "_graphql" for class "FunctionType"
+    Attribute "_graphql" is unknown (reportFunctionMemberAccess)
+  /app/tests/test_schema.py:43:33 - error: Cannot access attribute "_graphql" for class "type[AbstractNoSchema]"
+    Attribute "_graphql" is unknown (reportAttributeAccessIssue)
+  /app/tests/test_schema.py:44:63 - error: Cannot access attribute "_graphql" for class "FunctionType"
+    Attribute "_graphql" is unknown (reportFunctionMemberAccess)
+  /app/tests/test_schema.py:45:66 - error: Cannot access attribute "_graphql" for class "FunctionType"
+    Attribute "_graphql" is unknown (reportFunctionMemberAccess)
+  /app/tests/test_schema.py:48:34 - error: Cannot access attribute "_graphql" for class "type[InterfaceNoSchema]"
+    Attribute "_graphql" is unknown (reportAttributeAccessIssue)
+  /app/tests/test_schema.py:49:65 - error: Cannot access attribute "_graphql" for class "FunctionType"
+    Attribute "_graphql" is unknown (reportFunctionMemberAccess)
+  /app/tests/test_schema.py:50:68 - error: Cannot access attribute "_graphql" for class "FunctionType"
+    Attribute "_graphql" is unknown (reportFunctionMemberAccess)
+  /app/tests/test_schema.py:58:52 - error: Function with declared return type "int" must return value on all code paths
+    "None" is not assignable to "int" (reportReturnType)
+  /app/tests/test_schema.py:62:55 - error: Function with declared return type "int" must return value on all code paths
+    "None" is not assignable to "int" (reportReturnType)
+  /app/tests/test_schema.py:66:29 - error: Cannot access attribute "_graphql" for class "type[ObjectSchema]"
+    Attribute "_graphql" is unknown (reportAttributeAccessIssue)
+  /app/tests/test_schema.py:67:47 - error: Cannot access attribute "_graphql" for class "FunctionType"
+    Attribute "_graphql" is unknown (reportFunctionMemberAccess)
+  /app/tests/test_schema.py:68:50 - error: Cannot access attribute "_graphql" for class "FunctionType"
+    Attribute "_graphql" is unknown (reportFunctionMemberAccess)
+  /app/tests/test_schema.py:74:60 - error: Function with declared return type "int" must return value on all code paths
+    "None" is not assignable to "int" (reportReturnType)
+  /app/tests/test_schema.py:78:63 - error: Function with declared return type "int" must return value on all code paths
+    "None" is not assignable to "int" (reportReturnType)
+  /app/tests/test_schema.py:82:35 - error: Cannot access attribute "_graphql" for class "type[ObjectNoSchemaMeta]"
+    Attribute "_graphql" is unknown (reportAttributeAccessIssue)
+  /app/tests/test_schema.py:83:61 - error: Cannot access attribute "_graphql" for class "FunctionType"
+    Attribute "_graphql" is unknown (reportFunctionMemberAccess)
+  /app/tests/test_schema.py:84:64 - error: Cannot access attribute "_graphql" for class "FunctionType"
+    Attribute "_graphql" is unknown (reportFunctionMemberAccess)
+  /app/tests/test_schema.py:92:57 - error: Function with declared return type "int" must return value on all code paths
+    "None" is not assignable to "int" (reportReturnType)
+  /app/tests/test_schema.py:96:60 - error: Function with declared return type "int" must return value on all code paths
+    "None" is not assignable to "int" (reportReturnType)
+  /app/tests/test_schema.py:100:33 - error: Cannot access attribute "_graphql" for class "type[ObjectSchemaMeta]"
+    Attribute "_graphql" is unknown (reportAttributeAccessIssue)
+  /app/tests/test_schema.py:101:56 - error: Cannot access attribute "_graphql" for class "FunctionType"
+    Attribute "_graphql" is unknown (reportFunctionMemberAccess)
+  /app/tests/test_schema.py:102:59 - error: Cannot access attribute "_graphql" for class "FunctionType"
+    Attribute "_graphql" is unknown (reportFunctionMemberAccess)
+  /app/tests/test_schema.py:106:16 - warning: Assert expression always evaluates to true (reportAssertAlwaysTrue)
+/app/tests/test_subscriptions.py
+  /app/tests/test_subscriptions.py:82:33 - error: "ExecutionResult" is not iterable
+    "__aiter__" method not defined (reportGeneralTypeIssues)
+  /app/tests/test_subscriptions.py:107:38 - error: Expression of type "None" cannot be assigned to parameter of type "str"
+    "None" is not assignable to "str" (reportArgumentType)
+190 errors, 1 warning, 0 informations

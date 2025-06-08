@@ -1,0 +1,108 @@
+Metadata-Version: 2.4
+Name: graphql_api
+Version: 0.0.0
+Summary: A framework for building Python GraphQL APIs.
+Home-page: https://gitlab.com/parob/graphql-api
+Download-URL: https://gitlab.com/parob/graphql/-/archive/v0.0.0/graphql_api-v0.0.0.tar.gz
+Author: Robert Parker
+Author-email: rob@parob.com
+License: MIT
+Keywords: GraphQL,GraphQL-API,GraphQLAPI,Server
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: graphql-core~=3.1
+Requires-Dist: requests~=2.24
+Requires-Dist: typing-inspect~=0.6
+Requires-Dist: aiohttp~=3.8
+Requires-Dist: docstring-parser~=0.15
+Provides-Extra: dev
+Requires-Dist: pytest~=5.4; extra == "dev"
+Requires-Dist: pytest-cov~=2.10; extra == "dev"
+Requires-Dist: coverage~=5.2; extra == "dev"
+Requires-Dist: faker~=4.1; extra == "dev"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: download-url
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license
+Dynamic: license-file
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: summary
+
+# GraphQL API
+Framework for building a GraphQL API with Python
+
+[![coverage report](https://gitlab.com/parob/graphql-api/badges/master/coverage.svg)](https://gitlab.com/parob/graphql-api/commits/master)
+
+[![pipeline status](https://gitlab.com/parob/graphql-api/badges/master/pipeline.svg)](https://gitlab.com/parob/graphql-api/commits/master)
+
+
+
+## Installation
+
+##### Pip
+```
+pip install graphql-api
+```
+
+## Run the Unit Tests
+To run the tests.
+```
+pip install pipenv
+pipenv install --dev
+pipenv run python -m pytest tests --cov=graphql_api
+```
+
+## Docs
+
+The documentation is public, and is generated using Sphinx.
+
+[GraphQL-API Documentation](http://parob.gitlab.io/graphql-api/)
+
+##### Build documentation
+To build a local static HTML version of the documentation.
+```
+pip install pipenv
+pipenv install sphinx
+pipenv run sphinx-build docs ./public -b html
+```
+
+## Simple Example
+``` python
+from graphql_api import GraphQLAPI
+
+api = GraphQLAPI()
+
+@api.type(is_root_type=True)
+class MathService:
+
+    @api.field
+    def is_odd(self, number: int) -> str:
+        return "No" if (num % 2) else "Yes"
+
+
+query = '''
+    query {
+        isOdd(number: 5)
+    }
+'''
+
+result = api.executor().execute(query)
+
+print(result.data)
+```
+
+``` text
+$ python example.py
+>>> {'isOdd': 'No'}
+```

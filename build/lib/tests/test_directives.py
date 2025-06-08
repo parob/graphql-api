@@ -59,7 +59,6 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=TestSchema, directives=[custom_directive_definition])
 
         schema, _ = api.build_schema()
-        assert schema is not None, 'GraphQL schema should not be None'
         printed_schema = print_schema(schema)
 
         assert "directive @test1" in printed_schema
@@ -67,7 +66,7 @@ class TestGraphQLDirectives:
     def test_builtin_directive(self):
         @type
         class TestSchema:
-            @deprecated(reason="deprecated reason")  # pyright: ignore [reportCallIssue, reportOptionalCall]
+            @deprecated(reason="deprecated reason")
             @field
             def test(self, a: int) -> int:
                 return a + 1
@@ -75,7 +74,6 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=TestSchema, directives=[deprecated])
 
         schema, _ = api.build_schema()
-        assert schema is not None, 'GraphQL schema should not be None'
         printed_schema = print_schema(schema)
 
         assert '@deprecated(reason: "deprecated reason")' in printed_schema
@@ -99,7 +97,7 @@ class TestGraphQLDirectives:
             def name(self) -> str:
                 return "rob"
 
-        @key(fields="object_decorator_key")  # pyright: ignore [reportCallIssue, reportOptionalCall]
+        @key(fields="object_decorator_key")
         @type
         class TestSchema:
             @field
@@ -109,7 +107,6 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=TestSchema)
 
         schema, _ = api.build_schema()
-        assert schema is not None, 'GraphQL schema should not be None'
         printed_schema = print_schema(schema)
 
         assert "directive @key" in printed_schema
@@ -137,12 +134,12 @@ class TestGraphQLDirectives:
             def test(self, a: int) -> int:
                 return a + 1
 
-            @tag(name="field_decorator_tag")  # pyright: ignore [reportCallIssue, reportOptionalCall]
+            @tag(name="field_decorator_tag")
             @field
             def test_2(self, a: int) -> int:
                 return a + 1
 
-            @tag(name="mutable_field_decorator_tag")  # pyright: ignore [reportCallIssue, reportOptionalCall]
+            @tag(name="mutable_field_decorator_tag")
             @field(mutable=True)
             def add(self, a: int) -> int:
                 return a + 1
@@ -150,12 +147,9 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=TestSchema)
 
         schema, _ = api.build_schema()
-        assert schema is not None, 'GraphQL schema should not be None'
         printed_schema = print_schema(schema)
 
-        assert api.query_mapper is not None, 'api.query_mapper should not be None'
         assert tag in self.get_directives(api.query_mapper)
-        assert api.mutation_mapper is not None, 'api.mutation_mapper should not be None'
         assert tag in self.get_directives(api.mutation_mapper)
 
         assert "directive @tag" in printed_schema
@@ -185,16 +179,14 @@ class TestGraphQLDirectives:
         @type
         class Bank:
             @field
-            def owner_or_customer(self) -> Optional[big(Union[Owner, Customer])]:  # pyright: ignore [reportInvalidTypeForm]
+            def owner_or_customer(self) -> Optional[big(Union[Owner, Customer])]:
                 return Customer()
 
         api = GraphQLAPI(root_type=Bank)
 
         schema, _ = api.build_schema()
-        assert schema is not None, 'GraphQL schema should not be None'
         printed_schema = print_schema(schema)
 
-        assert api.query_mapper is not None, 'api.query_mapper should not be None'
         assert big in self.get_directives(api.query_mapper)
 
         assert "directive @big" in printed_schema
@@ -228,12 +220,9 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=Root)
 
         schema, _ = api.build_schema()
-        assert schema is not None, 'GraphQL schema should not be None'
         printed_schema = print_schema(schema)
 
-        assert api.query_mapper is not None, 'api.query_mapper should not be None'
         assert interface_directive in self.get_directives(api.query_mapper)
-        assert api.mutation_mapper is not None, 'api.mutation_mapper should not be None'
         assert interface_directive in self.get_directives(api.mutation_mapper)
 
         assert "directive @interface_directive" in printed_schema
@@ -254,8 +243,8 @@ class TestGraphQLDirectives:
         #     description="Enum value directive description",
         # )
 
-        @enum_directive()  # pyright: ignore [reportCallIssue, reportOptionalCall]
-        class AnimalType(enum.Enum):  # pyright: ignore [reportGeneralTypeIssues]
+        @enum_directive()
+        class AnimalType(enum.Enum):
             dog = "dog"
             cat = "cat"
 
@@ -273,10 +262,8 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=Root)
 
         schema, _ = api.build_schema()
-        assert schema is not None, 'GraphQL schema should not be None'
         printed_schema = print_schema(schema)
 
-        assert api.query_mapper is not None, 'api.query_mapper should not be None'
         assert enum_directive in self.get_directives(api.query_mapper)
 
         assert "directive @enum_directive" in printed_schema
@@ -289,7 +276,7 @@ class TestGraphQLDirectives:
 
         @object_directive
         @type(interface=True)
-        class Animal:  # pyright: ignore [reportGeneralTypeIssues]
+        class Animal:
             @field
             def name(self) -> str:
                 return "GenericAnimalName"
@@ -297,7 +284,7 @@ class TestGraphQLDirectives:
         class Root:
             @field
             def animal(self) -> Animal:
-                return Animal()  # pyright: ignore [reportCallIssue, reportOptionalCall]
+                return Animal()
 
         api = GraphQLAPI(root_type=Root)
 
@@ -323,7 +310,7 @@ class TestGraphQLDirectives:
             is_repeatable=True,
         )
 
-        @key(fields="schema_decorator_test")  # pyright: ignore [reportCallIssue, reportOptionalCall]
+        @key(fields="schema_decorator_test")
         @type
         class TestSchema:
             @field(
@@ -336,7 +323,7 @@ class TestGraphQLDirectives:
             def test(self, a: int) -> int:
                 return a + 1
 
-            @tag(name="field_decorator_tag")  # pyright: ignore [reportCallIssue, reportOptionalCall]
+            @tag(name="field_decorator_tag")
             @field
             def test_2(self, a: int) -> int:
                 return a + 1
@@ -346,7 +333,7 @@ class TestGraphQLDirectives:
             def test_3(self, a: int) -> int:
                 return a + 1
 
-            @tag(name="mutable_field_decorator_tag")  # pyright: ignore [reportCallIssue, reportOptionalCall]
+            @tag(name="mutable_field_decorator_tag")
             @field(mutable=True)
             def add(self, a: int) -> int:
                 return a + 1
@@ -354,12 +341,9 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=TestSchema)
 
         schema, _ = api.build_schema()
-        assert schema is not None, 'GraphQL schema should not be None'
         printed_schema = print_schema(schema)
 
-        assert api.query_mapper is not None, 'api.query_mapper should not be None'
         assert tag in self.get_directives(api.query_mapper)
-        assert api.mutation_mapper is not None, 'api.mutation_mapper should not be None'
         assert tag in self.get_directives(api.mutation_mapper)
 
         assert "directive @key" in printed_schema
