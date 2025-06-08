@@ -1,0 +1,137 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.17, pytest-8.4.0, pluggy-1.6.0
+rootdir: /app
+configfile: setup.cfg
+plugins: Faker-37.3.0, asyncio-1.0.0, cov-6.1.1
+asyncio: mode=strict, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 1 item
+
+tests/test_filtering.py F                                                [100%]
+
+=================================== FAILURES ===================================
+________________ TestSchemaFiltering.test_mutation_return_query ________________
+
+self = <tests.test_filtering.TestSchemaFiltering object at 0x7f0a07c7c370>
+
+    def test_mutation_return_query(self):
+        """
+        Mutation fields by default should return queries
+        :return:
+        """
+        api = GraphQLAPI()
+
+        class Person:
+            def __init__(self):
+                self._name = ""
+
+            @api.field
+            def name(self) -> str:
+                return self._name
+
+            @api.field(mutable=True)
+            def update_name(self, name: str) -> "Person":
+                self._name = name
+                return self
+
+        # noinspection PyUnusedLocal
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def person(self) -> Person:
+                return Person()
+
+        executor = api.executor()
+
+        test_query = """
+            mutation PersonName {
+                person {
+                    updateName(name:"phil") {
+                        name
+                    }
+                }
+            }
+        """
+
+        result = executor.execute(test_query)
+>       assert not result.errors
+E       assert not [GraphQLError("Cannot query field 'name' on type 'PersonMutable'.", locations=[SourceLocation(line=5, column=25)])]
+E        +  where [GraphQLError("Cannot query field 'name' on type 'PersonMutable'.", locations=[SourceLocation(line=5, column=25)])] = ExecutionResult(data=None, errors=[GraphQLError("Cannot query field 'name' on type 'PersonMutable'.", locations=[SourceLocation(line=5, column=25)])]).errors
+
+tests/test_filtering.py:81: AssertionError
+----------------------------- Captured stdout call -----------------------------
+[ClassFuncs] Processing class: Root, mutable_flag: False
+[ClassFuncs] Class: Root, mutable_flag: False, initial members found by getmembers/mro: ['_defined_on', '_graphql', '_schemas', 'person']
+[Matcher] Checking member: _defined_on for class TestSchemaFiltering, mutable_flag: False, type: <class 'type'>
+[Matcher] Member: _defined_on, func_type: object, meta: None, result: False
+[Matcher] Checking member: person for class TestSchemaFiltering, mutable_flag: False, type: <class 'function'>
+[Matcher] Member: person, func_type: field, meta: None, result: True
+[ClassFuncs] Class: Root, Member: person matched criterion for mutable_flag: False
+[MapToField] Processing field: person for GraphQL type: Root, as_mutable_mapper: False, function: person
+[ClassFuncs] Processing class: Person, mutable_flag: False
+[ClassFuncs] Class: Person, mutable_flag: False, initial members found by getmembers/mro: ['name', 'update_name']
+[Matcher] Checking member: name for class TestSchemaFiltering, mutable_flag: False, type: <class 'function'>
+[Matcher] Member: name, func_type: field, meta: None, result: True
+[ClassFuncs] Class: Person, Member: name matched criterion for mutable_flag: False
+[Matcher] Checking member: update_name for class TestSchemaFiltering, mutable_flag: False, type: <class 'function'>
+[Matcher] Member: update_name, func_type: mutable_field, meta: None, result: False
+[MapToField] For field: person on GQL type: Root, returning: GraphQLField
+[MapToField] Processing field: name for GraphQL type: Person, as_mutable_mapper: False, function: name
+[MapToField] For field: name on GQL type: Person, returning: GraphQLField
+[ClassFuncs] Processing class: Root, mutable_flag: True
+[ClassFuncs] Class: Root, mutable_flag: True, initial members found by getmembers/mro: ['_defined_on', '_graphql', '_schemas', 'person']
+[Matcher] Checking member: _defined_on for class TestSchemaFiltering, mutable_flag: True, type: <class 'type'>
+[Matcher] Member: _defined_on, func_type: object, meta: None, result: False
+[Matcher] Checking member: person for class TestSchemaFiltering, mutable_flag: True, type: <class 'function'>
+[Matcher] Member: person, func_type: field, meta: None, result: True
+[ClassFuncs] Class: Root, Member: person matched criterion for mutable_flag: True
+[MapToField] Processing field: person for GraphQL type: RootMutable, as_mutable_mapper: True, function: person
+[MapToObject-Mutable] Mapping Person to GraphQL type PersonMutable (as_mutable=True, suffix='Mutable')
+[ClassFuncs] Processing class: Person, mutable_flag: True
+[ClassFuncs] Class: Person, mutable_flag: True, initial members found by getmembers/mro: ['name', 'update_name']
+[Matcher] Checking member: name for class TestSchemaFiltering, mutable_flag: True, type: <class 'function'>
+[Matcher] Member: name, func_type: field, meta: None, result: True
+[ClassFuncs] Class: Person, Member: name matched criterion for mutable_flag: True
+[Matcher] Checking member: update_name for class TestSchemaFiltering, mutable_flag: True, type: <class 'function'>
+[Matcher] Member: update_name, func_type: mutable_field, meta: None, result: True
+[ClassFuncs] Class: Person, Member: update_name matched criterion for mutable_flag: True
+[MapToObject-Mutable] For Python class Person (mapped to PersonMutable), get_class_funcs returned: ['name', 'update_name']
+[MapToField] For field: person on GQL type: RootMutable, returning: GraphQLField
+[MapToField] Processing field: name for GraphQL type: PersonMutable, as_mutable_mapper: True, function: name
+[MapToField] For field: name on GQL type: PersonMutable, returning: GraphQLField
+[MapToField] Processing field: update_name for GraphQL type: PersonMutable, as_mutable_mapper: True, function: update_name
+[MapToField] For field: update_name on GQL type: PersonMutable, returning: GraphQLMutableField
+
+[BuildSchema] --- Query Mapper Types (3) ---
+[BuildSchema] QueryType: Person - <GraphQLObjectType 'Person'>
+[BuildSchema] QueryType fields for Person: ['name']
+[BuildSchema] QueryType: Root - <GraphQLObjectType 'Root'>
+[BuildSchema] QueryType: String - <GraphQLScalarType 'String'>
+
+[BuildSchema] --- Mutation Mapper Types (5) ---
+[BuildSchema] MutationType: Person - <GraphQLObjectType 'Person'>
+[BuildSchema] MutationType fields for Person: ['name']
+[BuildSchema] MutationType: PersonMutable - <GraphQLObjectType 'PersonMutable'>
+[BuildSchema] MutationType fields for PersonMutable: ['updateName']
+[BuildSchema] MutationType: Root - <GraphQLObjectType 'Root'>
+[BuildSchema] MutationType: RootMutable - <GraphQLObjectType 'RootMutable'>
+[BuildSchema] MutationType: String - <GraphQLScalarType 'String'>
+
+[BuildSchema] --- Explicit API Types (self.types) (0) ---
+[BuildSchema] query_mapper.registry has Person (<GraphQLObjectType 'Person'>) from key Registry(-1896842322423594918)|False|False
+[BuildSchema] query_mapper.registry has PersonMutable (<GraphQLObjectType 'PersonMutable'>) from key Registry(120245925136177857)|Mutable|False|True
+[BuildSchema] mutation_mapper.registry has Person (<GraphQLObjectType 'Person'>) from key Registry(-1896842322423594918)|False|False
+[BuildSchema] mutation_mapper.registry has PersonMutable (<GraphQLObjectType 'PersonMutable'>) from key Registry(120245925136177857)|Mutable|False|True
+
+[BuildSchema] --- Building unique_types_by_name from query_types, mutation_types, self.types ---
+[BuildSchema] From query_mapper: ADDING Person (<GraphQLObjectType 'Person'>) to unique_types_by_name
+[BuildSchema] From query_mapper: ADDING Root (<GraphQLObjectType 'Root'>) to unique_types_by_name
+[BuildSchema] From query_mapper: ADDING String (<GraphQLScalarType 'String'>) to unique_types_by_name
+[BuildSchema] From mutation_mapper: ADDING RootMutable (<GraphQLObjectType 'RootMutable'>) to unique_types_by_name
+[BuildSchema] From mutation_mapper: ADDING PersonMutable (<GraphQLObjectType 'PersonMutable'>) to unique_types_by_name
+
+[BuildSchema] --- Final list of types for GraphQLSchema constructor (5) ---
+[BuildSchema] Final type: Person - <GraphQLObjectType 'Person'> - Fields: ['name']
+[BuildSchema] Final type: PersonMutable - <GraphQLObjectType 'PersonMutable'> - Fields: ['updateName']
+=========================== short test summary info ============================
+FAILED tests/test_filtering.py::TestSchemaFiltering::test_mutation_return_query
+============================== 1 failed in 0.48s ===============================

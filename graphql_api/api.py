@@ -341,18 +341,116 @@ class GraphQLAPI(GraphQLBaseExecutor):
             # Ensure query_types and mutation_types are sets of GraphQLNamedType
             # Ensure self.types is set[Union[GraphQLNamedType, Type]]
 
-            temp_list: list[Any] = list(query_types | mutation_types | self.types)
-            # Initialize collected_types as an empty list of the correct type
-            collected_types_list: list[GraphQLNamedType] = []
-            for item in temp_list:
-                if is_named_type(item):
-                    # We've checked it's a GraphQLNamedType, so direct append or cast
-                    collected_types_list.append(cast(GraphQLNamedType, item))
+            # --- START DEBUG LOGGING ---
+            print(f"\n[BuildSchema] --- Query Mapper Types ({len(query_types)}) ---")
+            for qt in sorted(list(query_types), key=lambda x: x.name if hasattr(x, 'name') and x.name else ''):
+                if hasattr(qt, 'name') and qt.name:
+                    print(f"[BuildSchema] QueryType: {qt.name} - {repr(qt)}")
+                    if qt.name in ["Person", "PersonMutable"] and hasattr(qt, 'fields'):
+                        try: print(f"[BuildSchema] QueryType fields for {qt.name}: {list(qt.fields.keys())}")
+                        except Exception as e: print(f"[BuildSchema] QueryType fields for {qt.name} - Error accessing fields: {e}")
 
-            collected_types = collected_types_list
+
+            print(f"\n[BuildSchema] --- Mutation Mapper Types ({len(mutation_types)}) ---")
+            for mt in sorted(list(mutation_types), key=lambda x: x.name if hasattr(x, 'name') and x.name else ''):
+                if hasattr(mt, 'name') and mt.name:
+                    print(f"[BuildSchema] MutationType: {mt.name} - {repr(mt)}")
+                    if mt.name in ["Person", "PersonMutable"] and hasattr(mt, 'fields'):
+                        try: print(f"[BuildSchema] MutationType fields for {mt.name}: {list(mt.fields.keys())}")
+                        except Exception as e: print(f"[BuildSchema] MutationType fields for {mt.name} - Error accessing fields: {e}")
+
+
+            print(f"\n[BuildSchema] --- Explicit API Types (self.types) ({len(self.types)}) ---")
+            # self.types are Python classes, need mapping if not already in query/mutation mappers
+            # These are already incorporated into query_mapper.types() if they were mapped.
+            # For logging, let's see what GraphQL types they correspond to using query_mapper.
+            for t_class_api in self.types:
+                if not is_named_type(t_class_api): # if it's a Python class
+                    mapped_t_api = query_mapper.map(t_class_api)
+                    if mapped_t_api and hasattr(mapped_t_api, 'name'):
+                        print(f"[BuildSchema] ExplicitAPIType (Python class {t_class_api.__name__} mapped to): {mapped_t_api.name} - {repr(mapped_t_api)}")
+                elif hasattr(t_class_api, 'name'): # if it's already a GraphQLNamedType
+                     print(f"[BuildSchema] ExplicitAPIType (GraphQL type): {t_class_api.name} - {repr(t_class_api)}")
+
+
+            # Original collection logic
+            # query_types and mutation_types are already sets of GraphQLNamedType objects (or None)
+            # self.types might contain Python classes, which map() handles and query_mapper.types() would then include.
+            # The key is that query_mapper.types() and mutation_mapper.types() should reflect all mapped types.
+
+            # Let's reconstruct collected_types carefully for logging, similar to original logic
+            # The original temp_list combined sets, which de-duplicates by object identity.
+            # Then it filters for is_named_type.
+
+            # Log contents of query_mapper.registry and mutation_mapper.registry for Person/PersonMutable
+            if query_mapper:
+                for py_type, gql_type in query_mapper.registry.items(): # registry is str_key -> gql_type in current mapper
+                    if gql_type and hasattr(gql_type, 'name') and gql_type.name in ["Person", "PersonMutable"]:
+                        print(f"[BuildSchema] query_mapper.registry has {gql_type.name} ({repr(gql_type)}) from key {py_type}")
+            if mutation_mapper:
+                 for py_type, gql_type in mutation_mapper.registry.items():
+                    if gql_type and hasattr(gql_type, 'name') and gql_type.name in ["Person", "PersonMutable"]:
+                        print(f"[BuildSchema] mutation_mapper.registry has {gql_type.name} ({repr(gql_type)}) from key {py_type}")
+
+            # The actual types passed to GraphQLSchema constructor comes from this logic:
+            temp_list_for_schema: list[Any] = list(query_types | mutation_types | self.types)
+            collected_types_for_schema: list[GraphQLNamedType] = []
+
+            # De-duplication by name for the final list to GraphQLSchema
+            # This is the critical step matching the subtask prompt's suggestion
+            unique_types_by_name: Dict[str, GraphQLNamedType] = {}
+            print(f"\n[BuildSchema] --- Building unique_types_by_name from query_types, mutation_types, self.types ---")
+
+            # Process query_mapper types
+            for t in query_types:
+                if t and hasattr(t, 'name') and t.name:
+                    if t.name not in unique_types_by_name:
+                        unique_types_by_name[t.name] = t
+                        print(f"[BuildSchema] From query_mapper: ADDING {t.name} ({repr(t)}) to unique_types_by_name")
+                    elif unique_types_by_name[t.name] is not t:
+                        print(f"[BuildSchema] From query_mapper: DUPLICATE NAME {t.name} ({repr(t)}). Kept existing: {repr(unique_types_by_name[t.name])}")
+
+            # Process mutation_mapper types
+            if mutation_types: # mutation_types can be None if no root_type
+                for t in mutation_types:
+                    if t and hasattr(t, 'name') and t.name:
+                        if t.name not in unique_types_by_name:
+                            unique_types_by_name[t.name] = t
+                            print(f"[BuildSchema] From mutation_mapper: ADDING {t.name} ({repr(t)}) to unique_types_by_name")
+                        elif unique_types_by_name[t.name] is not t:
+                            print(f"[BuildSchema] From mutation_mapper: DUPLICATE NAME {t.name} ({repr(t)}). Kept existing: {repr(unique_types_by_name[t.name])}")
+                            if t.name == "PersonMutable": # If we are about to skip the mutable_mapper's version
+                                print(f"[BuildSchema] Discarded PersonMutable ({repr(t)}) fields: {list(t.fields.keys()) if hasattr(t,'fields') else 'N/A'}")
+                                kept_pm = unique_types_by_name[t.name]
+                                print(f"[BuildSchema] Kept PersonMutable ({repr(kept_pm)}) fields: {list(kept_pm.fields.keys()) if hasattr(kept_pm,'fields') else 'N/A'}")
+
+
+            # Process self.types (these are Python classes, need mapping)
+            # These should ideally already be in unique_types_by_name if they were reachable from root_type
+            # or explicitly mapped by query_mapper.map(typ) earlier.
+            # This loop is more for types that might not have been hit by query_mapper/mutation_mapper yet.
+            for t_class_api in self.types:
+                # Map it, preferably with query_mapper as a default context
+                # The caching in the mapper should return existing instances if already mapped
+                mapped_t_api = query_mapper.map(t_class_api) if query_mapper else None
+                if mapped_t_api and hasattr(mapped_t_api, 'name') and mapped_t_api.name:
+                    if mapped_t_api.name not in unique_types_by_name:
+                        unique_types_by_name[mapped_t_api.name] = mapped_t_api
+                        print(f"[BuildSchema] From self.types (mapped): ADDING {mapped_t_api.name} ({repr(mapped_t_api)}) to unique_types_by_name")
+                    elif unique_types_by_name[mapped_t_api.name] is not mapped_t_api:
+                         print(f"[BuildSchema] From self.types (mapped): DUPLICATE NAME {mapped_t_api.name} ({repr(mapped_t_api)}). Kept existing: {repr(unique_types_by_name[mapped_t_api.name])}")
+
+
+            collected_types = list(unique_types_by_name.values())
+
+            print(f"\n[BuildSchema] --- Final list of types for GraphQLSchema constructor ({len(collected_types)}) ---")
+            for t in sorted(collected_types, key=lambda x: x.name if hasattr(x, 'name') and x.name else ''):
+                 if hasattr(t, 'name') and t.name in ["Person", "PersonMutable"]:
+                    print(f"[BuildSchema] Final type: {t.name} - {repr(t)} - Fields: {list(t.fields.keys()) if hasattr(t,'fields') else 'N/A'}")
+            # --- END DEBUG LOGGING ---
 
             # Gather meta info from both mappers
-            meta = {**query_mapper.meta, **mutation_mapper.meta}
+            meta = {**query_mapper.meta, **mutation_mapper.meta} # query_mapper can be None
             self.query_mapper = query_mapper
             self.mutation_mapper = mutation_mapper
 

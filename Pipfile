@@ -20,6 +20,7 @@ coverage = "*"
 faker = "*"
 # Linting
 flake8 = "*"
+exceptiongroup = "*"
 # Documentation
 sphinx = "*"
 sphinxcontrib-fulltoc = "*"

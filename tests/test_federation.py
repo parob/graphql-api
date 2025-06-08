@@ -89,7 +89,7 @@ class TestFederation:
         assert "scalar _Any" in printed_schema
         assert "_entities(representations: [_Any!]!): [_Entity]!" in printed_schema
         assert "_service: _Service!" in printed_schema
-        assert "type_Service{sdl:String!}" in printed_schema.replace("\n", "").replace(
+        assert 'type_Service{""""""sdl:String!}' in printed_schema.replace("\n", "").replace( # Corrected string literal for empty docstring
             " ", ""
         )
 

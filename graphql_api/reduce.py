@@ -103,23 +103,40 @@ class GraphQLSchemaReducer:
 
         # Remove any query fields from mutable types
         fields_to_remove = set()
-        for type_ in filtered_mutation_types:
-            while isinstance(type_, (GraphQLNonNull, GraphQLList)):
-                type_ = type_.of_type
-            if isinstance(type_, GraphQLObjectType):
-                interface_fields = []
-                for interface in type_.interfaces:
-                    interface_fields += [key for key, field in interface.fields.items()]
-                for key, field in type_.fields.items():
-                    if (
-                        key not in interface_fields
-                        and not isinstance(field, GraphQLMutableField)
-                        and not has_mutable(field.type)
-                    ):
-                        fields_to_remove.add((type_, key))
+        # Only apply this aggressive field removal to the actual root mutation type's fields
+        if isinstance(mutation, GraphQLObjectType): # mutation is the root mutation type, e.g. RootMutable
+            root_mutation_type_obj = mutation # Clarity
+            # Unwrap if it's NonNull or List (though root mutation type usually isn't)
+            # This unwrap logic might be redundant if 'mutation' is always the direct GraphQLObjectType
+            # type_to_inspect_for_fields = mutation
+            # while isinstance(type_to_inspect_for_fields, (GraphQLNonNull, GraphQLList)):
+            #    type_to_inspect_for_fields = type_to_inspect_for_fields.of_type
+
+            # if isinstance(type_to_inspect_for_fields, GraphQLObjectType): # Ensure it's an object type after unwrapping
+            #    root_mutation_type_obj = type_to_inspect_for_fields
+
+            interface_fields = []
+            for interface in root_mutation_type_obj.interfaces: # Use root_mutation_type_obj
+                interface_fields += [key for key, field in interface.fields.items()]
+
+            for key, field in root_mutation_type_obj.fields.items(): # Use root_mutation_type_obj
+                if (
+                    key not in interface_fields
+                    and not isinstance(field, GraphQLMutableField)
+                    and not has_mutable(field.type)
+                ):
+                    # Add only fields from the root mutation type itself for removal
+                    fields_to_remove.add((root_mutation_type_obj, key))
+
+        # The old loop iterated all types in filtered_mutation_types.
+        # This was too broad and removed fields from payload types like PersonMutable.
+        # By restricting the above collection of fields_to_remove to only the root 'mutation' type,
+        # other types in filtered_mutation_types (like PersonMutable) will not have their readable fields removed.
 
         for type_, key in fields_to_remove:
-            del type_.fields[key]
+            # Ensure field still exists before attempting deletion, good practice
+            if hasattr(type_, 'fields') and key in type_.fields:
+                 del type_.fields[key]
 
         return mutation
 
