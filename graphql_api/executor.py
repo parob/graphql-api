@@ -1,7 +1,6 @@
 from typing import Any, Dict, Optional, List, Callable
 
-from graphql import (ExecutionContext, GraphQLError, GraphQLOutputType,
-                     Middleware, graphql, graphql_sync)
+from graphql import (ExecutionContext, GraphQLError, GraphQLOutputType, graphql, graphql_sync)
 from graphql.execution import ExecutionResult
 from graphql.type.schema import GraphQLSchema
 

@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union, Callable
 # noinspection PyPackageRequirements
 from graphql import (ExecutionResult, GraphQLDirective, GraphQLField,
                      GraphQLNamedType, GraphQLObjectType, GraphQLScalarType,
-                     GraphQLSchema, GraphQLString, Middleware, is_named_type,
+                     GraphQLSchema, GraphQLString, is_named_type,
                      specified_directives)
 
 from graphql_api.error import GraphQLError

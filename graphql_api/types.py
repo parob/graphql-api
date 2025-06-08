@@ -2,7 +2,9 @@ import binascii
 import datetime
 import json
 import uuid
-from typing import Any, Dict, List, Optional, Union
+import enum
+
+from typing import Any, Dict, List, Optional, Type, Union
 
 from graphql import (GraphQLEnumType, GraphQLScalarType, StringValueNode,
                      Undefined, ValueNode)
@@ -10,9 +12,11 @@ from graphql.language import ast
 
 
 class GraphQLMappedEnumType(GraphQLEnumType):
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.enum_type = None
+        self.enum_type: Optional[Type[enum.Enum]] = None
+
     def parse_literal(self, *args, **kwargs):
         result = super().parse_literal(*args, **kwargs)
         if result and hasattr(self, "enum_type") and self.enum_type:
@@ -22,7 +26,7 @@ class GraphQLMappedEnumType(GraphQLEnumType):
 
 def parse_uuid_literal(
     value_node: ValueNode, _variables: Any = None
-) -> Optional[uuid.UUID]:
+) -> Optional[uuid.UUID | ValueError]:
     if isinstance(value_node, StringValueNode):
         try:
             return uuid.UUID(value_node.value)

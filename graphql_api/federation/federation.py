@@ -1,4 +1,4 @@
-from typing import Dict, List, Union, cast, Callable
+from typing import Dict, List, Union, cast
 
 from graphql import (GraphQLArgument, GraphQLField, GraphQLList,
                      GraphQLNonNull, GraphQLSchema, GraphQLType, GraphQLUnionType,
@@ -12,7 +12,7 @@ from graphql_api.directives import (is_specified_directive,
 from graphql_api.federation.directives import federation_directives, key, link
 from graphql_api.federation.types import _Any, federation_types
 from graphql_api.mapper import UnionFlagType
-from graphql_api.schema import get_applied_directives, get_directives
+from graphql_api.schema import get_applied_directives
 
 
 def add_federation_types(

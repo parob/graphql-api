@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID, uuid4
 
 from graphql_api import field, type
@@ -12,7 +12,7 @@ class Node:
     """
 
     # noinspection PyShadowingBuiltins
-    def __init__(self, id: UUID = None, *args, **kwargs):
+    def __init__(self, id: Optional[UUID] = None, *args, **kwargs):
         if id is None:
             id = uuid4()
 
@@ -38,6 +38,7 @@ class PageInfo:
         has_next_page: bool,
         start_cursor: str,
         end_cursor: str,
+        count: int,
         *args,
         **kwargs,
     ):
@@ -47,6 +48,7 @@ class PageInfo:
         self._has_next_page = has_next_page
         self._start_cursor = start_cursor
         self._end_cursor = end_cursor
+        self._count = count
 
     @property
     @field
@@ -107,10 +109,10 @@ class Connection:
 
     def __init__(
         self,
-        before: str = None,
-        after: str = None,
-        first: int = None,
-        last: int = None,
+        before: Optional[str] = None,
+        after: Optional[str] = None,
+        first: Optional[int] = None,
+        last: Optional[int] = None,
         *args,
         **kwargs,
     ):

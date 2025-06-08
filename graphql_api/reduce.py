@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from graphql import GraphQLList, GraphQLNonNull, GraphQLObjectType
 from graphql.type.definition import GraphQLInterfaceType
@@ -17,7 +17,7 @@ class GraphQLFilter:
 
 
 class TagFilter(GraphQLFilter):
-    def __init__(self, tags: List[str] = None):
+    def __init__(self, tags: Optional[List[str]] = None):
         """
         Remove any fields that are tagged with a tag in tags
         """
@@ -173,7 +173,7 @@ class GraphQLSchemaReducer:
 
                 field_name = to_snake_case(key)
 
-                field_meta = meta.get((root_type.name, field_name), {})
+                field_meta = meta.get((root_type.name, field_name), {}) if meta else {}
 
                 if filters:
                     for field_filter in filters:

@@ -1,9 +1,9 @@
 import json
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union, cast
 
 from graphql import (GraphQLDirective, GraphQLField, GraphQLList,
-                     GraphQLNamedType, GraphQLNonNull, GraphQLType,
-                     is_interface_type, is_object_type)
+                     GraphQLNamedType, GraphQLNonNull, GraphQLObjectType, GraphQLType,
+                     is_interface_type, is_object_type, GraphQLInterfaceType)
 
 from graphql_api.directives import SchemaDirective
 from graphql_api.utils import to_camel_case
@@ -54,13 +54,15 @@ def get_applied_directives(value) -> List[AppliedDirective]:
 
 def get_directives(
     graphql_type: Union[GraphQLType, GraphQLField],
-    _fetched_types: List[Union[GraphQLNamedType, GraphQLField]] = None,
+    _fetched_types: Optional[List[Union[GraphQLNamedType, GraphQLField]]] = None,
 ) -> Dict[str, GraphQLDirective]:
     _directives = {}
     if not _fetched_types:
         _fetched_types = []
     while isinstance(graphql_type, (GraphQLNonNull, GraphQLList)):
         graphql_type = graphql_type.of_type
+    if not isinstance(graphql_type, (GraphQLNamedType, GraphQLField)):
+        return _directives
     if graphql_type not in _fetched_types:
         _fetched_types.append(graphql_type)
         for schema_directive in get_applied_directives(graphql_type):
@@ -68,6 +70,7 @@ def get_directives(
             _directives[directive.name] = directive
 
         if is_object_type(graphql_type) or is_interface_type(graphql_type):
+            graphql_type = cast(Union[GraphQLObjectType, GraphQLInterfaceType], graphql_type)
             for _field in graphql_type.fields.values():
                 _field: GraphQLField
                 _directives.update(get_directives(_field, _fetched_types))

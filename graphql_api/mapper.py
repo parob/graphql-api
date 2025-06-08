@@ -4,7 +4,7 @@ import inspect
 import types
 import typing
 from datetime import date, datetime
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type, Union, cast
+from typing import Any, Callable, List, Optional, Set, Tuple, Type, Union, cast
 from uuid import UUID
 from abc import abstractmethod
 
@@ -20,7 +20,7 @@ from graphql.type.definition import (GraphQLArgument, GraphQLEnumType,
                                      GraphQLUnionType, is_abstract_type,
                                      is_enum_type, is_input_type,
                                      is_interface_type, is_object_type,
-                                     is_scalar_type)
+                                     is_scalar_type, is_nullable_type)
 from typing_inspect import get_origin
 
 from graphql_api.context import GraphQLContext
@@ -122,7 +122,6 @@ class GraphQLTypeMapper:
                 f"Field '{name}.{key}' with function ({function_type}) did "
                 f"not specify a valid return type."
             )
-        
 
         return_graphql_type = self.map(return_type)
 
@@ -135,9 +134,28 @@ class GraphQLTypeMapper:
 
         if not self.validate(return_graphql_type):
             raise GraphQLTypeMapError(
+                f"Field '{name}.{key}' with function ({function_type}) did "
+                f"not specify a valid return type."
+            )
+
+        assert return_graphql_type is not None
+
+        if not isinstance(
+            return_graphql_type,
+            (
+                GraphQLScalarType,
+                GraphQLObjectType,
+                GraphQLInterfaceType,
+                GraphQLUnionType,
+                GraphQLEnumType,
+                GraphQLList,
+                GraphQLNonNull,
+            ),
+        ):
+            raise GraphQLTypeMapError(
                 f"Field '{name}.{key}' with function '{function_type}' return "
                 f"type '{return_type}' could not be mapped to a valid GraphQL "
-                f"type, was mapped to invalid type {return_graphql_type}."
+                f"output type, was mapped to {return_graphql_type}."
             )
 
         enum_return = None
@@ -145,8 +163,9 @@ class GraphQLTypeMapper:
         if isinstance(return_graphql_type, GraphQLEnumType):
             enum_return = return_type
 
-        if not nullable:
-            return_graphql_type: GraphQLType = GraphQLNonNull(return_graphql_type)
+        if not nullable and not isinstance(return_graphql_type, GraphQLNonNull):
+            if is_nullable_type(return_graphql_type):
+                return_graphql_type = GraphQLNonNull(return_graphql_type)
 
         signature = inspect.signature(function_type)
 
@@ -181,22 +200,25 @@ class GraphQLTypeMapper:
 
             arg_type = input_type_mapper.map(hint)
 
+            if arg_type is None:
+                raise GraphQLTypeMapError(f"Unable to map argument {name}.{key}.{_key}")
+
             if isinstance(arg_type, GraphQLEnumType):
                 enum_arguments[_key] = hint
 
             nullable = _key in default_args
             if not nullable:
-                arg_type = GraphQLNonNull(arg_type)
+                arg_type = GraphQLNonNull(arg_type)  # type: ignore
 
             arguments[to_camel_case(_key)] = GraphQLArgument(
-                type_=arg_type, default_value=default_args.get(_key, Undefined)
+                type_=arg_type, default_value=default_args.get(_key, Undefined)  # type: ignore
             )
 
         # noinspection PyUnusedLocal
         def resolve(_self, info=None, context=None, *args, **kwargs):
             _args = {to_snake_case(_key): arg for _key, arg in kwargs.items()}
 
-            if include_context:
+            if include_context and info:
                 _args["context"] = info.context
 
             function_name = function_type.__name__
@@ -242,17 +264,18 @@ class GraphQLTypeMapper:
         self.add_applied_directives(field, f"{name}.{key}", function_type)
         return field
 
-    def map_to_union(self, union_type: Union) -> GraphQLType:
+    def map_to_union(self, union_type: Any) -> GraphQLType:
         union_args = typing_inspect.get_args(union_type, evaluate=True)
         union_args = [arg for arg in union_args if arg != UnionFlagType]
         none_type = type(None)
-        union_map: Dict[type, GraphQLType] = {
+        union_map = {
             arg: self.map(arg) for arg in union_args if arg and arg != none_type
         }
 
         if len(union_map) == 1 and none_type in union_args:
             _, mapped_type = union_map.popitem()
-            return mapped_type
+            if mapped_type:
+                return mapped_type
 
         # noinspection PyUnusedLocal
         def resolve_type(value, info, _type):
@@ -264,14 +287,26 @@ class GraphQLTypeMapper:
                 value_type = value.python_type
 
             for arg, _mapped_type in union_map.items():
-                if issubclass(value_type, arg) and hasattr(_mapped_type, "name"):
-                    return _mapped_type.name
+                if inspect.isclass(arg) and is_object_type(_mapped_type) and issubclass(
+                    cast(type, value_type), arg
+                ):
+                    return cast(GraphQLObjectType, _mapped_type).name
 
-        names = [arg.__name__ for arg in union_args if arg.__name__ != "NoneType"]
+        names = [
+            arg.__name__
+            for arg in union_args
+            if inspect.isclass(arg) and arg.__name__ != "NoneType"
+        ]
         name = f"{''.join(names)}{self.suffix}Union"
 
         union = GraphQLUnionType(
-            name, types=[*union_map.values()], resolve_type=resolve_type
+            name,
+            types=[
+                cast(GraphQLObjectType, v)
+                for v in union_map.values()
+                if v and is_object_type(v)
+            ],
+            resolve_type=resolve_type,
         )
         self.add_applied_directives(union, name, union_type)
 
@@ -286,13 +321,26 @@ class GraphQLTypeMapper:
         if origin == Union and type(None) in args:
             args = tuple(a for a in args if not isinstance(a, type(None)))
             if len(args) == 1:
-                list_subtype = [0]
+                list_subtype = args[0]
             nullable = True
 
         subtype = self.map(list_subtype)
+
+        if subtype is None:
+            raise GraphQLTypeMapError(f"Unable to map list subtype {list_subtype}")
+
         if not nullable:
-            # noinspection PyTypeChecker
-            subtype = GraphQLNonNull(type_=subtype)
+            GRAPHQL_NULLABLE_TYPES = (
+                GraphQLScalarType,
+                GraphQLObjectType,
+                GraphQLInterfaceType,
+                GraphQLUnionType,
+                GraphQLEnumType,
+                GraphQLList,
+                GraphQLInputObjectType,
+            )
+            if isinstance(subtype, GRAPHQL_NULLABLE_TYPES):
+                subtype = GraphQLNonNull(subtype)
 
         return GraphQLList(type_=subtype)
 
@@ -302,7 +350,10 @@ class GraphQLTypeMapper:
         if not all(isinstance(x, _type) for x in literal_args):
             raise TypeError("Literals must all be of the same type")
 
-        return self.map(_type)
+        mapped_type = self.map(_type)
+        if mapped_type is None:
+            raise GraphQLTypeMapError(f"Unable to map literal type {_type}")
+        return mapped_type
 
     # noinspection PyMethodMayBeStatic
     def map_to_enum(self, type_: Type[enum.Enum]) -> GraphQLEnumType:
@@ -369,6 +420,7 @@ class GraphQLTypeMapper:
                 if issubclass(class_type, test_type):
                     self.add_applied_directives(graphql_type, name, class_type)
                     return graphql_type
+        raise GraphQLTypeMapError(f"Could not map scalar {class_type}")
 
     def map_to_interface(
         self,
@@ -392,7 +444,8 @@ class GraphQLTypeMapper:
             # noinspection PyUnusedLocal
             def resolve_type(value, info, _type):
                 value = local_self.map(type(value))
-                if hasattr(value, "name"):
+                if is_object_type(value):
+                    value = cast(GraphQLObjectType, value)
                     return value.name
 
             return resolve_type
@@ -472,10 +525,15 @@ class GraphQLTypeMapper:
                 for key, hint in local_type_hints.items():
                     input_arg_type = local_self.map(hint)
 
+                    if input_arg_type is None:
+                        raise GraphQLTypeMapError(
+                            f"Unable to map input argument {local_name}.{key}"
+                        )
+
                     nullable = key in local_default_args
                     if not nullable:
                         # noinspection PyTypeChecker
-                        input_arg_type = GraphQLNonNull(input_arg_type)
+                        input_arg_type = GraphQLNonNull(input_arg_type)  # type: ignore
 
                     default_value = local_default_args.get(key, None)
 
@@ -488,7 +546,7 @@ class GraphQLTypeMapper:
                             )
 
                     arguments[to_camel_case(key)] = GraphQLInputField(
-                        type_=input_arg_type, default_value=default_value
+                        type_=input_arg_type, default_value=default_value  # type: ignore
                     )
                 return arguments
 
@@ -572,7 +630,7 @@ class GraphQLTypeMapper:
 
         for key, func in class_funcs:
             func_meta = get_value(func, self.schema, "meta")
-            func_meta["graphql_type"] = get_value(func, self.schema, "graphql_type")
+            func_meta["graphql_type"] = get_value(func, self.schema, "graphql_type")  # type: ignore
 
             self.meta[(name, to_snake_case(key))] = func_meta
 
@@ -706,7 +764,7 @@ class GraphQLTypeMapper:
             self.registry[key] = value
             self.reverse_registry[value] = python_type
 
-    def validate(self, type_: GraphQLType, evaluate=False) -> bool:
+    def validate(self, type_: Optional[GraphQLType], evaluate=False) -> bool:
         if not type_:
             return False
 
@@ -794,7 +852,7 @@ def get_class_funcs(class_type, schema, mutable=False) -> List[Tuple[Any, Any]]:
                     local_key = key
                     local_member = member
 
-                    def func(self) -> return_type: # type: ignore
+                    def func(self) -> return_type:  # type: ignore
                         return getattr(self, local_key)
 
                     func._graphql = local_member._graphql

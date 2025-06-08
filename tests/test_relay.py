@@ -65,6 +65,7 @@ class TestRelay:
                     end_cursor=self.filtered_cursors[-1],
                     has_previous_page=self.has_previous_page,
                     has_next_page=self.has_next_page,
+                    count=len(self.filtered_cursors),
                 )
 
         # noinspection PyUnusedLocal
