@@ -10,10 +10,14 @@ from graphql.language import ast
 
 
 class GraphQLMappedEnumType(GraphQLEnumType):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.enum_type = None
     def parse_literal(self, *args, **kwargs):
         result = super().parse_literal(*args, **kwargs)
-
-        return self.enum_type(result) if hasattr(self, "enum_type") else result
+        if result and hasattr(self, "enum_type") and self.enum_type:
+            return self.enum_type(result)
+        return result
 
 
 def parse_uuid_literal(

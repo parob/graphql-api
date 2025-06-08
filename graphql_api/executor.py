@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List, Callable
 
 from graphql import (ExecutionContext, GraphQLError, GraphQLOutputType,
                      Middleware, graphql, graphql_sync)
@@ -34,7 +34,7 @@ class GraphQLBaseExecutor:
         Synchronous execution of a GraphQL query.
         Override in subclasses to implement custom logic.
         """
-        pass
+        raise NotImplementedError
 
     async def execute_async(
         self, query, variables=None, operation_name=None
@@ -43,7 +43,7 @@ class GraphQLBaseExecutor:
         Asynchronous execution of a GraphQL query.
         Override in subclasses to implement custom logic.
         """
-        pass
+        raise NotImplementedError
 
 
 class ErrorProtectionExecutionContext(ExecutionContext):
@@ -76,7 +76,7 @@ class ErrorProtectionExecutionContext(ExecutionContext):
 
         # If error protection is disabled, re-raise the original error
         if not error_protection:
-            raise error.original_error
+            raise error.original_error if error.original_error is not None else error
 
         # Otherwise, call the default error handler
         return super().handle_field_error(error=error, return_type=return_type)
@@ -100,9 +100,9 @@ class GraphQLExecutor(GraphQLBaseExecutor):
     def __init__(
         self,
         schema: GraphQLSchema,
-        meta: Dict = None,
+        meta: Optional[Dict] = None,
         root_value: Any = None,
-        middleware: Optional[Middleware] = None,
+        middleware: Optional[List[Callable]] = None,
         error_protection: bool = True,
     ):
         """

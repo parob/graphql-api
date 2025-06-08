@@ -4,13 +4,14 @@ import inspect
 import types
 import typing
 from datetime import date, datetime
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type, Union, cast
 from uuid import UUID
+from abc import abstractmethod
 
 import typing_inspect
 from graphql import (DirectiveLocation, GraphQLBoolean, GraphQLField,
                      GraphQLFloat, GraphQLInt, GraphQLList, GraphQLObjectType,
-                     GraphQLString, is_union_type)
+                     GraphQLString, is_union_type, GraphQLWrappingType)
 from graphql.pyutils import Undefined, UndefinedType
 from graphql.type.definition import (GraphQLArgument, GraphQLEnumType,
                                      GraphQLInputField, GraphQLInputObjectType,
@@ -63,8 +64,9 @@ class GraphQLTypeMapError(GraphQLBaseException):
 
 class GraphQLTypeWrapper:
     @classmethod
+    @abstractmethod
     def graphql_type(cls, mapper: "GraphQLTypeMapper") -> GraphQLType:
-        pass
+        ...
 
 
 class GraphQLMetaKey(enum.Enum):
@@ -120,6 +122,7 @@ class GraphQLTypeMapper:
                 f"Field '{name}.{key}' with function ({function_type}) did "
                 f"not specify a valid return type."
             )
+        
 
         return_graphql_type = self.map(return_type)
 
@@ -623,14 +626,14 @@ class GraphQLTypeMapper:
         self.add_applied_directives(obj, name, class_type)
         return obj
 
-    def rmap(self, graphql_type: GraphQLType) -> Type:
-        while hasattr(graphql_type, "of_type"):
+    def rmap(self, graphql_type: GraphQLType) -> Optional[Type]:
+        while isinstance(graphql_type, GraphQLWrappingType):
             graphql_type = graphql_type.of_type
 
         return self.reverse_registry.get(graphql_type)
 
     def map(self, type_, use_graphql_type=True) -> GraphQLType | None:
-        def _map(type__) -> GraphQLType:
+        def _map(type__) -> GraphQLType | None:
             if type_ == JsonType:
                 return GraphQLJSON
 
@@ -649,10 +652,8 @@ class GraphQLTypeMapper:
 
             origin_type = get_origin(type__)
 
-            if inspect.isclass(origin_type) and issubclass(
-                get_origin(type__), (List, Set)
-            ):
-                return self.map_to_list(type__)
+            if origin_type is list or origin_type is set:
+                return self.map_to_list(cast(List, type__))
 
             if inspect.isclass(type__):
                 if issubclass(type__, GraphQLType):
@@ -686,7 +687,9 @@ class GraphQLTypeMapper:
         if generic_registry_value:
             return generic_registry_value
 
-        value: GraphQLType = _map(type_)
+        value = _map(type_)
+        if not value:
+            return None
         key = str(value)
 
         registry_value = self.registry.get(key, None)
@@ -791,7 +794,7 @@ def get_class_funcs(class_type, schema, mutable=False) -> List[Tuple[Any, Any]]:
                     local_key = key
                     local_member = member
 
-                    def func(self) -> return_type:
+                    def func(self) -> return_type: # type: ignore
                         return getattr(self, local_key)
 
                     func._graphql = local_member._graphql

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union, Callable
 
 # noinspection PyPackageRequirements
 from graphql import (ExecutionResult, GraphQLDirective, GraphQLField,
@@ -180,7 +180,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
     def __init__(
         self,
         root_type=None,
-        middleware: Optional[Middleware] = None,
+        middleware: Optional[List[Callable]] = None,
         directives: Optional[List[GraphQLDirective]] = None,
         types: Optional[List[Union[GraphQLNamedType, Type]]] = None,
         filters: Optional[List[GraphQLFilter]] = None,

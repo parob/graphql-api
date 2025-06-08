@@ -27,14 +27,14 @@ class SchemaDirective(GraphQLDirective):
         description: Optional[str] = None,
         extensions: Optional[Dict[str, Any]] = None,
         ast_node: Optional[ast.DirectiveDefinitionNode] = None,
-        directive: GraphQLDirective = None,
+        directive: Optional[GraphQLDirective] = None,
     ):
         if directive:
             self.directive = directive
         else:
             super().__init__(
-                name=name,
-                locations=locations,
+                name=name or "",
+                locations=locations or (),
                 args=args,
                 is_repeatable=is_repeatable,
                 description=description,
@@ -62,7 +62,7 @@ class SchemaDirective(GraphQLDirective):
             )
 
 
-def print_applied_directives(value, printed_directives: list = None):
+def print_applied_directives(value, printed_directives: Optional[list] = None):
     from graphql_api.schema import get_applied_directives
 
     schema_directives = get_applied_directives(value)
@@ -74,7 +74,7 @@ def print_applied_directives(value, printed_directives: list = None):
     return ""
 
 
-def print_schema(schema: GraphQLSchema, printed_directives: list = None) -> str:
+def print_schema(schema: GraphQLSchema, printed_directives: Optional[list] = None) -> str:
     return print_filtered_schema(
         schema,
         lambda n: not is_specified_directive(n),
@@ -84,7 +84,7 @@ def print_schema(schema: GraphQLSchema, printed_directives: list = None) -> str:
 
 
 def print_introspection_schema(
-    schema: GraphQLSchema, printed_directives: list = None
+    schema: GraphQLSchema, printed_directives: Optional[list] = None
 ) -> str:
     return print_filtered_schema(
         schema, is_specified_directive, is_introspection_type, printed_directives
@@ -99,7 +99,7 @@ def print_filtered_schema(
     schema: GraphQLSchema,
     directive_filter: Callable[[GraphQLDirective], bool],
     type_filter: Callable[[GraphQLNamedType], bool],
-    printed_directives: list = None,
+    printed_directives: Optional[list] = None,
 ) -> str:
     directives = list(filter(directive_filter, schema.directives))
     types = filter(type_filter, schema.type_map.values())
@@ -114,7 +114,7 @@ def print_filtered_schema(
 
 
 def print_schema_definition(
-    schema: GraphQLSchema, printed_directives: list = None
+    schema: GraphQLSchema, printed_directives: Optional[list] = None
 ) -> Optional[str]:
     if schema.description is None and is_schema_of_common_names(schema):
         return None
@@ -171,7 +171,7 @@ def is_schema_of_common_names(schema: GraphQLSchema) -> bool:
     return not subscription_type or subscription_type.name == "Subscription"
 
 
-def print_type(type_: GraphQLNamedType, printed_directives: list = None) -> str:
+def print_type(type_: GraphQLNamedType, printed_directives: Optional[list] = None) -> str:
     if is_scalar_type(type_):
         type_ = cast(GraphQLScalarType, type_)
         return print_scalar(type_, printed_directives)
@@ -195,12 +195,12 @@ def print_type(type_: GraphQLNamedType, printed_directives: list = None) -> str:
     raise TypeError(f"Unexpected type: {inspect(type_)}.")
 
 
-def print_scalar(type_: GraphQLScalarType, printed_directives: list = None) -> str:
+def print_scalar(type_: GraphQLScalarType, printed_directives: Optional[list] = None) -> str:
     return (
         print_description(type_)
         + f"scalar {type_.name}"
         + print_specified_by_url(type_)
-        + print_applied_directives(type_, printed_directives)  # ADDED
+        + print_applied_directives(type_, printed_directives)
     )
 
 
@@ -211,29 +211,29 @@ def print_implemented_interfaces(
     return " implements " + " & ".join(i.name for i in interfaces) if interfaces else ""
 
 
-def print_object(type_: GraphQLObjectType, printed_directives: list = None) -> str:
+def print_object(type_: GraphQLObjectType, printed_directives: Optional[list] = None) -> str:
     return (
         print_description(type_)
         + f"type {type_.name}"
         + print_implemented_interfaces(type_)
-        + print_applied_directives(type_, printed_directives)  # ADDED
+        + print_applied_directives(type_, printed_directives)
         + print_fields(type_, printed_directives)
     )
 
 
 def print_interface(
-    type_: GraphQLInterfaceType, printed_directives: list = None
+    type_: GraphQLInterfaceType, printed_directives: Optional[list] = None
 ) -> str:
     return (
         print_description(type_)
         + f"interface {type_.name}"
         + print_implemented_interfaces(type_)
-        + print_applied_directives(type_, printed_directives)  # ADDED
+        + print_applied_directives(type_, printed_directives)
         + print_fields(type_, printed_directives)
     )
 
 
-def print_union(type_: GraphQLUnionType, printed_directives: list = None) -> str:
+def print_union(type_: GraphQLUnionType, printed_directives: Optional[list] = None) -> str:
     types = type_.types
     possible_types = " = " + " | ".join(t.name for t in types) if types else ""
     return (
@@ -241,10 +241,10 @@ def print_union(type_: GraphQLUnionType, printed_directives: list = None) -> str
         + f"union {type_.name}"
         + possible_types
         + print_applied_directives(type_, printed_directives)
-    )  # ADDED
+    )
 
 
-def print_enum(type_: GraphQLEnumType, printed_directives: list = None) -> str:
+def print_enum(type_: GraphQLEnumType, printed_directives: Optional[list] = None) -> str:
     values = [
         print_description(value, "  ", not i)
         + f"  {name}"
@@ -257,11 +257,11 @@ def print_enum(type_: GraphQLEnumType, printed_directives: list = None) -> str:
         + f"enum {type_.name}"
         + print_block(values)
         + print_applied_directives(type_, printed_directives)
-    )  # ADDED
+    )
 
 
 def print_input_object(
-    type_: GraphQLInputObjectType, printed_directives: list = None
+    type_: GraphQLInputObjectType, printed_directives: Optional[list] = None
 ) -> str:
     fields = [
         print_description(field, "  ", not i)
@@ -274,20 +274,20 @@ def print_input_object(
         + f"input {type_.name}"
         + print_block(fields)
         + print_applied_directives(type_, printed_directives)
-    )  # ADDED
+    )
 
 
 def print_fields(
     type_: Union[GraphQLObjectType, GraphQLInterfaceType],
-    printed_directives: list = None,
+    printed_directives: Optional[list] = None,
 ) -> str:
     fields = [
         print_description(field, "  ", not i)
         + f"  {name}"
-        + print_args(field.args, "  ")
+        + print_args(field.args, "  ", printed_directives)
         + f": {field.type}"
         + print_deprecated(field.deprecation_reason)
-        + print_applied_directives(field, printed_directives)  # ADDED
+        + print_applied_directives(field, printed_directives)
         for i, (name, field) in enumerate(type_.fields.items())
     ]
     return print_block(fields)
@@ -297,7 +297,11 @@ def print_block(items: List[str]) -> str:
     return " {\n" + "\n".join(items) + "\n}" if items else ""
 
 
-def print_args(args: Dict[str, GraphQLArgument], indentation: str = "") -> str:
+def print_args(
+    args: Dict[str, GraphQLArgument],
+    indentation: str = "",
+    printed_directives: Optional[list] = None,
+) -> str:
     if not args:
         return ""
 
@@ -305,7 +309,10 @@ def print_args(args: Dict[str, GraphQLArgument], indentation: str = "") -> str:
     if not any(arg.description for arg in args.values()):
         return (
             "("
-            + ", ".join(print_input_value(name, arg) for name, arg in args.items())
+            + ", ".join(
+                print_input_value(name, arg, printed_directives)
+                for name, arg in args.items()
+            )
             + ")"
         )
 
@@ -314,7 +321,7 @@ def print_args(args: Dict[str, GraphQLArgument], indentation: str = "") -> str:
         + "\n".join(
             print_description(arg, f"  {indentation}", not i)
             + f"  {indentation}"
-            + print_input_value(name, arg)
+            + print_input_value(name, arg, printed_directives)
             for i, (name, arg) in enumerate(args.items())
         )
         + f"\n{indentation})"
@@ -323,8 +330,8 @@ def print_args(args: Dict[str, GraphQLArgument], indentation: str = "") -> str:
 
 def print_input_value(
     name: str,
-    arg: GraphQLArgument | GraphQLField | GraphQLInputField,
-    printed_directives: list = None,
+    arg: Union[GraphQLArgument, GraphQLInputField],
+    printed_directives: Optional[list] = None,
 ) -> str:
     default_ast = ast_from_value(arg.default_value, arg.type)
     arg_decl = f"{name}: {arg.type}"
@@ -334,14 +341,16 @@ def print_input_value(
         arg_decl
         + print_deprecated(arg.deprecation_reason)
         + print_applied_directives(arg, printed_directives)
-    )  # ADDED
+    )
 
 
-def print_directive(directive: GraphQLDirective) -> str:
+def print_directive(
+    directive: GraphQLDirective, printed_directives: Optional[list] = None
+) -> str:
     return (
         print_description(directive)
         + f"directive @{directive.name}"
-        + print_args(directive.args)
+        + print_args(directive.args, printed_directives=printed_directives)
         + (" repeatable" if directive.is_repeatable else "")
         + " on "
         + " | ".join(location.name for location in directive.locations)

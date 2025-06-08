@@ -39,7 +39,7 @@ def to_snake_case(name):
     return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
 
 
-def to_camel_case_text(text: str):
+def to_camel_case_text(text: str | None):
     if not text:
         return text
     for word in text.split():
@@ -272,10 +272,9 @@ def is_union_of_single_type(annotation_node) -> bool:
     # Extract the subscript part. In older Python versions (<=3.8),
     # it might be wrapped in an ast.Index node.
     slice_node = annotation_node.slice
-    if isinstance(slice_node, ast.Index):  # <= Python 3.8
-        slice_value = slice_node.value
-    else:
-        # Python 3.9+: "slice" is used directly
+    slice_value = getattr(slice_node, "value", None)
+    if slice_value is None:
+        # Python 3.9+: "slice" is used directly, or it's not an Index node
         slice_value = slice_node
 
     # If the user wrote Union[int, str], we get an ast.Tuple in `slice_value`.
