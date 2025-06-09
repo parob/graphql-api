@@ -1,4 +1,3 @@
-import pytest
 from pydantic import BaseModel, Field
 from typing import List, Optional, Union
 from enum import Enum
@@ -22,9 +21,9 @@ class TestPydantic:
                 return Statistics(
                     conversations_count=10, messages_count=25
                 )
-        
+
         api = GraphQLAPI(root_type=ExampleAPI)
-        
+
         query = '''
             query {
                 getStats {
@@ -35,7 +34,7 @@ class TestPydantic:
         '''
         expected = {
             'getStats': {
-                'conversationsCount': 10, 
+                'conversationsCount': 10,
                 'messagesCount': 25
             }
         }
@@ -148,7 +147,7 @@ class TestPydantic:
         }
         response = api.execute(query)
         assert response.data == expected
-        
+
     def test_pydantic_model_with_enum(self):
         class StatusEnum(str, Enum):
             PENDING = "PENDING"
@@ -461,7 +460,7 @@ class TestPydantic:
         }
         response = api.execute(query)
         assert response.data == expected
-        
+
     def test_pydantic_forward_ref(self):
         class ModelA(BaseModel):
             b: 'ModelB'
