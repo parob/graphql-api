@@ -27,6 +27,7 @@ from graphql_api.context import GraphQLContext
 from graphql_api.dataclass_mapping import (type_from_dataclass,
                                            type_is_dataclass)
 from graphql_api.exception import GraphQLBaseException
+from graphql_api.pydantic import type_from_pydantic_model, type_is_pydantic_model
 from graphql_api.schema import add_applied_directives, get_applied_directives
 from graphql_api.types import (GraphQLBytes, GraphQLDate, GraphQLDateTime,
                                GraphQLJSON, GraphQLMappedEnumType, GraphQLUUID,
@@ -698,6 +699,9 @@ class GraphQLTypeMapper:
             if use_graphql_type and inspect.isclass(type__):
                 if issubclass(type__, GraphQLTypeWrapper):
                     return type__.graphql_type(mapper=self)
+
+                if type_is_pydantic_model(type__):
+                    return type_from_pydantic_model(type__, mapper=self)
 
                 if type_is_dataclass(type__):
                     return type_from_dataclass(type__, mapper=self)
