@@ -1,288 +1,497 @@
-from typing import Optional, List, Any
-import inspect # Ensure inspect is imported
-
 import pytest
-from pydantic import BaseModel, Field, RootModel
-from graphql import graphql_sync, GraphQLSchema as CoreGraphQLSchema
+from pydantic import BaseModel, Field
+from typing import List, Optional, Union
+from enum import Enum
+from dataclasses import dataclass
 
 from graphql_api.api import GraphQLAPI
 from graphql_api.decorators import field
 
-# Models for testing (Copied from previous correct state)
 
-class EmptyModel(BaseModel):
-    pass
+class TestPydantic:
 
-class AliasedModel(BaseModel):
-    actual_name: str = Field(alias="name_in_data")
+    def test_pydantic(self):
+        class Statistics(BaseModel):
+            conversations_count: int = Field(description="Number of conversations")
+            messages_count: int
 
-class AnyFieldModel(BaseModel):
-    anything: Any
-    optional_any: Optional[Any]
+        class ExampleAPI:
 
-class ModelD(BaseModel):
-    final_value: int
-
-class ModelC(BaseModel):
-    model_d: ModelD
-    optional_model_d: Optional[ModelD]
-
-class ModelB(BaseModel):
-    model_c: ModelC
-
-class ModelA(BaseModel):
-    model_b: ModelB
-    name: str
-
-class ListPrimitivesModel(BaseModel):
-    str_list: List[str]
-    optional_int_list: Optional[List[int]]
-    list_optional_str: List[Optional[str]]
-    optional_list_optional_int: Optional[List[Optional[int]]]
-
-class NestedModel(BaseModel):
-    nested_field: str = Field(description="A nested field")
-
-class OptionalModel(BaseModel):
-    optional_field: Optional[str] = Field(description="An optional field")
-    another_optional_field: Optional[int]
-
-class Statistics(BaseModel):
-    conversations_count: int = Field(description="Number of conversations")
-    messages_count: int
-    completion_rate: Optional[float]
-    nested_stats: NestedModel
-    optional_nested: Optional[NestedModel]
-    list_of_nested: List[NestedModel]
-    list_of_optional_nested: Optional[List[OptionalModel]] = Field(default=None)
-
-# Renamed TestAPI to PydanticTestAPI to avoid Pytest collection warning
-class PydanticTestAPI(GraphQLAPI):
-    def __init__(self):
-        super().__init__(root_type=PydanticTestAPI) # Use the new class name
-
-    @field
-    def get_stats(self) -> Statistics:
-        return Statistics(
-            conversations_count=10, messages_count=25, completion_rate=0.85,
-            nested_stats=NestedModel(nested_field="test_value"),
-            optional_nested=NestedModel(nested_field="optional_test"),
-            list_of_nested=[NestedModel(nested_field="item1"), NestedModel(nested_field="item2")],
-            list_of_optional_nested=[OptionalModel(optional_field="opt_item1", another_optional_field=None)]
-        )
-
-    @field
-    def get_stats_optional_missing(self) -> Statistics:
-        return Statistics(
-            conversations_count=5, messages_count=12, completion_rate=None,
-            nested_stats=NestedModel(nested_field="another_value"),
-            optional_nested=None, list_of_nested=[NestedModel(nested_field="item_a")],
-            list_of_optional_nested=None
-        )
-
-    @field
-    def get_optional_model_present(self) -> OptionalModel:
-        return OptionalModel(optional_field="present", another_optional_field=123)
-
-    @field
-    def get_optional_model_none(self) -> OptionalModel:
-        return OptionalModel(optional_field=None, another_optional_field=None)
-
-    @field
-    def get_optional_model_partial(self) -> OptionalModel:
-        return OptionalModel(optional_field=None, another_optional_field=456)
-
-    @field
-    def get_empty_model(self) -> EmptyModel:
-        return EmptyModel()
-
-    @field
-    def get_aliased_model(self) -> AliasedModel:
-        return AliasedModel.model_validate({'name_in_data': 'aliased value'})
-
-    # @field
-    # def get_any_field_model(self) -> AnyFieldModel:
-    #     return AnyFieldModel(anything={"complex": [1, "data"], "bool": True}, optional_any=None)
-
-    @field
-    def get_deeply_nested_model(self) -> ModelA:
-        return ModelA(
-            name="TestA", model_b=ModelB(model_c=ModelC(
-                model_d=ModelD(final_value=123), optional_model_d=ModelD(final_value=456)))
-        )
-
-    @field
-    def get_deeply_nested_optional_missing(self) -> ModelA:
-        return ModelA(
-            name="TestAOptional", model_b=ModelB(model_c=ModelC(
-                model_d=ModelD(final_value=789), optional_model_d=None))
-        )
-
-    @field
-    def get_list_primitives(self) -> ListPrimitivesModel:
-        return ListPrimitivesModel(
-            str_list=["a", "b", "c"], optional_int_list=[1, 2, 3],
-            list_optional_str=["x", None, "y"], optional_list_optional_int=[10, None, 20]
-        )
-
-    @field
-    def get_list_primitives_optionals_none(self) -> ListPrimitivesModel:
-        return ListPrimitivesModel(
-            str_list=[], optional_int_list=None,
-            list_optional_str=[None, None], optional_list_optional_int=None
-        )
-
-# Pytest Fixture
-@pytest.fixture(scope="function")
-def gql_schema_and_root():
-    api_instance = PydanticTestAPI() # Use the renamed class
-    schema = api_instance.build_schema()[0]
-    return schema, api_instance
-
-# Execute Query Helper
-def execute_query(schema_and_root, query: str, variables: Optional[dict] = None):
-    schema, root_value = schema_and_root
-    result = graphql_sync(schema, query, root_value=root_value, variable_values=variables)
-    if result.errors:
-        # print("GraphQL Errors:", result.errors)
-        raise result.errors[0]
-    return result.data
-
-# --- Test Functions (adapted to use gql_schema_and_root) ---
-
-def test_pydantic_model_mapping(gql_schema_and_root: tuple):
-    query = '''
-        query { getStats {
-            conversationsCount messagesCount completionRate
-            nestedStats { nestedField }
-            optionalNested { nestedField }
-            listOfNested { nestedField }
-            listOfOptionalNested { optionalField anotherOptionalField }
-        } }
-    '''
-    expected = {
-        'getStats': {
-            'conversationsCount': 10, 'messagesCount': 25, 'completionRate': 0.85,
-            'nestedStats': {'nestedField': 'test_value'},
-            'optionalNested': {'nestedField': 'optional_test'},
-            'listOfNested': [{'nestedField': 'item1'}, {'nestedField': 'item2'}],
-            'listOfOptionalNested': [{'optionalField': 'opt_item1', 'anotherOptionalField': None}]
+            @field
+            def get_stats(self) -> Statistics:
+                return Statistics(
+                    conversations_count=10, messages_count=25
+                )
+        
+        api = GraphQLAPI(root_type=ExampleAPI)
+        
+        query = '''
+            query {
+                getStats {
+                    conversationsCount
+                    messagesCount
+                }
+            }
+        '''
+        expected = {
+            'getStats': {
+                'conversationsCount': 10, 
+                'messagesCount': 25
+            }
         }
-    }
-    assert execute_query(gql_schema_and_root, query) == expected
+        response = api.execute(query)
+        assert response.data == expected
 
-def test_pydantic_model_optional_fields_missing(gql_schema_and_root: tuple):
-    query = '''
-        query { getStatsOptionalMissing {
-            conversationsCount messagesCount completionRate
-            nestedStats { nestedField }
-            optionalNested { nestedField }
-            listOfNested { nestedField }
-            listOfOptionalNested { optionalField }
-        } }
-    '''
-    expected = {
-        'getStatsOptionalMissing': {
-            'conversationsCount': 5, 'messagesCount': 12, 'completionRate': None,
-            'nestedStats': {'nestedField': 'another_value'},
-            'optionalNested': None, 'listOfNested': [{'nestedField': 'item_a'}],
-            'listOfOptionalNested': None
+    def test_nested_pydantic_models(self):
+        class Author(BaseModel):
+            name: str
+
+        class Book(BaseModel):
+            title: str
+            author: Author
+
+        class LibraryAPI:
+            @field
+            def get_book(self) -> Book:
+                return Book(
+                    title="The Hitchhiker's Guide to the Galaxy",
+                    author=Author(name="Douglas Adams")
+                )
+
+        api = GraphQLAPI(root_type=LibraryAPI)
+        query = '''
+            query {
+                getBook {
+                    title
+                    author {
+                        name
+                    }
+                }
+            }
+        '''
+        expected = {
+            'getBook': {
+                'title': "The Hitchhiker's Guide to the Galaxy",
+                'author': {
+                    'name': "Douglas Adams"
+                }
+            }
         }
-    }
-    assert execute_query(gql_schema_and_root, query) == expected
+        response = api.execute(query)
+        assert response.data == expected
 
-def test_optional_model_fields(gql_schema_and_root: tuple):
-    query_present = '{ getOptionalModelPresent { optionalField anotherOptionalField } }'
-    assert execute_query(gql_schema_and_root, query_present) == \
-        {'getOptionalModelPresent': {'optionalField': 'present', 'anotherOptionalField': 123}}
+    def test_list_of_pydantic_models(self):
+        class ToDo(BaseModel):
+            task: str
+            completed: bool
 
-    query_none = '{ getOptionalModelNone { optionalField anotherOptionalField } }'
-    assert execute_query(gql_schema_and_root, query_none) == \
-        {'getOptionalModelNone': {'optionalField': None, 'anotherOptionalField': None}}
+        class ToDoAPI:
+            @field
+            def get_todos(self) -> List[ToDo]:
+                return [
+                    ToDo(task="Learn GraphQL", completed=True),
+                    ToDo(task="Write more tests", completed=False),
+                ]
 
-    query_partial = '{ getOptionalModelPartial { optionalField anotherOptionalField } }'
-    assert execute_query(gql_schema_and_root, query_partial) == \
-        {'getOptionalModelPartial': {'optionalField': None, 'anotherOptionalField': 456}}
-
-def test_pydantic_model_descriptions(gql_schema_and_root: tuple):
-    schema, _ = gql_schema_and_root
-    stats_type = schema.get_type("Statistics")
-    assert stats_type.description == inspect.cleandoc(Statistics.__doc__)
-    assert stats_type.fields['conversationsCount'].description == "Number of conversations"
-    assert stats_type.fields['messagesCount'].description is None
-
-    nested_type = schema.get_type("NestedModel")
-    assert nested_type.fields['nestedField'].description == "A nested field"
-
-    optional_type = schema.get_type("OptionalModel")
-    assert optional_type.fields['optionalField'].description == "An optional field"
-    assert optional_type.fields['anotherOptionalField'].description is None
-
-def test_empty_model(gql_schema_and_root: tuple):
-    query = '{ getEmptyModel { __typename } }'
-    assert execute_query(gql_schema_and_root, query) == {'getEmptyModel': {'__typename': 'EmptyModel'}}
-    schema, _ = gql_schema_and_root
-    empty_gql_type = schema.get_type("EmptyModel")
-    assert empty_gql_type is not None
-    assert not empty_gql_type.fields
-
-def test_aliased_model(gql_schema_and_root: tuple):
-    query = '{ getAliasedModel { actualName } }'
-    expected = {'getAliasedModel': {'actualName': 'aliased value'}}
-    assert execute_query(gql_schema_and_root, query) == expected
-    schema, _ = gql_schema_and_root
-    aliased_gql_type = schema.get_type("AliasedModel")
-    assert "actualName" in aliased_gql_type.fields
-    assert "nameInData" not in aliased_gql_type.fields
-
-# def test_any_field_model(gql_schema_and_root: tuple):
-#     query = '{ getAnyFieldModel { anything optionalAny } }'
-#     expected = {'getAnyFieldModel': {'anything': {"complex": [1, "data"], "bool": True}, 'optionalAny': None}}
-#     assert execute_query(gql_schema_and_root, query) == expected
-
-#     schema, _ = gql_schema_and_root
-#     any_field_model_gql_type = schema.get_type("AnyFieldModel")
-#     assert any_field_model_gql_type is not None, "AnyFieldModel not found in schema"
-#     assert "anything" in any_field_model_gql_type.fields, "'anything' field missing"
-#     assert any_field_model_gql_type.fields["anything"].type.name == "JSON"
-#     assert any_field_model_gql_type.fields["optionalAny"].type.name == "JSON"
-
-def test_deeply_nested_model(gql_schema_and_root: tuple):
-    query = '''
-        query {
-            getDeeplyNestedModel { name modelB { modelC { modelD { finalValue } optionalModelD { finalValue } } } }
-            getDeeplyNestedOptionalMissing { name modelB { modelC { modelD { finalValue } optionalModelD { finalValue } } } }
+        api = GraphQLAPI(root_type=ToDoAPI)
+        query = '''
+            query {
+                getTodos {
+                    task
+                    completed
+                }
+            }
+        '''
+        expected = {
+            'getTodos': [
+                {'task': "Learn GraphQL", 'completed': True},
+                {'task': "Write more tests", 'completed': False},
+            ]
         }
-    '''
-    expected = {
-        'getDeeplyNestedModel': {
-            'name': "TestA", 'modelB': {'modelC': {'modelD': {'finalValue': 123}, 'optionalModelD': {'finalValue': 456}}}
-        },
-        'getDeeplyNestedOptionalMissing': {
-            'name': "TestAOptional", 'modelB': {'modelC': {'modelD': {'finalValue': 789}, 'optionalModelD': None}}
-        }
-    }
-    assert execute_query(gql_schema_and_root, query) == expected
+        response = api.execute(query)
+        assert response.data == expected
 
-def test_list_primitives(gql_schema_and_root: tuple):
-    query_present = ''' query GetLP { getListPrimitives {
-        strList optionalIntList listOptionalStr optionalListOptionalInt
-    } } '''
-    expected_present = {
-        'getListPrimitives': {
-            'strList': ["a", "b", "c"], 'optionalIntList': [1, 2, 3],
-            'listOptionalStr': ["x", None, "y"], 'optionalListOptionalInt': [10, None, 20]
-        }
-    }
-    assert execute_query(gql_schema_and_root, query_present) == expected_present
+    def test_optional_fields_and_scalar_types(self):
+        class UserProfile(BaseModel):
+            username: str
+            age: Optional[int] = None
+            is_active: bool
+            rating: float
 
-    query_optionals_none = ''' query GetLPNone { getListPrimitivesOptionalsNone {
-        strList optionalIntList listOptionalStr optionalListOptionalInt
-    } } '''
-    expected_optionals_none = {
-        'getListPrimitivesOptionalsNone': {
-            'strList': [], 'optionalIntList': None,
-            'listOptionalStr': [None, None], 'optionalListOptionalInt': None
+        class UserAPI:
+            @field
+            def get_user(self) -> UserProfile:
+                return UserProfile(
+                    username="testuser",
+                    is_active=True,
+                    rating=4.5
+                )
+
+        api = GraphQLAPI(root_type=UserAPI)
+        query = '''
+            query {
+                getUser {
+                    username
+                    age
+                    isActive
+                    rating
+                }
+            }
+        '''
+        expected = {
+            'getUser': {
+                'username': "testuser",
+                'age': None,
+                'isActive': True,
+                'rating': 4.5
+            }
         }
-    }
-    assert execute_query(gql_schema_and_root, query_optionals_none) == expected_optionals_none
+        response = api.execute(query)
+        assert response.data == expected
+        
+    def test_pydantic_model_with_enum(self):
+        class StatusEnum(str, Enum):
+            PENDING = "PENDING"
+            COMPLETED = "COMPLETED"
+
+        class Task(BaseModel):
+            name: str
+            status: StatusEnum
+
+        class TaskAPI:
+            @field
+            def get_task(self) -> Task:
+                return Task(name="My Task", status=StatusEnum.PENDING)
+
+        api = GraphQLAPI(root_type=TaskAPI)
+        query = '''
+            query {
+                getTask {
+                    name
+                    status
+                }
+            }
+        '''
+        expected = {
+            'getTask': {
+                'name': "My Task",
+                'status': "PENDING"
+            }
+        }
+        response = api.execute(query)
+        assert response.data == expected
+
+    def test_deeply_nested_pydantic_models(self):
+        class User(BaseModel):
+            id: int
+            username: str
+
+        class Comment(BaseModel):
+            text: str
+            author: User
+
+        class Post(BaseModel):
+            title: str
+            content: str
+            comments: List[Comment]
+
+        class BlogAPI:
+            @field
+            def get_latest_post(self) -> Post:
+                return Post(
+                    title="Deeply Nested Structures",
+                    content="A post about testing them.",
+                    comments=[
+                        Comment(text="Great post!", author=User(id=1, username="commenter1")),
+                        Comment(text="Very informative.", author=User(id=2, username="commenter2")),
+                    ]
+                )
+
+        api = GraphQLAPI(root_type=BlogAPI)
+        query = '''
+            query {
+                getLatestPost {
+                    title
+                    content
+                    comments {
+                        text
+                        author {
+                            id
+                            username
+                        }
+                    }
+                }
+            }
+        '''
+        expected = {
+            'getLatestPost': {
+                'title': "Deeply Nested Structures",
+                'content': "A post about testing them.",
+                'comments': [
+                    {'text': "Great post!", 'author': {'id': 1, 'username': "commenter1"}},
+                    {'text': "Very informative.", 'author': {'id': 2, 'username': "commenter2"}},
+                ]
+            }
+        }
+        response = api.execute(query)
+        assert response.data == expected
+
+    def test_list_with_optional_nested_model(self):
+        class Chapter(BaseModel):
+            title: str
+            page_count: int
+
+        class Book(BaseModel):
+            title: str
+            chapter: Optional[Chapter] = None
+
+        class ShelfAPI:
+            @field
+            def get_books(self) -> List[Book]:
+                return [
+                    Book(title="A Book with a Chapter", chapter=Chapter(title="The Beginning", page_count=20)),
+                    Book(title="A Book without a Chapter")
+                ]
+
+        api = GraphQLAPI(root_type=ShelfAPI)
+        query = '''
+            query {
+                getBooks {
+                    title
+                    chapter {
+                        title
+                        pageCount
+                    }
+                }
+            }
+        '''
+        expected = {
+            'getBooks': [
+                {
+                    'title': "A Book with a Chapter",
+                    'chapter': {'title': "The Beginning", 'pageCount': 20}
+                },
+                {
+                    'title': "A Book without a Chapter",
+                    'chapter': None
+                }
+            ]
+        }
+        response = api.execute(query)
+        assert response.data == expected
+
+    def test_pydantic_model_with_default_value(self):
+        class Config(BaseModel):
+            name: str
+            value: str = "default_value"
+
+        class ConfigAPI:
+            @field
+            def get_config(self) -> Config:
+                return Config(name="test_config")
+
+        api = GraphQLAPI(root_type=ConfigAPI)
+        query = '''
+            query {
+                getConfig {
+                    name
+                    value
+                }
+            }
+        '''
+        expected = {
+            'getConfig': {
+                'name': "test_config",
+                'value': "default_value"
+            }
+        }
+        response = api.execute(query)
+        assert response.data == expected
+
+    def test_pydantic_model_with_field_alias(self):
+        class User(BaseModel):
+            user_name: str = Field(..., alias='userName')
+            user_id: int = Field(..., alias='userId')
+
+        class UserAliasAPI:
+            @field
+            def get_user_with_alias(self) -> User:
+                return User.model_validate(
+                    {'userName': "aliased_user", 'userId': 123}
+                )
+
+        api = GraphQLAPI(root_type=UserAliasAPI)
+        query = '''
+            query {
+                getUserWithAlias {
+                    userName
+                    userId
+                }
+            }
+        '''
+        expected = {
+            'getUserWithAlias': {
+                'userName': "aliased_user",
+                'userId': 123
+            }
+        }
+        response = api.execute(query)
+        assert response.data == expected
+
+    def test_pydantic_with_dataclass_field(self):
+        @dataclass
+        class DataClassDetails:
+            detail: str
+
+        class ModelWithDataClass(BaseModel):
+            name: str
+            details: DataClassDetails
+
+        class MixedAPI:
+            @field
+            def get_mixed_model(self) -> ModelWithDataClass:
+                return ModelWithDataClass(
+                    name="Mixed",
+                    details=DataClassDetails(detail="This is from a dataclass")
+                )
+
+        api = GraphQLAPI(root_type=MixedAPI)
+        query = '''
+            query {
+                getMixedModel {
+                    name
+                    details {
+                        detail
+                    }
+                }
+            }
+        '''
+        expected = {
+            'getMixedModel': {
+                'name': "Mixed",
+                'details': {
+                    'detail': "This is from a dataclass"
+                }
+            }
+        }
+        response = api.execute(query)
+        assert response.data == expected
+
+    def test_recursive_pydantic_model(self):
+        class Employee(BaseModel):
+            name: str
+            manager: Optional['Employee'] = None
+
+        class OrgAPI:
+            @field
+            def get_employee_hierarchy(self) -> Employee:
+                manager = Employee(name="Big Boss")
+                return Employee(name="Direct Report", manager=manager)
+
+        api = GraphQLAPI(root_type=OrgAPI)
+        query = '''
+            query {
+                getEmployeeHierarchy {
+                    name
+                    manager {
+                        name
+                        manager {
+                            name
+                        }
+                    }
+                }
+            }
+        '''
+        expected = {
+            'getEmployeeHierarchy': {
+                'name': "Direct Report",
+                'manager': {
+                    'name': "Big Boss",
+                    'manager': None
+                }
+            }
+        }
+        response = api.execute(query)
+        assert response.data == expected
+
+    def test_pydantic_model_with_union_field(self):
+        class Cat(BaseModel):
+            name: str
+            meow_volume: int
+
+        class Dog(BaseModel):
+            name: str
+            bark_loudness: int
+
+        class PetOwner(BaseModel):
+            name: str
+            pet: Union[Cat, Dog]
+
+        class PetAPI:
+            @field
+            def get_cat_owner(self) -> PetOwner:
+                return PetOwner(name="Cat Lover", pet=Cat(name="Whiskers", meow_volume=10))
+
+        api = GraphQLAPI(root_type=PetAPI)
+        query = '''
+            query {
+                getCatOwner {
+                    name
+                    pet {
+                        ... on Cat {
+                            name
+                            meowVolume
+                        }
+                        ... on Dog {
+                            name
+                            barkLoudness
+                        }
+                    }
+                }
+            }
+        '''
+        expected = {
+            'getCatOwner': {
+                'name': "Cat Lover",
+                'pet': {
+                    'name': "Whiskers",
+                    'meowVolume': 10
+                }
+            }
+        }
+        response = api.execute(query)
+        assert response.data == expected
+        
+    def test_pydantic_forward_ref(self):
+        class ModelA(BaseModel):
+            b: 'ModelB'
+
+        class ModelB(BaseModel):
+            a_val: int
+
+        ModelA.model_rebuild()
+
+        class ForwardRefAPI:
+            @field
+            def get_a(self) -> ModelA:
+                return ModelA(b=ModelB(a_val=123))
+
+        api = GraphQLAPI(root_type=ForwardRefAPI)
+        query = '''
+            query {
+                getA {
+                    b {
+                        aVal
+                    }
+                }
+            }
+        '''
+        expected = {
+            'getA': {
+                'b': {
+                    'aVal': 123
+                }
+            }
+        }
+        response = api.execute(query)
+        assert response.data == expected

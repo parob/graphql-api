@@ -6,8 +6,6 @@ import re
 import textwrap
 from json.decoder import JSONDecodeError
 
-import aiohttp
-from aiohttp import ClientTimeout
 from graphql import (GraphQLError, GraphQLList, GraphQLNonNull,
                      GraphQLObjectType, GraphQLSchema, build_client_schema,
                      get_introspection_query)
@@ -160,6 +158,9 @@ async def http_query(
     http_timeout=10,
     verify=True,
 ):
+    import aiohttp
+    from aiohttp import ClientTimeout
+
     params = {"query": query}
 
     if http_headers is None:
