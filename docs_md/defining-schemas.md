@@ -49,6 +49,16 @@ type Query {
 }
 ```
 
+### Naming Conventions
+
+You may have noticed that the Python method `get_user` (snake_case) was automatically converted to the GraphQL field `getUser` (camelCase). `graphql-api` handles this conversion for you to maintain standard naming conventions in both languages. If you need to override this behavior, you can provide a custom name for a field:
+
+```python
+@api.field(name="explicitlyNamedField")
+def a_python_method(self) -> str:
+    return "some value"
+```
+
 ## Fields and Resolvers
 
 Each method decorated with `@api.field` within a GraphQL type class becomes a field in the schema. The method itself acts as the resolver for that field.
@@ -118,33 +128,51 @@ type Query {
 }
 ```
 
-## Mutations
+## Mutations and Input Types
 
-To define mutations, you can either create a separate class for your mutations or include them in your root type. To mark a field as a mutation, use the `mutable=True` parameter in the `@api.field` decorator.
+While simple mutations can accept scalar types as arguments, most complex mutations use **Input Types**. An input type is a special kind of object type that can be passed as an argument to a field. You can define them using Pydantic models or dataclasses, which `graphql-api` will automatically convert to `GraphQLInputObjectType`.
 
-It's common practice to organize mutations in a separate class and pass it to the `GraphQLAPI` constructor.
+### Defining an Input Type
+
+Let's define a Pydantic model to represent the input for creating a post.
 
 ```python
-from graphql_api.api import GraphQLAPI
+from pydantic import BaseModel
 
-# This example is illustrative. The GraphQLAPI constructor would need to be
-# updated to accept a `mutation_type`.
-# api = GraphQLAPI(root_type=Query, mutation_type=Mutation)
-
-class Mutation:
-    @api.field(mutable=True)
-    def create_post(self, title: str, content: str) -> Post:
-        # Logic to create and save a new post...
-        return Post(title=title, content=content)
+class CreatePostInput(BaseModel):
+    title: str
+    content: str
+    author_email: str
 ```
 
-This would create a `Mutation` type in your schema:
+### Using an Input Type in a Mutation
+
+Now, you can use `CreatePostInput` as an argument in your mutation resolver. The resolver will receive an instance of the `CreatePostInput` model.
+
+```python
+# In your mutations class
+@api.field(mutable=True)
+def create_post(self, input: CreatePostInput) -> Post:
+    print(f"Creating post '{input.title}' by {input.author_email}")
+    # Logic to create and save a new post...
+    return Post(id=456, title=input.title, content=input.content)
+```
+
+This generates a clean and organized mutation in your schema:
 
 ```graphql
+input CreatePostInput {
+  title: String!
+  content: String!
+  authorEmail: String!
+}
+
 type Mutation {
-  createPost(title: String!, content: String!): Post!
+  createPost(input: CreatePostInput!): Post!
 }
 ```
+
+This approach is highly recommended as it makes your mutations cleaner and more extensible.
 
 ## Enums and Interfaces
 
@@ -183,4 +211,47 @@ class Human(Character):
         return "Earth"
 ```
 
-This feature allows you to build flexible and maintainable schemas that adhere to GraphQL best practices. 
+This feature allows you to build flexible and maintainable schemas that adhere to GraphQL best practices.
+
+### Union Types
+
+`graphql-api` can create `GraphQLUnionType`s from Python's `typing.Union`. This is useful when a field can return one of several different object types.
+
+```python
+from typing import Union
+
+# Assume Cat and Dog are Pydantic models or @api.type classes
+class Cat(BaseModel):
+    name: str
+    meow_volume: int
+
+class Dog(BaseModel):
+    name: str
+    bark_loudness: int
+
+@api.type(is_root_type=True)
+class Query:
+    @api.field
+    def search_pet(self, name: str) -> Union[Cat, Dog]:
+        if name == "Whiskers":
+            return Cat(name="Whiskers", meow_volume=10)
+        if name == "Fido":
+            return Dog(name="Fido", bark_loudness=100)
+```
+
+To query a union type, the client must use fragment spreads to specify which fields to retrieve for each possible type.
+
+```graphql
+query {
+    searchPet(name: "Whiskers") {
+        ... on Cat {
+            name
+            meowVolume
+        }
+        ... on Dog {
+            name
+            barkLoudness
+        }
+    }
+}
+``` 

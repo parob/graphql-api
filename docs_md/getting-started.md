@@ -95,6 +95,38 @@ $ python main.py
 
 Congratulations! You've successfully created and queried your first GraphQL API with `graphql-api`.
 
+## Exploring Your Schema: Introspection
+
+One of the most powerful features of GraphQL is introspection, which allows you to query the schema itself to understand what queries, types, and fields are available. This is how tools like GraphiQL and Postman can provide autocompletion and documentation on-the-fly.
+
+You can perform an introspection query yourself to see the structure of the schema we just created. For example, to see all the types in your schema:
+
+```python
+# main.py
+# ... (previous code)
+
+introspection_query = """
+    query IntrospectionQuery {
+        __schema {
+            types {
+                name
+                kind
+            }
+        }
+    }
+"""
+
+if __name__ == "__main__":
+    # ... (previous code)
+    introspection_result = api.execute(introspection_query)
+    # This will print a list of all types in your schema,
+    # including standard ones like String, and your custom Query type.
+    print(introspection_result.data)
+
+```
+
+Most of the time, you won't write these queries by hand. You'll use a GraphQL client or IDE that has a built-in schema explorer. Simply point the tool to your running API endpoint, and it will use introspection to provide you with a full, interactive guide to your API.
+
 ## Next Steps
 
 Now that you've covered the basics, you're ready to explore more advanced features:

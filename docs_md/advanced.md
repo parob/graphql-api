@@ -1,6 +1,6 @@
 # Advanced Topics
 
-This section covers some of the more advanced features of `graphql-api`, including middleware, directives, and Relay support.
+This section covers some of the more advanced features of `graphql-api`, including middleware, error handling, resolver context, directives, and Relay support.
 
 ## Middleware
 
@@ -34,6 +34,93 @@ api = GraphQLAPI(middleware=[timing_middleware])
 ```
 
 When a query is executed, the `timing_middleware` will be called for each resolved field, providing valuable performance insights.
+
+## Error Handling
+
+Proper error handling is crucial for a robust API. `graphql-api` allows you to customize how errors are handled and reported to the client.
+
+### Custom Exceptions
+
+You can define custom exception classes that will be automatically formatted into GraphQL errors. This is useful for representing specific error scenarios, like "not found" or "permission denied."
+
+```python
+from graphql_api.error import GraphQLError
+
+class UserNotFoundError(GraphQLError):
+    """A specific error for when a user is not found."""
+    def __init__(self, user_id: int):
+        super().__init__(
+            f"User with ID {user_id} not found.",
+            extensions={"code": "USER_NOT_FOUND"}
+        )
+
+# In a resolver, you can raise this exception
+@api.field
+def get_user_by_id(self, user_id: int) -> User:
+    user = find_user_in_db(user_id)
+    if not user:
+        raise UserNotFoundError(user_id)
+    return user
+```
+
+When this resolver is executed with an invalid ID, the client will receive a structured error in the response:
+
+```json
+{
+  "errors": [
+    {
+      "message": "User with ID 123 not found.",
+      "locations": [...],
+      "path": ["getUserById"],
+      "extensions": {
+        "code": "USER_NOT_FOUND"
+      }
+    }
+  ],
+  "data": {
+    "getUserById": null
+  }
+}
+```
+
+This allows clients to handle specific error cases programmatically.
+
+## Resolver Context
+
+Sometimes, your resolvers need access to request-specific information, such as the current user's authentication details, HTTP headers, or a database connection. `graphql-api` provides a `context` object for this purpose.
+
+The context is a dictionary that is passed to every resolver during the execution of a query. You can populate it when you execute the query.
+
+### Populating the Context
+
+```python
+# When executing a query, you can pass a `context` dictionary.
+result = api.execute(
+    query,
+    context={
+        "current_user": get_user_from_request(request),
+        "db_session": create_db_session()
+    }
+)
+```
+
+### Accessing the Context in Resolvers
+
+The context is available via the `info` argument (which is of type `GraphQLResolveInfo`) that is passed to every resolver.
+
+```python
+@api.field
+def get_my_profile(self, info) -> User:
+    # Access the context from the `info` object.
+    current_user = info.context.get("current_user")
+
+    if not current_user:
+        raise PermissionError("You must be logged in to view your profile.")
+
+    return current_user
+```
+
+Using the context is the recommended way to provide resolvers with request-scoped data, keeping them decoupled from the transport layer (e.g., HTTP).
 
 ## Directives
 

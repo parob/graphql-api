@@ -76,6 +76,58 @@ type UserProfile {
 }
 ```
 
+#### Field Aliases
+
+Pydantic's field aliases are fully supported. This is useful when your data source uses a different naming convention (e.g., snake_case in your database) than your GraphQL schema (camelCase).
+
+```python
+from pydantic import BaseModel, Field
+
+class Task(BaseModel):
+    id: int
+    # The data source uses `task_name`, but the API will expose `taskName`.
+    task_name: str = Field(..., alias="taskName")
+    is_completed: bool = Field(False, alias="isCompleted")
+
+    class Config:
+        # This allows you to create a Task instance using the alias names.
+        populate_by_name = True
+```
+
+When you return a `Task` object, `graphql-api` will use the alias in the schema, but you can populate it using the Python-friendly field name.
+
+### Recursive Models
+
+Pydantic models can be recursive, and `graphql-api` will handle the conversion to a recursive GraphQL type correctly. This is useful for modeling hierarchical data like organizational charts or comment threads.
+
+```python
+from typing import Optional
+from pydantic import BaseModel
+
+class Employee(BaseModel):
+    name: str
+    manager: Optional['Employee'] = None
+
+# For older versions of Pydantic, you may need to call this to update the forward reference.
+# Employee.model_rebuild()
+
+@api.type(is_root_type=True)
+class Query:
+    @api.field
+    def get_employee_hierarchy(self) -> Employee:
+        manager = Employee(name="Big Boss")
+        return Employee(name="Direct Report", manager=manager)
+```
+
+This generates a self-referencing `Employee` type in GraphQL:
+
+```graphql
+type Employee {
+  name: String!
+  manager: Employee
+}
+```
+
 ## Dataclass Integration
 
 Similar to Pydantic, standard Python dataclasses can also be used to define your GraphQL types.
