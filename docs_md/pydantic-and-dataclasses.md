@@ -1,0 +1,124 @@
+# Using Pydantic and Dataclasses
+
+`graphql-api` provides first-class support for Pydantic and dataclasses, allowing you to use them seamlessly as GraphQL types. This is a powerful feature that helps you build robust, self-documenting, and validated APIs with minimal boilerplate.
+
+## Pydantic Integration
+
+Pydantic models are automatically converted into GraphQL object types. This is ideal for defining the structure of your data and ensuring type safety.
+
+### Defining Pydantic Types
+
+To use a Pydantic model in your schema, simply define it as you normally would and use it as a type hint in your resolvers.
+
+```python
+from pydantic import BaseModel
+from typing import List
+from graphql_api.api import GraphQLAPI
+
+api = GraphQLAPI()
+
+class Author(BaseModel):
+    name: str
+
+class Book(BaseModel):
+    title: str
+    author: Author
+
+@api.type(is_root_type=True)
+class Query:
+    @api.field
+    def get_book(self) -> Book:
+        return Book(
+            title="The Hitchhiker's Guide to the Galaxy",
+            author=Author(name="Douglas Adams")
+        )
+```
+
+This will generate the following GraphQL schema:
+
+```graphql
+type Author {
+  name: String!
+}
+
+type Book {
+  title: String!
+  author: Author!
+}
+
+type Query {
+  getBook: Book!
+}
+```
+
+### Pydantic Fields and Validation
+
+All Pydantic features, such as field descriptions, default values, and aliases, are respected and reflected in the generated schema.
+
+```python
+from pydantic import BaseModel, Field
+from typing import Optional
+
+class UserProfile(BaseModel):
+    username: str
+    age: Optional[int] = Field(None, description="The user's age")
+    is_active: bool = True
+```
+
+This will be converted to:
+
+```graphql
+type UserProfile {
+  username: String!
+  "The user's age"
+  age: Int
+  isActive: Boolean!
+}
+```
+
+## Dataclass Integration
+
+Similar to Pydantic, standard Python dataclasses can also be used to define your GraphQL types.
+
+### Defining Dataclass Types
+
+Decorate a class with `@dataclass` and use it as a type hint in your resolvers.
+
+```python
+from dataclasses import dataclass, field
+from typing import List
+from graphql_api.api import GraphQLAPI
+
+api = GraphQLAPI()
+
+@dataclass
+class Product:
+    id: int
+    name: str
+    in_stock: bool = True
+
+@api.type(is_root_type=True)
+class Query:
+    @api.field
+    def get_featured_products(self) -> List[Product]:
+        return [
+            Product(id=1, name="Laptop"),
+            Product(id=2, name="Mouse", in_stock=False),
+        ]
+```
+
+This generates the following schema:
+
+```graphql
+type Product {
+  id: Int!
+  name: String!
+  inStock: Boolean!
+}
+
+type Query {
+  getFeaturedProducts: [Product!]!
+}
+```
+
+By leveraging Pydantic and dataclasses, you can create clean, maintainable, and robust GraphQL APIs, letting `graphql-api` handle the conversion to the GraphQL schema. 
