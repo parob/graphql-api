@@ -31,6 +31,7 @@ setup(
         "typing-inspect~=0.6",
         "aiohttp~=3.8",
         "docstring-parser~=0.15",
+        "pydantic~=2.0",
     ],
     extras_require={
         "dev": ["pytest~=5.4", "pytest-cov~=2.10", "coverage~=5.2", "faker~=4.1"]
