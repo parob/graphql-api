@@ -1,5 +1,8 @@
-# noinspection PyPep8Naming,DuplicatedCode
-from graphql_api import GraphQLAPI, field, type
+import pytest
+from unittest.mock import MagicMock
+
+from graphql_api import (GraphQLAPI, GraphQLRootTypeDelegate, field,
+                         type)
 
 
 class TestGraphQLSchema:
@@ -104,3 +107,66 @@ class TestGraphQLSchema:
         schema = api_1.build_schema()
 
         assert schema
+
+    def test_schema_with_no_root_type(self):
+        """
+        Tests that a schema can be built with no root type, resulting
+        in a placeholder query type.
+        """
+        api = GraphQLAPI()
+        schema, _ = api.build_schema()
+
+        assert schema
+        assert schema.query_type.name == "PlaceholderQuery"
+        assert "placeholder" in schema.query_type.fields
+        assert schema.mutation_type is None
+
+    def test_root_type_delegate_is_called(self):
+        """
+        Tests that for a root_type that inherits from GraphQLRootTypeDelegate,
+        the validate_graphql_schema method is called when building the schema.
+        """
+
+        class RootWithDelegate(GraphQLRootTypeDelegate):
+            @field
+            def a_query(self) -> str:
+                return "test"
+
+        # Mock the class method
+        RootWithDelegate.validate_graphql_schema = MagicMock(
+            side_effect=lambda schema: schema
+        )
+
+        api = GraphQLAPI(root_type=RootWithDelegate)
+        schema, _ = api.build_schema()
+
+        assert schema is not None
+        RootWithDelegate.validate_graphql_schema.assert_called_once()
+
+        # Check that it was called with the schema
+        schema_arg = RootWithDelegate.validate_graphql_schema.call_args[0][0]
+        assert schema_arg is schema
+
+    def test_interface_cannot_be_root_type(self):
+        """
+        Tests that a TypeError is raised when trying to set an interface
+        as the root type of a schema.
+        """
+        with pytest.raises(TypeError, match="Cannot set .* of type 'interface' as a root."):
+            api = GraphQLAPI()
+
+            @api.type(is_root_type=True, interface=True)
+            class MyInterface:
+                pass
+
+    def test_abstract_cannot_be_root_type(self):
+        """
+        Tests that a TypeError is raised when trying to set an abstract type
+        as the root type of a schema.
+        """
+        with pytest.raises(TypeError, match="Cannot set .* of type 'abstract' as a root."):
+            api = GraphQLAPI()
+
+            @api.type(is_root_type=True, abstract=True)
+            class MyAbstract:
+                pass

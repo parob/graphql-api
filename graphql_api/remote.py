@@ -6,7 +6,7 @@ import sys
 import uuid
 from dataclasses import fields as dataclasses_fields
 from dataclasses import is_dataclass
-from typing import Dict, List, Optional, Tuple, Type
+from typing import Dict, List, Optional, Tuple, Type, Any
 
 from graphql import (GraphQLBoolean, GraphQLEnumType, GraphQLFloat, GraphQLID,
                      GraphQLInputObjectType, GraphQLInt, GraphQLInterfaceType,
@@ -929,6 +929,7 @@ class GraphQLRemoteField:
         mutable: bool,
         graphql_field: GraphQLField,
         parent: GraphQLRemoteObject,
+        is_property: bool = False,
     ):
         self.name = name
         self.mutable = mutable
@@ -937,6 +938,7 @@ class GraphQLRemoteField:
         self.nullable = is_nullable(self.graphql_field.type)
         self.scalar = is_scalar(self.graphql_field.type)
         self.list = is_list(self.graphql_field.type)
+        self.is_property = is_property
 
         # For recursive field detection
         self.recursive = False
@@ -964,13 +966,23 @@ class GraphQLRemoteField:
         for i, arg_val in enumerate(args):
             kwargs[arg_names[i]] = arg_val
 
+    @property
+    def is_async(self) -> bool:
+        """Return True if the field is asynchronous."""
+        if not self.graphql_field or not self.graphql_field.resolve:
+            return False
+        return inspect.iscoroutinefunction(self.graphql_field.resolve)
+
     def __call__(self, *args, **kwargs):
-        """
-        Invoke the remote field synchronously. If positional args are given,
-        they are remapped to named GraphQL arguments.
-        """
+        """Invoke the field, either locally or remotely."""
+        is_async = self.is_async or kwargs.get("aio")
+        kwargs.pop("aio", None)
+
         if args:
             self._convert_args_to_kwargs(args, kwargs)
+
+        if is_async:
+            return self.parent.get_value_async(self, kwargs)
         return self.parent.get_value(self, kwargs)
 
     async def call_async(self, *args, **kwargs):
@@ -981,6 +993,9 @@ class GraphQLRemoteField:
         if args:
             self._convert_args_to_kwargs(args, kwargs)
         return await self.parent.get_value_async(self, kwargs)
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} {self.name}>"
 
     def __hash__(self):
         if self.parent.python_type:

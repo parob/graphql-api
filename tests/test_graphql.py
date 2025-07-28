@@ -28,19 +28,28 @@ from graphql_api.utils import executor_to_ast
 Period = Literal["1d", "5d", "1mo", "3mo", "6mo", "1y"]
 
 
-def available(url, method="GET"):
+def available(url, method="POST", is_graphql=False):
     try:
-        response = request(
-            method,
-            url,
-            timeout=5,
-            verify=False,
-            headers={
-                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,"
-                "image/avif,image/webp,image/apng,*/*;q=0.8,"
-                "application/signed-exchange;v=b3;q=0.7"
-            },
-        )
+        if is_graphql:
+            response = request(
+                method,
+                url,
+                timeout=5,
+                verify=False,
+                json={"query": "{ __schema { types { name } } }"},
+            )
+        else:
+            response = request(
+                method,
+                url,
+                timeout=5,
+                verify=False,
+                headers={
+                    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,"
+                    "image/avif,image/webp,image/apng,*/*;q=0.8,"
+                    "application/signed-exchange;v=b3;q=0.7"
+                },
+            )
     except (ConnectionError, ConnectTimeout, ReadTimeout):
         return False
 

@@ -44,8 +44,25 @@ class GraphQLSchemaReducer:
             root_type=query, filters=filters, meta=mapper.meta
         )
 
-        for type_, key in invalid_fields:
-            del type_.fields[key]
+        # Remove fields that reference invalid types
+        additional_invalid_fields = set()
+        for type_ in list(mapper.registry.values()):
+            if hasattr(type_, 'fields'):
+                for field_name, field in list(type_.fields.items()):
+                    field_type = field.type
+                    # Unwrap NonNull and List wrappers
+                    while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
+                        field_type = field_type.of_type
+                    
+                    if field_type in invalid_types:
+                        additional_invalid_fields.add((type_, field_name))
+
+        # Combine all invalid fields
+        all_invalid_fields = invalid_fields.union(additional_invalid_fields)
+
+        for type_, key in all_invalid_fields:
+            if hasattr(type_, 'fields') and key in type_.fields:
+                del type_.fields[key]
 
         for key, value in dict(mapper.registry).items():
             if value in invalid_types:
@@ -54,8 +71,38 @@ class GraphQLSchemaReducer:
         return query
 
     @staticmethod
-    def reduce_mutation(mapper, root):
+    def reduce_mutation(mapper, root, filters=None):
         mutation: GraphQLObjectType = mapper.map(root)
+
+        # Apply filtering to mutation schema first
+        if filters:
+            invalid_types, invalid_fields = GraphQLSchemaReducer.invalid(
+                root_type=mutation, filters=filters, meta=mapper.meta
+            )
+
+            # Remove fields that reference invalid types
+            additional_invalid_fields = set()
+            for type_ in list(mapper.registry.values()):
+                if hasattr(type_, 'fields'):
+                    for field_name, field in list(type_.fields.items()):
+                        field_type = field.type
+                        # Unwrap NonNull and List wrappers
+                        while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
+                            field_type = field_type.of_type
+                        
+                        if field_type in invalid_types:
+                            additional_invalid_fields.add((type_, field_name))
+
+            # Combine all invalid fields
+            all_invalid_fields = invalid_fields.union(additional_invalid_fields)
+
+            for type_, key in all_invalid_fields:
+                if hasattr(type_, 'fields') and key in type_.fields:
+                    del type_.fields[key]
+
+            for key, value in dict(mapper.registry).items():
+                if value in invalid_types:
+                    del mapper.registry[key]
 
         # Trigger dynamic fields to be called
         for _ in iterate_fields(mutation):
@@ -198,5 +245,16 @@ class GraphQLSchemaReducer:
                     except (AssertionError, GraphQLTypeMapError):
                         invalid_types.add(type_)
                         invalid_fields.add((root_type, key))
+
+        # After processing all fields, check if this type has no remaining valid fields
+        # (excluding interface fields which are inherited)
+        remaining_fields = []
+        for key, field in fields.items():
+            if key not in interface_fields and (root_type, key) not in invalid_fields:
+                remaining_fields.append(key)
+        
+        # If no fields remain after filtering, mark this type as invalid
+        if not remaining_fields and root_type not in invalid_types:
+            invalid_types.add(root_type)
 
         return invalid_types, invalid_fields

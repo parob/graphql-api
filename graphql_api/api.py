@@ -317,7 +317,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
             # Filter the Mutation
             filtered_mutation = GraphQLSchemaReducer.reduce_mutation(
-                mutation_mapper, _mutation
+                mutation_mapper, _mutation, filters=self.filters
             )
 
             if mutation_mapper.validate(filtered_mutation, evaluate=True):

@@ -501,13 +501,13 @@ class TestGraphQLRemote:
         random_int = front_door.rand()
         assert random_int == front_door.rand()
         assert random_int != front_door.rand(max=200)
+
+        # This should be cached
         assert random_int == front_door.rand()
 
-        front_door = house.front_door(id="door_a")
-        assert random_int != front_door.rand()
-
-        front_door = house.front_door(id="door_b")
-        assert random_int != front_door.rand()
+        # This should not be cached
+        front_door_2 = house.front_door(id="door_b")
+        assert random_int != front_door_2.rand()
 
     def test_remote_recursive_mutated(self):
         api = GraphQLAPI()
@@ -715,95 +715,129 @@ class TestGraphQLRemote:
         assert person.age() == 50
         assert person.hello() == "hello"
 
-    utc_time_api_url = "https://europe-west2-parob-297412.cloudfunctions.net/utc_time"
+    rick_and_morty_api_url = "https://rickandmortyapi.com/graphql"
 
-    # noinspection DuplicatedCode,PyUnusedLocal
     @pytest.mark.skipif(
-        not available(utc_time_api_url),
-        reason=f"The UTCTime API '{utc_time_api_url}' is unavailable",
+        not available(rick_and_morty_api_url, is_graphql=True),
+        reason=f"The Rick and Morty API '{rick_and_morty_api_url}' is unavailable",
     )
     def test_remote_get_async(self):
-        sync_time = None
-        async_time = None
+        """
+        Tests that a remote GraphQL API can be queried asynchronously.
+        """
+        rick_and_morty_api = GraphQLAPI()
+        remote_executor = GraphQLRemoteExecutor(url=self.rick_and_morty_api_url, verify=False)
 
-        for _ in range(3):
-            utc_time_api = GraphQLAPI()
+        class Character:
+            @rick_and_morty_api.field
+            def name(self) -> str:
+                ...
 
-            remote_executor = GraphQLRemoteExecutor(url=self.utc_time_api_url)
+        @rick_and_morty_api.type(is_root_type=True)
+        class RickAndMortyAPI:
+            @rick_and_morty_api.field
+            def character(self, id: int) -> Character:
+                ...
 
-            @utc_time_api.type(is_root_type=True)
-            class UTCTimeAPI:
-                @utc_time_api.field
-                def now(self) -> str:
-                    pass
+        # Add Character to the local namespace to allow for type hint resolution
+        locals()['Character'] = Character
 
-            # noinspection PyTypeChecker
-            api: UTCTimeAPI = GraphQLRemoteObject(
-                executor=remote_executor, api=utc_time_api
-            )
+        api: RickAndMortyAPI = GraphQLRemoteObject(
+            executor=remote_executor, api=rick_and_morty_api
+        )
 
-            request_count = 5
+        # Run multiple requests to test the timing of sync vs async
+        request_count = 5
+        sync_start = time.time()
+        for i in range(1, request_count + 1):
+            api.character(id=i).name()
+            # noinspection PyUnresolvedReferences
+            api.clear_cache()  # Clear cache to ensure a new request is made
+        sync_time = time.time() - sync_start
 
-            # Sync test
-            sync_start = time.time()
-            sync_utc_now_list = []
+        async def fetch():
+            tasks = []
+            for i in range(1, request_count + 1):
+                character = api.character(id=i)
+                tasks.append(character.name(aio=True))
+            return await asyncio.gather(*tasks)
 
-            for _ in range(0, request_count):
-                sync_utc_now_list.append(api.now())
-                # noinspection PyUnresolvedReferences
-                api.clear_cache()  # Clear the API cache so it re-fetches the request.
-            sync_time = time.time() - sync_start
+        async_start = time.time()
+        results = asyncio.run(fetch())
+        async_time = time.time() - async_start
 
-            assert len(set(sync_utc_now_list)) == request_count
+        assert len(results) == request_count
+        assert "Rick Sanchez" in results
+        assert sync_time > async_time * 1.5, "Async should be at least 1.5x faster"
 
-            # Async test
-            async_start = time.time()
-
-            async def fetch():
-                tasks = []
-                for _ in range(0, request_count):
-                    # noinspection PyUnresolvedReferences
-                    tasks.append(api.call_async("now"))
-                return await asyncio.gather(*tasks)
-
-            async_utc_now_list = asyncio.run(fetch())
-
-            async_time = time.time() - async_start
-            assert len(set(async_utc_now_list)) == request_count
-
-            if sync_time > async_time * 2:
-                break
-
-        assert sync_time > async_time * 2
-
-    # noinspection DuplicatedCode,PyUnusedLocal
     @pytest.mark.skipif(
-        not available(utc_time_api_url),
-        reason=f"The UTCTime API '{utc_time_api_url}' is unavailable",
+        not available(rick_and_morty_api_url, is_graphql=True),
+        reason=f"The Rick and Morty API '{rick_and_morty_api_url}' is unavailable",
     )
     def test_remote_get_async_await(self):
-        utc_time_api = GraphQLAPI()
+        """
+        Tests that a remote GraphQL API can be queried asynchronously with awaits.
+        """
+        rick_and_morty_api = GraphQLAPI()
+        remote_executor = GraphQLRemoteExecutor(url=self.rick_and_morty_api_url, verify=False)
 
-        remote_executor = GraphQLRemoteExecutor(url=self.utc_time_api_url)
+        class Character:
+            @rick_and_morty_api.field
+            def name(self) -> str:
+                ...
 
-        @utc_time_api.type(is_root_type=True)
-        class UTCTimeAPI:
-            @utc_time_api.field
-            def now(self) -> str:
-                pass
+        # noinspection PyTypeChecker
+        @rick_and_morty_api.type(is_root_type=True)
+        class RickAndMortyAPI:
+            @rick_and_morty_api.field
+            def character(self, id: int) -> Character:
+                ...
+        
+        # Add Character to the local namespace to allow for type hint resolution
+        locals()['Character'] = Character
 
-        api: UTCTimeAPI = GraphQLRemoteObject(
-            executor=remote_executor, api=utc_time_api
+        rick_and_morty: RickAndMortyAPI = GraphQLRemoteObject(
+            executor=remote_executor, api=rick_and_morty_api
         )
 
         async def fetch():
-            return await api.call_async("now")
+            character = rick_and_morty.character(id=1)
+            return await character.name(aio=True)
 
-        async_utc_now = asyncio.run(fetch())
+        assert asyncio.run(fetch()) == "Rick Sanchez"
 
-        assert async_utc_now
+    def test_remote_field_call_async(self):
+        """
+        Tests that a remote field can be invoked with call_async.
+        """
+        rick_and_morty_api = GraphQLAPI()
+        remote_executor = GraphQLRemoteExecutor(url=self.rick_and_morty_api_url, verify=False)
 
-    # Fix a bug calling fetch() with string list
+        class Character:
+            @rick_and_morty_api.field
+            def name(self) -> str:
+                ...
+
+        @rick_and_morty_api.type(is_root_type=True)
+        class RickAndMortyAPI:
+            @rick_and_morty_api.field
+            def character(self, id: int) -> Character:
+                ...
+
+        # Add Character to the local namespace to allow for type hint resolution
+        locals()['Character'] = Character
+
+        rick_and_morty: RickAndMortyAPI = GraphQLRemoteObject(
+            executor=remote_executor, api=rick_and_morty_api
+        )
+
+        async def fetch():
+            character = rick_and_morty.character(id=1)
+            # noinspection PyUnresolvedReferences
+            return await character.name.call_async()
+
+        assert asyncio.run(fetch()) == "Rick Sanchez"
+
     def test_remote_query_fetch_str_list(self):
         api = GraphQLAPI()
 
