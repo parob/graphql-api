@@ -53,7 +53,7 @@ class GraphQLSchemaReducer:
                     # Unwrap NonNull and List wrappers
                     while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
                         field_type = field_type.of_type
-                    
+
                     if field_type in invalid_types:
                         additional_invalid_fields.add((type_, field_name))
 
@@ -89,7 +89,7 @@ class GraphQLSchemaReducer:
                         # Unwrap NonNull and List wrappers
                         while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
                             field_type = field_type.of_type
-                        
+
                         if field_type in invalid_types:
                             additional_invalid_fields.add((type_, field_name))
 
@@ -252,7 +252,7 @@ class GraphQLSchemaReducer:
         for key, field in fields.items():
             if key not in interface_fields and (root_type, key) not in invalid_fields:
                 remaining_fields.append(key)
-        
+
         # If no fields remain after filtering, mark this type as invalid
         if not remaining_fields and root_type not in invalid_types:
             invalid_types.add(root_type)

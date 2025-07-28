@@ -6,7 +6,7 @@ import sys
 import uuid
 from dataclasses import fields as dataclasses_fields
 from dataclasses import is_dataclass
-from typing import Dict, List, Optional, Tuple, Type, Any
+from typing import Dict, List, Optional, Tuple, Type
 
 from graphql import (GraphQLBoolean, GraphQLEnumType, GraphQLFloat, GraphQLID,
                      GraphQLInputObjectType, GraphQLInt, GraphQLInterfaceType,
