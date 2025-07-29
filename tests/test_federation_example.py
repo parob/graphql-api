@@ -4,10 +4,19 @@ from graphql import DirectiveLocation, GraphQLID
 
 from graphql_api import GraphQLAPI, field, type
 from graphql_api.directives import SchemaDirective, deprecated
-from graphql_api.federation.directives import (composeDirective, external,
-                                               inaccessible, interfaceObject,
-                                               key, link, override, provides,
-                                               requires, shareable, tag)
+from graphql_api.federation.directives import (
+    composeDirective,
+    external,
+    inaccessible,
+    interfaceObject,
+    key,
+    link,
+    override,
+    provides,
+    requires,
+    shareable,
+    tag,
+)
 
 dimension = {
     "size": "small",

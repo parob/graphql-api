@@ -18,26 +18,19 @@ class TestPydantic:
 
             @field
             def get_stats(self) -> Statistics:
-                return Statistics(
-                    conversations_count=10, messages_count=25
-                )
+                return Statistics(conversations_count=10, messages_count=25)
 
         api = GraphQLAPI(root_type=ExampleAPI)
 
-        query = '''
+        query = """
             query {
                 getStats {
                     conversationsCount
                     messagesCount
                 }
             }
-        '''
-        expected = {
-            'getStats': {
-                'conversationsCount': 10,
-                'messagesCount': 25
-            }
-        }
+        """
+        expected = {"getStats": {"conversationsCount": 10, "messagesCount": 25}}
         response = api.execute(query)
         assert response.data == expected
 
@@ -54,11 +47,11 @@ class TestPydantic:
             def get_book(self) -> Book:
                 return Book(
                     title="The Hitchhiker's Guide to the Galaxy",
-                    author=Author(name="Douglas Adams")
+                    author=Author(name="Douglas Adams"),
                 )
 
         api = GraphQLAPI(root_type=LibraryAPI)
-        query = '''
+        query = """
             query {
                 getBook {
                     title
@@ -67,13 +60,11 @@ class TestPydantic:
                     }
                 }
             }
-        '''
+        """
         expected = {
-            'getBook': {
-                'title': "The Hitchhiker's Guide to the Galaxy",
-                'author': {
-                    'name': "Douglas Adams"
-                }
+            "getBook": {
+                "title": "The Hitchhiker's Guide to the Galaxy",
+                "author": {"name": "Douglas Adams"},
             }
         }
         response = api.execute(query)
@@ -93,18 +84,18 @@ class TestPydantic:
                 ]
 
         api = GraphQLAPI(root_type=ToDoAPI)
-        query = '''
+        query = """
             query {
                 getTodos {
                     task
                     completed
                 }
             }
-        '''
+        """
         expected = {
-            'getTodos': [
-                {'task': "Learn GraphQL", 'completed': True},
-                {'task': "Write more tests", 'completed': False},
+            "getTodos": [
+                {"task": "Learn GraphQL", "completed": True},
+                {"task": "Write more tests", "completed": False},
             ]
         }
         response = api.execute(query)
@@ -120,14 +111,10 @@ class TestPydantic:
         class UserAPI:
             @field
             def get_user(self) -> UserProfile:
-                return UserProfile(
-                    username="testuser",
-                    is_active=True,
-                    rating=4.5
-                )
+                return UserProfile(username="testuser", is_active=True, rating=4.5)
 
         api = GraphQLAPI(root_type=UserAPI)
-        query = '''
+        query = """
             query {
                 getUser {
                     username
@@ -136,13 +123,13 @@ class TestPydantic:
                     rating
                 }
             }
-        '''
+        """
         expected = {
-            'getUser': {
-                'username': "testuser",
-                'age': None,
-                'isActive': True,
-                'rating': 4.5
+            "getUser": {
+                "username": "testuser",
+                "age": None,
+                "isActive": True,
+                "rating": 4.5,
             }
         }
         response = api.execute(query)
@@ -163,20 +150,15 @@ class TestPydantic:
                 return Task(name="My Task", status=StatusEnum.PENDING)
 
         api = GraphQLAPI(root_type=TaskAPI)
-        query = '''
+        query = """
             query {
                 getTask {
                     name
                     status
                 }
             }
-        '''
-        expected = {
-            'getTask': {
-                'name': "My Task",
-                'status': "PENDING"
-            }
-        }
+        """
+        expected = {"getTask": {"name": "My Task", "status": "PENDING"}}
         response = api.execute(query)
         assert response.data == expected
 
@@ -201,13 +183,18 @@ class TestPydantic:
                     title="Deeply Nested Structures",
                     content="A post about testing them.",
                     comments=[
-                        Comment(text="Great post!", author=User(id=1, username="commenter1")),
-                        Comment(text="Very informative.", author=User(id=2, username="commenter2")),
-                    ]
+                        Comment(
+                            text="Great post!", author=User(id=1, username="commenter1")
+                        ),
+                        Comment(
+                            text="Very informative.",
+                            author=User(id=2, username="commenter2"),
+                        ),
+                    ],
                 )
 
         api = GraphQLAPI(root_type=BlogAPI)
-        query = '''
+        query = """
             query {
                 getLatestPost {
                     title
@@ -221,15 +208,21 @@ class TestPydantic:
                     }
                 }
             }
-        '''
+        """
         expected = {
-            'getLatestPost': {
-                'title': "Deeply Nested Structures",
-                'content': "A post about testing them.",
-                'comments': [
-                    {'text': "Great post!", 'author': {'id': 1, 'username': "commenter1"}},
-                    {'text': "Very informative.", 'author': {'id': 2, 'username': "commenter2"}},
-                ]
+            "getLatestPost": {
+                "title": "Deeply Nested Structures",
+                "content": "A post about testing them.",
+                "comments": [
+                    {
+                        "text": "Great post!",
+                        "author": {"id": 1, "username": "commenter1"},
+                    },
+                    {
+                        "text": "Very informative.",
+                        "author": {"id": 2, "username": "commenter2"},
+                    },
+                ],
             }
         }
         response = api.execute(query)
@@ -248,12 +241,15 @@ class TestPydantic:
             @field
             def get_books(self) -> List[Book]:
                 return [
-                    Book(title="A Book with a Chapter", chapter=Chapter(title="The Beginning", page_count=20)),
-                    Book(title="A Book without a Chapter")
+                    Book(
+                        title="A Book with a Chapter",
+                        chapter=Chapter(title="The Beginning", page_count=20),
+                    ),
+                    Book(title="A Book without a Chapter"),
                 ]
 
         api = GraphQLAPI(root_type=ShelfAPI)
-        query = '''
+        query = """
             query {
                 getBooks {
                     title
@@ -263,17 +259,14 @@ class TestPydantic:
                     }
                 }
             }
-        '''
+        """
         expected = {
-            'getBooks': [
+            "getBooks": [
                 {
-                    'title': "A Book with a Chapter",
-                    'chapter': {'title': "The Beginning", 'pageCount': 20}
+                    "title": "A Book with a Chapter",
+                    "chapter": {"title": "The Beginning", "pageCount": 20},
                 },
-                {
-                    'title': "A Book without a Chapter",
-                    'chapter': None
-                }
+                {"title": "A Book without a Chapter", "chapter": None},
             ]
         }
         response = api.execute(query)
@@ -290,50 +283,38 @@ class TestPydantic:
                 return Config(name="test_config")
 
         api = GraphQLAPI(root_type=ConfigAPI)
-        query = '''
+        query = """
             query {
                 getConfig {
                     name
                     value
                 }
             }
-        '''
-        expected = {
-            'getConfig': {
-                'name': "test_config",
-                'value': "default_value"
-            }
-        }
+        """
+        expected = {"getConfig": {"name": "test_config", "value": "default_value"}}
         response = api.execute(query)
         assert response.data == expected
 
     def test_pydantic_model_with_field_alias(self):
         class User(BaseModel):
-            user_name: str = Field(..., alias='userName')
-            user_id: int = Field(..., alias='userId')
+            user_name: str = Field(..., alias="userName")
+            user_id: int = Field(..., alias="userId")
 
         class UserAliasAPI:
             @field
             def get_user_with_alias(self) -> User:
-                return User.model_validate(
-                    {'userName': "aliased_user", 'userId': 123}
-                )
+                return User.model_validate({"userName": "aliased_user", "userId": 123})
 
         api = GraphQLAPI(root_type=UserAliasAPI)
-        query = '''
+        query = """
             query {
                 getUserWithAlias {
                     userName
                     userId
                 }
             }
-        '''
-        expected = {
-            'getUserWithAlias': {
-                'userName': "aliased_user",
-                'userId': 123
-            }
-        }
+        """
+        expected = {"getUserWithAlias": {"userName": "aliased_user", "userId": 123}}
         response = api.execute(query)
         assert response.data == expected
 
@@ -351,11 +332,11 @@ class TestPydantic:
             def get_mixed_model(self) -> ModelWithDataClass:
                 return ModelWithDataClass(
                     name="Mixed",
-                    details=DataClassDetails(detail="This is from a dataclass")
+                    details=DataClassDetails(detail="This is from a dataclass"),
                 )
 
         api = GraphQLAPI(root_type=MixedAPI)
-        query = '''
+        query = """
             query {
                 getMixedModel {
                     name
@@ -364,13 +345,11 @@ class TestPydantic:
                     }
                 }
             }
-        '''
+        """
         expected = {
-            'getMixedModel': {
-                'name': "Mixed",
-                'details': {
-                    'detail': "This is from a dataclass"
-                }
+            "getMixedModel": {
+                "name": "Mixed",
+                "details": {"detail": "This is from a dataclass"},
             }
         }
         response = api.execute(query)
@@ -379,7 +358,7 @@ class TestPydantic:
     def test_recursive_pydantic_model(self):
         class Employee(BaseModel):
             name: str
-            manager: Optional['Employee'] = None
+            manager: Optional["Employee"] = None
 
         class OrgAPI:
             @field
@@ -388,7 +367,7 @@ class TestPydantic:
                 return Employee(name="Direct Report", manager=manager)
 
         api = GraphQLAPI(root_type=OrgAPI)
-        query = '''
+        query = """
             query {
                 getEmployeeHierarchy {
                     name
@@ -400,14 +379,11 @@ class TestPydantic:
                     }
                 }
             }
-        '''
+        """
         expected = {
-            'getEmployeeHierarchy': {
-                'name': "Direct Report",
-                'manager': {
-                    'name': "Big Boss",
-                    'manager': None
-                }
+            "getEmployeeHierarchy": {
+                "name": "Direct Report",
+                "manager": {"name": "Big Boss", "manager": None},
             }
         }
         response = api.execute(query)
@@ -429,10 +405,12 @@ class TestPydantic:
         class PetAPI:
             @field
             def get_cat_owner(self) -> PetOwner:
-                return PetOwner(name="Cat Lover", pet=Cat(name="Whiskers", meow_volume=10))
+                return PetOwner(
+                    name="Cat Lover", pet=Cat(name="Whiskers", meow_volume=10)
+                )
 
         api = GraphQLAPI(root_type=PetAPI)
-        query = '''
+        query = """
             query {
                 getCatOwner {
                     name
@@ -448,14 +426,11 @@ class TestPydantic:
                     }
                 }
             }
-        '''
+        """
         expected = {
-            'getCatOwner': {
-                'name': "Cat Lover",
-                'pet': {
-                    'name': "Whiskers",
-                    'meowVolume': 10
-                }
+            "getCatOwner": {
+                "name": "Cat Lover",
+                "pet": {"name": "Whiskers", "meowVolume": 10},
             }
         }
         response = api.execute(query)
@@ -463,7 +438,7 @@ class TestPydantic:
 
     def test_pydantic_forward_ref(self):
         class ModelA(BaseModel):
-            b: 'ModelB'
+            b: "ModelB"
 
         class ModelB(BaseModel):
             a_val: int
@@ -476,7 +451,7 @@ class TestPydantic:
                 return ModelA(b=ModelB(a_val=123))
 
         api = GraphQLAPI(root_type=ForwardRefAPI)
-        query = '''
+        query = """
             query {
                 getA {
                     b {
@@ -484,13 +459,7 @@ class TestPydantic:
                     }
                 }
             }
-        '''
-        expected = {
-            'getA': {
-                'b': {
-                    'aVal': 123
-                }
-            }
-        }
+        """
+        expected = {"getA": {"b": {"aVal": 123}}}
         response = api.execute(query)
         assert response.data == expected

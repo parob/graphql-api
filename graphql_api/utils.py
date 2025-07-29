@@ -6,9 +6,15 @@ import re
 import textwrap
 from json.decoder import JSONDecodeError
 
-from graphql import (GraphQLError, GraphQLList, GraphQLNonNull,
-                     GraphQLObjectType, GraphQLSchema, build_client_schema,
-                     get_introspection_query)
+from graphql import (
+    GraphQLError,
+    GraphQLList,
+    GraphQLNonNull,
+    GraphQLObjectType,
+    GraphQLSchema,
+    build_client_schema,
+    get_introspection_query,
+)
 from graphql.type.definition import GraphQLInterfaceType, GraphQLType
 
 

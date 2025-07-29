@@ -13,6 +13,7 @@ from graphql_api.api import GraphQLAPI
 from graphql_api.error import GraphQLError
 from graphql_api.mapper import GraphQLMetaKey
 from graphql_api.remote import GraphQLRemoteExecutor, GraphQLRemoteObject
+
 # noinspection PyTypeChecker
 
 
@@ -598,7 +599,9 @@ class TestGraphQLRemote:
                 return self._height
 
             @api.field(mutable=True)
-            def update(self, name: Optional[str] = None, height: Optional[float] = None) -> "Person":
+            def update(
+                self, name: Optional[str] = None, height: Optional[float] = None
+            ) -> "Person":
                 if name:
                     self._name = name
 
@@ -704,7 +707,7 @@ class TestGraphQLRemote:
                 assert cls == Person
                 return "hello"
 
-        person: Person = GraphQLRemoteObject(executor=api.executor(), api=api)   # type: ignore[reportIncompatibleMethodOverride]
+        person: Person = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert person.age() == 50
         assert person.hello() == "hello"
@@ -720,7 +723,9 @@ class TestGraphQLRemote:
         Tests that a remote GraphQL API can be queried asynchronously.
         """
         rick_and_morty_api = GraphQLAPI()
-        remote_executor = GraphQLRemoteExecutor(url=self.rick_and_morty_api_url, verify=False)
+        remote_executor = GraphQLRemoteExecutor(
+            url=self.rick_and_morty_api_url, verify=False
+        )
 
         class Character:
             @rick_and_morty_api.field
@@ -734,7 +739,7 @@ class TestGraphQLRemote:
                 ...
 
         # Add Character to the local namespace to allow for type hint resolution
-        locals()['Character'] = Character
+        locals()["Character"] = Character
 
         api: RickAndMortyAPI = GraphQLRemoteObject(
             executor=remote_executor, api=rick_and_morty_api
@@ -773,7 +778,9 @@ class TestGraphQLRemote:
         Tests that a remote GraphQL API can be queried asynchronously with awaits.
         """
         rick_and_morty_api = GraphQLAPI()
-        remote_executor = GraphQLRemoteExecutor(url=self.rick_and_morty_api_url, verify=False)
+        remote_executor = GraphQLRemoteExecutor(
+            url=self.rick_and_morty_api_url, verify=False
+        )
 
         class Character:
             @rick_and_morty_api.field
@@ -788,7 +795,7 @@ class TestGraphQLRemote:
                 ...
 
         # Add Character to the local namespace to allow for type hint resolution
-        locals()['Character'] = Character
+        locals()["Character"] = Character
 
         rick_and_morty: RickAndMortyAPI = GraphQLRemoteObject(
             executor=remote_executor, api=rick_and_morty_api
@@ -805,7 +812,9 @@ class TestGraphQLRemote:
         Tests that a remote field can be invoked with call_async.
         """
         rick_and_morty_api = GraphQLAPI()
-        remote_executor = GraphQLRemoteExecutor(url=self.rick_and_morty_api_url, verify=False)
+        remote_executor = GraphQLRemoteExecutor(
+            url=self.rick_and_morty_api_url, verify=False
+        )
 
         class Character:
             @rick_and_morty_api.field
@@ -819,7 +828,7 @@ class TestGraphQLRemote:
                 ...
 
         # Add Character to the local namespace to allow for type hint resolution
-        locals()['Character'] = Character
+        locals()["Character"] = Character
 
         rick_and_morty: RickAndMortyAPI = GraphQLRemoteObject(
             executor=remote_executor, api=rick_and_morty_api

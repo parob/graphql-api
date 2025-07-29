@@ -1,9 +1,18 @@
 import json
 from typing import Dict, List, Optional, Union, cast
 
-from graphql import (GraphQLDirective, GraphQLField, GraphQLList,
-                     GraphQLNamedType, GraphQLNonNull, GraphQLObjectType, GraphQLType,
-                     is_interface_type, is_object_type, GraphQLInterfaceType)
+from graphql import (
+    GraphQLDirective,
+    GraphQLField,
+    GraphQLList,
+    GraphQLNamedType,
+    GraphQLNonNull,
+    GraphQLObjectType,
+    GraphQLType,
+    is_interface_type,
+    is_object_type,
+    GraphQLInterfaceType,
+)
 
 from graphql_api.directives import SchemaDirective
 from graphql_api.utils import to_camel_case
@@ -70,7 +79,9 @@ def get_directives(
             _directives[directive.name] = directive
 
         if is_object_type(graphql_type) or is_interface_type(graphql_type):
-            graphql_type = cast(Union[GraphQLObjectType, GraphQLInterfaceType], graphql_type)
+            graphql_type = cast(
+                Union[GraphQLObjectType, GraphQLInterfaceType], graphql_type
+            )
             for _field in graphql_type.fields.values():
                 _field: GraphQLField
                 _directives.update(get_directives(_field, _fetched_types))

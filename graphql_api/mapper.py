@@ -9,32 +9,60 @@ from uuid import UUID
 from abc import abstractmethod
 
 import typing_inspect
-from graphql import (DirectiveLocation, GraphQLBoolean, GraphQLField,
-                     GraphQLFloat, GraphQLInt, GraphQLList, GraphQLObjectType,
-                     GraphQLString, is_union_type, GraphQLWrappingType)
+from graphql import (
+    DirectiveLocation,
+    GraphQLBoolean,
+    GraphQLField,
+    GraphQLFloat,
+    GraphQLInt,
+    GraphQLList,
+    GraphQLObjectType,
+    GraphQLString,
+    is_union_type,
+    GraphQLWrappingType,
+)
 from graphql.pyutils import Undefined, UndefinedType
-from graphql.type.definition import (GraphQLArgument, GraphQLEnumType,
-                                     GraphQLInputField, GraphQLInputObjectType,
-                                     GraphQLInterfaceType, GraphQLNonNull,
-                                     GraphQLScalarType, GraphQLType,
-                                     GraphQLUnionType, is_abstract_type,
-                                     is_enum_type, is_input_type,
-                                     is_interface_type, is_object_type,
-                                     is_scalar_type, is_nullable_type)
+from graphql.type.definition import (
+    GraphQLArgument,
+    GraphQLEnumType,
+    GraphQLInputField,
+    GraphQLInputObjectType,
+    GraphQLInterfaceType,
+    GraphQLNonNull,
+    GraphQLScalarType,
+    GraphQLType,
+    GraphQLUnionType,
+    is_abstract_type,
+    is_enum_type,
+    is_input_type,
+    is_interface_type,
+    is_object_type,
+    is_scalar_type,
+    is_nullable_type,
+)
 from typing_inspect import get_origin
 
 from graphql_api.context import GraphQLContext
-from graphql_api.dataclass_mapping import (type_from_dataclass,
-                                           type_is_dataclass)
+from graphql_api.dataclass_mapping import type_from_dataclass, type_is_dataclass
 from graphql_api.exception import GraphQLBaseException
 from graphql_api.pydantic import type_from_pydantic_model, type_is_pydantic_model
 from graphql_api.schema import add_applied_directives, get_applied_directives
-from graphql_api.types import (GraphQLBytes, GraphQLDate, GraphQLDateTime,
-                               GraphQLJSON, GraphQLMappedEnumType, GraphQLUUID,
-                               JsonType)
-from graphql_api.utils import (has_single_type_union_return, to_camel_case,
-                               to_camel_case_text, to_input_value,
-                               to_snake_case)
+from graphql_api.types import (
+    GraphQLBytes,
+    GraphQLDate,
+    GraphQLDateTime,
+    GraphQLJSON,
+    GraphQLMappedEnumType,
+    GraphQLUUID,
+    JsonType,
+)
+from graphql_api.utils import (
+    has_single_type_union_return,
+    to_camel_case,
+    to_camel_case_text,
+    to_input_value,
+    to_snake_case,
+)
 
 """
 class AnyObject:
@@ -288,8 +316,10 @@ class GraphQLTypeMapper:
                 value_type = value.python_type
 
             for arg, _mapped_type in union_map.items():
-                if inspect.isclass(arg) and is_object_type(_mapped_type) and issubclass(
-                    cast(type, value_type), arg
+                if (
+                    inspect.isclass(arg)
+                    and is_object_type(_mapped_type)
+                    and issubclass(cast(type, value_type), arg)
                 ):
                     return cast(GraphQLObjectType, _mapped_type).name
 

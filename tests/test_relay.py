@@ -41,12 +41,12 @@ class TestRelay:
                     if end_index < len(cursors) - 1:
                         self.has_next_page = True
 
-                self.filtered_cursors = cursors[start_index:end_index + 1]
+                self.filtered_cursors = cursors[start_index: end_index + 1]
 
                 self.people = people
 
                 if self._first is not None:
-                    self.filtered_cursors = self.filtered_cursors[:self._first]
+                    self.filtered_cursors = self.filtered_cursors[: self._first]
 
                 elif self._last is not None:
                     self.filtered_cursors = self.filtered_cursors[-self._last:]

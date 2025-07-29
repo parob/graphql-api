@@ -1,8 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 
-from graphql_api import (GraphQLAPI, GraphQLRootTypeDelegate, field,
-                         type)
+from graphql_api import GraphQLAPI, GraphQLRootTypeDelegate, field, type
 
 
 class TestGraphQLSchema:
@@ -152,7 +151,9 @@ class TestGraphQLSchema:
         Tests that a TypeError is raised when trying to set an interface
         as the root type of a schema.
         """
-        with pytest.raises(TypeError, match="Cannot set .* of type 'interface' as a root."):
+        with pytest.raises(
+            TypeError, match="Cannot set .* of type 'interface' as a root."
+        ):
             api = GraphQLAPI()
 
             @api.type(is_root_type=True, interface=True)
@@ -164,7 +165,9 @@ class TestGraphQLSchema:
         Tests that a TypeError is raised when trying to set an abstract type
         as the root type of a schema.
         """
-        with pytest.raises(TypeError, match="Cannot set .* of type 'abstract' as a root."):
+        with pytest.raises(
+            TypeError, match="Cannot set .* of type 'abstract' as a root."
+        ):
             api = GraphQLAPI()
 
             @api.type(is_root_type=True, abstract=True)

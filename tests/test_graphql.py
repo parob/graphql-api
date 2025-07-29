@@ -1112,8 +1112,11 @@ class TestGraphQL:
         schema, _ = api.build_schema()
 
         # Check that single type unions was sucesfully created as a union type.
-        assert schema is not None and schema.query_type is not None and \
-               schema.query_type.fields["owner"].type.of_type.name == "OwnerUnion"
+        assert (
+            schema is not None
+            and schema.query_type is not None
+            and schema.query_type.fields["owner"].type.of_type.name == "OwnerUnion"
+        )
 
         test_optional_list_union_query = """
             query TestOwnerUnion {
@@ -1124,7 +1127,9 @@ class TestGraphQL:
                 }
             }
         """
-        assert schema is not None and schema.query_type is not None  # Add check here as well
+        assert (
+            schema is not None and schema.query_type is not None
+        )  # Add check here as well
         return_type = schema.query_type.fields[
             "optionalOwnerOrCustomer"
         ].type.of_type.of_type
@@ -1218,7 +1223,9 @@ class TestGraphQL:
         class Root:
             @api.field
             def star_wars(self, context: GraphQLContext) -> RemoteAPI:  # type: ignore[valid-type]
-                assert context.request is not None, "GraphQLContext.request cannot be None"
+                assert (
+                    context.request is not None
+                ), "GraphQLContext.request cannot be None"
                 assert context.field is not None, "GraphQLContext.field cannot be None"
                 operation = context.request.info.operation.operation
                 field_query_details = context.field.query
@@ -1270,7 +1277,9 @@ class TestGraphQL:
         class Root:
             @api.field
             def pokemon(self, context: GraphQLContext) -> RemoteAPI:  # type: ignore[valid-type]
-                assert context.request is not None, "GraphQLContext.request cannot be None"
+                assert (
+                    context.request is not None
+                ), "GraphQLContext.request cannot be None"
                 assert context.field is not None, "GraphQLContext.field cannot be None"
                 operation = context.request.info.operation.operation
                 field_query_details = context.field.query
@@ -1489,7 +1498,9 @@ class TestGraphQL:
         result = executor.execute(test_query)
 
         assert not result.errors
-        assert result.data is not None and result.data["hello"] == f"hello {hash('rob')}"
+        assert (
+            result.data is not None and result.data["hello"] == f"hello {hash('rob')}"
+        )
 
     def test_class_update_same_name(self):
         @dataclass
@@ -1523,7 +1534,9 @@ class TestGraphQL:
         result = executor.execute(test_query)
 
         assert not result.errors
-        assert result.data is not None and result.data["hello"] == f"hello {hash('rob')}"
+        assert (
+            result.data is not None and result.data["hello"] == f"hello {hash('rob')}"
+        )
 
     def test_debug_root_type_issue(self):
         """
@@ -1542,7 +1555,10 @@ class TestGraphQL:
         print("SimpleRoot class:", SimpleRoot)
 
         schema, _ = api.build_schema()
-        print("Schema query type:", schema.query_type.name if schema.query_type else "None")
+        print(
+            "Schema query type:",
+            schema.query_type.name if schema.query_type else "None",
+        )
         if schema.query_type:
             print("Query fields:", list(schema.query_type.fields.keys()))
 
@@ -1557,6 +1573,7 @@ class TestGraphQL:
         Test that when ALL fields in the root type are filtered out,
         the root type name is preserved and a meaningful schema field is provided.
         """
+
         # Create a root type where ALL fields will be filtered
         class Root:
             @field({"tags": ["admin"]})
@@ -1569,20 +1586,29 @@ class TestGraphQL:
 
         # Test with filters that remove ALL root fields
         from graphql_api.reduce import TagFilter
-        filtered_api = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=["admin", "private"])])
+
+        filtered_api = GraphQLAPI(
+            root_type=Root, filters=[TagFilter(tags=["admin", "private"])]
+        )
         filtered_schema, _ = filtered_api.build_schema()
 
         # Verify the fix: root type name should be preserved
         assert filtered_schema.query_type is not None
-        assert filtered_schema.query_type.name == "Root", "Root type name should be preserved"
-        assert "_schema" in filtered_schema.query_type.fields, "Should have _schema field"
+        assert (
+            filtered_schema.query_type.name == "Root"
+        ), "Root type name should be preserved"
+        assert (
+            "_schema" in filtered_schema.query_type.fields
+        ), "Should have _schema field"
 
         # Test that the schema field works
         executor = filtered_api.executor()
         result = executor.execute("query { _schema }")
 
         assert not result.errors, "Schema info query should work"
-        assert result.data and "filtered" in result.data["_schema"].lower(), "Should indicate filtered state"
+        assert (
+            result.data and "filtered" in result.data["_schema"].lower()
+        ), "Should indicate filtered state"
 
     def test_filter_behavior_comparison(self):
         """
@@ -1591,6 +1617,7 @@ class TestGraphQL:
         - Object types with all fields filtered should be removed (even in PRESERVE_TRANSITIVE mode due to GraphQL constraints)
         - Parent fields should be handled appropriately
         """
+
         # Create the types first
         class UserData:
             @field
@@ -1622,29 +1649,34 @@ class TestGraphQL:
 
         # Test with filters that remove admin fields using strict mode (preserve_transitive=False)
         from graphql_api.reduce import TagFilter
+
         filtered_api = GraphQLAPI(
-            root_type=Root, 
-            filters=[TagFilter(tags=["admin"], preserve_transitive=False)]
+            root_type=Root,
+            filters=[TagFilter(tags=["admin"], preserve_transitive=False)],
         )
         filtered_schema, _ = filtered_api.build_schema()
         executor = filtered_api.executor()
 
         # UserData should work - has remaining fields
-        result1 = executor.execute("""
+        result1 = executor.execute(
+            """
             query { userData { publicInfo privateInfo } }
-        """)
+        """
+        )
         assert not result1.errors
         assert result1.data == {
             "userData": {
                 "publicInfo": "This is public",
-                "privateInfo": "This is private"
+                "privateInfo": "This is private",
             }
         }
 
         # AdminData should be completely removed - all fields filtered and no way to preserve empty types
-        result2 = executor.execute("""
+        result2 = executor.execute(
+            """
             query { adminData { secretKey } }
-        """)
+        """
+        )
         assert result2.errors
         assert "Cannot query field 'adminData'" in str(result2.errors[0])
 
@@ -1652,7 +1684,9 @@ class TestGraphQL:
         assert filtered_schema.query_type is not None
         assert filtered_schema.query_type.name == "Root"
         assert "userData" in filtered_schema.query_type.fields
-        assert "adminData" not in filtered_schema.query_type.fields  # Removed because AdminData has no fields
+        assert (
+            "adminData" not in filtered_schema.query_type.fields
+        )  # Removed because AdminData has no fields
         assert "UserData" in filtered_schema.type_map
         assert "AdminData" not in filtered_schema.type_map  # Removed
 
@@ -1661,6 +1695,7 @@ class TestGraphQL:
         Test that object types with some fields filtered remain accessible
         with only the filtered fields removed.
         """
+
         class UserData:
             @field
             def public_info(self) -> str:
@@ -1677,10 +1712,8 @@ class TestGraphQL:
 
         # Create filtered API
         from graphql_api.reduce import TagFilter
-        filtered_api = GraphQLAPI(
-            root_type=Root,
-            filters=[TagFilter(tags=["private"])]
-        )
+
+        filtered_api = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=["private"])])
 
         # Test that the object type with remaining fields should still be accessible
         schema, _ = filtered_api.build_schema()
@@ -1695,24 +1728,28 @@ class TestGraphQL:
         executor = filtered_api.executor()
 
         # Should work for accessible field
-        result = executor.execute("""
+        result = executor.execute(
+            """
             query GetUserData {
                 userData {
                     publicInfo
                 }
             }
-        """)
+        """
+        )
         assert not result.errors
         assert result.data == {"userData": {"publicInfo": "This is public"}}
 
         # Should fail for filtered field
-        private_result = executor.execute("""
+        private_result = executor.execute(
+            """
             query GetPrivateData {
                 userData {
                     privateInfo
                 }
             }
-        """)
+        """
+        )
         assert private_result.errors
         assert "Cannot query field 'privateInfo'" in str(private_result.errors[0])
 
@@ -1729,6 +1766,7 @@ class TestGraphQL:
         and only filtered fields are removed. Types with no remaining fields
         are removed entirely due to GraphQL constraints.
         """
+
         # Define types without API instance to avoid decorator conflicts
         class UserPreferences:
             @field
@@ -1794,14 +1832,16 @@ class TestGraphQL:
 
         # Create filtered API that removes admin and private fields using strict mode (preserve_transitive=False)
         from graphql_api.reduce import TagFilter
+
         filtered_api = GraphQLAPI(
             root_type=Root,
-            filters=[TagFilter(tags=["admin", "private"], preserve_transitive=False)]
+            filters=[TagFilter(tags=["admin", "private"], preserve_transitive=False)],
         )
         executor = filtered_api.executor()
 
         # Test nested query with remaining fields
-        result = executor.execute("""
+        result = executor.execute(
+            """
             query GetUser {
                 user {
                     username
@@ -1816,20 +1856,15 @@ class TestGraphQL:
                     }
                 }
             }
-        """)
+        """
+        )
 
         expected = {
             "user": {
                 "username": "johndoe",
                 "email": "john@example.com",
-                "profile": {
-                    "displayName": "John Doe",
-                    "bio": "Software developer"
-                },
-                "preferences": {
-                    "theme": "dark",
-                    "language": "en"
-                }
+                "profile": {"displayName": "John Doe", "bio": "Software developer"},
+                "preferences": {"theme": "dark", "language": "en"},
             }
         }
 
@@ -1837,7 +1872,8 @@ class TestGraphQL:
         assert result.data == expected
 
         # Test that filtered fields are not accessible
-        result_filtered = executor.execute("""
+        result_filtered = executor.execute(
+            """
             query GetFilteredData {
                 user {
                     profile {
@@ -1845,18 +1881,21 @@ class TestGraphQL:
                     }
                 }
             }
-        """)
+        """
+        )
         assert result_filtered.errors
         assert "Cannot query field 'socialSecurity'" in str(result_filtered.errors[0])
 
         # Test that object types with ALL fields filtered are completely removed
-        result_admin = executor.execute("""
+        result_admin = executor.execute(
+            """
             query GetAdminData {
                 adminData {
                     secretKey
                 }
             }
-        """)
+        """
+        )
         assert result_admin.errors
         assert "Cannot query field 'adminData'" in str(result_admin.errors[0])
 

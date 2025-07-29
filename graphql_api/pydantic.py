@@ -31,7 +31,9 @@ def type_from_pydantic_model(
             field_type = field.annotation
             graphql_type = mapper.map(field_type)
             if graphql_type is None:
-                raise TypeError(f"Unable to map pydantic field '{name}' with type {field_type}")
+                raise TypeError(
+                    f"Unable to map pydantic field '{name}' with type {field_type}"
+                )
             if not is_output_type(graphql_type):
                 raise TypeError(
                     f"Mapped type for pydantic field '{name}' is not a valid GraphQL Output Type."
@@ -40,11 +42,11 @@ def type_from_pydantic_model(
             def create_resolver(_name):
                 def resolver(instance, info):
                     return getattr(instance, _name)
+
                 return resolver
 
             fields[to_camel_case(name)] = GraphQLField(
-                cast(GraphQLOutputType, graphql_type),
-                resolve=create_resolver(name)
+                cast(GraphQLOutputType, graphql_type), resolve=create_resolver(name)
             )
         return fields
 

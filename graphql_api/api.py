@@ -1,10 +1,18 @@
 from typing import Any, Dict, List, Optional, Tuple, Type, Union, Callable
 
 # noinspection PyPackageRequirements
-from graphql import (ExecutionResult, GraphQLDirective, GraphQLField,
-                     GraphQLNamedType, GraphQLObjectType, GraphQLScalarType,
-                     GraphQLSchema, GraphQLString, is_named_type,
-                     specified_directives)
+from graphql import (
+    ExecutionResult,
+    GraphQLDirective,
+    GraphQLField,
+    GraphQLNamedType,
+    GraphQLObjectType,
+    GraphQLScalarType,
+    GraphQLSchema,
+    GraphQLString,
+    is_named_type,
+    specified_directives,
+)
 
 from graphql_api.error import GraphQLError
 from graphql_api.directives import SchemaDirective
@@ -313,10 +321,10 @@ class GraphQLAPI(GraphQLBaseExecutor):
                         "_schema": GraphQLField(
                             type_=GraphQLString,
                             resolve=lambda *_: f"Schema '{filtered_query.name}' has all fields filtered",
-                            description="Indicates that all fields in this schema have been filtered out"
+                            description="Indicates that all fields in this schema have been filtered out",
                         )
                     },
-                    description=f"Filtered version of {filtered_query.name} with no accessible fields"
+                    description=f"Filtered version of {filtered_query.name} with no accessible fields",
                 )
                 query_types = query_mapper.types()
                 registry = query_mapper.registry
@@ -402,8 +410,10 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
         # Post-federation modifications
         if self.federation:
-            from graphql_api.federation.federation import (add_entity_type,
-                                                           link_directives)
+            from graphql_api.federation.federation import (
+                add_entity_type,
+                link_directives,
+            )
 
             add_entity_type(self, schema)
             link_directives(schema)

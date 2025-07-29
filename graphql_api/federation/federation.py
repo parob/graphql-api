@@ -1,14 +1,25 @@
 from typing import Dict, List, Union, cast
 
-from graphql import (GraphQLArgument, GraphQLField, GraphQLList,
-                     GraphQLNonNull, GraphQLSchema, GraphQLType, GraphQLUnionType,
-                     is_introspection_type, is_specified_scalar_type)
+from graphql import (
+    GraphQLArgument,
+    GraphQLField,
+    GraphQLList,
+    GraphQLNonNull,
+    GraphQLSchema,
+    GraphQLType,
+    GraphQLUnionType,
+    is_introspection_type,
+    is_specified_scalar_type,
+)
 
 from graphql_api import GraphQLAPI
 from graphql_api.context import GraphQLContext
 from graphql_api.decorators import field, type
-from graphql_api.directives import (is_specified_directive,
-                                    print_filtered_schema, SchemaDirective)
+from graphql_api.directives import (
+    is_specified_directive,
+    print_filtered_schema,
+    SchemaDirective,
+)
 from graphql_api.federation.directives import federation_directives, key, link
 from graphql_api.federation.types import _Any, federation_types
 from graphql_api.mapper import UnionFlagType

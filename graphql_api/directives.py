@@ -1,17 +1,37 @@
 from inspect import isfunction
 from typing import Any, Callable, Collection, Dict, List, Optional, Union, cast
 
-from graphql import (DEFAULT_DEPRECATION_REASON, DirectiveLocation,
-                     GraphQLArgument, GraphQLDeprecatedDirective,
-                     GraphQLDirective, GraphQLEnumType, GraphQLEnumValue,
-                     GraphQLField, GraphQLInputField, GraphQLInputObjectType,
-                     GraphQLInputType, GraphQLInterfaceType, GraphQLNamedType,
-                     GraphQLObjectType, GraphQLScalarType, GraphQLSchema,
-                     GraphQLUnionType, StringValueNode, ast_from_value,
-                     is_enum_type, is_input_object_type, is_interface_type,
-                     is_introspection_type, is_object_type, is_scalar_type,
-                     is_specified_directive, is_specified_scalar_type,
-                     is_union_type, print_ast)
+from graphql import (
+    DEFAULT_DEPRECATION_REASON,
+    DirectiveLocation,
+    GraphQLArgument,
+    GraphQLDeprecatedDirective,
+    GraphQLDirective,
+    GraphQLEnumType,
+    GraphQLEnumValue,
+    GraphQLField,
+    GraphQLInputField,
+    GraphQLInputObjectType,
+    GraphQLInputType,
+    GraphQLInterfaceType,
+    GraphQLNamedType,
+    GraphQLObjectType,
+    GraphQLScalarType,
+    GraphQLSchema,
+    GraphQLUnionType,
+    StringValueNode,
+    ast_from_value,
+    is_enum_type,
+    is_input_object_type,
+    is_interface_type,
+    is_introspection_type,
+    is_object_type,
+    is_scalar_type,
+    is_specified_directive,
+    is_specified_scalar_type,
+    is_union_type,
+    print_ast,
+)
 from graphql.language import ast
 from graphql.language.block_string import is_printable_as_block_string
 from graphql.pyutils import inspect
@@ -74,7 +94,9 @@ def print_applied_directives(value, printed_directives: Optional[list] = None):
     return ""
 
 
-def print_schema(schema: GraphQLSchema, printed_directives: Optional[list] = None) -> str:
+def print_schema(
+    schema: GraphQLSchema, printed_directives: Optional[list] = None
+) -> str:
     return print_filtered_schema(
         schema,
         lambda n: not is_specified_directive(n),
@@ -171,7 +193,9 @@ def is_schema_of_common_names(schema: GraphQLSchema) -> bool:
     return not subscription_type or subscription_type.name == "Subscription"
 
 
-def print_type(type_: GraphQLNamedType, printed_directives: Optional[list] = None) -> str:
+def print_type(
+    type_: GraphQLNamedType, printed_directives: Optional[list] = None
+) -> str:
     if is_scalar_type(type_):
         type_ = cast(GraphQLScalarType, type_)
         return print_scalar(type_, printed_directives)
@@ -195,7 +219,9 @@ def print_type(type_: GraphQLNamedType, printed_directives: Optional[list] = Non
     raise TypeError(f"Unexpected type: {inspect(type_)}.")
 
 
-def print_scalar(type_: GraphQLScalarType, printed_directives: Optional[list] = None) -> str:
+def print_scalar(
+    type_: GraphQLScalarType, printed_directives: Optional[list] = None
+) -> str:
     return (
         print_description(type_)
         + f"scalar {type_.name}"
@@ -211,7 +237,9 @@ def print_implemented_interfaces(
     return " implements " + " & ".join(i.name for i in interfaces) if interfaces else ""
 
 
-def print_object(type_: GraphQLObjectType, printed_directives: Optional[list] = None) -> str:
+def print_object(
+    type_: GraphQLObjectType, printed_directives: Optional[list] = None
+) -> str:
     return (
         print_description(type_)
         + f"type {type_.name}"
@@ -233,7 +261,9 @@ def print_interface(
     )
 
 
-def print_union(type_: GraphQLUnionType, printed_directives: Optional[list] = None) -> str:
+def print_union(
+    type_: GraphQLUnionType, printed_directives: Optional[list] = None
+) -> str:
     types = type_.types
     possible_types = " = " + " | ".join(t.name for t in types) if types else ""
     return (
@@ -244,7 +274,9 @@ def print_union(type_: GraphQLUnionType, printed_directives: Optional[list] = No
     )
 
 
-def print_enum(type_: GraphQLEnumType, printed_directives: Optional[list] = None) -> str:
+def print_enum(
+    type_: GraphQLEnumType, printed_directives: Optional[list] = None
+) -> str:
     values = [
         print_description(value, "  ", not i)
         + f"  {name}"

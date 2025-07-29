@@ -2,11 +2,17 @@ from typing import Type, get_type_hints
 
 import typing_inspect
 from docstring_parser import parse_from_object
-from graphql.type.definition import (GraphQLField, GraphQLInputField,
-                                     GraphQLNonNull, GraphQLObjectType,
-                                     GraphQLType, get_named_type,
-                                     is_nullable_type,
-                                     is_input_type, is_output_type)
+from graphql.type.definition import (
+    GraphQLField,
+    GraphQLInputField,
+    GraphQLNonNull,
+    GraphQLObjectType,
+    GraphQLType,
+    get_named_type,
+    is_nullable_type,
+    is_input_type,
+    is_output_type,
+)
 
 from graphql_api.utils import to_camel_case, to_camel_case_text
 
@@ -175,8 +181,8 @@ def type_from_dataclass(cls: Type, mapper) -> GraphQLType:
                         )  # Call if it's a thunk
                     else:
                         existing_fields = (
-                            existing_fields_source
-                        )  # Use directly if it's a mapping
+                            existing_fields_source  # Use directly if it's a mapping
+                        )
 
                     for existing_name, existing_field in existing_fields.items():
                         if existing_name not in new_fields:

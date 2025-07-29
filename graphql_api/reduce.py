@@ -4,20 +4,20 @@ from enum import Enum
 from graphql import GraphQLList, GraphQLNonNull, GraphQLObjectType
 from graphql.type.definition import GraphQLInterfaceType
 
-from graphql_api.mapper import (GraphQLMetaKey, GraphQLMutableField,
-                                GraphQLTypeMapError)
+from graphql_api.mapper import GraphQLMetaKey, GraphQLMutableField, GraphQLTypeMapError
 from graphql_api.utils import has_mutable, iterate_fields, to_snake_case
 
 
 class FilterResponse(Enum):
     """
     Response from a GraphQL filter indicating how to handle a field and transitive types.
-    
+
     ALLOW - Keep the field, don't preserve transitive object types (should_filter=False, preserve_transitive=False)
     ALLOW_TRANSITIVE - Keep the field and preserve transitive object types (should_filter=False, preserve_transitive=True)
     REMOVE - Remove the field but preserve types referenced by unfiltered fields (should_filter=True, preserve_transitive=True)
     REMOVE_STRICT - Remove the field and don't preserve unreferenced types (should_filter=True, preserve_transitive=False)
     """
+
     ALLOW = "allow"
     ALLOW_TRANSITIVE = "allow_transitive"
     REMOVE = "remove"
@@ -27,7 +27,7 @@ class FilterResponse(Enum):
     def should_filter(self) -> bool:
         """True if the field should be removed from the schema"""
         return self in (FilterResponse.REMOVE, FilterResponse.REMOVE_STRICT)
-    
+
     @property
     def preserve_transitive(self) -> bool:
         """True if types referenced by unfiltered fields should be preserved"""
@@ -43,7 +43,9 @@ class GraphQLFilter:
 
 
 class TagFilter(GraphQLFilter):
-    def __init__(self, tags: Optional[List[str]] = None, preserve_transitive: bool = True):
+    def __init__(
+        self, tags: Optional[List[str]] = None, preserve_transitive: bool = True
+    ):
         self.tags = tags or []
         self.preserve_transitive = preserve_transitive
 
@@ -77,13 +79,16 @@ class GraphQLSchemaReducer:
         # Remove any types that have no fields
         # (and remove any fields that returned that type)
         invalid_types, invalid_fields = GraphQLSchemaReducer.invalid(
-            root_type=query, filters=filters, meta=mapper.meta, preserve_transitive=preserve_transitive
+            root_type=query,
+            filters=filters,
+            meta=mapper.meta,
+            preserve_transitive=preserve_transitive,
         )
 
         # Remove fields that reference invalid types
         additional_invalid_fields = set()
         for type_ in list(mapper.registry.values()):
-            if hasattr(type_, 'fields'):
+            if hasattr(type_, "fields"):
                 for field_name, field in list(type_.fields.items()):
                     field_type = field.type
                     # Unwrap NonNull and List wrappers
@@ -97,7 +102,7 @@ class GraphQLSchemaReducer:
         all_invalid_fields = (invalid_fields or set()).union(additional_invalid_fields)
 
         for type_, key in all_invalid_fields:
-            if hasattr(type_, 'fields') and key in type_.fields:
+            if hasattr(type_, "fields") and key in type_.fields:
                 del type_.fields[key]
 
         for key, value in dict(mapper.registry).items():
@@ -116,13 +121,16 @@ class GraphQLSchemaReducer:
         # Apply filtering to mutation schema first
         if filters:
             invalid_types, invalid_fields = GraphQLSchemaReducer.invalid(
-                root_type=mutation, filters=filters, meta=mapper.meta, preserve_transitive=preserve_transitive
+                root_type=mutation,
+                filters=filters,
+                meta=mapper.meta,
+                preserve_transitive=preserve_transitive,
             )
 
             # Remove fields that reference invalid types
             additional_invalid_fields = set()
             for type_ in list(mapper.registry.values()):
-                if hasattr(type_, 'fields'):
+                if hasattr(type_, "fields"):
                     for field_name, field in list(type_.fields.items()):
                         field_type = field.type
                         # Unwrap NonNull and List wrappers
@@ -133,10 +141,12 @@ class GraphQLSchemaReducer:
                             additional_invalid_fields.add((type_, field_name))
 
             # Combine all invalid fields
-            all_invalid_fields = (invalid_fields or set()).union(additional_invalid_fields)
+            all_invalid_fields = (invalid_fields or set()).union(
+                additional_invalid_fields
+            )
 
             for type_, key in all_invalid_fields:
-                if hasattr(type_, 'fields') and key in type_.fields:
+                if hasattr(type_, "fields") and key in type_.fields:
                     del type_.fields[key]
 
             for key, value in dict(mapper.registry).items():
@@ -291,7 +301,9 @@ class GraphQLSchemaReducer:
 
                 if filters:
                     for field_filter in filters:
-                        filter_response = field_filter.filter_field(field_name, field_meta)
+                        filter_response = field_filter.filter_field(
+                            field_name, field_meta
+                        )
                         if filter_response.should_filter:
                             invalid_fields.add((root_type, key))
 
@@ -350,16 +362,16 @@ class GraphQLSchemaReducer:
         types_with_valid_fields = set()
         all_object_types = set()
         type_field_refs = {}  # Maps (parent_type, child_type) -> [(field_name, field)]
-        
+
         def collect_type_info(current_type, current_checked=None):
             if current_checked is None:
                 current_checked = set()
-                
+
             if current_type in current_checked:
                 return
-                
+
             current_checked.add(current_type)
-            
+
             try:
                 fields = current_type.fields
             except (AssertionError, GraphQLTypeMapError):
@@ -390,22 +402,29 @@ class GraphQLSchemaReducer:
                         type_ = type_.of_type
 
                     field_name = to_snake_case(key)
-                    field_meta = meta.get((current_type.name, field_name), {}) if meta else {}
+                    field_meta = (
+                        meta.get((current_type.name, field_name), {}) if meta else {}
+                    )
 
                     field_is_filtered = False
                     if filters:
                         for field_filter in filters:
-                            filter_response = field_filter.filter_field(field_name, field_meta)
+                            filter_response = field_filter.filter_field(
+                                field_name, field_meta
+                            )
                             if filter_response.should_filter:
                                 invalid_fields.add((current_type, key))
                                 field_is_filtered = True
                                 break
-                    
+
                     if not field_is_filtered:
                         has_valid_fields = True
 
                     # Track field references between types (only for unfiltered fields)
-                    if isinstance(type_, (GraphQLInterfaceType, GraphQLObjectType)) and not field_is_filtered:
+                    if (
+                        isinstance(type_, (GraphQLInterfaceType, GraphQLObjectType))
+                        and not field_is_filtered
+                    ):
                         if (current_type, type_) not in type_field_refs:
                             type_field_refs[(current_type, type_)] = []
                         type_field_refs[(current_type, type_)].append((key, field))
@@ -418,25 +437,25 @@ class GraphQLSchemaReducer:
 
         # Start the recursive collection
         collect_type_info(root_type)
-        
+
         # Second pass: find types that should be preserved
         # A type should be preserved if:
         # 1. It has valid fields, OR
         # 2. It's reachable from a type with valid fields AND it will have at least one field after filtering
         preservable_types = set(types_with_valid_fields)
-        
+
         def mark_preservable_types(current_type, visited=None):
             if visited is None:
                 visited = set()
-                
+
             if current_type in visited:
                 return
-                
+
             visited.add(current_type)
             preservable_types.add(current_type)
-            
+
             # Traverse to all child types referenced by unfiltered fields
-            for (parent, child) in type_field_refs:
+            for parent, child in type_field_refs:
                 if parent == current_type and child not in visited:
                     # Only preserve the child if it will have at least one accessible field
                     # (GraphQL requires object types to have at least one field)
@@ -449,14 +468,14 @@ class GraphQLSchemaReducer:
                                 break
                     except (AssertionError, GraphQLTypeMapError):
                         pass
-                    
+
                     if child_will_have_fields:
                         mark_preservable_types(child, visited.copy())
-                        
+
         # Start from types with valid fields and mark all reachable types as preservable
         for type_with_valid_fields in list(types_with_valid_fields):
             mark_preservable_types(type_with_valid_fields)
-        
+
         # Third pass: mark types as invalid only if they're not preservable
         for obj_type in all_object_types:
             if obj_type not in preservable_types and obj_type not in invalid_types:

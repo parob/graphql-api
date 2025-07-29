@@ -130,7 +130,7 @@ def middleware_field_context(next_, root, info, **args):
     kwargs = {}
     if return_type and isinstance(return_type, GraphQLObjectType):
         sub_loc = info.field_nodes[0].selection_set.loc
-        kwargs["query"] = sub_loc.source.body[sub_loc.start:sub_loc.end]
+        kwargs["query"] = sub_loc.source.body[sub_loc.start: sub_loc.end]
 
     info.context.field = GraphQLFieldContext(meta=field_meta, **kwargs)
 

@@ -2,8 +2,7 @@ import enum
 from typing import List, Optional, Union
 
 import pytest
-from graphql import (DirectiveLocation, GraphQLArgument, GraphQLDirective,
-                     GraphQLString)
+from graphql import DirectiveLocation, GraphQLArgument, GraphQLDirective, GraphQLString
 
 from graphql_api import AppliedDirective, GraphQLAPI, field, type
 from graphql_api.directives import SchemaDirective, deprecated, print_schema

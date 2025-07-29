@@ -283,8 +283,8 @@ class TestSchemaFiltering:
 
         # Create API with filter that removes admin fields using strict mode (preserve_transitive=False)
         filtered_api = GraphQLAPI(
-            root_type=Root, 
-            filters=[TagFilter(tags=["admin"], preserve_transitive=False)]
+            root_type=Root,
+            filters=[TagFilter(tags=["admin"], preserve_transitive=False)],
         )
         executor = filtered_api.executor()
 
@@ -338,7 +338,7 @@ class TestSchemaFiltering:
             @field({"tags": ["admin"]})
             def admin_only_field(self) -> str:
                 return "admin-only"
-            
+
             @field  # This field remains accessible
             def public_field(self) -> str:
                 return "public data"
@@ -347,7 +347,7 @@ class TestSchemaFiltering:
             @field
             def public_field(self) -> str:
                 return "public"
-            
+
             @field
             def partial_ref(self) -> PartiallyFiltered:
                 return PartiallyFiltered()
@@ -360,43 +360,50 @@ class TestSchemaFiltering:
         # Test with preserve_transitive=True (default)
         preserve_api = GraphQLAPI(
             root_type=Root,
-            filters=[TagFilter(tags=["admin"], preserve_transitive=True)]
+            filters=[TagFilter(tags=["admin"], preserve_transitive=True)],
         )
-        
+
         # Build schema and verify PartiallyFiltered is preserved
         schema, _ = preserve_api.build_schema()
         type_map = schema.type_map
-        
+
         assert "HasValidFields" in type_map
-        assert "PartiallyFiltered" in type_map  # Should be preserved because it has accessible fields!
-        
+        assert (
+            "PartiallyFiltered" in type_map
+        )  # Should be preserved because it has accessible fields!
+
         # Verify the reference field is preserved
         from graphql import GraphQLObjectType
+
         has_valid_fields_type = type_map["HasValidFields"]
         assert isinstance(has_valid_fields_type, GraphQLObjectType)
         assert "publicField" in has_valid_fields_type.fields
-        assert "partialRef" in has_valid_fields_type.fields  # Reference should be preserved
-        
+        assert (
+            "partialRef" in has_valid_fields_type.fields
+        )  # Reference should be preserved
+
         # Verify PartiallyFiltered has one accessible field (admin field filtered out)
         partial_type = type_map["PartiallyFiltered"]
         assert isinstance(partial_type, GraphQLObjectType)
         assert len(partial_type.fields) == 1  # One accessible field
         assert "adminOnlyField" not in partial_type.fields  # Filtered field removed
         assert "publicField" in partial_type.fields  # Public field preserved
-        
+
         # Compare with preserve_transitive=False - in this case, both modes should preserve the type
         # because it has accessible fields
         strict_api = GraphQLAPI(
             root_type=Root,
-            filters=[TagFilter(tags=["admin"], preserve_transitive=False)]
+            filters=[TagFilter(tags=["admin"], preserve_transitive=False)],
         )
-        
+
         strict_schema, _ = strict_api.build_schema()
         strict_type_map = strict_schema.type_map
-        
+
         assert "HasValidFields" in strict_type_map
-        assert "PartiallyFiltered" in strict_type_map  # Should also be preserved in strict mode
-        
+        assert (
+            "PartiallyFiltered" in strict_type_map
+        )  # Should also be preserved in strict mode
+
         # Verify the behavior is the same since the type has accessible fields
         strict_partial_type = strict_type_map["PartiallyFiltered"]
         assert isinstance(strict_partial_type, GraphQLObjectType)
@@ -422,7 +429,7 @@ class TestSchemaFiltering:
             @field
             def public_info(self) -> str:
                 return "public"
-            
+
             # This creates a transitive reference
             @field
             def indirect_ref(self) -> IndirectlyReferenced:
@@ -437,19 +444,21 @@ class TestSchemaFiltering:
         preserve_api = GraphQLAPI(root_type=Root)
         preserve_schema, _ = preserve_api.build_schema()
         preserve_type_map = preserve_schema.type_map
-        
+
         # Both types should be preserved
         assert "DirectlyReferenced" in preserve_type_map
         assert "IndirectlyReferenced" in preserve_type_map
-        
+
         # Test preserve_transitive=False
         strict_api = GraphQLAPI(
             root_type=Root,
-            filters=[TagFilter(tags=[], preserve_transitive=False)]  # Empty filter with strict behavior
+            filters=[
+                TagFilter(tags=[], preserve_transitive=False)
+            ],  # Empty filter with strict behavior
         )
         strict_schema, _ = strict_api.build_schema()
         strict_type_map = strict_schema.type_map
-        
+
         # Both types should also be preserved in this case since no filtering is applied
         # and both types have accessible fields
         assert "DirectlyReferenced" in strict_type_map
@@ -476,17 +485,25 @@ class TestSchemaFiltering:
         # Test default behavior (TagFilter should default to preserve_transitive=True)
         api_default = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=[])])
         schema_default, _ = api_default.build_schema()
-        
+
         # Test explicit preserve_transitive=True
-        api_preserve = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=[], preserve_transitive=True)])
+        api_preserve = GraphQLAPI(
+            root_type=Root, filters=[TagFilter(tags=[], preserve_transitive=True)]
+        )
         schema_preserve, _ = api_preserve.build_schema()
-        
+
         # Both should have the same types
-        default_types = {name for name, type_obj in schema_default.type_map.items() 
-                        if hasattr(type_obj, 'fields') and not name.startswith('_')}
-        preserve_types = {name for name, type_obj in schema_preserve.type_map.items() 
-                         if hasattr(type_obj, 'fields') and not name.startswith('_')}
-        
+        default_types = {
+            name
+            for name, type_obj in schema_default.type_map.items()
+            if hasattr(type_obj, "fields") and not name.startswith("_")
+        }
+        preserve_types = {
+            name
+            for name, type_obj in schema_preserve.type_map.items()
+            if hasattr(type_obj, "fields") and not name.startswith("_")
+        }
+
         assert default_types == preserve_types
         assert "ReferencedType" in default_types
         assert "Root" in default_types
@@ -496,19 +513,19 @@ class TestSchemaFiltering:
         Test that the FilterResponse enum has correct properties
         """
         from graphql_api.reduce import FilterResponse
-        
+
         # Test ALLOW - keep field, don't preserve transitive
         assert not FilterResponse.ALLOW.should_filter
         assert not FilterResponse.ALLOW.preserve_transitive
-        
+
         # Test ALLOW_TRANSITIVE - keep field, preserve transitive
         assert not FilterResponse.ALLOW_TRANSITIVE.should_filter
         assert FilterResponse.ALLOW_TRANSITIVE.preserve_transitive
-        
+
         # Test REMOVE - remove field, preserve transitive
         assert FilterResponse.REMOVE.should_filter
         assert FilterResponse.REMOVE.preserve_transitive
-        
+
         # Test REMOVE_STRICT - remove field, don't preserve transitive
         assert FilterResponse.REMOVE_STRICT.should_filter
         assert not FilterResponse.REMOVE_STRICT.preserve_transitive
@@ -523,18 +540,22 @@ class TestSchemaFiltering:
         class AllBehaviorsFilter(TagFilter):
             def __init__(self):
                 super().__init__(tags=[], preserve_transitive=True)
-            
+
             def filter_field(self, name: str, meta: dict) -> FilterResponse:
                 tags = meta.get("tags", [])
-                
+
                 if "allow" in tags:
                     return FilterResponse.ALLOW  # Keep field, don't preserve transitive
                 elif "allow_transitive" in tags:
-                    return FilterResponse.ALLOW_TRANSITIVE  # Keep field, preserve transitive
+                    return (
+                        FilterResponse.ALLOW_TRANSITIVE
+                    )  # Keep field, preserve transitive
                 elif "remove" in tags:
                     return FilterResponse.REMOVE  # Remove field, preserve transitive
                 elif "remove_strict" in tags:
-                    return FilterResponse.REMOVE_STRICT  # Remove field, don't preserve transitive
+                    return (
+                        FilterResponse.REMOVE_STRICT
+                    )  # Remove field, don't preserve transitive
                 else:
                     return FilterResponse.ALLOW_TRANSITIVE  # Default behavior
 
@@ -542,15 +563,15 @@ class TestSchemaFiltering:
             @field({"tags": ["allow"]})
             def allow_field(self) -> str:
                 return "allow"
-            
+
             @field({"tags": ["allow_transitive"]})
             def allow_transitive_field(self) -> str:
                 return "allow_transitive"
-            
+
             @field({"tags": ["remove"]})
             def remove_field(self) -> str:
                 return "remove"
-            
+
             @field({"tags": ["remove_strict"]})
             def remove_strict_field(self) -> str:
                 return "remove_strict"
@@ -559,15 +580,15 @@ class TestSchemaFiltering:
             @field({"tags": ["allow"]})
             def allow_ref(self) -> ReferencedType:
                 return ReferencedType()
-            
+
             @field({"tags": ["allow_transitive"]})
             def allow_transitive_ref(self) -> ReferencedType:
                 return ReferencedType()
-            
+
             @field({"tags": ["remove"]})
             def remove_ref(self) -> ReferencedType:
                 return ReferencedType()
-            
+
             @field({"tags": ["remove_strict"]})
             def remove_strict_ref(self) -> ReferencedType:
                 return ReferencedType()
@@ -580,22 +601,23 @@ class TestSchemaFiltering:
         # Verify schema structure
         assert schema.query_type is not None
         root_fields = schema.query_type.fields
-        
+
         # ALLOW and ALLOW_TRANSITIVE should keep the fields
         assert "allowRef" in root_fields
         assert "allowTransitiveRef" in root_fields
-        
+
         # REMOVE and REMOVE_STRICT should remove the fields
         assert "removeRef" not in root_fields
         assert "removeStrictRef" not in root_fields
-        
+
         # ReferencedType should still exist (preserved by ALLOW_TRANSITIVE and REMOVE behaviors)
         assert "ReferencedType" in schema.type_map
-        
+
         from graphql import GraphQLObjectType
+
         referenced_type = schema.type_map["ReferencedType"]
         assert isinstance(referenced_type, GraphQLObjectType)
-        
+
         # Only ALLOW and ALLOW_TRANSITIVE fields should remain in ReferencedType
         assert "allowField" in referenced_type.fields
         assert "allowTransitiveField" in referenced_type.fields
@@ -603,7 +625,8 @@ class TestSchemaFiltering:
         assert "removeStrictField" not in referenced_type.fields
 
         # Test queries work for allowed fields
-        result = executor.execute("""
+        result = executor.execute(
+            """
             query TestAllowed {
                 allowRef {
                     allowField
@@ -614,18 +637,19 @@ class TestSchemaFiltering:
                     allowTransitiveField
                 }
             }
-        """)
-        
+        """
+        )
+
         assert not result.errors
         expected = {
             "allowRef": {
                 "allowField": "allow",
-                "allowTransitiveField": "allow_transitive"
+                "allowTransitiveField": "allow_transitive",
             },
             "allowTransitiveRef": {
                 "allowField": "allow",
-                "allowTransitiveField": "allow_transitive"
-            }
+                "allowTransitiveField": "allow_transitive",
+            },
         }
         assert result.data == expected
 
@@ -790,9 +814,7 @@ class TestSchemaFiltering:
         """
         result = executor.execute(test_query)
         assert not result.errors
-        expected = {
-            "dog": {"name": "Buddy", "breed": "Golden Retriever"}
-        }
+        expected = {"dog": {"name": "Buddy", "breed": "Golden Retriever"}}
         assert result.data == expected
 
         # Should fail for vet fields
@@ -903,11 +925,9 @@ class TestSchemaFiltering:
                     "bio": "Software developer",
                     "contact": {
                         "email": "user@example.com",
-                        "address": {
-                            "street": "123 Main St"
-                        }
-                    }
-                }
+                        "address": {"street": "123 Main St"},
+                    },
+                },
             }
         }
         assert result.data == expected
@@ -977,7 +997,9 @@ class TestSchemaFiltering:
                 return [Post()]
 
         # Test with internal and admin filters
-        filtered_api = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=["internal", "admin"])])
+        filtered_api = GraphQLAPI(
+            root_type=Root, filters=[TagFilter(tags=["internal", "admin"])]
+        )
         executor = filtered_api.executor()
 
         # Should work for non-filtered list/optional fields
@@ -998,7 +1020,7 @@ class TestSchemaFiltering:
             "post": {
                 "title": "My Post",
                 "tags": [{"name": "python"}, {"name": "graphql"}],
-                "optionalSummary": None
+                "optionalSummary": None,
             }
         }
         assert result.data == expected
@@ -1089,7 +1111,7 @@ class TestSchemaFiltering:
         assert not result.errors
         expected = {
             "content": {"title": "Public Content", "content": "This is public"},
-            "mixedContent": {"publicField": "Public"}
+            "mixedContent": {"publicField": "Public"},
         }
         assert result.data == expected
 
@@ -1122,10 +1144,14 @@ class TestSchemaFiltering:
                 parent_response = super().filter_field(name, meta)
                 if parent_response.should_filter:
                     return parent_response
-                
+
                 # Filter fields starting with 'internal_'
-                if name.startswith('internal_'):
-                    return FilterResponse.REMOVE if self.preserve_transitive else FilterResponse.REMOVE_STRICT
+                if name.startswith("internal_"):
+                    return (
+                        FilterResponse.REMOVE
+                        if self.preserve_transitive
+                        else FilterResponse.REMOVE_STRICT
+                    )
                 else:
                     return FilterResponse.ALLOW_TRANSITIVE
 
@@ -1152,7 +1178,9 @@ class TestSchemaFiltering:
                 return Data()
 
         # Test with custom filter
-        filtered_api = GraphQLAPI(root_type=Root, filters=[CustomFilter(tags=["admin"])])
+        filtered_api = GraphQLAPI(
+            root_type=Root, filters=[CustomFilter(tags=["admin"])]
+        )
         executor = filtered_api.executor()
 
         # Should be able to query public data
@@ -1272,8 +1300,8 @@ class TestSchemaFiltering:
 
     def test_recursive_object_type_preservation(self):
         """
-        Test that object types on fields of unfiltered objects (recursive) 
-        are still left on the schema, even if the referenced types would 
+        Test that object types on fields of unfiltered objects (recursive)
+        are still left on the schema, even if the referenced types would
         otherwise be filtered out, as long as the referenced types have at least one accessible field.
         """
         from graphql_api.reduce import TagFilter
@@ -1284,7 +1312,7 @@ class TestSchemaFiltering:
             @field({"tags": ["admin"]})
             def secret_key(self) -> str:
                 return "secret"
-            
+
             @field  # This field will remain accessible
             def public_setting(self) -> str:
                 return "public setting"
@@ -1294,7 +1322,7 @@ class TestSchemaFiltering:
             @field
             def public_setting(self) -> str:
                 return "public"
-            
+
             @field
             def deep_config(self) -> DeepConfig:
                 return DeepConfig()
@@ -1304,7 +1332,7 @@ class TestSchemaFiltering:
             @field
             def app_name(self) -> str:
                 return "MyApp"
-            
+
             @field
             def middle_config(self) -> MiddleConfig:
                 return MiddleConfig()
@@ -1317,36 +1345,36 @@ class TestSchemaFiltering:
         # Create filtered API that removes admin fields using preserve_transitive=True (default)
         filtered_api = GraphQLAPI(
             root_type=Root,
-            filters=[TagFilter(tags=["admin"], preserve_transitive=True)]
+            filters=[TagFilter(tags=["admin"], preserve_transitive=True)],
         )
-        
+
         # Build the schema to check its structure
         schema, _ = filtered_api.build_schema()
         type_map = schema.type_map
-        
-        # All object types should be preserved because they're reachable 
+
+        # All object types should be preserved because they're reachable
         # from unfiltered fields and DeepConfig has at least one accessible field
         assert "AppConfig" in type_map
         assert "MiddleConfig" in type_map
         assert "DeepConfig" in type_map  # This should be preserved!
-        
+
         # Verify that the fields referencing these types are preserved
         assert schema.query_type is not None
         root_fields = schema.query_type.fields
         assert "config" in root_fields
-        
+
         from graphql import GraphQLObjectType
-        
+
         app_config_type = type_map["AppConfig"]
         assert isinstance(app_config_type, GraphQLObjectType)
         assert "appName" in app_config_type.fields
         assert "middleConfig" in app_config_type.fields
-        
+
         middle_config_type = type_map["MiddleConfig"]
         assert isinstance(middle_config_type, GraphQLObjectType)
         assert "publicSetting" in middle_config_type.fields
         assert "deepConfig" in middle_config_type.fields  # This should be preserved!
-        
+
         # DeepConfig should exist with accessible fields (admin field filtered out)
         deep_config_type = type_map["DeepConfig"]
         assert isinstance(deep_config_type, GraphQLObjectType)
@@ -1355,10 +1383,11 @@ class TestSchemaFiltering:
         # But the public field should remain
         assert "publicSetting" in deep_config_type.fields
         assert len(deep_config_type.fields) == 1
-        
+
         # Test that queries work for the preserved structure
         executor = filtered_api.executor()
-        result = executor.execute("""
+        result = executor.execute(
+            """
             query GetConfig {
                 config {
                     appName
@@ -1370,18 +1399,17 @@ class TestSchemaFiltering:
                     }
                 }
             }
-        """)
-        
+        """
+        )
+
         assert not result.errors
         expected = {
             "config": {
                 "appName": "MyApp",
                 "middleConfig": {
                     "publicSetting": "public",
-                    "deepConfig": {
-                        "publicSetting": "public setting"
-                    }
-                }
+                    "deepConfig": {"publicSetting": "public setting"},
+                },
             }
         }
         assert result.data == expected

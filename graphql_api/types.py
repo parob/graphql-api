@@ -6,8 +6,13 @@ import enum
 
 from typing import Any, Dict, List, Optional, Type, Union
 
-from graphql import (GraphQLEnumType, GraphQLScalarType, StringValueNode,
-                     Undefined, ValueNode)
+from graphql import (
+    GraphQLEnumType,
+    GraphQLScalarType,
+    StringValueNode,
+    Undefined,
+    ValueNode,
+)
 from graphql.language import ast
 
 
