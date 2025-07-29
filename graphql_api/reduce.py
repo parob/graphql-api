@@ -47,7 +47,9 @@ class TagFilter(GraphQLFilter):
         self, tags: Optional[List[str]] = None, preserve_transitive: bool = True
     ):
         self.tags = tags or []
-        self.preserve_transitive = preserve_transitive  # Used internally for FilterResponse logic
+        self.preserve_transitive = (
+            preserve_transitive  # Used internally for FilterResponse logic
+        )
 
     def filter_field(self, name: str, meta: dict) -> FilterResponse:
         should_filter = False
@@ -190,7 +192,7 @@ class GraphQLSchemaReducer:
         # Remove query fields from mutable types that are flagged to resolve to mutable
         # Only remove query fields from types that are actually being returned as mutable types (resolve_to_mutable: True)
         mutable_return_types = set()
-        
+
         # Find all types that are returned by fields with resolve_to_mutable: True
         for type_, key, field in iterate_fields(mutation):
             meta = mapper.meta.get((type_.name, to_snake_case(key)), {})
@@ -200,7 +202,7 @@ class GraphQLSchemaReducer:
                 while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
                     field_type = field_type.of_type
                 mutable_return_types.add(field_type)
-        
+
         # Remove query fields only from types that are meant to be mutable returns
         fields_to_remove = set()
         for type_ in mutable_return_types:
@@ -221,22 +223,35 @@ class GraphQLSchemaReducer:
                 del type_.fields[key]
 
         # Clean up federation types from mutation schema - they should only exist in queries
-        federation_cleanup_keys = []
-        for key, value in dict(mapper.registry).items():
-            if hasattr(value, 'name'):
-                type_name = value.name
-                if type_name in ['_Service', '_ServiceMutable', '_Entity', '_EntityMutable', '_Any', '_AnyMutable']:
-                    federation_cleanup_keys.append(key)
+        # Only run this cleanup when federation is enabled to avoid unnecessary processing
+        if (
+            hasattr(mapper, "schema")
+            and mapper.schema
+            and getattr(mapper.schema, "federation", False)
+        ):
+            federation_cleanup_keys = []
+            for key, value in dict(mapper.registry).items():
+                if hasattr(value, "name"):
+                    type_name = value.name
+                    if type_name in [
+                        "_Service",
+                        "_ServiceMutable",
+                        "_Entity",
+                        "_EntityMutable",
+                        "_Any",
+                        "_AnyMutable",
+                    ]:
+                        federation_cleanup_keys.append(key)
 
-        for key in federation_cleanup_keys:
-            if key in mapper.registry:
-                del mapper.registry[key]
+            for key in federation_cleanup_keys:
+                if key in mapper.registry:
+                    del mapper.registry[key]
 
-        # Also remove federation fields from mutation root
-        if hasattr(mutation, 'fields'):
-            for field_name in ['_service', '_entities']:
-                if field_name in mutation.fields:
-                    del mutation.fields[field_name]
+            # Also remove federation fields from mutation root
+            if hasattr(mutation, "fields"):
+                for field_name in ["_service", "_entities"]:
+                    if field_name in mutation.fields:
+                        del mutation.fields[field_name]
 
         return mutation
 
@@ -287,18 +302,18 @@ class GraphQLSchemaReducer:
         # First, traverse the schema and collect all FilterResponse values
         # to determine the overall preservation behavior
         preserve_transitive = False
-        
+
         def collect_filter_responses(current_type, current_checked=None):
             nonlocal preserve_transitive
-            
+
             if current_checked is None:
                 current_checked = set()
-                
+
             if current_type in current_checked:
                 return
-                
+
             current_checked.add(current_type)
-            
+
             try:
                 fields = current_type.fields
             except (AssertionError, GraphQLTypeMapError):
@@ -333,7 +348,7 @@ class GraphQLSchemaReducer:
                             filter_response = field_filter.filter_field(
                                 field_name, field_meta
                             )
-                            # If any filter response wants to preserve transitive, 
+                            # If any filter response wants to preserve transitive,
                             # use preserve_transitive logic for the entire schema
                             if filter_response.preserve_transitive:
                                 preserve_transitive = True
@@ -343,7 +358,7 @@ class GraphQLSchemaReducer:
 
         # Collect all filter responses to determine overall behavior
         collect_filter_responses(root_type)
-        
+
         # Now use the appropriate existing method based on the collected responses
         if preserve_transitive:
             return GraphQLSchemaReducer._invalid_preserve_transitive(

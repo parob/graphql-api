@@ -664,10 +664,10 @@ class TestSchemaFiltering:
 
         class CustomFilter(GraphQLFilter):
             """Custom filter without preserve_transitive attribute"""
-            
+
             def filter_field(self, name: str, meta: dict) -> FilterResponse:
                 tags = meta.get("tags", [])
-                
+
                 if "private" in tags:
                     return FilterResponse.REMOVE_STRICT  # Remove without preservation
                 elif "admin" in tags:
@@ -679,11 +679,11 @@ class TestSchemaFiltering:
             @field
             def public_field(self) -> str:
                 return "public"
-            
+
             @field({"tags": ["private"]})
             def private_field(self) -> str:
                 return "private"
-            
+
             @field({"tags": ["admin"]})
             def admin_field(self) -> str:
                 return "admin"
@@ -701,23 +701,26 @@ class TestSchemaFiltering:
         # Verify schema structure
         assert "DataType" in schema.type_map
         from graphql import GraphQLObjectType
+
         data_type = schema.type_map["DataType"]
         assert isinstance(data_type, GraphQLObjectType)
-        
+
         # Should have public field but not private/admin fields
         assert "publicField" in data_type.fields
         assert "privateField" not in data_type.fields
         assert "adminField" not in data_type.fields
 
         # Test query execution
-        result = executor.execute("""
+        result = executor.execute(
+            """
             query TestQuery {
                 data {
                     publicField
                 }
             }
-        """)
-        
+        """
+        )
+
         assert not result.errors
         assert result.data == {"data": {"publicField": "public"}}
 
@@ -725,7 +728,7 @@ class TestSchemaFiltering:
         """
         Test that mutable object types that are not used from the root mutation type are filtered out.
         Only mutable types that are actually reachable from the root should remain in the schema.
-        
+
         This test verifies that:
         1. Unused mutable types (UnusedMutableType, AnotherUnusedMutableType) are not included in the schema
         2. Used mutable types (UsedMutableType) are correctly included
@@ -736,6 +739,7 @@ class TestSchemaFiltering:
 
         class UsedMutableType:
             """This type will be referenced from the root mutation"""
+
             def __init__(self):
                 self._value = "used"
 
@@ -750,6 +754,7 @@ class TestSchemaFiltering:
 
         class UnusedMutableType:
             """This type will NOT be referenced from the root mutation"""
+
             def __init__(self):
                 self._data = "unused"
 
@@ -764,6 +769,7 @@ class TestSchemaFiltering:
 
         class AnotherUnusedMutableType:
             """Another unused mutable type to make the test more comprehensive"""
+
             def __init__(self):
                 self._info = "also unused"
 
@@ -795,15 +801,15 @@ class TestSchemaFiltering:
 
         # Check that only used types are in the schema
         type_map = schema.type_map
-        
+
         # UsedMutableType should be present (both in query and mutation forms)
         assert "UsedMutableType" in type_map
         assert "UsedMutableTypeMutable" in type_map
-        
+
         # UnusedMutableType should NOT be present in either form
         assert "UnusedMutableType" not in type_map
         assert "UnusedMutableTypeMutable" not in type_map
-        
+
         # AnotherUnusedMutableType should NOT be present in either form
         assert "AnotherUnusedMutableType" not in type_map
         assert "AnotherUnusedMutableTypeMutable" not in type_map
@@ -811,18 +817,19 @@ class TestSchemaFiltering:
         # Verify the mutation schema only contains used types
         mutation_type = schema.mutation_type
         assert mutation_type is not None
-        
+
         # Should have create_used_object mutation field
         assert "createUsedObject" in mutation_type.fields
-        
+
         # Should be able to access the used object's mutable methods
         assert "usedObject" in mutation_type.fields
-        
+
         # Test that mutation operations work correctly
         executor = api.executor()
-        
+
         # Test creating and updating the used object
-        result = executor.execute("""
+        result = executor.execute(
+            """
             mutation TestMutation {
                 createUsedObject(value: "test") {
                     updateValue(newValue: "updated") {
@@ -830,21 +837,19 @@ class TestSchemaFiltering:
                     }
                 }
             }
-        """)
-        
+        """
+        )
+
         assert not result.errors
         assert result.data == {
-            "createUsedObject": {
-                "updateValue": {
-                    "value": "updated"
-                }
-            }
+            "createUsedObject": {"updateValue": {"value": "updated"}}
         }
 
         # Test that we can't access unused types (they shouldn't exist in the schema)
         # This mutation should fail at schema build time, not execution time
         try:
-            bad_result = executor.execute("""
+            _ = executor.execute(
+                """
                 mutation BadMutation {
                     unusedObject {
                         updateData(newData: "test") {
@@ -852,7 +857,8 @@ class TestSchemaFiltering:
                         }
                     }
                 }
-            """)
+            """
+            )
             # If we get here, the unused type wasn't properly filtered out
             assert False, "Unused mutable type should not be accessible in mutations"
         except Exception:
