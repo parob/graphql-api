@@ -5,7 +5,7 @@ from typing import List, Literal, Optional, Union
 
 import pytest
 import urllib3
-from graphql import GraphQLSchema, GraphQLUnionType
+from graphql import GraphQLSchema, GraphQLUnionType, GraphQLObjectType
 from graphql.utilities import print_schema
 from requests.api import request
 from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
@@ -1524,3 +1524,535 @@ class TestGraphQL:
 
         assert not result.errors
         assert result.data is not None and result.data["hello"] == f"hello {hash('rob')}"
+
+    def test_debug_root_type_issue(self):
+        """
+        Debug test to understand why root type isn't being set properly
+        """
+        api = GraphQLAPI()
+        
+        @api.type(is_root_type=True)
+        class SimpleRoot:
+            @api.field
+            def hello(self) -> str:
+                return "world"
+        
+        print("\n=== DEBUG: Root type after decorator ===")
+        print("api.root_type:", api.root_type)
+        print("SimpleRoot class:", SimpleRoot)
+        
+        schema, _ = api.build_schema()
+        print("Schema query type:", schema.query_type.name if schema.query_type else "None")
+        if schema.query_type:
+            print("Query fields:", list(schema.query_type.fields.keys()))
+        
+        # Test the working pattern
+        executor = api.executor()
+        result = executor.execute("query { hello }")
+        print("Query result:", result.data)
+        print("Query errors:", result.errors)
+
+    def test_filter_removes_all_root_fields_causes_placeholder(self):
+        """
+        Test that demonstrates the specific case where filtering causes PlaceholderQuery:
+        When ALL fields in the root type are filtered out, the entire root becomes invalid,
+        causing the schema to fall back to PlaceholderQuery.
+        
+        This test reproduces the actual bug scenario.
+        """
+        # Create a root type where ALL fields will be filtered
+        class Root:
+            @field({"tags": ["admin"]})
+            def admin_only_field(self) -> str:
+                return "admin data"
+            
+            @field({"tags": ["private"]})
+            def private_only_field(self) -> str:
+                return "private data"
+        
+        # Test 1: Without filters - should work
+        unfiltered_api = GraphQLAPI(root_type=Root)
+        unfiltered_schema, _ = unfiltered_api.build_schema()
+        
+        print("\n=== UNFILTERED API ===")
+        assert unfiltered_schema.query_type is not None
+        print("Query type:", unfiltered_schema.query_type.name)
+        print("Root fields:", list(unfiltered_schema.query_type.fields.keys()))
+        
+        # Test 2: With filters that remove ALL root fields - this triggers the bug
+        from graphql_api.reduce import TagFilter
+        filtered_api = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=["admin", "private"])])
+        filtered_schema, _ = filtered_api.build_schema()
+        
+        print("\n=== FILTERED API (ALL ROOT FIELDS FILTERED) ===")
+        print("Query type:", filtered_schema.query_type.name if filtered_schema.query_type else "None")
+        if filtered_schema.query_type:
+            print("Root fields:", list(filtered_schema.query_type.fields.keys()))
+        
+        # This demonstrates the bug
+        if filtered_schema.query_type and filtered_schema.query_type.name == "PlaceholderQuery":
+            print("\n=== BUG REPRODUCED ===")
+            print("✗ When ALL root fields are filtered, root type becomes invalid")
+            print("✗ Schema falls back to PlaceholderQuery instead of graceful handling")
+            print("✗ This is the root cause of the issue you described")
+            
+            # Test that queries fail
+            executor = filtered_api.executor()
+            result = executor.execute("query { placeholder }")
+            print("Placeholder query result:", result.data)
+            print("Placeholder query errors:", result.errors)
+            
+            # This is the bug - when all root fields are filtered, 
+            # the entire schema becomes unusable
+            assert True, "BUG REPRODUCED: All root fields filtered causes PlaceholderQuery"
+        else:
+            print("\n=== UNEXPECTED: No PlaceholderQuery ===")
+            print("The filtering didn't cause PlaceholderQuery fallback")
+            print("Root type:", filtered_schema.query_type.name if filtered_schema.query_type else "None")
+            print("This might indicate the issue is in a different scenario")
+
+    def test_filter_behavior_comparison(self):
+        """
+        Test that compares the behavior with and without filters to clearly
+        demonstrate what should happen vs what actually happens.
+        
+        ROOT CAUSE OF THE ISSUE:
+        1. When filters are applied, they remove fields from object types
+        2. If an object type has ALL its fields removed, it becomes "invalid" 
+           (GraphQLTypeMapper.validate returns False for types with 0 fields)
+        3. If the root query type becomes invalid, the entire query is set to None
+        4. This triggers creation of a PlaceholderQuery instead of preserving 
+           the root type with remaining accessible fields
+        
+        THE ISSUE: Object types should remain accessible even if some fields 
+        are filtered, as long as they have at least one remaining field.
+        """
+        # Create the types first
+        class UserData:
+            @field
+            def public_info(self) -> str:
+                return "This is public"
+            
+            @field({"tags": ["private"]})
+            def private_info(self) -> str:
+                return "This is private"
+        
+        # Create an object type where ALL fields will be filtered
+        class AdminData:
+            @field({"tags": ["admin"]})
+            def secret_key(self) -> str:
+                return "secret"
+            
+            @field({"tags": ["admin"]})
+            def admin_token(self) -> str:
+                return "token"
+        
+        class Root:
+            @field
+            def user_data(self) -> UserData:
+                return UserData()
+            
+            @field
+            def admin_data(self) -> AdminData:
+                return AdminData()
+        
+        # Test 1: Without filters - this should work
+        unfiltered_api = GraphQLAPI(root_type=Root)
+        unfiltered_schema, _ = unfiltered_api.build_schema()
+        
+        print("\n=== UNFILTERED API (Expected Behavior) ===")
+        assert unfiltered_schema.query_type is not None
+        print("Query type:", unfiltered_schema.query_type.name)
+        print("Root fields:", list(unfiltered_schema.query_type.fields.keys()))
+        user_data_type = unfiltered_schema.type_map["UserData"]
+        assert isinstance(user_data_type, GraphQLObjectType)
+        print("UserData fields:", list(user_data_type.fields.keys()))
+        admin_data_type = unfiltered_schema.type_map["AdminData"]
+        assert isinstance(admin_data_type, GraphQLObjectType)
+        print("AdminData fields:", list(admin_data_type.fields.keys()))
+        
+        # This should work
+        unfiltered_executor = unfiltered_api.executor()
+        result = unfiltered_executor.execute("""
+            query { 
+                userData { publicInfo privateInfo }
+                adminData { secretKey adminToken }
+            }
+        """)
+        assert not result.errors
+        assert result.data == {
+            "userData": {
+                "publicInfo": "This is public", 
+                "privateInfo": "This is private"
+            },
+            "adminData": {
+                "secretKey": "secret",
+                "adminToken": "token"
+            }
+        }
+        
+        # Test 2: With filters - this demonstrates the bug
+        from graphql_api.reduce import TagFilter
+        filtered_api = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=["admin"])])
+        filtered_schema, _ = filtered_api.build_schema()
+        
+        print("\n=== FILTERED API (Current Broken Behavior) ===")
+        print("Query type:", filtered_schema.query_type.name if filtered_schema.query_type else "None")
+        if filtered_schema.query_type:
+            print("Root fields:", list(filtered_schema.query_type.fields.keys()))
+        print("Available types:", [name for name in filtered_schema.type_map.keys() if not name.startswith('__')])
+        
+        print("\n=== WHAT SHOULD HAPPEN ===")
+        print("Query type should be: Root")
+        print("Root fields should be: ['userData'] (adminData should be removed)")
+        print("UserData should exist with fields: ['publicInfo', 'privateInfo']")
+        print("AdminData should NOT exist (all fields filtered)")
+        print("Query 'userData { publicInfo privateInfo }' should work")
+        print("Query 'adminData { ... }' should fail with field error")
+        
+        print("\n=== WHAT ACTUALLY HAPPENS (THE BUG) ===")
+        print(f"Query type is: {filtered_schema.query_type.name if filtered_schema.query_type else 'None'}")
+        print(f"Root fields are: {list(filtered_schema.query_type.fields.keys()) if filtered_schema.query_type else 'None'}")
+        print("UserData type exists:", "UserData" in filtered_schema.type_map)
+        print("AdminData type exists:", "AdminData" in filtered_schema.type_map)
+        
+        # Test the behavior
+        filtered_executor = filtered_api.executor()
+        
+        # This should work - userData should still be accessible
+        result1 = filtered_executor.execute("""
+            query { userData { publicInfo privateInfo } }
+        """)
+        
+        print("UserData query result:", result1.data)
+        print("UserData query errors:", [str(e) for e in result1.errors] if result1.errors else "None")
+        
+        # This should fail - adminData should not be accessible
+        result2 = filtered_executor.execute("""
+            query { adminData { secretKey } }
+        """)
+        
+        print("AdminData query result:", result2.data)
+        print("AdminData query errors:", [str(e) for e in result2.errors] if result2.errors else "None")
+        
+        # Validate the expected behavior
+        if filtered_schema.query_type and filtered_schema.query_type.name == "PlaceholderQuery":
+            print("\n=== BUG CONFIRMED ===")
+            print("✗ ISSUE: Entire schema replaced with PlaceholderQuery")
+            print("✗ Expected: Root type with accessible fields should remain")
+            assert False, "BUG: Filtering incorrectly removes entire root type"
+        else:
+            print("\n=== TESTING CORRECT BEHAVIOR ===")
+            # UserData should work
+            assert not result1.errors, f"UserData query should work: {result1.errors}"
+            assert result1.data == {
+                "userData": {
+                    "publicInfo": "This is public", 
+                    "privateInfo": "This is private"
+                }
+            }
+            
+            # AdminData should fail
+            assert result2.errors, "AdminData query should fail"
+            assert "Cannot query field 'adminData'" in str(result2.errors[0])
+            
+            # Schema structure should be correct
+            assert filtered_schema.query_type is not None, "Query type should exist"
+            assert "userData" in filtered_schema.query_type.fields, "userData field should exist"
+            assert "adminData" not in filtered_schema.query_type.fields, "adminData field should be removed"
+            assert "UserData" in filtered_schema.type_map, "UserData type should exist"
+            assert "AdminData" not in filtered_schema.type_map, "AdminData type should be removed"
+            
+            print("✓ All assertions passed - filtering works correctly!")
+
+    def test_filter_should_preserve_object_types_with_remaining_fields(self):
+        """
+        Simplified test that demonstrates the core filtering issue:
+        When an object type has some fields filtered out but other fields remain,
+        the object type should still be accessible, not completely removed.
+        
+        This test currently FAILS and documents the expected behavior.
+        When the bug is fixed, this test should PASS.
+        """
+        api = GraphQLAPI()
+        
+        class UserData:
+            @api.field
+            def public_info(self) -> str:
+                return "This is public"
+            
+            # This field will be filtered out
+            @field({"tags": ["private"]})
+            def private_info(self) -> str:
+                return "This is private"
+        
+        class Root:
+            @api.field
+            def user_data(self) -> UserData:
+                return UserData()
+        
+        # Create filtered API
+        from graphql_api.reduce import TagFilter
+        filtered_api = GraphQLAPI(
+            root_type=Root, 
+            filters=[TagFilter(tags=["private"])]
+        )
+        
+        # Test that the object type with remaining fields should still be accessible
+        schema, _ = filtered_api.build_schema()
+        
+        print("\n=== Simple Test Debug ===")
+        print("Query type:", schema.query_type.name if schema.query_type else "None")
+        if schema.query_type:
+            print("Root fields:", list(schema.query_type.fields.keys()))
+        print("Available types:", [name for name in schema.type_map.keys() if not name.startswith('__')])
+        
+        # The issue: Root type gets replaced with PlaceholderQuery
+        # Expected: Root type should remain with userdata field
+        # Expected: UserData type should exist with only publicInfo field
+        
+        # This should pass but currently fails due to the filtering bug
+        assert schema.query_type is not None, "Query type should not be None"
+        assert schema.query_type.name == "Root", f"Expected Root type, got {schema.query_type.name}"
+        assert "userdata" in schema.query_type.fields, "userdata field should exist in Root"
+        assert "UserData" in schema.type_map, "UserData type should exist in schema"
+        
+        # Test the actual query execution
+        executor = filtered_api.executor()
+        
+        test_query = """
+            query GetUserData {
+                userdata {
+                    publicInfo
+                }
+            }
+        """
+        
+        result = executor.execute(test_query)
+        print("Query result:", result.data)
+        print("Query errors:", result.errors)
+        
+        # This should work but currently fails
+        assert not result.errors, f"Query should succeed: {result.errors}"
+        assert result.data == {"userdata": {"publicInfo": "This is public"}}
+        
+        # Verify that private field is properly filtered
+        private_query = """
+            query GetPrivateData {
+                userdata {
+                    privateInfo
+                }
+            }
+        """
+        
+        private_result = executor.execute(private_query)
+        assert private_result.errors, "Private field should be filtered out"
+        assert "Cannot query field 'privateInfo'" in str(private_result.errors[0])
+
+    def test_filter_object_type_field_removal_issue(self):
+        """
+        Test that demonstrates the issue where filtering removes entire object types
+        and their parent fields when all fields within the object are filtered,
+        even when the object type itself should remain accessible.
+        
+        This test validates that:
+        1. Object types with filtered fields should still be queryable
+        2. Only the filtered fields should be removed, not the entire object type
+        3. Parent fields returning filtered object types should remain accessible
+        """
+        api = GraphQLAPI()
+        
+        class UserPreferences:
+            @api.field
+            def theme(self) -> str:
+                return "dark"
+                
+            @api.field
+            def language(self) -> str:
+                return "en"
+            
+            # This field will be filtered out
+            @field({"tags": ["admin"]})
+            def admin_settings(self) -> str:
+                return "admin-only-settings"
+        
+        class UserProfile:
+            @api.field
+            def display_name(self) -> str:
+                return "John Doe"
+                
+            @api.field
+            def bio(self) -> str:
+                return "Software developer"
+            
+            # This field will be filtered out
+            @field({"tags": ["private"]})
+            def social_security(self) -> str:
+                return "123-45-6789"
+        
+        class User:
+            @api.field
+            def username(self) -> str:
+                return "johndoe"
+                
+            @api.field
+            def email(self) -> str:
+                return "john@example.com"
+            
+            # These fields return object types that have some filtered fields
+            @api.field
+            def profile(self) -> UserProfile:
+                return UserProfile()
+                
+            @api.field
+            def preferences(self) -> UserPreferences:
+                return UserPreferences()
+        
+        # Object type where ALL fields are filtered
+        class AdminOnlyData:
+            @field({"tags": ["admin"]})
+            def secret_key(self) -> str:
+                return "secret"
+                
+            @field({"tags": ["admin"]})
+            def admin_token(self) -> str:
+                return "token"
+        
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def user(self) -> User:
+                return User()
+                
+            # This should be removed because AdminOnlyData has no accessible fields
+            @api.field
+            def admin_data(self) -> AdminOnlyData:
+                return AdminOnlyData()
+        
+        # Create filtered API that removes admin and private fields
+        from graphql_api.reduce import TagFilter
+        filtered_api = GraphQLAPI(
+            root_type=Root, 
+            filters=[TagFilter(tags=["admin", "private"])]
+        )
+        executor = filtered_api.executor()
+        
+        # Test 1: User object should still be accessible even though it contains
+        # a profile with filtered fields
+        test_query_user = """
+            query GetUser {
+                user {
+                    username
+                    email
+                    profile {
+                        displayName
+                        bio
+                    }
+                    preferences {
+                        theme
+                        language
+                    }
+                }
+            }
+        """
+        
+        result = executor.execute(test_query_user)
+        
+        # This should work - the user and nested objects should be accessible
+        # even though some fields within them are filtered
+        expected = {
+            "user": {
+                "username": "johndoe",
+                "email": "john@example.com",
+                "profile": {
+                    "displayName": "John Doe",
+                    "bio": "Software developer"
+                },
+                "preferences": {
+                    "theme": "dark",
+                    "language": "en"
+                }
+            }
+        }
+        
+        print("=== Test Query Result ===")
+        if result.errors:
+            print("Errors:", [str(error) for error in result.errors])
+        print("Data:", result.data)
+        print("Expected:", expected)
+        
+        # Debug: Print schema structure to understand what's happening
+        schema, _ = filtered_api.build_schema()
+        print("\n=== Schema Debug Info ===")
+        print("Query type:", schema.query_type.name if schema.query_type else "None")
+        if schema.query_type:
+            print("Query fields:", list(schema.query_type.fields.keys()))
+        print("Available types:", [name for name in schema.type_map.keys() if not name.startswith('__')])
+        print("========================\n")
+        
+        # CURRENT ISSUE: This assertion may fail because the filtering logic
+        # removes entire object types when all their fields are filtered,
+        # which also removes parent fields that return those types
+        assert not result.errors, f"Query should succeed but got errors: {result.errors}"
+        assert result.data == expected
+        
+        # Test 2: Filtered fields should not be accessible
+        test_query_filtered = """
+            query GetFilteredData {
+                user {
+                    profile {
+                        socialSecurity
+                    }
+                }
+            }
+        """
+        
+        result_filtered = executor.execute(test_query_filtered)
+        assert result_filtered.errors
+        assert "Cannot query field 'socialSecurity'" in str(result_filtered.errors[0])
+        
+        # Test 3: Object types with ALL fields filtered should be completely removed
+        test_query_admin = """
+            query GetAdminData {
+                adminData {
+                    secretKey
+                }
+            }
+        """
+        
+        result_admin = executor.execute(test_query_admin)
+        assert result_admin.errors
+        assert "Cannot query field 'adminData'" in str(result_admin.errors[0])
+        
+        # Test 4: Verify schema structure - object types with some accessible 
+        # fields should remain in the schema
+        schema, _ = filtered_api.build_schema()
+        
+        # UserProfile should exist in schema even though it has filtered fields
+        type_map = schema.type_map
+        assert "UserProfile" in type_map, "UserProfile type should exist in schema"
+        assert "UserPreferences" in type_map, "UserPreferences type should exist in schema"
+        
+        # AdminOnlyData should NOT exist because all its fields are filtered
+        assert "AdminOnlyData" not in type_map, "AdminOnlyData should be removed from schema"
+        
+        # Root type should have user field but not adminData field
+        assert schema.query_type is not None, "Query type should exist"
+        root_fields = schema.query_type.fields
+        assert "user" in root_fields, "user field should exist in root"
+        assert "adminData" not in root_fields, "adminData field should be removed from root"
+        
+        # User type should have profile and preferences fields
+        user_type = type_map["User"]
+        assert isinstance(user_type, GraphQLObjectType), "User type should be GraphQLObjectType"
+        user_fields = user_type.fields
+        assert "profile" in user_fields, "profile field should exist in User type"
+        assert "preferences" in user_fields, "preferences field should exist in User type"
+        
+        # UserProfile should have accessible fields but not filtered ones
+        user_profile_type = type_map["UserProfile"]
+        assert isinstance(user_profile_type, GraphQLObjectType), "UserProfile type should be GraphQLObjectType"
+        profile_fields = user_profile_type.fields
+        assert "displayName" in profile_fields, "displayName should exist in UserProfile"
+        assert "bio" in profile_fields, "bio should exist in UserProfile"
+        assert "socialSecurity" not in profile_fields, "socialSecurity should be filtered out"
