@@ -296,11 +296,36 @@ class GraphQLAPI(GraphQLBaseExecutor):
                 query_mapper, _query, filters=self.filters
             )
 
-            if query_mapper.validate(filtered_query, evaluate=True):
+            # Check if filtering removed all fields from the root query type
+            query_has_fields = False
+            try:
+                query_has_fields = len(filtered_query.fields) > 0
+            except (AssertionError, AttributeError):
+                query_has_fields = False
+
+            # For filtered schemas, we need to handle empty query types gracefully
+            if self.filters and not query_has_fields:
+                # All query fields were filtered out - create a minimal query type
+                # that preserves the original name and indicates the filtered state
+                query = GraphQLObjectType(
+                    name=filtered_query.name,
+                    fields={
+                        "_schema": GraphQLField(
+                            type_=GraphQLString,
+                            resolve=lambda *_: f"Schema '{filtered_query.name}' has all fields filtered",
+                            description="Indicates that all fields in this schema have been filtered out"
+                        )
+                    },
+                    description=f"Filtered version of {filtered_query.name} with no accessible fields"
+                )
+                query_types = query_mapper.types()
+                registry = query_mapper.registry
+            elif query_mapper.validate(filtered_query, evaluate=True):
                 query = filtered_query
                 query_types = query_mapper.types()
                 registry = query_mapper.registry
             else:
+                # Query failed validation for reasons other than filtering
                 query_types = set()
                 registry = None
 
@@ -339,7 +364,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
             self.query_mapper = query_mapper
             self.mutation_mapper = mutation_mapper
 
-        # If there's no query, create a placeholder
+        # If there's no query, create a placeholder (this should now only happen for non-filtered cases)
         if not query:
             query = GraphQLObjectType(
                 name="PlaceholderQuery",
