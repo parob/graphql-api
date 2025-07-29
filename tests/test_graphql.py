@@ -635,6 +635,7 @@ class TestGraphQL:
 
             type MathMutable {
                 createSquare(number: Int!): Int!
+                square(number: Int!): Int!
             }
         """.strip().replace(
             " ", ""

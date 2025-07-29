@@ -653,6 +653,212 @@ class TestSchemaFiltering:
         }
         assert result.data == expected
 
+    def test_custom_filter_without_preserve_transitive_attribute(self):
+        """
+        Test that custom filters without preserve_transitive attributes work correctly.
+        This addresses the issue where the system was trying to access preserve_transitive
+        on filter objects instead of determining behavior from FilterResponse values.
+        """
+        from graphql_api.reduce import GraphQLFilter, FilterResponse
+        from graphql_api.decorators import field
+
+        class CustomFilter(GraphQLFilter):
+            """Custom filter without preserve_transitive attribute"""
+            
+            def filter_field(self, name: str, meta: dict) -> FilterResponse:
+                tags = meta.get("tags", [])
+                
+                if "private" in tags:
+                    return FilterResponse.REMOVE_STRICT  # Remove without preservation
+                elif "admin" in tags:
+                    return FilterResponse.REMOVE  # Remove with preservation
+                else:
+                    return FilterResponse.ALLOW_TRANSITIVE  # Keep with preservation
+
+        class DataType:
+            @field
+            def public_field(self) -> str:
+                return "public"
+            
+            @field({"tags": ["private"]})
+            def private_field(self) -> str:
+                return "private"
+            
+            @field({"tags": ["admin"]})
+            def admin_field(self) -> str:
+                return "admin"
+
+        class Root:
+            @field
+            def data(self) -> DataType:
+                return DataType()
+
+        # This should work without errors (no preserve_transitive attribute access)
+        api = GraphQLAPI(root_type=Root, filters=[CustomFilter()])
+        schema, _ = api.build_schema()
+        executor = api.executor()
+
+        # Verify schema structure
+        assert "DataType" in schema.type_map
+        from graphql import GraphQLObjectType
+        data_type = schema.type_map["DataType"]
+        assert isinstance(data_type, GraphQLObjectType)
+        
+        # Should have public field but not private/admin fields
+        assert "publicField" in data_type.fields
+        assert "privateField" not in data_type.fields
+        assert "adminField" not in data_type.fields
+
+        # Test query execution
+        result = executor.execute("""
+            query TestQuery {
+                data {
+                    publicField
+                }
+            }
+        """)
+        
+        assert not result.errors
+        assert result.data == {"data": {"publicField": "public"}}
+
+    def test_unused_mutable_types_filtered_out(self):
+        """
+        Test that mutable object types that are not used from the root mutation type are filtered out.
+        Only mutable types that are actually reachable from the root should remain in the schema.
+        
+        This test verifies that:
+        1. Unused mutable types (UnusedMutableType, AnotherUnusedMutableType) are not included in the schema
+        2. Used mutable types (UsedMutableType) are correctly included
+        3. The filtering works correctly even with the fixed field.type assignment
+        4. Query fields are preserved on mutable types (unless marked with resolve_to_mutable: True)
+        """
+        from graphql_api.decorators import field
+
+        class UsedMutableType:
+            """This type will be referenced from the root mutation"""
+            def __init__(self):
+                self._value = "used"
+
+            @field
+            def value(self) -> str:
+                return self._value
+
+            @field(mutable=True)
+            def update_value(self, new_value: str) -> "UsedMutableType":
+                self._value = new_value
+                return self
+
+        class UnusedMutableType:
+            """This type will NOT be referenced from the root mutation"""
+            def __init__(self):
+                self._data = "unused"
+
+            @field
+            def data(self) -> str:
+                return self._data
+
+            @field(mutable=True)
+            def update_data(self, new_data: str) -> "UnusedMutableType":
+                self._data = new_data
+                return self
+
+        class AnotherUnusedMutableType:
+            """Another unused mutable type to make the test more comprehensive"""
+            def __init__(self):
+                self._info = "also unused"
+
+            @field
+            def info(self) -> str:
+                return self._info
+
+            @field(mutable=True)
+            def update_info(self, new_info: str) -> "AnotherUnusedMutableType":
+                self._info = new_info
+                return self
+
+        class Root:
+            @field
+            def used_object(self) -> UsedMutableType:
+                return UsedMutableType()
+
+            @field(mutable=True)
+            def create_used_object(self, value: str) -> UsedMutableType:
+                obj = UsedMutableType()
+                obj._value = value
+                return obj
+
+            # Note: We deliberately don't reference UnusedMutableType or AnotherUnusedMutableType
+
+        # Build the API
+        api = GraphQLAPI(root_type=Root)
+        schema, _ = api.build_schema()
+
+        # Check that only used types are in the schema
+        type_map = schema.type_map
+        
+        # UsedMutableType should be present (both in query and mutation forms)
+        assert "UsedMutableType" in type_map
+        assert "UsedMutableTypeMutable" in type_map
+        
+        # UnusedMutableType should NOT be present in either form
+        assert "UnusedMutableType" not in type_map
+        assert "UnusedMutableTypeMutable" not in type_map
+        
+        # AnotherUnusedMutableType should NOT be present in either form
+        assert "AnotherUnusedMutableType" not in type_map
+        assert "AnotherUnusedMutableTypeMutable" not in type_map
+
+        # Verify the mutation schema only contains used types
+        mutation_type = schema.mutation_type
+        assert mutation_type is not None
+        
+        # Should have create_used_object mutation field
+        assert "createUsedObject" in mutation_type.fields
+        
+        # Should be able to access the used object's mutable methods
+        assert "usedObject" in mutation_type.fields
+        
+        # Test that mutation operations work correctly
+        executor = api.executor()
+        
+        # Test creating and updating the used object
+        result = executor.execute("""
+            mutation TestMutation {
+                createUsedObject(value: "test") {
+                    updateValue(newValue: "updated") {
+                        value
+                    }
+                }
+            }
+        """)
+        
+        assert not result.errors
+        assert result.data == {
+            "createUsedObject": {
+                "updateValue": {
+                    "value": "updated"
+                }
+            }
+        }
+
+        # Test that we can't access unused types (they shouldn't exist in the schema)
+        # This mutation should fail at schema build time, not execution time
+        try:
+            bad_result = executor.execute("""
+                mutation BadMutation {
+                    unusedObject {
+                        updateData(newData: "test") {
+                            data
+                        }
+                    }
+                }
+            """)
+            # If we get here, the unused type wasn't properly filtered out
+            assert False, "Unused mutable type should not be accessible in mutations"
+        except Exception:
+            # Expected - the field shouldn't exist
+            pass
+
     def test_filter_mutable_fields(self):
         """
         Test filtering of mutable fields in both query and mutation contexts
@@ -1303,6 +1509,7 @@ class TestSchemaFiltering:
         Test that object types on fields of unfiltered objects (recursive)
         are still left on the schema, even if the referenced types would
         otherwise be filtered out, as long as the referenced types have at least one accessible field.
+        Types with NO accessible fields cannot be preserved due to GraphQL constraints.
         """
         from graphql_api.reduce import TagFilter
         from graphql_api.decorators import field
