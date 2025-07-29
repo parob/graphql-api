@@ -1588,7 +1588,7 @@ class TestGraphQL:
         """
         Test filtering behavior with mixed scenarios:
         - Object types with some fields filtered should remain accessible
-        - Object types with all fields filtered should be removed
+        - Object types with all fields filtered should be removed (even in PRESERVE_TRANSITIVE mode due to GraphQL constraints)
         - Parent fields should be handled appropriately
         """
         # Create the types first
@@ -1620,9 +1620,12 @@ class TestGraphQL:
             def admin_data(self) -> AdminData:
                 return AdminData()
 
-        # Test with filters that remove admin fields
+        # Test with filters that remove admin fields using strict mode (preserve_transitive=False)
         from graphql_api.reduce import TagFilter
-        filtered_api = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=["admin"])])
+        filtered_api = GraphQLAPI(
+            root_type=Root, 
+            filters=[TagFilter(tags=["admin"], preserve_transitive=False)]
+        )
         filtered_schema, _ = filtered_api.build_schema()
         executor = filtered_api.executor()
 
@@ -1638,7 +1641,7 @@ class TestGraphQL:
             }
         }
 
-        # AdminData should fail - all fields filtered
+        # AdminData should be completely removed - all fields filtered and no way to preserve empty types
         result2 = executor.execute("""
             query { adminData { secretKey } }
         """)
@@ -1649,9 +1652,9 @@ class TestGraphQL:
         assert filtered_schema.query_type is not None
         assert filtered_schema.query_type.name == "Root"
         assert "userData" in filtered_schema.query_type.fields
-        assert "adminData" not in filtered_schema.query_type.fields
+        assert "adminData" not in filtered_schema.query_type.fields  # Removed because AdminData has no fields
         assert "UserData" in filtered_schema.type_map
-        assert "AdminData" not in filtered_schema.type_map
+        assert "AdminData" not in filtered_schema.type_map  # Removed
 
     def test_filter_should_preserve_object_types_with_remaining_fields(self):
         """
@@ -1723,7 +1726,8 @@ class TestGraphQL:
         """
         Test filtering behavior for complex nested object types.
         Verifies that object types with remaining fields are preserved
-        and only filtered fields are removed.
+        and only filtered fields are removed. Types with no remaining fields
+        are removed entirely due to GraphQL constraints.
         """
         # Define types without API instance to avoid decorator conflicts
         class UserPreferences:
@@ -1788,11 +1792,11 @@ class TestGraphQL:
             def admin_data(self) -> AdminOnlyData:
                 return AdminOnlyData()
 
-        # Create filtered API that removes admin and private fields
+        # Create filtered API that removes admin and private fields using strict mode (preserve_transitive=False)
         from graphql_api.reduce import TagFilter
         filtered_api = GraphQLAPI(
             root_type=Root,
-            filters=[TagFilter(tags=["admin", "private"])]
+            filters=[TagFilter(tags=["admin", "private"], preserve_transitive=False)]
         )
         executor = filtered_api.executor()
 
@@ -1845,7 +1849,7 @@ class TestGraphQL:
         assert result_filtered.errors
         assert "Cannot query field 'socialSecurity'" in str(result_filtered.errors[0])
 
-        # Test that object types with ALL fields filtered are removed
+        # Test that object types with ALL fields filtered are completely removed
         result_admin = executor.execute("""
             query GetAdminData {
                 adminData {
@@ -1864,7 +1868,7 @@ class TestGraphQL:
         assert "UserProfile" in type_map
         assert "UserPreferences" in type_map
 
-        # Types with all fields filtered should not exist
+        # Types with all fields filtered should be completely removed
         assert "AdminOnlyData" not in type_map
 
         # Root should have user field but not adminData field
