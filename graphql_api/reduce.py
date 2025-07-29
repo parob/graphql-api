@@ -111,18 +111,6 @@ class GraphQLSchemaReducer:
     def reduce_mutation(mapper, root, filters=None):
         mutation: GraphQLObjectType = mapper.map(root)
 
-        # Remove federation fields from mutation root FIRST - before any other processing
-        # This prevents the creation of mutable federation types
-        federation_fields_to_remove = []
-        if hasattr(mutation, 'fields'):
-            for field_name, field in list(mutation.fields.items()):
-                if field_name in ['_service', '_entities']:
-                    federation_fields_to_remove.append(field_name)
-
-        for field_name in federation_fields_to_remove:
-            if hasattr(mutation, 'fields') and field_name in mutation.fields:
-                del mutation.fields[field_name]
-
         # Apply filtering to mutation schema first
         if filters:
             invalid_types, invalid_fields = GraphQLSchemaReducer.invalid(
@@ -167,23 +155,8 @@ class GraphQLSchemaReducer:
             if has_mutable(type_, interfaces_default_mutable=False):
                 filtered_mutation_types.add(type_)
 
-        # Also remove any federation types that might have been added to filtered_mutation_types
-        federation_types_to_remove_from_filtered = []
-        for type_ in filtered_mutation_types:
-            type_name = getattr(type_, 'name', str(type_))
-            if (type_name in ['_Service', '_Entity', '_Any'] or 
-                type_name in ['_ServiceMutable', '_EntityMutable', '_AnyMutable']):
-                federation_types_to_remove_from_filtered.append(type_)
-
-        for type_ in federation_types_to_remove_from_filtered:
-            filtered_mutation_types.discard(type_)
-
         # Replace fields that have no mutable subtypes with their non-mutable equivalents
         for type_, key, field in iterate_fields(mutation):
-            # Skip federation fields - they should not have mutable versions
-            if key in ['_service', '_entities']:
-                continue
-                
             field_type = field.type
             meta = mapper.meta.get((type_.name, to_snake_case(key)), {})
             field_definition_type = meta.get("graphql_type", "field")
@@ -247,22 +220,23 @@ class GraphQLSchemaReducer:
             if hasattr(type_, "fields") and key in type_.fields:
                 del type_.fields[key]
 
-        # Final cleanup: ensure no federation types remain in the mapper
-        # This is a comprehensive cleanup to handle any federation types that might have been created
-        final_cleanup_keys = []
+        # Clean up federation types from mutation schema - they should only exist in queries
+        federation_cleanup_keys = []
         for key, value in dict(mapper.registry).items():
             if hasattr(value, 'name'):
                 type_name = value.name
-                if (type_name in ['_Service', '_ServiceMutable', '_Entity', '_EntityMutable', '_Any', '_AnyMutable'] or
-                    '_Service' in type_name or '_Entity' in type_name):
-                    final_cleanup_keys.append(key)
+                if type_name in ['_Service', '_ServiceMutable', '_Entity', '_EntityMutable', '_Any', '_AnyMutable']:
+                    federation_cleanup_keys.append(key)
 
-        for key in final_cleanup_keys:
+        for key in federation_cleanup_keys:
             if key in mapper.registry:
                 del mapper.registry[key]
-                # Also remove from reverse registry if it exists
-                if hasattr(mapper, 'reverse_registry') and mapper.registry.get(key) in mapper.reverse_registry:
-                    del mapper.reverse_registry[mapper.registry[key]]
+
+        # Also remove federation fields from mutation root
+        if hasattr(mutation, 'fields'):
+            for field_name in ['_service', '_entities']:
+                if field_name in mutation.fields:
+                    del mutation.fields[field_name]
 
         return mutation
 
