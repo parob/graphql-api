@@ -742,7 +742,7 @@ class TestSchemaFiltering:
                 """Regular query field - should NOT be in mutable type"""
                 return self._name
 
-            @field 
+            @field
             def email(self) -> str:
                 """Regular query field - should NOT be in mutable type"""
                 return self._email
@@ -779,7 +779,7 @@ class TestSchemaFiltering:
         assert isinstance(user_type, GraphQLObjectType)
         user_fields = set(user_type.fields.keys())
         expected_user_fields = {"name", "email", "age"}
-        
+
         print(f"User (query) fields: {user_fields}")
         assert expected_user_fields.issubset(user_fields), f"User should have query fields {expected_user_fields}"
 
@@ -789,12 +789,12 @@ class TestSchemaFiltering:
         user_mutable_fields = set(user_mutable_type.fields.keys())
         expected_mutable_fields = {"updateName", "updateEmail"}
         expected_query_fields = {"name", "email", "age"}
-        
+
         print(f"UserMutable fields: {user_mutable_fields}")
-        
+
         # CRITICAL TEST: Mutable type should have mutable fields
         assert expected_mutable_fields.issubset(user_mutable_fields), f"UserMutable should have mutable fields {expected_mutable_fields}"
-        
+
         # CRITICAL TEST: Non-root mutable type should also have query fields for compatibility
         assert expected_query_fields.issubset(user_mutable_fields), f"UserMutable should have query fields {expected_query_fields} for GraphQL compatibility"
 
@@ -810,7 +810,7 @@ class TestSchemaFiltering:
                 }
             }
         """)
-        
+
         assert not result.errors
         assert result.data == {
             "user": {
@@ -883,7 +883,7 @@ class TestSchemaFiltering:
         assert isinstance(root_type, GraphQLObjectType)
         root_fields = set(root_type.fields.keys())
         expected_query_fields = {"user", "counter"}
-        
+
         print(f"Root (query) fields: {root_fields}")
         assert expected_query_fields.issubset(root_fields), f"Root should have query fields {expected_query_fields}"
 
@@ -894,12 +894,12 @@ class TestSchemaFiltering:
         root_mutation_fields = set(root_mutation_type.fields.keys())
         expected_fields = {"createUser", "incrementCounter", "user"}  # mutable fields + fields providing mutable access
         unexpected_fields = {"counter"}  # pure query fields that don't provide mutable access
-        
+
         print(f"RootMutable (mutation root) fields: {root_mutation_fields}")
-        
+
         # CRITICAL TEST: Root mutation type should have mutable fields and mutable access fields
         assert expected_fields.issubset(root_mutation_fields), f"RootMutable should have fields {expected_fields}"
-        
+
         # CRITICAL TEST: Root mutation type should NOT have pure query fields
         overlapping_fields = root_mutation_fields.intersection(unexpected_fields)
         assert not overlapping_fields, f"RootMutable should NOT contain pure query fields: {overlapping_fields}"
@@ -915,7 +915,7 @@ class TestSchemaFiltering:
                 incrementCounter
             }
         """)
-        
+
         assert not result.errors
         assert result.data == {
             "createUser": {

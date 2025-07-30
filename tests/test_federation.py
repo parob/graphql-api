@@ -60,7 +60,7 @@ class TestFederation:
                 "url": "https://myspecs.dev/myCustomDirective/v1.0",
                 "import": ["@custom"],
             }
-        )(schema)  # type: ignore[reportIncompatibleMethodOverride] 
+        )(schema)  # type: ignore[reportIncompatibleMethodOverride]
 
         response = api.execute("{users{id,name}}")
 
