@@ -289,6 +289,46 @@ class GraphQLSchemaReducer:
                     if field_name in mutation.fields:
                         del mutation.fields[field_name]
 
+        # Simple cleanup: Remove mutable types that have no mutable fields and aren't returned by mutable fields
+        # This fixes the main issue while avoiding complex interface handling
+        types_referenced_by_mutations = set()
+
+        # Collect types returned by mutable fields
+        def collect_mutation_return_types(obj_type):
+            if hasattr(obj_type, 'fields'):
+                for field_name, field in obj_type.fields.items():
+                    if isinstance(field, GraphQLMutableField):
+                        field_type = field.type
+                        # Unwrap NonNull and List wrappers
+                        while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
+                            field_type = field_type.of_type
+
+                        if isinstance(field_type, GraphQLObjectType):
+                            types_referenced_by_mutations.add(field_type)
+
+        collect_mutation_return_types(mutation)
+
+        # Remove mutable types that:
+        # 1. Don't have mutable fields themselves
+        # 2. Their base type isn't returned by mutable fields
+        # 3. Aren't interfaces (to avoid complexity)
+        types_to_remove = []
+        for key, type_obj in dict(mapper.registry).items():
+            if mapper.suffix in str(type_obj) and isinstance(type_obj, GraphQLObjectType):
+                has_mutable_fields = has_mutable(type_obj, interfaces_default_mutable=False)
+
+                # Get the base type to check if it's referenced
+                base_type_name = str(type_obj).replace(mapper.suffix, "", 1)
+                base_type = mapper.registry.get(base_type_name)
+                is_base_referenced = base_type in types_referenced_by_mutations
+
+                if (not has_mutable_fields and not is_base_referenced):
+                    types_to_remove.append(key)
+
+        for key in types_to_remove:
+            if key in mapper.registry:
+                del mapper.registry[key]
+
         return mutation
 
     @staticmethod
