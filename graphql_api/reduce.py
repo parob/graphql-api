@@ -203,6 +203,16 @@ class GraphQLSchemaReducer:
                     field_type = field_type.of_type
                 mutable_return_types.add(field_type)
 
+        # Find types that are returned by ANY mutable field (not just resolve_to_mutable ones)
+        types_returned_by_mutable_fields = set()
+        for type_, key, field in iterate_fields(mutation):
+            if isinstance(field, GraphQLMutableField):
+                field_type = field.type
+                # Unwrap NonNull and List wrappers
+                while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
+                    field_type = field_type.of_type
+                types_returned_by_mutable_fields.add(field_type)
+
         # Remove query fields only from types that are meant to be mutable returns
         fields_to_remove = set()
         for type_ in mutable_return_types:
@@ -221,6 +231,29 @@ class GraphQLSchemaReducer:
         for type_, key in fields_to_remove:
             if hasattr(type_, "fields") and key in type_.fields:
                 del type_.fields[key]
+
+        # Remove query fields from the root mutation type - it should only have mutable fields
+        # Keep fields that are explicitly mutable OR provide access to mutable functionality
+        root_fields_to_remove = set()
+        if isinstance(root, GraphQLObjectType):
+            interface_fields = []
+            for interface in root.interfaces:
+                interface_fields += [key for key, field in interface.fields.items()]
+            for key, field in root.fields.items():
+                if (
+                    key not in interface_fields
+                    and not isinstance(field, GraphQLMutableField)
+                    and not has_mutable(field.type)
+                ):
+                    # Remove fields that are neither mutable nor provide access to mutable types
+                    root_fields_to_remove.add(key)
+
+        for key in root_fields_to_remove:
+            if hasattr(root, "fields") and key in root.fields:
+                del root.fields[key]
+
+        # For non-root mutable types, keep query fields for GraphQL compatibility
+        # This allows reading data after mutations on returned objects
 
         # Clean up federation types from mutation schema - they should only exist in queries
         # Only run this cleanup when federation is enabled to avoid unnecessary processing

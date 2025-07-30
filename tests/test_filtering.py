@@ -724,6 +724,207 @@ class TestSchemaFiltering:
         assert not result.errors
         assert result.data == {"data": {"publicField": "public"}}
 
+    def test_non_root_mutable_types_contain_both_field_types(self):
+        """
+        Test that non-root mutable types (like UserMutable) contain both mutable fields
+        and query fields for GraphQL compatibility. This validates the core mutation behavior.
+        """
+        from graphql_api.decorators import field
+
+        class User:
+            def __init__(self):
+                self._name = "John"
+                self._email = "john@example.com"
+                self._age = 25
+
+            @field
+            def name(self) -> str:
+                """Regular query field - should NOT be in mutable type"""
+                return self._name
+
+            @field 
+            def email(self) -> str:
+                """Regular query field - should NOT be in mutable type"""
+                return self._email
+
+            @field
+            def age(self) -> int:
+                """Regular query field - should NOT be in mutable type"""
+                return self._age
+
+            @field(mutable=True)
+            def update_name(self, new_name: str) -> "User":
+                """Mutable field - should be in mutable type"""
+                self._name = new_name
+                return self
+
+            @field(mutable=True)
+            def update_email(self, new_email: str) -> "User":
+                """Mutable field - should be in mutable type"""
+                self._email = new_email
+                return self
+
+        class Root:
+            @field
+            def user(self) -> User:
+                return User()
+
+        # Build the API
+        api = GraphQLAPI(root_type=Root)
+        schema, _ = api.build_schema()
+
+        # Check that User (query type) has all fields
+        from graphql import GraphQLObjectType
+        user_type = schema.type_map["User"]
+        assert isinstance(user_type, GraphQLObjectType)
+        user_fields = set(user_type.fields.keys())
+        expected_user_fields = {"name", "email", "age"}
+        
+        print(f"User (query) fields: {user_fields}")
+        assert expected_user_fields.issubset(user_fields), f"User should have query fields {expected_user_fields}"
+
+        # Check that UserMutable has both mutable and query fields for compatibility
+        user_mutable_type = schema.type_map["UserMutable"]
+        assert isinstance(user_mutable_type, GraphQLObjectType)
+        user_mutable_fields = set(user_mutable_type.fields.keys())
+        expected_mutable_fields = {"updateName", "updateEmail"}
+        expected_query_fields = {"name", "email", "age"}
+        
+        print(f"UserMutable fields: {user_mutable_fields}")
+        
+        # CRITICAL TEST: Mutable type should have mutable fields
+        assert expected_mutable_fields.issubset(user_mutable_fields), f"UserMutable should have mutable fields {expected_mutable_fields}"
+        
+        # CRITICAL TEST: Non-root mutable type should also have query fields for compatibility
+        assert expected_query_fields.issubset(user_mutable_fields), f"UserMutable should have query fields {expected_query_fields} for GraphQL compatibility"
+
+        # Test that mutations work correctly
+        executor = api.executor()
+        result = executor.execute("""
+            mutation UpdateUser {
+                user {
+                    updateName(newName: "Jane") {
+                        name
+                        email
+                    }
+                }
+            }
+        """)
+        
+        assert not result.errors
+        assert result.data == {
+            "user": {
+                "updateName": {
+                    "name": "Jane",
+                    "email": "john@example.com"
+                }
+            }
+        }
+
+    def test_root_mutation_type_only_has_mutable_fields(self):
+        """
+        Test that the root mutation type only contains mutable fields, not query fields.
+        This validates that the mutation root filtering is working correctly.
+        """
+        from graphql_api.decorators import field
+
+        class User:
+            def __init__(self):
+                self._name = "John"
+                self._email = "john@example.com"
+
+            @field
+            def name(self) -> str:
+                return self._name
+
+            @field
+            def email(self) -> str:
+                return self._email
+
+            @field(mutable=True)
+            def update_name(self, new_name: str) -> "User":
+                self._name = new_name
+                return self
+
+        class Root:
+            def __init__(self):
+                self._counter = 0
+
+            @field
+            def user(self) -> User:
+                """Query field - should NOT be in root mutation type"""
+                return User()
+
+            @field
+            def counter(self) -> int:
+                """Query field - should NOT be in root mutation type"""
+                return self._counter
+
+            @field(mutable=True)
+            def create_user(self, name: str) -> User:
+                """Mutable field - should be in root mutation type"""
+                user = User()
+                user._name = name
+                return user
+
+            @field(mutable=True)
+            def increment_counter(self) -> int:
+                """Mutable field - should be in root mutation type"""
+                self._counter += 1
+                return self._counter
+
+        # Build the API
+        api = GraphQLAPI(root_type=Root)
+        schema, _ = api.build_schema()
+
+        # Check that Root (query type) has all fields
+        from graphql import GraphQLObjectType
+        root_type = schema.type_map["Root"]
+        assert isinstance(root_type, GraphQLObjectType)
+        root_fields = set(root_type.fields.keys())
+        expected_query_fields = {"user", "counter"}
+        
+        print(f"Root (query) fields: {root_fields}")
+        assert expected_query_fields.issubset(root_fields), f"Root should have query fields {expected_query_fields}"
+
+        # Check that RootMutable (mutation root) has mutable fields and fields providing mutable access
+        root_mutation_type = schema.mutation_type
+        assert root_mutation_type is not None
+        assert isinstance(root_mutation_type, GraphQLObjectType)
+        root_mutation_fields = set(root_mutation_type.fields.keys())
+        expected_fields = {"createUser", "incrementCounter", "user"}  # mutable fields + fields providing mutable access
+        unexpected_fields = {"counter"}  # pure query fields that don't provide mutable access
+        
+        print(f"RootMutable (mutation root) fields: {root_mutation_fields}")
+        
+        # CRITICAL TEST: Root mutation type should have mutable fields and mutable access fields
+        assert expected_fields.issubset(root_mutation_fields), f"RootMutable should have fields {expected_fields}"
+        
+        # CRITICAL TEST: Root mutation type should NOT have pure query fields
+        overlapping_fields = root_mutation_fields.intersection(unexpected_fields)
+        assert not overlapping_fields, f"RootMutable should NOT contain pure query fields: {overlapping_fields}"
+
+        # Test that mutations work correctly
+        executor = api.executor()
+        result = executor.execute("""
+            mutation CreateAndRead {
+                createUser(name: "Alice") {
+                    name
+                    email
+                }
+                incrementCounter
+            }
+        """)
+        
+        assert not result.errors
+        assert result.data == {
+            "createUser": {
+                "name": "Alice",
+                "email": "john@example.com"
+            },
+            "incrementCounter": 1
+        }
+
     def test_unused_mutable_types_filtered_out(self):
         """
         Test that mutable object types that are not used from the root mutation type are filtered out.

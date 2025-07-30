@@ -16,8 +16,8 @@ class TestFederation:
         custom = SchemaDirective(name="custom", locations=[DirectiveLocation.OBJECT])
 
         @custom
-        @key(fields="name")
-        @key(fields="id")
+        @key(fields="name")  # type: ignore[reportIncompatibleMethodOverride]
+        @key(fields="id")  # type: ignore[reportIncompatibleMethodOverride]
         @type
         class User:
             @classmethod
@@ -36,7 +36,7 @@ class TestFederation:
             def name(self) -> str:
                 return self._name
 
-        @key(fields="name")
+        @key(fields="name")  # type: ignore[reportIncompatibleMethodOverride]
         @type
         class Food:
             def __init__(self, name: str):
@@ -60,7 +60,7 @@ class TestFederation:
                 "url": "https://myspecs.dev/myCustomDirective/v1.0",
                 "import": ["@custom"],
             }
-        )(schema)
+        )(schema)  # type: ignore[reportIncompatibleMethodOverride] 
 
         response = api.execute("{users{id,name}}")
 
@@ -95,7 +95,7 @@ class TestFederation:
 
         response = api.execute("{_service{ sdl }}")
 
-        sdl = response.data["_service"]["sdl"]
+        sdl = response.data["_service"]["sdl"]  # type: ignore[reportIncompatibleMethodOverride]
 
         assert sdl
 
@@ -145,5 +145,5 @@ class TestFederation:
 
         response = api.execute("{_service{ sdl }}")
 
-        sdl = response.data["_service"]["sdl"]
+        sdl = response.data["_service"]["sdl"]  # type: ignore[reportIncompatibleMethodOverride]
         assert sdl
