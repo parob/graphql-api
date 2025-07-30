@@ -427,15 +427,14 @@ class GraphQLSchemaReducer:
                 # 1. The type has no valid fields AND
                 # 2. The type has fields that were filtered out (not just absent)
                 if not type_has_valid_field and type_has_filtered_field:
-                    # Preserve the type and restore one filtered field
+                    # Preserve the type and restore all filtered fields
                     invalid_types.discard(allow_type)
 
-                    # Find the first field that was marked for removal and preserve it
+                    # Find all fields that were marked for removal and preserve them
                     for field_key, field_val in allow_type.fields.items():
                         if (allow_type, field_key) in invalid_fields:
                             # Remove this field from invalid_fields to preserve it
                             invalid_fields.discard((allow_type, field_key))
-                            break
                 elif type_has_valid_field:
                     # Type already has valid fields, just preserve it
                     invalid_types.discard(allow_type)
