@@ -341,7 +341,7 @@ class GraphQLSchemaReducer:
         preserve_transitive = False
 
         def collect_filter_responses(current_type, current_checked=None):
-            nonlocal preserve_transitive, allow_transitive_types
+            nonlocal preserve_transitive
 
             if current_checked is None:
                 current_checked = set()
@@ -409,27 +409,27 @@ class GraphQLSchemaReducer:
             invalid_types, invalid_fields = GraphQLSchemaReducer._invalid_strict(
                 root_type, filters, meta, checked_types, invalid_types, invalid_fields
             )
-            
+
         # Handle ALLOW_TRANSITIVE types: preserve them only if they have filtered fields to restore
         for allow_type in allow_transitive_types:
             if hasattr(allow_type, 'fields'):
                 type_has_valid_field = False
                 type_has_filtered_field = False
-                
+
                 # Check if the type has any valid (non-filtered) fields
                 for field_key, field_val in allow_type.fields.items():
                     if (allow_type, field_key) not in invalid_fields:
                         type_has_valid_field = True
                     else:
                         type_has_filtered_field = True
-                
+
                 # Only apply ALLOW_TRANSITIVE if:
                 # 1. The type has no valid fields AND
                 # 2. The type has fields that were filtered out (not just absent)
                 if not type_has_valid_field and type_has_filtered_field:
                     # Preserve the type and restore one filtered field
                     invalid_types.discard(allow_type)
-                    
+
                     # Find the first field that was marked for removal and preserve it
                     for field_key, field_val in allow_type.fields.items():
                         if (allow_type, field_key) in invalid_fields:
@@ -439,7 +439,7 @@ class GraphQLSchemaReducer:
                 elif type_has_valid_field:
                     # Type already has valid fields, just preserve it
                     invalid_types.discard(allow_type)
-                            
+
         return invalid_types, invalid_fields
 
     @staticmethod

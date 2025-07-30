@@ -932,7 +932,7 @@ class TestSchemaFiltering:
         """
         from graphql_api.decorators import field
         from graphql_api.reduce import FilterResponse
-        
+
         class AdminUser:
             """This type would normally be filtered out due to admin tags"""
             def __init__(self):
@@ -968,6 +968,7 @@ class TestSchemaFiltering:
 
         # Create a custom filter that uses ALLOW_TRANSITIVE for admin_user field
         from graphql_api.reduce import GraphQLFilter
+
         class TestFilter(GraphQLFilter):
             def filter_field(self, name: str, meta: dict) -> FilterResponse:
                 tags = meta.get("tags", [])
@@ -985,35 +986,35 @@ class TestSchemaFiltering:
         schema, _ = api.build_schema()
 
         type_map = schema.type_map
-        
+
         print(f"Types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
-        
+
         # The key test: AdminUser should be preserved because admin_user field uses ALLOW_TRANSITIVE
         assert "AdminUser" in type_map, "AdminUser type should be preserved due to ALLOW_TRANSITIVE on admin_user field"
-        
+
         # PublicData should also be present (normal case)
         assert "PublicData" in type_map, "PublicData should be present"
-        
+
         # Root should be present
         assert "Root" in type_map, "Root should be present"
-        
+
         # Check that the admin_user field is present on Root
         from graphql import GraphQLObjectType
         root_type = type_map["Root"]
         assert isinstance(root_type, GraphQLObjectType)
         assert "adminUser" in root_type.fields, "adminUser field should be present on Root"
-        
+
         # Check that AdminUser type has its fields (they should be filtered out but type preserved)
         admin_user_type = type_map["AdminUser"]
         assert isinstance(admin_user_type, GraphQLObjectType)
-        
+
         # The AdminUser fields should be filtered out (REMOVE_STRICT), but the type should exist
         admin_user_fields = set(admin_user_type.fields.keys())
         print(f"AdminUser fields: {admin_user_fields}")
-        
+
         # Test that we can query the preserved type structure
         executor = api.executor()
-        
+
         # This should work - we can access the admin_user field and get back data
         result = executor.execute("""
             query TestQuery {
@@ -1025,15 +1026,251 @@ class TestSchemaFiltering:
                 }
             }
         """)
-        
+
         print(f"Query result: {result.data}")
         print(f"Query errors: {result.errors}")
-        
+
         assert not result.errors, f"Query should succeed, but got errors: {result.errors}"
         assert result.data == {
             "adminUser": {"__typename": "AdminUser"},
             "publicData": {"info": "public info"}
         }
+
+    def test_allow_transitive_with_remove_vs_remove_strict(self):
+        """
+        Test that ALLOW_TRANSITIVE works correctly with both REMOVE and REMOVE_STRICT
+        for filtering out other fields on the preserved type.
+        """
+        from graphql_api.decorators import field
+        from graphql_api.reduce import FilterResponse, GraphQLFilter
+
+        class AdminUser:
+            """This type would normally be filtered out due to admin tags"""
+            def __init__(self):
+                self._name = "Admin User"
+                self._secret = "classified"
+                self._level = 5
+
+            @field({"tags": ["admin"]})
+            def name(self) -> str:
+                return self._name
+
+            @field({"tags": ["admin"]})
+            def secret(self) -> str:
+                return self._secret
+
+            @field({"tags": ["admin"]})
+            def level(self) -> int:
+                return self._level
+
+        class PublicData:
+            def __init__(self):
+                self._info = "public info"
+
+            @field
+            def info(self) -> str:
+                return self._info
+
+        class Root:
+            @field({"tags": ["admin"]})
+            def admin_user(self) -> AdminUser:
+                """Field that returns AdminUser - should preserve AdminUser type with ALLOW_TRANSITIVE"""
+                return AdminUser()
+
+            @field
+            def public_data(self) -> PublicData:
+                return PublicData()
+
+        # Test 1: ALLOW_TRANSITIVE with REMOVE_STRICT (existing behavior)
+        class TestFilterStrict(GraphQLFilter):
+            def filter_field(self, name: str, meta: dict) -> FilterResponse:
+                tags = meta.get("tags", [])
+                if "admin" in tags:
+                    if name == "admin_user":
+                        return FilterResponse.ALLOW_TRANSITIVE
+                    else:
+                        return FilterResponse.REMOVE_STRICT
+                return FilterResponse.ALLOW
+
+        api_strict = GraphQLAPI(root_type=Root, filters=[TestFilterStrict()])
+        schema_strict, _ = api_strict.build_schema()
+
+        # Test 2: ALLOW_TRANSITIVE with REMOVE (new test case)
+        class TestFilterRemove(GraphQLFilter):
+            def filter_field(self, name: str, meta: dict) -> FilterResponse:
+                tags = meta.get("tags", [])
+                if "admin" in tags:
+                    if name == "admin_user":
+                        return FilterResponse.ALLOW_TRANSITIVE
+                    else:
+                        return FilterResponse.REMOVE  # Use REMOVE instead of REMOVE_STRICT
+                return FilterResponse.ALLOW
+
+        api_remove = GraphQLAPI(root_type=Root, filters=[TestFilterRemove()])
+        schema_remove, _ = api_remove.build_schema()
+
+        # Both schemas should preserve AdminUser type
+        for schema, test_name in [(schema_strict, "REMOVE_STRICT"), (schema_remove, "REMOVE")]:
+            type_map = schema.type_map
+
+            print(f"{test_name} - Types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
+
+            # AdminUser should be preserved in both cases
+            assert "AdminUser" in type_map, f"AdminUser type should be preserved with ALLOW_TRANSITIVE + {test_name}"
+
+            # Check that AdminUser has at least one field preserved
+            from graphql import GraphQLObjectType
+            admin_user_type = type_map["AdminUser"]
+            assert isinstance(admin_user_type, GraphQLObjectType)
+            admin_user_fields = set(admin_user_type.fields.keys())
+
+            print(f"{test_name} - AdminUser fields: {admin_user_fields}")
+            assert len(admin_user_fields) > 0, f"AdminUser should have at least one field preserved with {test_name}"
+
+        # Both should work for queries
+        for api, test_name in [(api_strict, "REMOVE_STRICT"), (api_remove, "REMOVE")]:
+            executor = api.executor()
+            result = executor.execute("""
+                query TestQuery {
+                    adminUser {
+                        __typename
+                    }
+                    publicData {
+                        info
+                    }
+                }
+            """)
+
+            print(f"{test_name} - Query result: {result.data}")
+            print(f"{test_name} - Query errors: {result.errors}")
+
+            assert not result.errors, f"Query should succeed with ALLOW_TRANSITIVE + {test_name}, but got errors: {result.errors}"
+            assert result.data == {
+                "adminUser": {"__typename": "AdminUser"},
+                "publicData": {"info": "public info"}
+            }, f"Query data should be correct with {test_name}"
+
+    def test_remove_strict_always_removed_regardless_of_transitive(self):
+        """
+        Test that fields marked with REMOVE_STRICT are always removed,
+        even when the type is preserved due to ALLOW_TRANSITIVE logic.
+        """
+        from graphql_api.decorators import field
+        from graphql_api.reduce import FilterResponse, GraphQLFilter
+
+        class SecretData:
+            """This type will be preserved due to ALLOW_TRANSITIVE, but some fields should still be removed"""
+            def __init__(self):
+                self._public_info = "public"
+                self._secret_info = "secret"
+                self._classified_info = "classified"
+
+            @field
+            def public_info(self) -> str:
+                """This field should be preserved (no tags)"""
+                return self._public_info
+
+            @field({"tags": ["secret"]})
+            def secret_info(self) -> str:
+                """This field should be removed with REMOVE_STRICT"""
+                return self._secret_info
+
+            @field({"tags": ["classified"]})
+            def classified_info(self) -> str:
+                """This field should be removed with REMOVE_STRICT"""
+                return self._classified_info
+
+        class Root:
+            @field({"tags": ["admin"]})
+            def secret_data(self) -> SecretData:
+                """This field uses ALLOW_TRANSITIVE to preserve SecretData type"""
+                return SecretData()
+
+            @field
+            def public_field(self) -> str:
+                return "public"
+
+        # Create a filter that uses ALLOW_TRANSITIVE for secret_data field
+        # but REMOVE_STRICT for secret_info and classified_info fields
+        class TestFilter(GraphQLFilter):
+            def filter_field(self, name: str, meta: dict) -> FilterResponse:
+                tags = meta.get("tags", [])
+
+                if name == "secret_data" and "admin" in tags:
+                    # Use ALLOW_TRANSITIVE to preserve SecretData type
+                    return FilterResponse.ALLOW_TRANSITIVE
+                elif "secret" in tags or "classified" in tags:
+                    # These fields should ALWAYS be removed, even if type is preserved
+                    return FilterResponse.REMOVE_STRICT
+                elif "admin" in tags:
+                    # Other admin fields are removed normally
+                    return FilterResponse.REMOVE
+                else:
+                    # Allow all other fields
+                    return FilterResponse.ALLOW
+
+        # Build the API with the test filter
+        api = GraphQLAPI(root_type=Root, filters=[TestFilter()])
+        schema, _ = api.build_schema()
+
+        type_map = schema.type_map
+
+        print(f"Types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
+
+        # SecretData should be preserved due to ALLOW_TRANSITIVE
+        assert "SecretData" in type_map, "SecretData type should be preserved due to ALLOW_TRANSITIVE"
+
+        # Check SecretData fields
+        from graphql import GraphQLObjectType
+        secret_data_type = type_map["SecretData"]
+        assert isinstance(secret_data_type, GraphQLObjectType)
+        secret_data_fields = set(secret_data_type.fields.keys())
+
+        print(f"SecretData fields: {secret_data_fields}")
+
+        # CRITICAL TEST: REMOVE_STRICT fields should be removed despite ALLOW_TRANSITIVE
+        assert "secretInfo" not in secret_data_fields, "secretInfo should be removed (REMOVE_STRICT) even though type is preserved"
+        assert "classifiedInfo" not in secret_data_fields, "classifiedInfo should be removed (REMOVE_STRICT) even though type is preserved"
+
+        # public_info should be preserved (it has no filtering tags)
+        assert "publicInfo" in secret_data_fields, "publicInfo should be preserved (no filtering applied)"
+
+        # Test that queries work correctly
+        executor = api.executor()
+
+        # This should work - we can access secret_data but only get allowed fields
+        result = executor.execute("""
+            query TestQuery {
+                secretData {
+                    publicInfo
+                }
+                publicField
+            }
+        """)
+
+        print(f"Query result: {result.data}")
+        print(f"Query errors: {result.errors}")
+
+        assert not result.errors, f"Query should succeed, but got errors: {result.errors}"
+        assert result.data == {
+            "secretData": {"publicInfo": "public"},
+            "publicField": "public"
+        }
+
+        # This should fail - trying to access REMOVE_STRICT fields
+        result_with_forbidden = executor.execute("""
+            query TestForbiddenQuery {
+                secretData {
+                    secretInfo
+                }
+            }
+        """)
+
+        print(f"Forbidden query errors: {result_with_forbidden.errors}")
+
+        # Should get an error trying to access the REMOVE_STRICT field
+        assert result_with_forbidden.errors, "Should get error when trying to access REMOVE_STRICT field"
+        assert "Cannot query field 'secretInfo'" in str(result_with_forbidden.errors[0])
 
     def test_unused_mutable_types_filtered_out(self):
         """
