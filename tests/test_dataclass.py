@@ -4,6 +4,7 @@ from enum import Enum
 
 from graphql_api.api import GraphQLAPI
 from graphql_api.decorators import field
+from graphql_api.mapper import GraphQLMetaKey
 from graphql_api.reduce import GraphQLFilter, FilterResponse
 
 
@@ -222,7 +223,7 @@ class TestDataclass:
                 return AnotherUnusedType()
 
             # Only ONE mutable field that only uses UsedType
-            @field(mutable=True)
+            @field({GraphQLMetaKey.resolve_to_mutable: True}, mutable=True)
             def update_used(self, value: str) -> UsedType:
                 """Only mutable operation - only UsedType should get a mutable version"""
                 obj = UsedType()
@@ -343,7 +344,7 @@ class TestDataclass:
                 """Query field that returns Book - this SHOULD NOT create BookMutable"""
                 return Book("1", "Great Gatsby", "F. Scott Fitzgerald")
 
-            @field(mutable=True)
+            @field({GraphQLMetaKey.resolve_to_mutable: True}, mutable=True)
             def update_user(self, id: str, name: str, email: str) -> Optional[User]:
                 """Mutable field - this SHOULD create UserMutable"""
                 return User(id, name, email, UserRole.READER)
@@ -470,7 +471,7 @@ class TestDataclass:
                 """Query field that returns UsedType"""
                 return UsedType()
 
-            @field(mutable=True)
+            @field({GraphQLMetaKey.resolve_to_mutable: True}, mutable=True)
             def update_used(self, value: str) -> UsedType:
                 """Only mutable field at root - should only require UsedTypeMutable"""
                 return UsedType()
@@ -532,3 +533,98 @@ class TestDataclass:
         # For now, document what we found rather than making assertions that might fail
         # Note: TypeCMutable should theoretically be removable but the current implementation
         # has timing issues with shared registries between query and mutation mappers
+
+    def test_library_app_mutable_types_bug(self):
+        """Reproduces the exact bug from the user's library app using their exact pattern"""
+        api = GraphQLAPI()
+
+        # Use the user's exact pattern - regular classes with @api.type decorator and manual field definitions
+        @api.type
+        class Address:
+            def __init__(self, street: str, city: str, state: str, zip_code: str, country: str = "USA"):
+                self._street = street
+                self._city = city
+                self._state = state
+                self._zip_code = zip_code
+                self._country = country
+
+            @api.field
+            def street(self) -> str:
+                return self._street
+
+            @api.field
+            def city(self) -> str:
+                return self._city
+
+            @api.field
+            def state(self) -> str:
+                return self._state
+
+            @api.field
+            def zip_code(self) -> str:
+                return self._zip_code
+
+            @api.field
+            def country(self) -> str:
+                return self._country
+
+        @api.type
+        class User:
+            def __init__(self, id: str, name: str, email: str, address: Optional[Address] = None):
+                self._id = id
+                self._name = name
+                self._email = email
+                self._address = address
+
+            @api.field
+            def id(self) -> str:
+                return self._id
+
+            @api.field
+            def name(self) -> str:
+                return self._name
+
+            @api.field
+            def email(self) -> str:
+                return self._email
+
+            @api.field
+            def address(self) -> Optional[Address]:
+                return self._address
+
+        @api.type(is_root_type=True)
+        class HelloWorld:
+            @api.field(mutable=True)
+            def update_user(self, id: str, name: str, email: str) -> Optional[User]:
+                """Only mutable field - returns User"""
+                return None
+
+            @api.field
+            def user(self) -> User:
+                """Query field returning User"""
+                address = Address("789 Main St", "Springfield", "IL", "62701")
+                return User("123", "John Doe", "john@example.com", address)
+
+        schema, type_map = api.build_schema()
+
+        print("\nLibrary app bug demonstration:")
+        print(f"All types in schema: {sorted([str(t) for t in type_map.values()])}")
+        print(f"Mutable types in schema: {sorted([str(t) for t in type_map.values() if 'Mutable' in str(t)])}")
+
+        # Correct behavior: Neither UserMutable nor AddressMutable should exist
+        # because update_user doesn't have the resolve_to_mutable flag set
+        # Mutable fields return query types by default, only creating mutable types when resolve_to_mutable: True
+
+        user_mutable_exists = any('UserMutable' in str(t) for t in type_map.values())
+        address_mutable_exists = any('AddressMutable' in str(t) for t in type_map.values())
+
+        print(f"UserMutable exists: {user_mutable_exists} (should be False - no resolve_to_mutable flag)")
+        print(f"AddressMutable exists: {address_mutable_exists} (should be False - no resolve_to_mutable flag)")
+
+        # Correct behavior: Neither should exist without resolve_to_mutable flag
+        if not user_mutable_exists and not address_mutable_exists:
+            print("✅ Working correctly: No mutable types created without resolve_to_mutable flag")
+        elif user_mutable_exists or address_mutable_exists:
+            print("❌ Bug: Mutable types created without resolve_to_mutable flag")
+        else:
+            print("❓ Unexpected state - check the debug output above")

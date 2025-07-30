@@ -156,63 +156,55 @@ class GraphQLSchemaReducer:
 
         # EARLY CLEANUP: Remove unused mutable types before they get into the final schema
         # This must happen before the schema is finalized but after all types are mapped
-        reachable_from_root_mutations = set()
+        types_with_resolve_to_mutable = set()
 
-        def collect_reachable_from_mutations(obj_type, visited=None):
+        def collect_resolve_to_mutable_types():
             """
-            Recursively collect all types reachable from root mutation fields.
-            This handles transitive dependencies correctly.
+            Collect only types returned by fields with resolve_to_mutable: True.
+            This is the correct flag that determines when mutable types should exist.
             """
-            if visited is None:
-                visited = set()
-            if obj_type in visited:
-                return
-            visited.add(obj_type)
-            reachable_from_root_mutations.add(obj_type)
+            for type_, key, field in iterate_fields(mutation):
+                meta = mapper.meta.get((type_.name, to_snake_case(key)), {})
+                if meta.get(GraphQLMetaKey.resolve_to_mutable):
+                    field_type = field.type
+                    # Unwrap NonNull and List wrappers
+                    while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
+                        field_type = field_type.of_type
 
-            if hasattr(obj_type, 'fields'):
-                for field_name, field in obj_type.fields.items():
-                    # Only follow mutable fields from mutation types
-                    if isinstance(field, GraphQLMutableField):
-                        field_type = field.type
-                        # Unwrap NonNull and List wrappers
-                        while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
-                            field_type = field_type.of_type
+                    if isinstance(field_type, GraphQLObjectType):
+                        # Get the base type (query version)
+                        base_type_name = str(field_type).replace(mapper.suffix, "", 1)
+                        base_type = mapper.registry.get(base_type_name)
+                        if base_type:
+                            types_with_resolve_to_mutable.add(base_type)
 
-                        if isinstance(field_type, GraphQLObjectType):
-                            # Get the base type (query version)
-                            base_type_name = str(field_type).replace(mapper.suffix, "", 1)
-                            base_type = mapper.registry.get(base_type_name)
-                            if base_type:
-                                collect_reachable_from_mutations(base_type, visited)
+        # Collect only types with resolve_to_mutable flag
+        collect_resolve_to_mutable_types()
 
-        # Start traversal from root mutation
-        collect_reachable_from_mutations(mutation)
-
-        # Remove mutable types whose base types are not reachable from root mutations
+        # Remove mutable types whose base types don't have resolve_to_mutable flag
         # Create a snapshot to avoid iteration issues
         registry_snapshot = dict(mapper.registry)
         types_to_remove = []
 
         for key, type_obj in registry_snapshot.items():
             if mapper.suffix in str(type_obj) and isinstance(type_obj, GraphQLObjectType):
-                # Get the base type to check if it's reachable
+                # Get the base type to check if it has resolve_to_mutable flag
                 base_type_name = str(type_obj).replace(mapper.suffix, "", 1)
                 base_type = mapper.registry.get(base_type_name)
 
-                # More nuanced rule: Keep mutable types if:
-                # 1. Their base type is reachable from root mutations, OR
+                # Keep mutable types only if:
+                # 1. Their base type has resolve_to_mutable flag set, OR
                 # 2. The mutable type itself has mutable fields (it can be used in mutations), OR
                 # 3. It's the root mutation type
-                is_base_reachable = base_type in reachable_from_root_mutations
+                has_resolve_to_mutable = base_type in types_with_resolve_to_mutable
                 has_mutable_fields = has_mutable(type_obj, interfaces_default_mutable=False)
                 is_root_mutation = type_obj == mutation  # Never remove the root mutation type
 
                 # Remove mutable types only if:
-                # - Base type is not reachable from root mutations AND
+                # - Base type doesn't have resolve_to_mutable flag AND
                 # - The type doesn't have mutable fields itself AND
                 # - It's not the root mutation type
-                if not is_base_reachable and not has_mutable_fields and not is_root_mutation:
+                if not has_resolve_to_mutable and not has_mutable_fields and not is_root_mutation:
                     types_to_remove.append(key)
 
         # Remove types from the actual registry
@@ -282,20 +274,25 @@ class GraphQLSchemaReducer:
                     field_type = field_type.of_type
                 types_returned_by_mutable_fields.add(field_type)
 
-        # Remove query fields only from types that are meant to be mutable returns
+        # Remove query fields from mutable return types that have their own mutable fields
+        # This ensures proper mutable semantics:
+        # - Types WITH mutable fields: Only mutable fields in their mutable version
+        # - Types WITHOUT mutable fields: Keep query fields in their mutable version
         fields_to_remove = set()
         for type_ in mutable_return_types:
             if isinstance(type_, GraphQLObjectType):
-                interface_fields = []
-                for interface in type_.interfaces:
-                    interface_fields += [key for key, field in interface.fields.items()]
-                for key, field in type_.fields.items():
-                    if (
-                        key not in interface_fields
-                        and not isinstance(field, GraphQLMutableField)
-                        and not has_mutable(field.type)
-                    ):
-                        fields_to_remove.add((type_, key))
+                # Only remove query fields if the type itself has mutable fields
+                if has_mutable(type_, interfaces_default_mutable=False):
+                    interface_fields = []
+                    for interface in type_.interfaces:
+                        interface_fields += [key for key, field in interface.fields.items()]
+                    for key, field in type_.fields.items():
+                        if (
+                            key not in interface_fields
+                            and not isinstance(field, GraphQLMutableField)
+                            and not has_mutable(field.type)
+                        ):
+                            fields_to_remove.add((type_, key))
 
         for type_, key in fields_to_remove:
             if hasattr(type_, "fields") and key in type_.fields:
