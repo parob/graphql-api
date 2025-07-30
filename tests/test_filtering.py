@@ -925,6 +925,116 @@ class TestSchemaFiltering:
             "incrementCounter": 1
         }
 
+    def test_allow_transitive_preserves_object_types(self):
+        """
+        Test that ALLOW_TRANSITIVE correctly preserves transitive object types
+        that would otherwise be filtered out.
+        """
+        from graphql_api.decorators import field
+        from graphql_api.reduce import FilterResponse
+        
+        class AdminUser:
+            """This type would normally be filtered out due to admin tags"""
+            def __init__(self):
+                self._name = "Admin User"
+                self._secret = "classified"
+
+            @field({"tags": ["admin"]})
+            def name(self) -> str:
+                return self._name
+
+            @field({"tags": ["admin"]})
+            def secret(self) -> str:
+                return self._secret
+
+        class PublicData:
+            """This type has no admin tags and should always be present"""
+            def __init__(self):
+                self._info = "public info"
+
+            @field
+            def info(self) -> str:
+                return self._info
+
+        class Root:
+            @field({"tags": ["admin"]})  # This field should use ALLOW_TRANSITIVE
+            def admin_user(self) -> AdminUser:
+                """Field that returns AdminUser - should preserve AdminUser type with ALLOW_TRANSITIVE"""
+                return AdminUser()
+
+            @field
+            def public_data(self) -> PublicData:
+                return PublicData()
+
+        # Create a custom filter that uses ALLOW_TRANSITIVE for admin_user field
+        from graphql_api.reduce import GraphQLFilter
+        class TestFilter(GraphQLFilter):
+            def filter_field(self, name: str, meta: dict) -> FilterResponse:
+                tags = meta.get("tags", [])
+                if "admin" in tags:
+                    if name == "admin_user":
+                        # Use ALLOW_TRANSITIVE to preserve the AdminUser type
+                        return FilterResponse.ALLOW_TRANSITIVE
+                    else:
+                        # Other admin fields should be removed
+                        return FilterResponse.REMOVE_STRICT
+                return FilterResponse.ALLOW
+
+        # Build the API with the custom filter
+        api = GraphQLAPI(root_type=Root, filters=[TestFilter()])
+        schema, _ = api.build_schema()
+
+        type_map = schema.type_map
+        
+        print(f"Types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
+        
+        # The key test: AdminUser should be preserved because admin_user field uses ALLOW_TRANSITIVE
+        assert "AdminUser" in type_map, "AdminUser type should be preserved due to ALLOW_TRANSITIVE on admin_user field"
+        
+        # PublicData should also be present (normal case)
+        assert "PublicData" in type_map, "PublicData should be present"
+        
+        # Root should be present
+        assert "Root" in type_map, "Root should be present"
+        
+        # Check that the admin_user field is present on Root
+        from graphql import GraphQLObjectType
+        root_type = type_map["Root"]
+        assert isinstance(root_type, GraphQLObjectType)
+        assert "adminUser" in root_type.fields, "adminUser field should be present on Root"
+        
+        # Check that AdminUser type has its fields (they should be filtered out but type preserved)
+        admin_user_type = type_map["AdminUser"]
+        assert isinstance(admin_user_type, GraphQLObjectType)
+        
+        # The AdminUser fields should be filtered out (REMOVE_STRICT), but the type should exist
+        admin_user_fields = set(admin_user_type.fields.keys())
+        print(f"AdminUser fields: {admin_user_fields}")
+        
+        # Test that we can query the preserved type structure
+        executor = api.executor()
+        
+        # This should work - we can access the admin_user field and get back data
+        result = executor.execute("""
+            query TestQuery {
+                adminUser {
+                    __typename
+                }
+                publicData {
+                    info
+                }
+            }
+        """)
+        
+        print(f"Query result: {result.data}")
+        print(f"Query errors: {result.errors}")
+        
+        assert not result.errors, f"Query should succeed, but got errors: {result.errors}"
+        assert result.data == {
+            "adminUser": {"__typename": "AdminUser"},
+            "publicData": {"info": "public info"}
+        }
+
     def test_unused_mutable_types_filtered_out(self):
         """
         Test that mutable object types that are not used from the root mutation type are filtered out.

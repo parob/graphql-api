@@ -60,8 +60,11 @@ class TagFilter(GraphQLFilter):
                     break
 
         if not should_filter:
-            # Field is allowed - use transitive preservation by default
-            return FilterResponse.ALLOW_TRANSITIVE
+            # Field is allowed - use ALLOW_TRANSITIVE only if preserve_transitive is enabled
+            if self.preserve_transitive:
+                return FilterResponse.ALLOW_TRANSITIVE
+            else:
+                return FilterResponse.ALLOW
         elif self.preserve_transitive:
             # Field is filtered but preserve transitive dependencies
             return FilterResponse.REMOVE
@@ -333,11 +336,12 @@ class GraphQLSchemaReducer:
             invalid_fields = set()
 
         # First, traverse the schema and collect all FilterResponse values
-        # to determine the overall preservation behavior
+        # Track types that should be preserved due to ALLOW_TRANSITIVE fields
+        allow_transitive_types = set()
         preserve_transitive = False
 
         def collect_filter_responses(current_type, current_checked=None):
-            nonlocal preserve_transitive
+            nonlocal preserve_transitive, allow_transitive_types
 
             if current_checked is None:
                 current_checked = set()
@@ -381,6 +385,10 @@ class GraphQLSchemaReducer:
                             filter_response = field_filter.filter_field(
                                 field_name, field_meta
                             )
+                            # If this field uses ALLOW_TRANSITIVE, preserve its referenced type
+                            if filter_response == FilterResponse.ALLOW_TRANSITIVE:
+                                if isinstance(type_, (GraphQLInterfaceType, GraphQLObjectType)):
+                                    allow_transitive_types.add(type_)
                             # If any filter response wants to preserve transitive,
                             # use preserve_transitive logic for the entire schema
                             if filter_response.preserve_transitive:
@@ -392,15 +400,47 @@ class GraphQLSchemaReducer:
         # Collect all filter responses to determine overall behavior
         collect_filter_responses(root_type)
 
-        # Now use the appropriate existing method based on the collected responses
+        # Use preserve_transitive method if needed, but with explicit ALLOW_TRANSITIVE preservation
         if preserve_transitive:
-            return GraphQLSchemaReducer._invalid_preserve_transitive(
+            invalid_types, invalid_fields = GraphQLSchemaReducer._invalid_preserve_transitive(
                 root_type, filters, meta, checked_types, invalid_types, invalid_fields
             )
         else:
-            return GraphQLSchemaReducer._invalid_strict(
+            invalid_types, invalid_fields = GraphQLSchemaReducer._invalid_strict(
                 root_type, filters, meta, checked_types, invalid_types, invalid_fields
             )
+            
+        # Handle ALLOW_TRANSITIVE types: preserve them only if they have filtered fields to restore
+        for allow_type in allow_transitive_types:
+            if hasattr(allow_type, 'fields'):
+                type_has_valid_field = False
+                type_has_filtered_field = False
+                
+                # Check if the type has any valid (non-filtered) fields
+                for field_key, field_val in allow_type.fields.items():
+                    if (allow_type, field_key) not in invalid_fields:
+                        type_has_valid_field = True
+                    else:
+                        type_has_filtered_field = True
+                
+                # Only apply ALLOW_TRANSITIVE if:
+                # 1. The type has no valid fields AND
+                # 2. The type has fields that were filtered out (not just absent)
+                if not type_has_valid_field and type_has_filtered_field:
+                    # Preserve the type and restore one filtered field
+                    invalid_types.discard(allow_type)
+                    
+                    # Find the first field that was marked for removal and preserve it
+                    for field_key, field_val in allow_type.fields.items():
+                        if (allow_type, field_key) in invalid_fields:
+                            # Remove this field from invalid_fields to preserve it
+                            invalid_fields.discard((allow_type, field_key))
+                            break
+                elif type_has_valid_field:
+                    # Type already has valid fields, just preserve it
+                    invalid_types.discard(allow_type)
+                            
+        return invalid_types, invalid_fields
 
     @staticmethod
     def _invalid_strict(
