@@ -449,12 +449,12 @@ class GraphQLSchemaReducer:
                                 field_name, field_meta
                             )
                             # If this field uses ALLOW_TRANSITIVE, preserve its referenced type
-                            if filter_response == FilterResponse.ALLOW_TRANSITIVE:
+                            if isinstance(filter_response, FilterResponse) and filter_response == FilterResponse.ALLOW_TRANSITIVE:
                                 if isinstance(type_, (GraphQLInterfaceType, GraphQLObjectType)):
                                     allow_transitive_types.add(type_)
                             # If any filter response wants to preserve transitive,
                             # use preserve_transitive logic for the entire schema
-                            if filter_response.preserve_transitive:
+                            if isinstance(filter_response, FilterResponse) and filter_response.preserve_transitive:
                                 preserve_transitive = True
 
                     if isinstance(type_, (GraphQLInterfaceType, GraphQLObjectType)):
