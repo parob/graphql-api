@@ -2174,3 +2174,76 @@ class TestSchemaFiltering:
             }
         }
         assert result.data == expected
+
+    def test_filter_response_type_safety(self):
+        """Test that the filtering system handles unexpected filter response types gracefully"""
+        from graphql_api.reduce import GraphQLFilter, FilterResponse
+        
+        class BrokenFilter(GraphQLFilter):
+            """A filter that returns unexpected types to test error handling"""
+            
+            def __init__(self, return_type="bool"):
+                self.return_type = return_type
+            
+            def filter_field(self, name: str, meta: dict):
+                if self.return_type == "bool":
+                    return True  # Should be FilterResponse
+                elif self.return_type == "none":
+                    return None  # Should be FilterResponse
+                elif self.return_type == "string":
+                    return "invalid"  # Should be FilterResponse
+                elif self.return_type == "int":
+                    return 42  # Should be FilterResponse
+                else:
+                    return FilterResponse.ALLOW  # Valid response
+        
+        api = GraphQLAPI()
+        
+        @api.type
+        class TestType:
+            @api.field
+            def field1(self) -> str:
+                return "test"
+            
+            @api.field
+            def field2(self) -> str:
+                return "test2"
+        
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def test(self) -> TestType:
+                return TestType()
+        
+        # Test with boolean filter response
+        broken_filter_bool = BrokenFilter(return_type="bool")
+        filtered_api_bool = GraphQLAPI(root_type=Root, filters=[broken_filter_bool])
+        executor = filtered_api_bool.executor()
+        # Should not raise AttributeError
+        
+        # Test with None filter response
+        broken_filter_none = BrokenFilter(return_type="none")
+        filtered_api_none = GraphQLAPI(root_type=Root, filters=[broken_filter_none])
+        executor = filtered_api_none.executor()
+        # Should not raise AttributeError
+        
+        # Test with string filter response
+        broken_filter_string = BrokenFilter(return_type="string")
+        filtered_api_string = GraphQLAPI(root_type=Root, filters=[broken_filter_string])
+        executor = filtered_api_string.executor()
+        # Should not raise AttributeError
+        
+        # Test with int filter response
+        broken_filter_int = BrokenFilter(return_type="int")
+        filtered_api_int = GraphQLAPI(root_type=Root, filters=[broken_filter_int])
+        executor = filtered_api_int.executor()
+        # Should not raise AttributeError
+        
+        # Test with valid filter response
+        valid_filter = BrokenFilter(return_type="valid")
+        filtered_api_valid = GraphQLAPI(root_type=Root, filters=[valid_filter])
+        executor = filtered_api_valid.executor()
+        # Should work normally
+        
+        # All tests should pass without AttributeError
+        assert executor is not None

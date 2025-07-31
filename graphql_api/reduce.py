@@ -559,7 +559,7 @@ class GraphQLSchemaReducer:
                         filter_response = field_filter.filter_field(
                             field_name, field_meta
                         )
-                        if filter_response.should_filter:
+                        if isinstance(filter_response, FilterResponse) and filter_response.should_filter:
                             invalid_fields.add((root_type, key))
 
                 if isinstance(type_, (GraphQLInterfaceType, GraphQLObjectType)):
@@ -667,7 +667,7 @@ class GraphQLSchemaReducer:
                             filter_response = field_filter.filter_field(
                                 field_name, field_meta
                             )
-                            if filter_response.should_filter:
+                            if isinstance(filter_response, FilterResponse) and filter_response.should_filter:
                                 invalid_fields.add((current_type, key))
                                 field_is_filtered = True
                                 break
