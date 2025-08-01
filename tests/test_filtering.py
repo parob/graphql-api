@@ -1,5 +1,7 @@
 from graphql_api.api import GraphQLAPI
 from graphql_api.mapper import GraphQLMetaKey
+from graphql_api.reduce import GraphQLFilter
+from graphql_api.directives import print_schema
 
 
 class TestSchemaFiltering:
@@ -515,12 +517,12 @@ class TestSchemaFiltering:
         from graphql_api.reduce import FilterResponse
 
         # Test ALLOW - keep field, don't preserve transitive
-        assert not FilterResponse.ALLOW.should_filter
-        assert not FilterResponse.ALLOW.preserve_transitive
+        assert not FilterResponse.KEEP.should_filter
+        assert not FilterResponse.KEEP.preserve_transitive
 
         # Test ALLOW_TRANSITIVE - keep field, preserve transitive
-        assert not FilterResponse.ALLOW_TRANSITIVE.should_filter
-        assert FilterResponse.ALLOW_TRANSITIVE.preserve_transitive
+        assert not FilterResponse.KEEP_TRANSITIVE.should_filter
+        assert FilterResponse.KEEP_TRANSITIVE.preserve_transitive
 
         # Test REMOVE - remove field, preserve transitive
         assert FilterResponse.REMOVE.should_filter
@@ -545,10 +547,10 @@ class TestSchemaFiltering:
                 tags = meta.get("tags", [])
 
                 if "allow" in tags:
-                    return FilterResponse.ALLOW  # Keep field, don't preserve transitive
+                    return FilterResponse.KEEP  # Keep field, don't preserve transitive
                 elif "allow_transitive" in tags:
                     return (
-                        FilterResponse.ALLOW_TRANSITIVE
+                        FilterResponse.KEEP_TRANSITIVE
                     )  # Keep field, preserve transitive
                 elif "remove" in tags:
                     return FilterResponse.REMOVE  # Remove field, preserve transitive
@@ -557,7 +559,7 @@ class TestSchemaFiltering:
                         FilterResponse.REMOVE_STRICT
                     )  # Remove field, don't preserve transitive
                 else:
-                    return FilterResponse.ALLOW_TRANSITIVE  # Default behavior
+                    return FilterResponse.KEEP_TRANSITIVE  # Default behavior
 
         class ReferencedType:
             @field({"tags": ["allow"]})
@@ -673,7 +675,7 @@ class TestSchemaFiltering:
                 elif "admin" in tags:
                     return FilterResponse.REMOVE  # Remove with preservation
                 else:
-                    return FilterResponse.ALLOW_TRANSITIVE  # Keep with preservation
+                    return FilterResponse.KEEP_TRANSITIVE  # Keep with preservation
 
         class DataType:
             @field
@@ -975,11 +977,11 @@ class TestSchemaFiltering:
                 if "admin" in tags:
                     if name == "admin_user":
                         # Use ALLOW_TRANSITIVE to preserve the AdminUser type
-                        return FilterResponse.ALLOW_TRANSITIVE
+                        return FilterResponse.KEEP_TRANSITIVE
                     else:
                         # Other admin fields should be removed
                         return FilterResponse.REMOVE_STRICT
-                return FilterResponse.ALLOW
+                return FilterResponse.KEEP
 
         # Build the API with the custom filter
         api = GraphQLAPI(root_type=Root, filters=[TestFilter()])
@@ -1087,10 +1089,10 @@ class TestSchemaFiltering:
                 tags = meta.get("tags", [])
                 if "admin" in tags:
                     if name == "admin_user":
-                        return FilterResponse.ALLOW_TRANSITIVE
+                        return FilterResponse.KEEP_TRANSITIVE
                     else:
                         return FilterResponse.REMOVE_STRICT
-                return FilterResponse.ALLOW
+                return FilterResponse.KEEP
 
         api_strict = GraphQLAPI(root_type=Root, filters=[TestFilterStrict()])
         schema_strict, _ = api_strict.build_schema()
@@ -1101,10 +1103,10 @@ class TestSchemaFiltering:
                 tags = meta.get("tags", [])
                 if "admin" in tags:
                     if name == "admin_user":
-                        return FilterResponse.ALLOW_TRANSITIVE
+                        return FilterResponse.KEEP_TRANSITIVE
                     else:
                         return FilterResponse.REMOVE  # Use REMOVE instead of REMOVE_STRICT
-                return FilterResponse.ALLOW
+                return FilterResponse.KEEP
 
         api_remove = GraphQLAPI(root_type=Root, filters=[TestFilterRemove()])
         schema_remove, _ = api_remove.build_schema()
@@ -1198,7 +1200,7 @@ class TestSchemaFiltering:
 
                 if name == "secret_data" and "admin" in tags:
                     # Use ALLOW_TRANSITIVE to preserve SecretData type
-                    return FilterResponse.ALLOW_TRANSITIVE
+                    return FilterResponse.KEEP_TRANSITIVE
                 elif "secret" in tags or "classified" in tags:
                     # These fields should ALWAYS be removed, even if type is preserved
                     return FilterResponse.REMOVE_STRICT
@@ -1207,7 +1209,7 @@ class TestSchemaFiltering:
                     return FilterResponse.REMOVE
                 else:
                     # Allow all other fields
-                    return FilterResponse.ALLOW
+                    return FilterResponse.KEEP
 
         # Build the API with the test filter
         api = GraphQLAPI(root_type=Root, filters=[TestFilter()])
@@ -1524,11 +1526,11 @@ class TestSchemaFiltering:
         class Animal:
             @field
             def name(self) -> str:
-                pass
+                ...
 
             @field({"tags": ["vet"]})
             def medical_history(self) -> str:
-                pass
+                ...
 
         class Dog(Animal):
             def __init__(self):
@@ -1913,7 +1915,7 @@ class TestSchemaFiltering:
                         else FilterResponse.REMOVE_STRICT
                     )
                 else:
-                    return FilterResponse.ALLOW_TRANSITIVE
+                    return FilterResponse.KEEP_TRANSITIVE
 
         class Data:
             @field
@@ -2058,6 +2060,49 @@ class TestSchemaFiltering:
         assert result.errors
         # Should fail because updateName field is filtered out
 
+
+    def test_custom_public_filter(self):
+        """
+        Test that we can use a custom filter to keep public fields and remove non-public ones
+        """
+        from graphql_api.reduce import GraphQLFilter
+        from graphql_api.decorators import field
+
+        class PublicFilter(GraphQLFilter):
+
+            def filter_field(self, name: str, meta: dict) -> bool:
+                # Return True to remove the field, False to keep it
+                # We want to keep public fields and remove non-public ones
+
+                is_public = meta.get("public")
+                should_filter = not is_public
+                if should_filter:
+                    print(f"Filtering field {name} with meta {meta}: {should_filter}")
+                else:
+                    print(f"Keeping field {name} with meta {meta}: {should_filter}")
+
+                return should_filter
+
+        api = GraphQLAPI(filters=[PublicFilter()])
+
+        @api.type(is_root_type=True)
+        class Root:
+
+            @api.field({"public": True})
+            def public_field(self) -> str:
+                return "public"
+
+            @api.field
+            def non_public_field(self) -> str:
+                return "non-public"
+
+
+        schema, _ = api.build_schema()
+        printed_schema = print_schema(schema)
+        assert "publicField" in printed_schema
+        assert "nonPublicField" not in printed_schema
+
+
     def test_recursive_object_type_preservation(self):
         """
         Test that object types on fields of unfiltered objects (recursive)
@@ -2195,7 +2240,7 @@ class TestSchemaFiltering:
                 elif self.return_type == "int":
                     return 42  # Should be FilterResponse
                 else:
-                    return FilterResponse.ALLOW  # Valid response
+                    return FilterResponse.KEEP  # Valid response
 
         api = GraphQLAPI()
 

@@ -111,11 +111,11 @@ class TestDataclass:
                 if "admin" in tags:
                     if name == "get_stats":
                         # Use ALLOW_TRANSITIVE to preserve the Stats type
-                        return FilterResponse.ALLOW_TRANSITIVE
+                        return FilterResponse.KEEP_TRANSITIVE
                     else:
                         # Other admin fields should be removed
                         return FilterResponse.REMOVE_STRICT
-                return FilterResponse.ALLOW
+                return FilterResponse.KEEP
 
         # Build the API with the custom filter
         api = GraphQLAPI(root_type=Root, filters=[TestFilter()])

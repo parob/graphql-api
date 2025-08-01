@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 from enum import Enum
 
 from graphql import GraphQLList, GraphQLNonNull, GraphQLObjectType
@@ -12,14 +12,15 @@ class FilterResponse(Enum):
     """
     Response from a GraphQL filter indicating how to handle a field and transitive types.
 
-    ALLOW - Keep the field, don't preserve transitive object types (should_filter=False, preserve_transitive=False)
-    ALLOW_TRANSITIVE - Keep the field and preserve transitive object types (should_filter=False, preserve_transitive=True)
-    REMOVE - Remove the field but preserve types referenced by unfiltered fields (should_filter=True, preserve_transitive=True)
-    REMOVE_STRICT - Remove the field and don't preserve unreferenced types (should_filter=True, preserve_transitive=False)
+    KEEP - Keep the field, don't preserve transitive object types
+    KEEP_TRANSITIVE - Keep the field and preserve transitive object types
+    REMOVE - Remove the field but preserve types referenced by unfiltered fields
+    REMOVE_STRICT - Always remove the field even if it is referenced by an unfiltered field that preserves transitive types.
+
     """
 
-    ALLOW = "allow"
-    ALLOW_TRANSITIVE = "allow_transitive"
+    KEEP = "keep"
+    KEEP_TRANSITIVE = "allow_transitive"
     REMOVE = "remove"
     REMOVE_STRICT = "remove_strict"
 
@@ -31,18 +32,32 @@ class FilterResponse(Enum):
     @property
     def preserve_transitive(self) -> bool:
         """True if types referenced by unfiltered fields should be preserved"""
-        return self in (FilterResponse.ALLOW_TRANSITIVE, FilterResponse.REMOVE)
+        return self in (FilterResponse.KEEP_TRANSITIVE, FilterResponse.REMOVE)
 
 
 class GraphQLFilter:
-    def filter_field(self, name, meta: dict) -> FilterResponse:
+
+    def filter_field(self, name: str, meta: dict) -> Union[bool, FilterResponse]:
         """
-        Return FilterResponse indicating how to handle the field
+        Return either FilterReponse or a bool value indicating how to handle the field.
+
+        There are two options for what is returned;
+
+        Basic usage:
+            True: This field should be removed.
+            False: This field should be kept.
+
+        Advanced usage:
+            FilterResponse.KEEP_TRANSITIVE: This field should be kept and any transitive types should be kept.
+            FilterResponse.KEEP: This field should be kept but any transitive types set to REMOVE or REMOVE_STRICT will be removed.
+            FilterResponse.REMOVE: This field should generally be removed, but will be kept if it is referenced by an unfiltered field that is set to KEEP_TRANSITIVE.
+            FilterResponse.REMOVE_STRICT: This field should always be removed, even if it is referenced by an unfiltered field that is set to KEEP_TRANSITIVE.
         """
         raise NotImplementedError()
 
 
 class TagFilter(GraphQLFilter):
+
     def __init__(
         self, tags: Optional[List[str]] = None, preserve_transitive: bool = True
     ):
@@ -62,9 +77,9 @@ class TagFilter(GraphQLFilter):
         if not should_filter:
             # Field is allowed - use ALLOW_TRANSITIVE only if preserve_transitive is enabled
             if self.preserve_transitive:
-                return FilterResponse.ALLOW_TRANSITIVE
+                return FilterResponse.KEEP_TRANSITIVE
             else:
-                return FilterResponse.ALLOW
+                return FilterResponse.KEEP
         elif self.preserve_transitive:
             # Field is filtered but preserve transitive dependencies
             return FilterResponse.REMOVE
@@ -448,8 +463,20 @@ class GraphQLSchemaReducer:
                             filter_response = field_filter.filter_field(
                                 field_name, field_meta
                             )
+
+                            # Handle backwards compatibility with boolean returns
+                            if isinstance(filter_response, bool):
+                                # Boolean True means filter the field (old API)
+                                # Convert to FilterResponse for consistent handling
+                                if filter_response:
+                                    # Field should be filtered - use REMOVE_STRICT as default
+                                    filter_response = FilterResponse.REMOVE_STRICT
+                                else:
+                                    # Field should be kept - use ALLOW as default
+                                    filter_response = FilterResponse.KEEP
+
                             # If this field uses ALLOW_TRANSITIVE, preserve its referenced type
-                            if isinstance(filter_response, FilterResponse) and filter_response == FilterResponse.ALLOW_TRANSITIVE:
+                            if isinstance(filter_response, FilterResponse) and filter_response == FilterResponse.KEEP_TRANSITIVE:
                                 if isinstance(type_, (GraphQLInterfaceType, GraphQLObjectType)):
                                     allow_transitive_types.add(type_)
                             # If any filter response wants to preserve transitive,
@@ -559,7 +586,13 @@ class GraphQLSchemaReducer:
                         filter_response = field_filter.filter_field(
                             field_name, field_meta
                         )
-                        if isinstance(filter_response, FilterResponse) and filter_response.should_filter:
+
+                        # Handle backwards compatibility with boolean returns
+                        if isinstance(filter_response, bool):
+                            # Boolean True means filter the field (old API)
+                            if filter_response:
+                                invalid_fields.add((root_type, key))
+                        elif isinstance(filter_response, FilterResponse) and filter_response.should_filter:
                             invalid_fields.add((root_type, key))
 
                 if isinstance(type_, (GraphQLInterfaceType, GraphQLObjectType)):
@@ -667,7 +700,16 @@ class GraphQLSchemaReducer:
                             filter_response = field_filter.filter_field(
                                 field_name, field_meta
                             )
-                            if isinstance(filter_response, FilterResponse) and filter_response.should_filter:
+
+                            # Handle backwards compatibility with boolean returns
+                            should_filter_field = False
+                            if isinstance(filter_response, bool):
+                                # Boolean True means filter the field (old API)
+                                should_filter_field = filter_response
+                            elif isinstance(filter_response, FilterResponse):
+                                should_filter_field = filter_response.should_filter
+
+                            if should_filter_field:
                                 invalid_fields.add((current_type, key))
                                 field_is_filtered = True
                                 break
