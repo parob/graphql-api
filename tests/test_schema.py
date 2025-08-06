@@ -10,44 +10,44 @@ class TestGraphQLSchema:
         class ObjectNoSchema:
             @field
             def test_query_no_schema(self, a: int) -> int:
-                pass
+                ...
 
             @field(mutable=True)
             def test_mutation_no_schema(self, a: int) -> int:
-                pass
+                ...
 
         @type(abstract=True)
         class AbstractNoSchema:
             @field
             def test_abstract_query_no_schema(self, a: int) -> int:
-                pass
+                ...
 
             @field(mutable=True)
             def test_abstract_mutation_no_schema(self, a: int) -> int:
-                pass
+                ...
 
         @type(interface=True)
         class InterfaceNoSchema:
             @field
             def test_interface_query_no_schema(self, a: int) -> int:
-                pass
+                ...
 
             @field(mutable=True)
             def test_interface_mutation_no_schema(self, a: int) -> int:
-                pass
+                ...
 
         # noinspection PyUnresolvedReferences
-        assert ObjectNoSchema._graphql
+        assert ObjectNoSchema._graphql  # type: ignore[reportAttributeAccess]
         assert ObjectNoSchema.test_query_no_schema._graphql
         assert ObjectNoSchema.test_mutation_no_schema._graphql
 
         # noinspection PyUnresolvedReferences
-        assert AbstractNoSchema._graphql
+        assert AbstractNoSchema._graphql  # type: ignore[reportAttributeAccess]
         assert AbstractNoSchema.test_abstract_query_no_schema._graphql
         assert AbstractNoSchema.test_abstract_mutation_no_schema._graphql
 
         # noinspection PyUnresolvedReferences
-        assert InterfaceNoSchema._graphql
+        assert InterfaceNoSchema._graphql  # type: ignore[reportAttributeAccess]
         assert InterfaceNoSchema.test_interface_query_no_schema._graphql
         assert InterfaceNoSchema.test_interface_mutation_no_schema._graphql
 
@@ -58,14 +58,14 @@ class TestGraphQLSchema:
         class ObjectSchema:
             @api_1.field
             def test_query_schema(self, a: int) -> int:
-                pass
+                ...
 
             @api_1.field(mutable=True)
             def test_mutation_schema(self, a: int) -> int:
-                pass
+                ...
 
         # noinspection PyUnresolvedReferences
-        assert ObjectSchema._graphql
+        assert ObjectSchema._graphql  # type: ignore[reportAttributeAccess]
         assert ObjectSchema.test_query_schema._graphql
         assert ObjectSchema.test_mutation_schema._graphql
 
@@ -74,14 +74,14 @@ class TestGraphQLSchema:
         class ObjectNoSchemaMeta:
             @field(meta={"test": "test"})
             def test_query_no_schema_meta(self, a: int) -> int:
-                pass
+                ...
 
             @field(meta={"test": "test"}, mutable=True)
             def test_mutation_no_schema_meta(self, a: int) -> int:
-                pass
+                ...
 
         # noinspection PyUnresolvedReferences
-        assert ObjectNoSchemaMeta._graphql
+        assert ObjectNoSchemaMeta._graphql  # type: ignore[reportAttributeAccess]
         assert ObjectNoSchemaMeta.test_query_no_schema_meta._graphql
         assert ObjectNoSchemaMeta.test_mutation_no_schema_meta._graphql
 
@@ -92,20 +92,22 @@ class TestGraphQLSchema:
         class ObjectSchemaMeta:
             @api_1.field(meta={"test3": "test4"})
             def test_query_schema_meta(self, a: int) -> int:
-                pass
+                ...
 
             @api_1.field(meta={"test5": "test6"}, mutable=True)
             def test_mutation_schema_meta(self, a: int) -> int:
-                pass
+                ...
 
         # noinspection PyUnresolvedReferences
-        assert ObjectSchemaMeta._graphql
+        assert ObjectSchemaMeta._graphql  # type: ignore[reportAttributeAccess]
         assert ObjectSchemaMeta.test_query_schema_meta._graphql
         assert ObjectSchemaMeta.test_mutation_schema_meta._graphql
 
-        schema = api_1.build_schema()
+        schema, _ = api_1.build_schema()
 
-        assert schema
+        assert schema is not None
+        assert schema.query_type is not None
+        assert schema.mutation_type is not None
 
     def test_schema_with_no_root_type(self):
         """
@@ -115,9 +117,11 @@ class TestGraphQLSchema:
         api = GraphQLAPI()
         schema, _ = api.build_schema()
 
-        assert schema
+        assert schema is not None
+        assert schema.query_type is not None
         assert schema.query_type.name == "PlaceholderQuery"
         assert "placeholder" in schema.query_type.fields
+        assert schema.mutation_type is not None
         assert schema.mutation_type is None
 
     def test_root_type_delegate_is_called(self):
