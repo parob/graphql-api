@@ -900,6 +900,167 @@ class TestGraphQL:
 
         assert result.data == expected
 
+    def test_string_enum(self):
+        """Test string enum functionality"""
+        api = GraphQLAPI()
+
+        class Timeframe(str, enum.Enum):
+            """A timeframe."""
+            LAST_30_DAYS = "last_30_days"
+            ALL_TIME = "all_time"
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def get_timeframe(self) -> Timeframe:
+                return Timeframe.LAST_30_DAYS
+
+            @api.field
+            def echo_timeframe(self, timeframe: Timeframe) -> Timeframe:
+                return timeframe
+
+        executor = api.executor()
+
+        # Test return value
+        query1 = """
+            query {
+                getTimeframe
+            }
+        """
+        result1 = executor.execute(query1)
+        assert result1.data == {'getTimeframe': 'LAST_30_DAYS'}
+
+        # Test input argument
+        query2 = """
+            query {
+                echoTimeframe(timeframe: ALL_TIME)
+            }
+        """
+        result2 = executor.execute(query2)
+        assert result2.data == {'echoTimeframe': 'ALL_TIME'}
+
+    def test_string_enum_with_regular_enum(self):
+        """Test that both string enums and regular enums work together"""
+        api = GraphQLAPI()
+
+        class StringStatus(str, enum.Enum):
+            ACTIVE = "active"
+            INACTIVE = "inactive"
+
+        class RegularPriority(enum.Enum):
+            LOW = 1
+            MEDIUM = 2
+            HIGH = 3
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def get_status(self) -> StringStatus:
+                return StringStatus.ACTIVE
+
+            @api.field
+            def get_priority(self) -> RegularPriority:
+                return RegularPriority.HIGH
+
+            @api.field
+            def combine(self, status: StringStatus, priority: RegularPriority) -> str:
+                return f"{status.value}:{priority.value}"
+
+        executor = api.executor()
+
+        query = """
+            query {
+                getStatus
+                getPriority
+                combine(status: ACTIVE, priority: HIGH)
+            }
+        """
+
+        result = executor.execute(query)
+        assert result.data == {
+            'getStatus': 'ACTIVE',
+            'getPriority': 'HIGH',
+            'combine': 'active:3'
+        }
+
+    def test_string_enum_optional(self):
+        """Test optional string enum"""
+        api = GraphQLAPI()
+
+        class Color(str, enum.Enum):
+            RED = "red"
+            GREEN = "green"
+            BLUE = "blue"
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def get_color(self, color: Optional[Color] = None) -> str:
+                if color:
+                    return f"Color is {color.value}"
+                return "No color specified"
+
+        executor = api.executor()
+
+        # Test with value
+        query1 = """
+            query {
+                getColor(color: RED)
+            }
+        """
+        result1 = executor.execute(query1)
+        assert result1.data == {'getColor': 'Color is red'}
+
+        # Test without value
+        query2 = """
+            query {
+                getColor
+            }
+        """
+        result2 = executor.execute(query2)
+        assert result2.data == {'getColor': 'No color specified'}
+
+    def test_string_enum_list(self):
+        """Test list of string enums"""
+        api = GraphQLAPI()
+
+        class Tag(str, enum.Enum):
+            PYTHON = "python"
+            JAVASCRIPT = "javascript"
+            RUST = "rust"
+            GO = "go"
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def get_tags(self) -> List[Tag]:
+                return [Tag.PYTHON, Tag.RUST]
+
+            @api.field
+            def filter_tags(self, tags: List[Tag]) -> List[Tag]:
+                # Return only tags that start with 'P' or 'R'
+                return [t for t in tags if t.value[0] in ('p', 'r')]
+
+        executor = api.executor()
+
+        # Test returning list
+        query1 = """
+            query {
+                getTags
+            }
+        """
+        result1 = executor.execute(query1)
+        assert result1.data == {'getTags': ['PYTHON', 'RUST']}
+
+        # Test list as input
+        query2 = """
+            query {
+                filterTags(tags: [PYTHON, JAVASCRIPT, RUST, GO])
+            }
+        """
+        result2 = executor.execute(query2)
+        assert result2.data == {'filterTags': ['PYTHON', 'RUST']}
+
     # noinspection PyUnusedLocal
     def test_literal(self):
         api = GraphQLAPI()

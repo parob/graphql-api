@@ -403,9 +403,6 @@ class GraphQLTypeMapper:
         )
 
         enum_type.enum_type = type_
-        
-        # Check if this is a string enum (inherits from both str and Enum)
-        is_string_enum = issubclass(type_, str)
 
         def serialize(_self, value) -> Union[str, None, UndefinedType]:
             if value and isinstance(value, collections.abc.Hashable):

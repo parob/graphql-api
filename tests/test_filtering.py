@@ -1,6 +1,5 @@
 from graphql_api.api import GraphQLAPI
 from graphql_api.mapper import GraphQLMetaKey
-from graphql_api.reduce import GraphQLFilter
 from graphql_api.directives import print_schema
 
 
@@ -2060,13 +2059,11 @@ class TestSchemaFiltering:
         assert result.errors
         # Should fail because updateName field is filtered out
 
-
     def test_custom_public_filter(self):
         """
         Test that we can use a custom filter to keep public fields and remove non-public ones
         """
         from graphql_api.reduce import GraphQLFilter
-        from graphql_api.decorators import field
 
         class PublicFilter(GraphQLFilter):
 
@@ -2096,12 +2093,10 @@ class TestSchemaFiltering:
             def non_public_field(self) -> str:
                 return "non-public"
 
-
         schema, _ = api.build_schema()
         printed_schema = print_schema(schema)
         assert "publicField" in printed_schema
         assert "nonPublicField" not in printed_schema
-
 
     def test_recursive_object_type_preservation(self):
         """
