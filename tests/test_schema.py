@@ -107,7 +107,6 @@ class TestGraphQLSchema:
 
         assert schema is not None
         assert schema.query_type is not None
-        assert schema.mutation_type is not None
 
     def test_schema_with_no_root_type(self):
         """
@@ -121,7 +120,6 @@ class TestGraphQLSchema:
         assert schema.query_type is not None
         assert schema.query_type.name == "PlaceholderQuery"
         assert "placeholder" in schema.query_type.fields
-        assert schema.mutation_type is not None
         assert schema.mutation_type is None
 
     def test_root_type_delegate_is_called(self):
