@@ -403,14 +403,21 @@ class GraphQLTypeMapper:
         )
 
         enum_type.enum_type = type_
+        
+        # Check if this is a string enum (inherits from both str and Enum)
+        is_string_enum = issubclass(type_, str)
 
         def serialize(_self, value) -> Union[str, None, UndefinedType]:
             if value and isinstance(value, collections.abc.Hashable):
+                # For both string and regular enums, we need to extract the .value attribute
                 if isinstance(value, enum.Enum):
-                    value = value.value
+                    lookup_key = value.value
+                else:
+                    # If it's not an enum instance, use the value directly
+                    lookup_key = value
 
                 # noinspection PyProtectedMember
-                lookup_value = _self._value_lookup.get(value)
+                lookup_value = _self._value_lookup.get(lookup_key)
                 if lookup_value:
                     return lookup_value
                 else:
@@ -751,11 +758,13 @@ class GraphQLTypeMapper:
                 if issubclass(type__, GraphQLType):
                     return type__()
 
-                if issubclass(type__, tuple(self.scalar_classes())):
-                    return self.map_to_scalar(type__)
-
+                # Check for enum.Enum before scalar types to handle string enums correctly
+                # String enums inherit from both str and Enum, so we need to check Enum first
                 if issubclass(type__, enum.Enum):
                     return self.map_to_enum(type__)
+
+                if issubclass(type__, tuple(self.scalar_classes())):
+                    return self.map_to_scalar(type__)
 
                 if is_interface(type__, self.schema):
                     return self.map_to_interface(type__)
