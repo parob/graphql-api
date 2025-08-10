@@ -570,15 +570,9 @@ class GraphQLTypeMapper:
                         # noinspection PyTypeChecker
                         input_arg_type = GraphQLNonNull(input_arg_type)  # type: ignore
 
+                    # Use the raw Python default for input coercion.
+                    # Do not convert to GraphQL query literals here.
                     default_value = local_default_args.get(key, None)
-
-                    if default_value is not None:
-                        try:
-                            default_value = to_input_value(default_value)
-                        except ValueError as _err:
-                            raise ValueError(
-                                f"Unable to map {local_name}.{key}, {_err}."
-                            )
 
                     arguments[to_camel_case(key)] = GraphQLInputField(
                         type_=input_arg_type, default_value=default_value  # type: ignore

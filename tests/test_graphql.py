@@ -1087,6 +1087,147 @@ class TestGraphQL:
         result = executor.execute(query, variables={'tag': Tag.PYTHON.name})
         assert result.data == {'checkTag': True}
 
+    def test_string_enum_variable_rejects_value_literal(self):
+        api = GraphQLAPI()
+
+        class Tag(str, enum.Enum):
+            PYTHON = "python"
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def check(self, tag: Tag) -> bool:
+                return isinstance(tag, Tag)
+
+        executor = api.executor()
+        query = """
+            query($tag: TagEnum!){
+                check(tag: $tag)
+            }
+        """
+        # Variable must be the NAME ("PYTHON"), not the underlying value ("python")
+        result = executor.execute(query, variables={"tag": "python"})
+        assert result.errors and "does not exist in 'TagEnum'" in result.errors[0].message
+
+    def test_regular_enum_variable(self):
+        api = GraphQLAPI()
+
+        class Priority(enum.Enum):
+            LOW = 1
+            HIGH = 3
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def is_high(self, p: Priority) -> bool:
+                return p is Priority.HIGH
+
+        executor = api.executor()
+        q = "query($p: PriorityEnum!){ isHigh(p: $p) }"
+        result = executor.execute(q, variables={"p": "HIGH"})
+        assert result.data == {"isHigh": True}
+
+    def test_input_object_enum_default_and_override(self):
+        api = GraphQLAPI()
+
+        class Status(str, enum.Enum):
+            ACTIVE = "active"
+            INACTIVE = "inactive"
+
+        class Filter:
+            def __init__(self, status: Status = Status.ACTIVE):
+                self.status = status
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def get_status(self, flt: Filter) -> Status:
+                return flt.status
+
+        executor = api.executor()
+        # Uses default from InputObject field
+        r1 = executor.execute("query{ getStatus(flt: {}) }")
+        assert not r1.errors and r1.data == {"getStatus": "ACTIVE"}
+
+        # Override via variable with enum NAME
+        q = "query($s: StatusEnum!){ getStatus(flt: {status: $s}) }"
+        r2 = executor.execute(q, variables={"s": "INACTIVE"})
+        assert r2.data == {"getStatus": "INACTIVE"}
+
+    def test_string_enum_list_variable(self):
+        api = GraphQLAPI()
+
+        class Tag(str, enum.Enum):
+            PYTHON = "python"
+            RUST = "rust"
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def echo(self, tags: List[Tag]) -> List[Tag]:
+                assert all(isinstance(t, Tag) for t in tags)
+                return tags
+
+        executor = api.executor()
+        q = "query($tags: [TagEnum!]!){ echo(tags: $tags) }"
+        r = executor.execute(q, variables={"tags": ["PYTHON", "RUST"]})
+        assert r.data == {"echo": ["PYTHON", "RUST"]}
+
+    def test_optional_enum_undefined_vs_null(self):
+        api = GraphQLAPI()
+
+        class Color(str, enum.Enum):
+            RED = "red"
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def show(self, color: Optional[Color] = None) -> str:
+                return "none" if color is None else color.value
+
+        executor = api.executor()
+        q = "query($c: ColorEnum){ show(color: $c) }"
+        # Undefined variable
+        r1 = executor.execute(q, variables={})
+        assert r1.data == {"show": "none"}
+        # Explicit null
+        r2 = executor.execute(q, variables={"c": None})
+        assert r2.data == {"show": "none"}
+
+    def test_returning_underlying_value_maps_to_enum_name(self):
+        api = GraphQLAPI()
+
+        class Color(str, enum.Enum):
+            RED = "red"
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def color(self) -> Color:  # type: ignore[override]
+                # Returning the underlying value should still serialize to NAME
+                return "red"  # type: ignore[return-value]
+
+        executor = api.executor()
+        r = executor.execute("query{ color }")
+        assert r.data == {"color": "RED"}
+
+    def test_enum_variable_mixed_case_invalid(self):
+        api = GraphQLAPI()
+
+        class Tag(str, enum.Enum):
+            PYTHON = "python"
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def ok(self, tag: Tag) -> bool:
+                return True
+
+        executor = api.executor()
+        q = "query($t: TagEnum!){ ok(tag: $t) }"
+        res = executor.execute(q, variables={"t": "Python"})
+        assert res.errors and "does not exist in 'TagEnum'" in res.errors[0].message
+
     # noinspection PyUnusedLocal
     def test_literal(self):
         api = GraphQLAPI()
