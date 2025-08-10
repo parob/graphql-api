@@ -4,7 +4,7 @@ import json
 import uuid
 import enum
 
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union, cast
 
 from graphql import (
     GraphQLEnumType,
@@ -24,8 +24,31 @@ class GraphQLMappedEnumType(GraphQLEnumType):
 
     def parse_literal(self, *args, **kwargs):
         result = super().parse_literal(*args, **kwargs)
-        if result and hasattr(self, "enum_type") and self.enum_type:
-            return self.enum_type(result)
+        if result is not Undefined and result is not None and getattr(self, "enum_type", None):
+            try:
+                enum_type: Optional[Type[enum.Enum]] = self.enum_type
+                if enum_type is None:
+                    return result
+                return cast(Type[enum.Enum], enum_type)(result)
+            except Exception:
+                return Undefined
+        return result
+
+    def parse_value(self, value):
+        """Coerce incoming variable values to the mapped Python Enum instance.
+
+        GraphQL variables use `parse_value`, while inline literals use
+        `parse_literal`. Ensure both paths produce the Python Enum.
+        """
+        result = super().parse_value(value)
+        if result is not Undefined and result is not None and getattr(self, "enum_type", None):
+            try:
+                enum_type: Optional[Type[enum.Enum]] = self.enum_type
+                if enum_type is None:
+                    return result
+                return cast(Type[enum.Enum], enum_type)(result)
+            except Exception:
+                return Undefined
         return result
 
 
