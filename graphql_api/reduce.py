@@ -472,7 +472,7 @@ class GraphQLSchemaReducer:
                                     # Field should be filtered - use REMOVE_STRICT as default
                                     filter_response = FilterResponse.REMOVE_STRICT
                                 else:
-                                    # Field should be kept - use ALLOW as default
+                                    # Field should be kept - use KEEP as default
                                     filter_response = FilterResponse.KEEP
 
                             # If this field uses ALLOW_TRANSITIVE, preserve its referenced type

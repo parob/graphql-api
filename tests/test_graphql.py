@@ -1061,6 +1061,32 @@ class TestGraphQL:
         result2 = executor.execute(query2)
         assert result2.data == {'filterTags': ['PYTHON', 'RUST']}
 
+    def test_string_enum_argument(self):
+        api = GraphQLAPI()
+
+        class Tag(str, enum.Enum):
+            PYTHON = "python"
+            JAVASCRIPT = "javascript"
+            RUST = "rust"
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def check_tag(self, tag: Tag) -> bool:
+                if isinstance(tag, Tag):
+                    return True
+                return False
+
+        executor = api.executor()
+
+        query = """
+            query CheckTag($tag: TagEnum!) {
+                checkTag(tag: $tag)
+            }
+            """
+        result = executor.execute(query, variables={'tag': Tag.PYTHON.name})
+        assert result.data == {'checkTag': True}
+
     # noinspection PyUnusedLocal
     def test_literal(self):
         api = GraphQLAPI()
