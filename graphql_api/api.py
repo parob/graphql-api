@@ -194,6 +194,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
         filters: Optional[List[GraphQLFilter]] = None,
         error_protection: bool = True,
         federation: bool = False,
+        max_docstring_length: Optional[int] = 500,
     ):
         super().__init__()
         self.root_type = root_type
@@ -206,6 +207,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
         self.error_protection = error_protection
         self.federation = federation
         self._cached_schema: Optional[Tuple[GraphQLSchema, Dict]] = None
+        self.max_docstring_length = max_docstring_length
 
     # --------------------------------------------------------------------------
     # DECORATORS
@@ -288,7 +290,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
         if self.root_type:
             # Build root Query
-            query_mapper = GraphQLTypeMapper(schema=self)
+            query_mapper = GraphQLTypeMapper(schema=self, max_docstring_length=self.max_docstring_length)
             _query = query_mapper.map(self.root_type)
 
             # Map additional types that aren't native GraphQLNamedType
@@ -339,7 +341,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
             # Build root Mutation
             mutation_mapper = GraphQLTypeMapper(
-                as_mutable=True, suffix="Mutable", registry=registry, schema=self
+                as_mutable=True, suffix="Mutable", registry=registry, schema=self, max_docstring_length=self.max_docstring_length
             )
             _mutation = mutation_mapper.map(self.root_type)
 

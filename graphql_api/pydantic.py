@@ -1,7 +1,7 @@
 import inspect
 import typing
 
-from typing import Any, Type, cast
+from typing import Any, Type, cast, Optional
 
 from graphql import GraphQLField, GraphQLObjectType, GraphQLOutputType
 from graphql.type.definition import is_output_type
@@ -20,25 +20,33 @@ def type_is_pydantic_model(type_: Any) -> bool:
         return False
 
 
-def _get_pydantic_model_description(pydantic_model: Type[BaseModel]) -> str:
+def _get_pydantic_model_description(pydantic_model: Type[BaseModel], max_docstring_length: Optional[int] = None) -> str:
     """
     Get description for a Pydantic model, filtering out default BaseModel docstring.
-    
+
+    Args:
+        pydantic_model: The Pydantic model to get the description for
+        max_docstring_length: Optional maximum length for docstrings (truncates if longer)
+
     Returns None if the model has no explicit docstring or uses the default BaseModel docstring.
     """
     doc = inspect.getdoc(pydantic_model)
-    
+
     # If no docstring, return None
     if not doc:
         return None
-        
+
     # Get the default BaseModel docstring to compare against
     default_doc = inspect.getdoc(BaseModel)
-    
+
     # If it's the default BaseModel docstring, return None
     if doc == default_doc:
         return None
-        
+
+    # Apply truncation if requested
+    if max_docstring_length is not None and len(doc) > max_docstring_length:
+        doc = doc[:max_docstring_length].rstrip() + "..."
+
     return doc
 
 
@@ -75,5 +83,5 @@ def type_from_pydantic_model(
     return GraphQLObjectType(
         name=pydantic_model.__name__,
         fields=get_fields,
-        description=_get_pydantic_model_description(pydantic_model),
+        description=_get_pydantic_model_description(pydantic_model, mapper.max_docstring_length),
     )

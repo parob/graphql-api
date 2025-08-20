@@ -112,18 +112,22 @@ class GraphQLGenericEnum(enum.Enum):
     pass
 
 
-def _get_class_description(class_type: Type) -> str:
+def _get_class_description(class_type: Type, max_docstring_length: Optional[int] = None) -> str:
     """
     Get description for a class, filtering out auto-generated docstrings.
-    
+
+    Args:
+        class_type: The class to get the description for
+        max_docstring_length: Optional maximum length for docstrings (truncates if longer)
+
     Returns None if the class has no explicit docstring or uses auto-generated content.
     """
     doc = inspect.getdoc(class_type)
-    
+
     # If no docstring, return None
     if not doc:
         return None
-        
+
     # Check if it's a dataclass auto-generated constructor signature
     # Pattern: "ClassName(field1: type1, field2: type2, ...)"
     if type_is_dataclass(class_type):
@@ -131,7 +135,26 @@ def _get_class_description(class_type: Type) -> str:
         if doc.startswith(f"{class_name}(") and doc.endswith(")"):
             # This looks like an auto-generated dataclass constructor signature
             return None
-            
+
+    # Check if this class inherits docstring from a built-in type or common base class
+    # This helps avoid verbose constructor documentation from dict, list, str, etc.
+    mro = inspect.getmro(class_type)
+    if len(mro) > 1:  # Has parent classes
+        for parent_class in mro[1:]:  # Skip the class itself
+            parent_doc = inspect.getdoc(parent_class)
+            if parent_doc == doc:
+                # The docstring is inherited from a parent class
+                # Filter out common verbose built-in docstrings
+                if parent_class in (dict, list, tuple, str, set, frozenset, Exception, object):
+                    return None
+                # Also filter out if parent docstring is very long (likely auto-generated)
+                if len(parent_doc) > 200:
+                    return None
+
+    # Apply truncation if requested
+    if max_docstring_length is not None and len(doc) > max_docstring_length:
+        doc = doc[:max_docstring_length].rstrip() + "..."
+
     return doc
 
 
@@ -144,6 +167,7 @@ class GraphQLTypeMapper:
         reverse_registry=None,
         suffix="",
         schema=None,
+        max_docstring_length=None,
     ):
         self.as_mutable = as_mutable
         self.as_input = as_input
@@ -154,6 +178,7 @@ class GraphQLTypeMapper:
         self.input_type_mapper = None
         self.schema = schema
         self.applied_schema_directives = []
+        self.max_docstring_length = max_docstring_length
 
     def types(self) -> Set[GraphQLType]:
         return set(self.registry.values())
@@ -549,7 +574,7 @@ class GraphQLTypeMapper:
             func = class_type.__init__
 
         description = to_camel_case_text(
-            inspect.getdoc(func) or _get_class_description(class_type)
+            inspect.getdoc(func) or _get_class_description(class_type, self.max_docstring_length)
         )
 
         try:
@@ -675,7 +700,7 @@ class GraphQLTypeMapper:
 
     def map_to_object(self, class_type: Type) -> GraphQLType:
         name = f"{class_type.__name__}{self.suffix}"
-        description = to_camel_case_text(_get_class_description(class_type))
+        description = to_camel_case_text(_get_class_description(class_type, self.max_docstring_length))
 
         class_funcs = get_class_funcs(class_type, self.schema, self.as_mutable)
 
