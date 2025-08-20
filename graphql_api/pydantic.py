@@ -20,6 +20,28 @@ def type_is_pydantic_model(type_: Any) -> bool:
         return False
 
 
+def _get_pydantic_model_description(pydantic_model: Type[BaseModel]) -> str:
+    """
+    Get description for a Pydantic model, filtering out default BaseModel docstring.
+    
+    Returns None if the model has no explicit docstring or uses the default BaseModel docstring.
+    """
+    doc = inspect.getdoc(pydantic_model)
+    
+    # If no docstring, return None
+    if not doc:
+        return None
+        
+    # Get the default BaseModel docstring to compare against
+    default_doc = inspect.getdoc(BaseModel)
+    
+    # If it's the default BaseModel docstring, return None
+    if doc == default_doc:
+        return None
+        
+    return doc
+
+
 def type_from_pydantic_model(
     pydantic_model: Type[BaseModel], mapper: "GraphQLTypeMapper"
 ) -> GraphQLObjectType:
@@ -53,5 +75,5 @@ def type_from_pydantic_model(
     return GraphQLObjectType(
         name=pydantic_model.__name__,
         fields=get_fields,
-        description=inspect.getdoc(pydantic_model),
+        description=_get_pydantic_model_description(pydantic_model),
     )

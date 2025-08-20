@@ -112,6 +112,29 @@ class GraphQLGenericEnum(enum.Enum):
     pass
 
 
+def _get_class_description(class_type: Type) -> str:
+    """
+    Get description for a class, filtering out auto-generated docstrings.
+    
+    Returns None if the class has no explicit docstring or uses auto-generated content.
+    """
+    doc = inspect.getdoc(class_type)
+    
+    # If no docstring, return None
+    if not doc:
+        return None
+        
+    # Check if it's a dataclass auto-generated constructor signature
+    # Pattern: "ClassName(field1: type1, field2: type2, ...)"
+    if type_is_dataclass(class_type):
+        class_name = class_type.__name__
+        if doc.startswith(f"{class_name}(") and doc.endswith(")"):
+            # This looks like an auto-generated dataclass constructor signature
+            return None
+            
+    return doc
+
+
 class GraphQLTypeMapper:
     def __init__(
         self,
@@ -526,7 +549,7 @@ class GraphQLTypeMapper:
             func = class_type.__init__
 
         description = to_camel_case_text(
-            inspect.getdoc(func) or inspect.getdoc(class_type)
+            inspect.getdoc(func) or _get_class_description(class_type)
         )
 
         try:
@@ -652,7 +675,7 @@ class GraphQLTypeMapper:
 
     def map_to_object(self, class_type: Type) -> GraphQLType:
         name = f"{class_type.__name__}{self.suffix}"
-        description = to_camel_case_text(inspect.getdoc(class_type))
+        description = to_camel_case_text(_get_class_description(class_type))
 
         class_funcs = get_class_funcs(class_type, self.schema, self.as_mutable)
 
