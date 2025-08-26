@@ -463,3 +463,285 @@ class TestPydantic:
         expected = {"getA": {"b": {"aVal": 123}}}
         response = api.execute(query)
         assert response.data == expected
+
+    def test_pydantic_model_as_input_argument(self):
+        """Test that Pydantic models work as input arguments to GraphQL fields."""
+        
+        class UserInput(BaseModel):
+            name: str
+            age: int
+            email: Optional[str] = None
+            is_active: bool = True
+
+        class User(BaseModel):
+            id: int
+            name: str
+            age: int
+            email: Optional[str]
+            is_active: bool
+
+        class UserAPI:
+            # Class-level storage for simplicity in tests
+            next_id = 1
+            users = []
+
+            @field(mutable=True)
+            def create_user(self, user_input: UserInput) -> User:
+                """Create a new user from input data."""
+                user = User(
+                    id=UserAPI.next_id,
+                    name=user_input.name,
+                    age=user_input.age,
+                    email=user_input.email,
+                    is_active=user_input.is_active
+                )
+                UserAPI.users.append(user)
+                UserAPI.next_id += 1
+                return user
+
+            @field(mutable=True)
+            def update_user(self, user_id: int, user_input: UserInput) -> Optional[User]:
+                """Update an existing user."""
+                for user in UserAPI.users:
+                    if user.id == user_id:
+                        user.name = user_input.name
+                        user.age = user_input.age
+                        user.email = user_input.email
+                        user.is_active = user_input.is_active
+                        return user
+                return None
+
+        # Reset class state for test isolation
+        UserAPI.next_id = 1
+        UserAPI.users = []
+        
+        api = GraphQLAPI(root_type=UserAPI)
+        
+        # Test creating a user with required fields only
+        mutation1 = """
+            mutation {
+                createUser(userInput: {
+                    name: "Alice",
+                    age: 30
+                }) {
+                    id
+                    name
+                    age
+                    email
+                    isActive
+                }
+            }
+        """
+        expected1 = {
+            "createUser": {
+                "id": 1,
+                "name": "Alice",
+                "age": 30,
+                "email": None,
+                "isActive": True
+            }
+        }
+        response1 = api.execute(mutation1)
+        assert response1.data == expected1
+
+        # Test creating a user with all fields
+        mutation2 = """
+            mutation {
+                createUser(userInput: {
+                    name: "Bob",
+                    age: 25,
+                    email: "bob@example.com",
+                    isActive: false
+                }) {
+                    id
+                    name
+                    age
+                    email
+                    isActive
+                }
+            }
+        """
+        expected2 = {
+            "createUser": {
+                "id": 2,
+                "name": "Bob",
+                "age": 25,
+                "email": "bob@example.com",
+                "isActive": False
+            }
+        }
+        response2 = api.execute(mutation2)
+        assert response2.data == expected2
+
+        # Test updating a user
+        mutation3 = """
+            mutation {
+                updateUser(userId: 1, userInput: {
+                    name: "Alice Updated",
+                    age: 31,
+                    email: "alice@updated.com",
+                    isActive: false
+                }) {
+                    id
+                    name
+                    age
+                    email
+                    isActive
+                }
+            }
+        """
+        expected3 = {
+            "updateUser": {
+                "id": 1,
+                "name": "Alice Updated",
+                "age": 31,
+                "email": "alice@updated.com",
+                "isActive": False
+            }
+        }
+        response3 = api.execute(mutation3)
+        assert response3.data == expected3
+
+    def test_nested_pydantic_models_as_input(self):
+        """Test nested Pydantic models as input arguments."""
+        
+        class AddressInput(BaseModel):
+            street: str
+            city: str
+            country: str
+            postal_code: Optional[str] = None
+
+        class ContactInput(BaseModel):
+            name: str
+            phone: Optional[str] = None
+            address: AddressInput
+
+        class Contact(BaseModel):
+            id: int
+            name: str
+            phone: Optional[str]
+            address: AddressInput
+
+        class ContactAPI:
+            @field(mutable=True)
+            def create_contact(self, contact_input: ContactInput) -> Contact:
+                """Create a new contact with address."""
+                return Contact(
+                    id=1,  # Simplified for test
+                    name=contact_input.name,
+                    phone=contact_input.phone,
+                    address=contact_input.address
+                )
+
+        api = GraphQLAPI(root_type=ContactAPI)
+
+        mutation = """
+            mutation {
+                createContact(contactInput: {
+                    name: "John Doe",
+                    phone: "123-456-7890",
+                    address: {
+                        street: "123 Main St",
+                        city: "Anytown",
+                        country: "USA",
+                        postalCode: "12345"
+                    }
+                }) {
+                    id
+                    name
+                    phone
+                    address {
+                        street
+                        city
+                        country
+                        postalCode
+                    }
+                }
+            }
+        """
+        expected = {
+            "createContact": {
+                "id": 1,
+                "name": "John Doe",
+                "phone": "123-456-7890",
+                "address": {
+                    "street": "123 Main St",
+                    "city": "Anytown",
+                    "country": "USA",
+                    "postalCode": "12345"
+                }
+            }
+        }
+        response = api.execute(mutation)
+        assert response.data == expected
+
+    def test_pydantic_input_with_list_field(self):
+        """Test Pydantic model with list fields as input arguments."""
+        
+        class TagInput(BaseModel):
+            name: str
+            color: str
+
+        class PostInput(BaseModel):
+            title: str
+            content: str
+            tags: List[TagInput]
+            published: bool = False
+
+        class Post(BaseModel):
+            id: int
+            title: str
+            content: str
+            tags: List[TagInput]
+            published: bool
+
+        class BlogAPI:
+            @field(mutable=True)
+            def create_post(self, post_input: PostInput) -> Post:
+                """Create a new blog post with tags."""
+                return Post(
+                    id=1,  # Simplified for test
+                    title=post_input.title,
+                    content=post_input.content,
+                    tags=post_input.tags,
+                    published=post_input.published
+                )
+
+        api = GraphQLAPI(root_type=BlogAPI)
+
+        mutation = """
+            mutation {
+                createPost(postInput: {
+                    title: "My First Post",
+                    content: "This is the content of my first post.",
+                    tags: [
+                        {name: "technology", color: "blue"},
+                        {name: "tutorial", color: "green"}
+                    ],
+                    published: true
+                }) {
+                    id
+                    title
+                    content
+                    tags {
+                        name
+                        color
+                    }
+                    published
+                }
+            }
+        """
+        expected = {
+            "createPost": {
+                "id": 1,
+                "title": "My First Post",
+                "content": "This is the content of my first post.",
+                "tags": [
+                    {"name": "technology", "color": "blue"},
+                    {"name": "tutorial", "color": "green"}
+                ],
+                "published": True
+            }
+        }
+        response = api.execute(mutation)
+        assert response.data == expected
