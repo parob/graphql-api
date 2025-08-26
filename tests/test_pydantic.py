@@ -745,3 +745,213 @@ class TestPydantic:
         }
         response = api.execute(mutation)
         assert response.data == expected
+
+    def test_pydantic_list_input_schema_generation(self):
+        """Test that List[PydanticModel] generates proper GraphQL list types, not JSON."""
+        
+        class ItemInput(BaseModel):
+            name: str
+            value: int
+
+        class ContainerInput(BaseModel):
+            title: str
+            items: List[ItemInput]
+
+        class Container(BaseModel):
+            id: int
+            title: str
+            items: List[ItemInput]
+
+        class API:
+            @field(mutable=True)
+            def create_container(self, container_input: ContainerInput) -> Container:
+                """Create a container with items."""
+                return Container(
+                    id=1,
+                    title=container_input.title,
+                    items=container_input.items
+                )
+
+        api = GraphQLAPI(root_type=API)
+        schema, _ = api.build_schema()
+        
+        # Get the GraphQL SDL to inspect the schema
+        from graphql import print_schema
+        schema_sdl = print_schema(schema)
+        print("\nSchema SDL:")
+        print(schema_sdl)
+        
+        # Check that the input type uses proper list syntax, not JSON
+        assert "items: [ItemInputInput!]" in schema_sdl or "items: [ItemInputInput]" in schema_sdl
+        assert "JSON" not in schema_sdl  # Should not fall back to JSON type
+        assert "ItemInputInput" in schema_sdl  # Should have proper input type
+        
+        # Test the actual functionality
+        mutation = """
+            mutation {
+                createContainer(containerInput: {
+                    title: "Test Container",
+                    items: [
+                        {name: "Item 1", value: 100},
+                        {name: "Item 2", value: 200}
+                    ]
+                }) {
+                    id
+                    title
+                    items {
+                        name
+                        value
+                    }
+                }
+            }
+        """
+        
+        expected = {
+            "createContainer": {
+                "id": 1,
+                "title": "Test Container",
+                "items": [
+                    {"name": "Item 1", "value": 100},
+                    {"name": "Item 2", "value": 200}
+                ]
+            }
+        }
+        
+        response = api.execute(mutation)
+        assert response.data == expected
+
+    def test_dict_type_mapping_to_json_scalar(self):
+        """Test that Dict[str, str] and Dict[str, Any] map to JSON scalar instead of failing."""
+        from typing import Dict, Any
+        
+        class ConfigInput(BaseModel):
+            name: str
+            settings: Dict[str, str]
+            metadata: Dict[str, Any]
+
+        class Config(BaseModel):
+            id: int
+            name: str
+            total_settings: int
+
+        class ConfigAPI:
+            @field(mutable=True)
+            def create_config(self, config_input: ConfigInput) -> Config:
+                """Create config with dict fields."""
+                # For this test, we just verify the schema generation works
+                # The dict will be passed as JSON scalar
+                return Config(
+                    id=1,
+                    name=config_input.name if hasattr(config_input, 'name') else "dict_input",
+                    total_settings=1
+                )
+
+        api = GraphQLAPI(root_type=ConfigAPI)
+        schema, _ = api.build_schema()
+        
+        # Get the GraphQL SDL to inspect the schema
+        from graphql import print_schema
+        schema_sdl = print_schema(schema)
+        
+        # Verify that Dict fields map to JSON instead of causing mapping errors
+        assert "settings: JSON" in schema_sdl
+        assert "metadata: JSON" in schema_sdl
+        assert "ConfigInputInput" in schema_sdl
+        
+        # Verify we didn't get any "Unable to map" errors during schema generation
+        assert "JSON" in schema_sdl  # JSON scalar should be present
+        
+        print("✅ Dict types successfully mapped to JSON scalar!")
+        print(f"Schema contains {schema_sdl.count('JSON')} JSON references")
+        
+        # Demonstrate that this fixes the original issue:
+        # Before fix: "Unable to map pydantic field 'settings' with type typing.Dict[str, str]"
+        # After fix: Dict fields properly map to JSON scalar type in GraphQL schema
+
+    def test_pydantic_response_status_pattern(self):
+        """Test a common API response pattern with status, message, and data fields."""
+        from typing import Dict, Any
+        from enum import Enum
+
+        class ResponseStatusEnum(str, Enum):
+            """Status of a response operation."""
+            SUCCESS = "SUCCESS"
+            ERROR = "ERROR"
+
+        class ResponseStatus(BaseModel):
+            status: ResponseStatusEnum
+            message: Optional[str] = None
+            error_message: Optional[str] = None
+            data: Optional[Dict[str, Any]] = None
+
+            @classmethod
+            def error(cls, error_message: str) -> "ResponseStatus":
+                return cls(status=ResponseStatusEnum.ERROR, error_message=error_message)
+
+            @classmethod
+            def success(cls, message: str, data: Optional[Dict[str, Any]] = None) -> "ResponseStatus":
+                return cls(status=ResponseStatusEnum.SUCCESS, message=message, data=data)
+
+        class ResponseAPI:
+            @field(mutable=True)
+            def create_user(self, name: str, email: str) -> ResponseStatus:
+                """Create a user and return status with data."""
+                if not email or "@" not in email:
+                    return ResponseStatus.error("Invalid email address")
+                
+                return ResponseStatus.success(
+                    "User created successfully",
+                    data={"user_id": 123, "name": name, "email": email}
+                )
+
+        api = GraphQLAPI(root_type=ResponseAPI)
+        schema, _ = api.build_schema()
+
+        # Verify schema generation
+        from graphql import print_schema
+        schema_sdl = print_schema(schema)
+        assert "data: JSON" in schema_sdl
+        assert "ResponseStatusEnumEnum" in schema_sdl
+        assert "Status of a response operation." in schema_sdl
+
+        # Test success case
+        mutation_success = """
+            mutation {
+                createUser(name: "John Doe", email: "john@example.com") {
+                    status
+                    message
+                    errorMessage
+                    data
+                }
+            }
+        """
+        result_success = api.execute(mutation_success)
+        assert result_success.data == {
+            "createUser": {
+                "status": "SUCCESS",
+                "message": "User created successfully",
+                "errorMessage": None,
+                "data": '{"user_id": 123, "name": "John Doe", "email": "john@example.com"}'
+            }
+        }
+
+        # Test error case
+        mutation_error = """
+            mutation {
+                createUser(name: "Jane Doe", email: "invalid-email") {
+                    status
+                    message
+                    errorMessage
+                    data
+                }
+            }
+        """
+        result_error = api.execute(mutation_error)
+        assert result_error.data == {
+            "createUser": {
+                "status": "ERROR",
+                "message": None,
+                "errorMessage": "Invalid email address",
+                "data": None
+            }
+        }

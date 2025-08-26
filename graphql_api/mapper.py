@@ -888,6 +888,9 @@ class GraphQLTypeMapper:
             if origin_type is list or origin_type is set:
                 return self.map_to_list(cast(List, type__))
 
+            if origin_type is dict:
+                return GraphQLJSON
+
             if inspect.isclass(type__):
                 if issubclass(type__, GraphQLType):
                     return type__()
