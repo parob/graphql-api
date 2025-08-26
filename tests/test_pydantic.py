@@ -466,7 +466,7 @@ class TestPydantic:
 
     def test_pydantic_model_as_input_argument(self):
         """Test that Pydantic models work as input arguments to GraphQL fields."""
-        
+
         class UserInput(BaseModel):
             name: str
             age: int
@@ -514,9 +514,9 @@ class TestPydantic:
         # Reset class state for test isolation
         UserAPI.next_id = 1
         UserAPI.users = []
-        
+
         api = GraphQLAPI(root_type=UserAPI)
-        
+
         # Test creating a user with required fields only
         mutation1 = """
             mutation {
@@ -604,7 +604,7 @@ class TestPydantic:
 
     def test_nested_pydantic_models_as_input(self):
         """Test nested Pydantic models as input arguments."""
-        
+
         class AddressInput(BaseModel):
             street: str
             city: str
@@ -677,7 +677,7 @@ class TestPydantic:
 
     def test_pydantic_input_with_list_field(self):
         """Test Pydantic model with list fields as input arguments."""
-        
+
         class TagInput(BaseModel):
             name: str
             color: str

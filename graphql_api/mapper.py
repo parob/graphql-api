@@ -81,68 +81,68 @@ class AnyObject:
 def _convert_pydantic_arguments(args_dict: dict, type_hints: dict) -> dict:
     """
     Convert GraphQL input dicts to Pydantic model instances automatically.
-    
+
     Args:
         args_dict: Dictionary of argument names to values from GraphQL
         type_hints: Dictionary of parameter names to their type hints
-    
+
     Returns:
         Dictionary with Pydantic models converted from dicts
     """
     converted_args = {}
-    
+
     for arg_name, arg_value in args_dict.items():
         if arg_name in type_hints:
             param_type = type_hints[arg_name]
-            
+
             # Check if this parameter is a Pydantic model
-            if (isinstance(arg_value, dict) and 
-                inspect.isclass(param_type) and 
-                type_is_pydantic_model(param_type)):
-                
+            if (isinstance(arg_value, dict)
+                    and inspect.isclass(param_type)
+                    and type_is_pydantic_model(param_type)):
+
                 # Convert dict to Pydantic model instance
                 try:
                     converted_args[arg_name] = _convert_dict_to_pydantic_model(arg_value, param_type)
-                except Exception as e:
+                except Exception:
                     # If conversion fails, pass the original value and let normal error handling occur
                     converted_args[arg_name] = arg_value
             else:
                 converted_args[arg_name] = arg_value
         else:
             converted_args[arg_name] = arg_value
-    
+
     return converted_args
 
 
 def _convert_dict_to_pydantic_model(input_dict: dict, model_class):
     """
     Recursively convert a GraphQL input dict to a Pydantic model instance.
-    
+
     Args:
         input_dict: The input dictionary from GraphQL
         model_class: The Pydantic model class to convert to
-    
+
     Returns:
         Instance of the Pydantic model
     """
     if not isinstance(input_dict, dict):
         return input_dict
-    
+
     # Convert camelCase keys to snake_case (the outer resolver only converts top-level keys)
     from graphql_api.utils import to_snake_case
     snake_case_dict = {to_snake_case(k): v for k, v in input_dict.items()}
-    
+
     converted_fields = {}
-    
+
     # Get model fields info
     model_fields = getattr(model_class, "model_fields", {})
-    
+
     for field_name, field_value in snake_case_dict.items():
         if isinstance(field_value, dict) and field_name in model_fields:
             # Check if this field is a nested Pydantic model
             field_info = model_fields[field_name]
             field_annotation = field_info.annotation
-            
+
             if inspect.isclass(field_annotation) and type_is_pydantic_model(field_annotation):
                 # Recursively convert nested model
                 converted_fields[field_name] = _convert_dict_to_pydantic_model(field_value, field_annotation)
@@ -157,7 +157,7 @@ def _convert_dict_to_pydantic_model(input_dict: dict, model_class):
                 if list_item_type and inspect.isclass(list_item_type) and type_is_pydantic_model(list_item_type):
                     # Convert each item in the list
                     converted_fields[field_name] = [
-                        _convert_dict_to_pydantic_model(item, list_item_type) 
+                        _convert_dict_to_pydantic_model(item, list_item_type)
                         if isinstance(item, dict) else item
                         for item in field_value
                     ]
@@ -167,7 +167,7 @@ def _convert_dict_to_pydantic_model(input_dict: dict, model_class):
                 converted_fields[field_name] = field_value
         else:
             converted_fields[field_name] = field_value
-    
+
     return model_class(**converted_fields)
 
 

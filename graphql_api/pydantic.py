@@ -54,12 +54,12 @@ def type_from_pydantic_model(
     pydantic_model: Type[BaseModel], mapper: "GraphQLTypeMapper"
 ) -> GraphQLObjectType | GraphQLInputObjectType:
     model_fields = getattr(pydantic_model, "model_fields", {})
-    
+
     if mapper.as_input:
         # Create input type
         def get_input_fields() -> dict[str, GraphQLInputField]:
             fields = {}
-            
+
             for name, field in model_fields.items():
                 field_type = field.annotation
                 graphql_type = mapper.map(field_type)
@@ -71,7 +71,7 @@ def type_from_pydantic_model(
                     raise TypeError(
                         f"Mapped type for pydantic field '{name}' is not a valid GraphQL Input Type."
                     )
-                
+
                 fields[to_camel_case(name)] = GraphQLInputField(
                     cast(GraphQLInputType, graphql_type)
                 )
