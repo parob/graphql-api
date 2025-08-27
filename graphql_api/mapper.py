@@ -151,18 +151,21 @@ def _extract_list_type(param_type):
 
     # Handle direct List[ItemType]
     if hasattr(param_type, '__origin__') and param_type.__origin__ is list:
-        list_item_type = param_type.__args__[0] if param_type.__args__ else None
+        list_item_type = param_type.__args__[0] if hasattr(param_type, '__args__') and param_type.__args__ else None
         return list, list_item_type
 
     # Handle Optional[List[ItemType]] or Union[List[ItemType], None]
     if (hasattr(param_type, '__origin__')
-            and param_type.__origin__ is typing.Union):
+            and param_type.__origin__ is typing.Union
+            and hasattr(param_type, '__args__')):
 
         # Check each union member for a list type
         for union_member in param_type.__args__:
             if (hasattr(union_member, '__origin__')
                     and union_member.__origin__ is list):
-                list_item_type = union_member.__args__[0] if union_member.__args__ else None
+                list_item_type = (union_member.__args__[0]
+                                  if hasattr(union_member, '__args__') and union_member.__args__
+                                  else None)
                 return list, list_item_type
 
     return None, None
