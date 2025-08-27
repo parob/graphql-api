@@ -196,6 +196,21 @@ class GraphQLAPI(GraphQLBaseExecutor):
         federation: bool = False,
         max_docstring_length: Optional[int] = 500,
     ):
+        """
+        Initialize a new GraphQL API instance.
+
+        Args:
+            root_type: The root query type class to use for the schema
+            middleware: List of middleware functions to apply to queries
+            directives: List of custom GraphQL directives to include in the schema
+            types: List of additional types to explicitly include in the schema
+            filters: List of filters to apply when building the schema (removes matching fields).
+                Each filter can specify cleanup_types=False to prevent automatic removal of
+                unreferenced types after filtering.
+            error_protection: Whether to enable error protection during execution
+            federation: Whether to enable GraphQL federation support
+            max_docstring_length: Maximum length for docstrings before truncation (None for no limit)
+        """
         super().__init__()
         self.root_type = root_type
         self.middleware = middleware or []
@@ -361,6 +376,22 @@ class GraphQLAPI(GraphQLBaseExecutor):
             else:
                 mutation = None
                 mutation_types = set()
+
+            # Clean up unreferenced types after filtering (only when filters are applied and any filter has cleanup enabled)
+            should_cleanup_types = False
+            if self.filters:
+                should_cleanup_types = any(getattr(f, 'cleanup_types', True) for f in self.filters)
+            if self.filters and should_cleanup_types and (query_mapper or mutation_mapper):
+                if query_mapper and query:
+                    GraphQLSchemaReducer._remove_unreferenced_types(query_mapper, query)
+                if mutation_mapper and mutation:
+                    GraphQLSchemaReducer._remove_unreferenced_types(mutation_mapper, mutation)
+
+                # Recalculate types after cleanup
+                if query_mapper:
+                    query_types = query_mapper.types()
+                if mutation_mapper:
+                    mutation_types = mutation_mapper.types()
 
             # Collect all types
             collected_types = [  # type: ignore[assignment]

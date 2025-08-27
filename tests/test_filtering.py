@@ -2287,3 +2287,179 @@ class TestSchemaFiltering:
 
         # All tests should pass without AttributeError
         assert executor is not None
+
+    def test_remove_unreferenced_types_after_filtering(self):
+        """Test that types referenced only by filtered fields are removed from the schema."""
+        from graphql_api.reduce import TagFilter
+        from graphql_api.decorators import field
+        from enum import Enum
+
+        api = GraphQLAPI()
+
+        class UsedEnum(str, Enum):
+            """This enum should appear in schema."""
+            VALUE_A = "A"
+            VALUE_B = "B"
+
+        class FilteredEnum(str, Enum):
+            """This enum should NOT appear in filtered schema."""
+            FILTERED_X = "X"
+            FILTERED_Y = "Y"
+
+        class UsedModel:
+            def __init__(self):
+                self.name = "test"
+                self.status = UsedEnum.VALUE_A
+
+            @field
+            def name(self) -> str:
+                return self.name
+
+            @field
+            def status(self) -> UsedEnum:
+                return self.status
+
+        class FilteredModel:
+            def __init__(self):
+                self.internal_field = "internal"
+                self.filtered_enum = FilteredEnum.FILTERED_X
+
+            @field
+            def internal_field(self) -> str:
+                return self.internal_field
+
+            @field
+            def filtered_enum(self) -> FilteredEnum:
+                return self.filtered_enum
+
+        @api.type(is_root_type=True)
+        class Root:
+            @field
+            def get_used_item(self) -> UsedModel:
+                """This uses UsedModel and UsedEnum."""
+                return UsedModel()
+
+            @field({"tags": ["admin"]})  # Tag for filtering
+            def get_filtered_item(self) -> FilteredModel:
+                """This field should be filtered out."""
+                return FilteredModel()
+
+            @field
+            def get_simple_string(self) -> str:
+                """This doesn't use any custom types."""
+                return "simple"
+
+        # Test without filtering - all types should be present
+        unfiltered_api = GraphQLAPI(root_type=Root)
+        unfiltered_schema, _ = unfiltered_api.build_schema()
+
+        from graphql import print_schema
+        unfiltered_sdl = print_schema(unfiltered_schema)
+
+        assert "UsedEnum" in unfiltered_sdl
+        assert "UsedModel" in unfiltered_sdl
+        assert "FilteredEnum" in unfiltered_sdl
+        assert "FilteredModel" in unfiltered_sdl
+        assert "getFilteredItem" in unfiltered_sdl
+
+        # Test with filtering - filtered types should be removed
+        filtered_api = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=["admin"])])
+        filtered_schema, _ = filtered_api.build_schema()
+
+        filtered_sdl = print_schema(filtered_schema)
+
+        # Should keep used types
+        assert "UsedEnum" in filtered_sdl
+        assert "UsedModel" in filtered_sdl
+
+        # Should remove filtered types and field
+        assert "FilteredEnum" not in filtered_sdl  # This is the key test
+        assert "FilteredModel" not in filtered_sdl  # This is the key test
+        assert "getFilteredItem" not in filtered_sdl
+
+        # Should keep other fields
+        assert "getUsedItem" in filtered_sdl
+        assert "getSimpleString" in filtered_sdl
+
+    def test_remove_unreferenced_types_configurable(self):
+        """Test that unreferenced type removal can be disabled via configuration."""
+        from graphql_api.reduce import TagFilter
+        from graphql_api.decorators import field
+        from enum import Enum
+
+        api = GraphQLAPI()
+
+        class UsedEnum(str, Enum):
+            VALUE_A = "A"
+
+        class FilteredEnum(str, Enum):
+            FILTERED_X = "X"
+
+        class UsedModel:
+            @field
+            def name(self) -> str:
+                return "test"
+
+            @field
+            def status(self) -> UsedEnum:
+                return UsedEnum.VALUE_A
+
+        class FilteredModel:
+            @field
+            def internal_field(self) -> str:
+                return "internal"
+
+            @field
+            def filtered_enum(self) -> FilteredEnum:
+                return FilteredEnum.FILTERED_X
+
+        @api.type(is_root_type=True)
+        class Root:
+            @field
+            def get_used_item(self) -> UsedModel:
+                return UsedModel()
+
+            @field({"tags": ["admin"]})
+            def get_filtered_item(self) -> FilteredModel:
+                return FilteredModel()
+
+        # Test with cleanup DISABLED
+        api_disabled = GraphQLAPI(
+            root_type=Root,
+            filters=[TagFilter(tags=["admin"], cleanup_types=False)]  # Disable cleanup
+        )
+        disabled_schema, _ = api_disabled.build_schema()
+
+        from graphql import print_schema
+        disabled_sdl = print_schema(disabled_schema)
+
+        # Field should still be filtered out
+        assert "getFilteredItem" not in disabled_sdl
+
+        # But types should be preserved even though unreferenced
+        assert "FilteredModel" in disabled_sdl  # Should be preserved
+        assert "FilteredEnumEnum" in disabled_sdl  # Should be preserved (note: framework adds "Enum" suffix)
+
+        # Used types should remain
+        assert "UsedModel" in disabled_sdl
+        assert "UsedEnumEnum" in disabled_sdl
+
+        # Test with cleanup ENABLED (default behavior)
+        api_enabled = GraphQLAPI(
+            root_type=Root,
+            filters=[TagFilter(tags=["admin"], cleanup_types=True)]  # Enable cleanup (this is the default)
+        )
+        enabled_schema, _ = api_enabled.build_schema()
+
+        enabled_sdl = print_schema(enabled_schema)
+
+        # Field should be filtered out
+        assert "getFilteredItem" not in enabled_sdl
+
+        # Unreferenced types should be removed
+        assert "FilteredModel" not in enabled_sdl  # Should be removed
+        assert "FilteredEnumEnum" not in enabled_sdl  # Should be removed
+
+        # Used types should remain
+        assert "UsedModel" in enabled_sdl
+        assert "UsedEnumEnum" in enabled_sdl

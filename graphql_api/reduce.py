@@ -37,6 +37,16 @@ class FilterResponse(Enum):
 
 class GraphQLFilter:
 
+    def __init__(self, cleanup_types: bool = True):
+        """
+        Initialize a GraphQL filter.
+
+        Args:
+            cleanup_types: Whether to remove unreferenced types after filtering.
+                Only applies when filters are active. Defaults to True.
+        """
+        self.cleanup_types = cleanup_types
+
     def filter_field(self, name: str, meta: dict) -> Union[bool, FilterResponse]:
         """
         Return either FilterReponse or a bool value indicating how to handle the field.
@@ -59,8 +69,9 @@ class GraphQLFilter:
 class TagFilter(GraphQLFilter):
 
     def __init__(
-        self, tags: Optional[List[str]] = None, preserve_transitive: bool = True
+        self, tags: Optional[List[str]] = None, preserve_transitive: bool = True, cleanup_types: bool = True
     ):
+        super().__init__(cleanup_types=cleanup_types)
         self.tags = tags or []
         self.preserve_transitive = (
             preserve_transitive  # Used internally for FilterResponse logic
@@ -124,6 +135,10 @@ class GraphQLSchemaReducer:
         for key, value in dict(mapper.registry).items():
             if value in invalid_types:
                 del mapper.registry[key]
+
+        # Second pass: find and remove types that are no longer referenced after filtering
+        # Note: We don't have access to explicit types in reduce_query, so we skip this cleanup here
+        # The cleanup will happen in the API build_schema method if needed
 
         return query
 
@@ -367,7 +382,80 @@ class GraphQLSchemaReducer:
                     if field_name in mutation.fields:
                         del mutation.fields[field_name]
 
+        # Second pass: find and remove types that are no longer referenced after filtering
+        # Note: We don't have access to explicit types in reduce_mutation, so we skip this cleanup here
+        # The cleanup will happen in the API build_schema method if needed
+
         return mutation
+
+    @staticmethod
+    def _remove_unreferenced_types(mapper, root_type):
+        """
+        Remove types from the registry that are no longer referenced by any field
+        after filtering has been applied.
+
+        This method should only be called when filtering is applied, so that explicitly
+        registered types (via types=[...] parameter) remain in unfiltered schemas.
+        """
+        # Collect all types that are still referenced by fields
+        referenced_types = set()
+
+        def collect_interface_implementations(interface_type, visited=None):
+            """Find all types that implement the given interface."""
+            if visited is None:
+                visited = set()
+
+            # Look through all registered types to find implementations
+            # Create a snapshot to avoid RuntimeError during iteration
+            registry_snapshot = list(mapper.registry.values())
+            for type_obj in registry_snapshot:
+                if (isinstance(type_obj, GraphQLObjectType)
+                        and hasattr(type_obj, 'interfaces')
+                        and interface_type in type_obj.interfaces):
+                    if type_obj not in visited:
+                        collect_referenced_types(type_obj, visited)
+
+        def collect_referenced_types(current_type, visited=None):
+            if visited is None:
+                visited = set()
+
+            if current_type in visited:
+                return
+
+            visited.add(current_type)
+            referenced_types.add(current_type)
+
+            try:
+                fields = current_type.fields
+            except (AssertionError, GraphQLTypeMapError, AttributeError):
+                return
+
+            for field_name, field in fields.items():
+                field_type = field.type
+                # Unwrap NonNull and List wrappers
+                while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
+                    field_type = field_type.of_type
+
+                if isinstance(field_type, (GraphQLInterfaceType, GraphQLObjectType)):
+                    collect_referenced_types(field_type, visited)
+
+                    # If this is an interface, also preserve all its implementations
+                    if isinstance(field_type, GraphQLInterfaceType):
+                        collect_interface_implementations(field_type, visited)
+                else:
+                    # For enums and other scalar types, just add them to referenced
+                    referenced_types.add(field_type)
+
+        # Start from the root type and collect all reachable types
+        collect_referenced_types(root_type)
+
+        # Remove any types from the registry that are no longer referenced
+        registry_snapshot = dict(mapper.registry)
+        for key, type_obj in registry_snapshot.items():
+            if type_obj not in referenced_types:
+                # Don't remove built-in GraphQL types (they start with __)
+                if not key.startswith('__') and not key.startswith('_'):
+                    del mapper.registry[key]
 
     @staticmethod
     def invalid(
