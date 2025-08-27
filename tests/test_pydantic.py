@@ -748,7 +748,7 @@ class TestPydantic:
 
     def test_pydantic_list_input_schema_generation(self):
         """Test that List[PydanticModel] generates proper GraphQL list types, not JSON."""
-        
+
         class ItemInput(BaseModel):
             name: str
             value: int
@@ -774,18 +774,18 @@ class TestPydantic:
 
         api = GraphQLAPI(root_type=API)
         schema, _ = api.build_schema()
-        
+
         # Get the GraphQL SDL to inspect the schema
         from graphql import print_schema
         schema_sdl = print_schema(schema)
         print("\nSchema SDL:")
         print(schema_sdl)
-        
+
         # Check that the input type uses proper list syntax, not JSON
         assert "items: [ItemInputInput!]" in schema_sdl or "items: [ItemInputInput]" in schema_sdl
         assert "JSON" not in schema_sdl  # Should not fall back to JSON type
         assert "ItemInputInput" in schema_sdl  # Should have proper input type
-        
+
         # Test the actual functionality
         mutation = """
             mutation {
@@ -805,7 +805,7 @@ class TestPydantic:
                 }
             }
         """
-        
+
         expected = {
             "createContainer": {
                 "id": 1,
@@ -816,14 +816,14 @@ class TestPydantic:
                 ]
             }
         }
-        
+
         response = api.execute(mutation)
         assert response.data == expected
 
     def test_dict_type_mapping_to_json_scalar(self):
         """Test that Dict[str, str] and Dict[str, Any] map to JSON scalar instead of failing."""
         from typing import Dict, Any
-        
+
         class ConfigInput(BaseModel):
             name: str
             settings: Dict[str, str]
@@ -848,22 +848,22 @@ class TestPydantic:
 
         api = GraphQLAPI(root_type=ConfigAPI)
         schema, _ = api.build_schema()
-        
+
         # Get the GraphQL SDL to inspect the schema
         from graphql import print_schema
         schema_sdl = print_schema(schema)
-        
+
         # Verify that Dict fields map to JSON instead of causing mapping errors
         assert "settings: JSON" in schema_sdl
         assert "metadata: JSON" in schema_sdl
         assert "ConfigInputInput" in schema_sdl
-        
+
         # Verify we didn't get any "Unable to map" errors during schema generation
         assert "JSON" in schema_sdl  # JSON scalar should be present
-        
+
         print("✅ Dict types successfully mapped to JSON scalar!")
         print(f"Schema contains {schema_sdl.count('JSON')} JSON references")
-        
+
         # Demonstrate that this fixes the original issue:
         # Before fix: "Unable to map pydantic field 'settings' with type typing.Dict[str, str]"
         # After fix: Dict fields properly map to JSON scalar type in GraphQL schema
@@ -898,7 +898,7 @@ class TestPydantic:
                 """Create a user and return status with data."""
                 if not email or "@" not in email:
                     return ResponseStatus.error("Invalid email address")
-                
+
                 return ResponseStatus.success(
                     "User created successfully",
                     data={"user_id": 123, "name": name, "email": email}
@@ -953,5 +953,209 @@ class TestPydantic:
                 "message": None,
                 "errorMessage": "Invalid email address",
                 "data": None
+            }
+        }
+
+    def test_list_pydantic_model_parameter_conversion(self):
+        """Test that List[PydanticModel] parameters are automatically converted from dicts to model instances."""
+        from enum import Enum
+
+        class Priority(str, Enum):
+            """Task priority levels."""
+            LOW = "LOW"
+            HIGH = "HIGH"
+
+        class Task(BaseModel):
+            title: str
+            priority: Priority
+            completed: bool = False
+
+        class TaskResult(BaseModel):
+            processed_count: int
+            success: bool
+
+        class TaskAPI:
+            @field(mutable=True)
+            def process_tasks(self, tasks: List[Task]) -> TaskResult:
+                """Process a list of tasks - should receive Task objects, not dicts."""
+                processed = 0
+
+                for task in tasks:
+                    # These should work because task is a Task instance, not a dict
+                    assert hasattr(task, 'title'), f"Expected Task object, got {type(task)}"
+                    assert hasattr(task, 'priority'), f"Expected Task object, got {type(task)}"
+                    assert isinstance(task, Task), f"Expected Task instance, got {type(task)}"
+
+                    # Test that we can access Pydantic model attributes
+                    _ = task.title  # Should work
+                    _ = task.priority  # Should work
+                    _ = task.completed  # Should work
+
+                    processed += 1
+
+                return TaskResult(processed_count=processed, success=True)
+
+        api = GraphQLAPI(root_type=TaskAPI)
+
+        mutation = """
+            mutation {
+                processTasks(tasks: [
+                    {title: "Task 1", priority: LOW, completed: false},
+                    {title: "Task 2", priority: HIGH, completed: true},
+                    {title: "Task 3", priority: LOW}
+                ]) {
+                    processedCount
+                    success
+                }
+            }
+        """
+
+        result = api.execute(mutation)
+        assert result.data == {
+            "processTasks": {
+                "processedCount": 3,
+                "success": True
+            }
+        }
+        assert result.errors is None
+
+    def test_mixed_parameter_types_with_list_conversion(self):
+        """Test that List[PydanticModel] conversion works alongside other parameter types."""
+
+        class Item(BaseModel):
+            name: str
+            value: int
+
+        class ProcessResult(BaseModel):
+            total_value: int
+            item_count: int
+            category: str
+
+        class MixedAPI:
+            @field(mutable=True)
+            def process_items_with_category(
+                self,
+                items: List[Item],
+                category: str,
+                multiplier: int = 1
+            ) -> ProcessResult:
+                """Test mixed parameter types with List[PydanticModel]."""
+                total = sum(item.value for item in items)  # Should work with Item objects
+                return ProcessResult(
+                    total_value=total * multiplier,
+                    item_count=len(items),
+                    category=category
+                )
+
+        api = GraphQLAPI(root_type=MixedAPI)
+
+        mutation = """
+            mutation {
+                processItemsWithCategory(
+                    items: [
+                        {name: "Item A", value: 10},
+                        {name: "Item B", value: 20}
+                    ],
+                    category: "test",
+                    multiplier: 2
+                ) {
+                    totalValue
+                    itemCount
+                    category
+                }
+            }
+        """
+
+        result = api.execute(mutation)
+        assert result.data == {
+            "processItemsWithCategory": {
+                "totalValue": 60,  # (10 + 20) * 2
+                "itemCount": 2,
+                "category": "test"
+            }
+        }
+
+    def test_optional_list_pydantic_model_parameter_conversion(self):
+        """Test that Optional[List[PydanticModel]] parameters are handled correctly."""
+
+        class Tag(BaseModel):
+            name: str
+            color: str
+
+        class TagResult(BaseModel):
+            message: str
+            tag_count: int
+
+        class OptionalListAPI:
+            @field(mutable=True)
+            def process_optional_tags(self, tags: Optional[List[Tag]] = None) -> TagResult:
+                """Process optional list of tags."""
+                if tags is None:
+                    return TagResult(message="No tags provided", tag_count=0)
+
+                # Should receive Tag objects, not dicts
+                for tag in tags:
+                    assert isinstance(tag, Tag), f"Expected Tag object, got {type(tag)}"
+                    assert hasattr(tag, 'name')
+                    assert hasattr(tag, 'color')
+
+                return TagResult(
+                    message=f"Processed tags: {', '.join(tag.name for tag in tags)}",
+                    tag_count=len(tags)
+                )
+
+        api = GraphQLAPI(root_type=OptionalListAPI)
+
+        # Test with None (omitted parameter)
+        mutation1 = """
+            mutation {
+                processOptionalTags {
+                    message
+                    tagCount
+                }
+            }
+        """
+        result1 = api.execute(mutation1)
+        assert result1.data == {
+            "processOptionalTags": {
+                "message": "No tags provided",
+                "tagCount": 0
+            }
+        }
+
+        # Test with actual tags
+        mutation2 = """
+            mutation {
+                processOptionalTags(tags: [
+                    {name: "urgent", color: "red"},
+                    {name: "feature", color: "green"}
+                ]) {
+                    message
+                    tagCount
+                }
+            }
+        """
+        result2 = api.execute(mutation2)
+        assert result2.data == {
+            "processOptionalTags": {
+                "message": "Processed tags: urgent, feature",
+                "tagCount": 2
+            }
+        }
+
+        # Test with empty list
+        mutation3 = """
+            mutation {
+                processOptionalTags(tags: []) {
+                    message
+                    tagCount
+                }
+            }
+        """
+        result3 = api.execute(mutation3)
+        assert result3.data == {
+            "processOptionalTags": {
+                "message": "Processed tags: ",
+                "tagCount": 0
             }
         }

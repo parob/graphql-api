@@ -106,12 +106,66 @@ def _convert_pydantic_arguments(args_dict: dict, type_hints: dict) -> dict:
                 except Exception:
                     # If conversion fails, pass the original value and let normal error handling occur
                     converted_args[arg_name] = arg_value
+
+            # Check if this parameter is a List[PydanticModel] or Optional[List[PydanticModel]]
+            elif isinstance(arg_value, list):
+                list_type, list_item_type = _extract_list_type(param_type)
+
+                if (list_type and list_item_type
+                        and inspect.isclass(list_item_type)
+                        and type_is_pydantic_model(list_item_type)):
+                    # Convert each dict in the list to a Pydantic model instance
+                    try:
+                        converted_args[arg_name] = [
+                            _convert_dict_to_pydantic_model(item, list_item_type)
+                            if isinstance(item, dict) else item
+                            for item in arg_value
+                        ]
+                    except Exception:
+                        # If conversion fails, pass the original value
+                        converted_args[arg_name] = arg_value
+                else:
+                    converted_args[arg_name] = arg_value
             else:
                 converted_args[arg_name] = arg_value
         else:
             converted_args[arg_name] = arg_value
 
     return converted_args
+
+
+def _extract_list_type(param_type):
+    """
+    Extract list type and item type from various type annotations.
+
+    Handles:
+    - List[ItemType] -> (list, ItemType)
+    - Optional[List[ItemType]] -> (list, ItemType)
+    - Union[List[ItemType], None] -> (list, ItemType)
+    - Other types -> (None, None)
+
+    Returns:
+        tuple: (list_origin_type, item_type) or (None, None) if not a list type
+    """
+    import typing
+
+    # Handle direct List[ItemType]
+    if hasattr(param_type, '__origin__') and param_type.__origin__ is list:
+        list_item_type = param_type.__args__[0] if param_type.__args__ else None
+        return list, list_item_type
+
+    # Handle Optional[List[ItemType]] or Union[List[ItemType], None]
+    if (hasattr(param_type, '__origin__')
+            and param_type.__origin__ is typing.Union):
+
+        # Check each union member for a list type
+        for union_member in param_type.__args__:
+            if (hasattr(union_member, '__origin__')
+                    and union_member.__origin__ is list):
+                list_item_type = union_member.__args__[0] if union_member.__args__ else None
+                return list, list_item_type
+
+    return None, None
 
 
 def _convert_dict_to_pydantic_model(input_dict: dict, model_class):
