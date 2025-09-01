@@ -195,6 +195,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
         error_protection: bool = True,
         federation: bool = False,
         max_docstring_length: Optional[int] = 500,
+        subscription_type: Optional[Type] = None,
     ):
         """
         Initialize a new GraphQL API instance.
@@ -213,12 +214,14 @@ class GraphQLAPI(GraphQLBaseExecutor):
         """
         super().__init__()
         self.root_type = root_type
+        self.subscription_type = subscription_type
         self.middleware = middleware or []
         self.directives = [*specified_directives] + (directives or [])
         self.types = set(types or [])
         self.filters = filters
         self.query_mapper: Optional[GraphQLTypeMapper] = None
         self.mutation_mapper: Optional[GraphQLTypeMapper] = None
+        self.subscription_mapper: Optional[GraphQLTypeMapper] = None
         self.error_protection = error_protection
         self.federation = federation
         self._cached_schema: Optional[Tuple[GraphQLSchema, Dict]] = None
@@ -301,6 +304,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
         meta: Dict = {}
         query: Optional[GraphQLObjectType] = None
         mutation: Optional[GraphQLObjectType] = None
+        subscription: Optional[GraphQLObjectType] = None
         collected_types: Optional[List[GraphQLNamedType]] = None
 
         if self.root_type:
@@ -354,9 +358,10 @@ class GraphQLAPI(GraphQLBaseExecutor):
                 query_types = set()
                 registry = None
 
-            # Build root Mutation
+            # Build root Mutation - use a copy of the registry to avoid polluting the shared registry
+            mutation_registry = registry.copy() if registry else {}
             mutation_mapper = GraphQLTypeMapper(
-                as_mutable=True, suffix="Mutable", registry=registry, schema=self, max_docstring_length=self.max_docstring_length
+                as_mutable=True, suffix="Mutable", registry=mutation_registry, schema=self, max_docstring_length=self.max_docstring_length
             )
             _mutation = mutation_mapper.map(self.root_type)
 
@@ -375,7 +380,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
                 mutation_types = mutation_mapper.types()
             else:
                 mutation = None
-                mutation_types = set()
+                mutation_types = set()  # Don't include any mutation types when validation fails
 
             # Clean up unreferenced types after filtering (only when filters are applied and any filter has cleanup enabled)
             should_cleanup_types = False
@@ -393,15 +398,43 @@ class GraphQLAPI(GraphQLBaseExecutor):
                 if mutation_mapper:
                     mutation_types = mutation_mapper.types()
 
+            # Build root Subscription (optional)
+            subscription_types = set()
+            if self.subscription_type:
+                subscription_mapper = GraphQLTypeMapper(
+                    as_mutable=False,
+                    suffix="Subscription",
+                    registry=registry,
+                    schema=self,
+                    max_docstring_length=self.max_docstring_length,
+                    as_subscription=True,
+                )
+                _subscription = subscription_mapper.map(self.subscription_type)
+                if not isinstance(_subscription, GraphQLObjectType):
+                    raise GraphQLError(
+                        f"Subscription {_subscription} was not a valid GraphQLObjectType."
+                    )
+                subscription = _subscription
+                subscription_types = subscription_mapper.types()
+                self.subscription_mapper = subscription_mapper
+
             # Collect all types
+            all_types = query_types | subscription_types | self.types
+            if mutation:  # Only include mutation types if mutation is valid
+                all_types = all_types | mutation_types
+
             collected_types = [  # type: ignore[assignment]
                 t
-                for t in list(query_types | mutation_types | self.types)
+                for t in list(all_types)
                 if is_named_type(t)
             ]
 
-            # Gather meta info from both mappers
-            meta = {**query_mapper.meta, **mutation_mapper.meta}
+            # Gather meta info from all mappers
+            meta = {**query_mapper.meta}
+            if mutation_mapper and mutation:  # Only include mutation meta if mutation is valid
+                meta.update(mutation_mapper.meta)
+            if self.subscription_mapper:
+                meta.update(self.subscription_mapper.meta)
             self.query_mapper = query_mapper
             self.mutation_mapper = mutation_mapper
 
@@ -417,19 +450,24 @@ class GraphQLAPI(GraphQLBaseExecutor):
             )
 
         # Include directives that may have been attached through the mappers
-        if self.query_mapper and self.mutation_mapper:
-            for _, _, applied_directives in (
-                self.query_mapper.applied_schema_directives
-                + self.mutation_mapper.applied_schema_directives
-            ):
-                for d in applied_directives:
-                    if d.directive not in self.directives:
-                        self.directives.append(d.directive)
+        if self.query_mapper:
+            applied_directives_list = [self.query_mapper.applied_schema_directives]
+            if self.mutation_mapper and mutation:  # Only include mutation directives if mutation is valid
+                applied_directives_list.append(self.mutation_mapper.applied_schema_directives)
+            if self.subscription_mapper:
+                applied_directives_list.append(self.subscription_mapper.applied_schema_directives)
 
-                        # Create the schema
+            for applied_directives in applied_directives_list:
+                for _, _, directives in applied_directives:
+                    for d in directives:
+                        if d.directive not in self.directives:
+                            self.directives.append(d.directive)
+
+        # Create the schema
         schema = GraphQLSchema(
             query=query,
             mutation=mutation,
+            subscription=subscription,
             types=collected_types,
             directives=[
                 d.directive if isinstance(d, SchemaDirective) else d

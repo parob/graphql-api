@@ -4,8 +4,11 @@ from graphql import (
     ExecutionContext,
     GraphQLError,
     GraphQLOutputType,
+    MapAsyncIterator,
     graphql,
     graphql_sync,
+    subscribe,
+    parse,
 )
 from graphql.execution import ExecutionResult
 from graphql.type.schema import GraphQLSchema
@@ -187,3 +190,26 @@ class GraphQLExecutor(GraphQLBaseExecutor):
             execution_context_class=self.execution_context_class,
         )
         return result
+
+    async def subscribe(
+        self, query: str, variables=None, operation_name=None, root_value=None
+    ):
+        """
+        Start a GraphQL subscription and return an async iterator of results.
+        """
+        context = GraphQLContext(schema=self.schema, meta=self.meta, executor=self)
+        if root_value is None:
+            root_value = self.root_value
+        # graphql-core subscribe expects a parsed document
+        document = parse(query)
+        # Use the same middleware and execution context where applicable
+        async_iter = await subscribe(
+            schema=self.schema,
+            document=document,
+            variable_values=variables,
+            operation_name=operation_name,
+            context_value=context,
+            root_value=root_value,
+            # execution_context_class is not a parameter for subscribe in graphql-core v3
+        )
+        return async_iter

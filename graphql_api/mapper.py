@@ -318,6 +318,7 @@ class GraphQLTypeMapper:
         suffix="",
         schema=None,
         max_docstring_length=None,
+        as_subscription: bool = False,
     ):
         self.as_mutable = as_mutable
         self.as_input = as_input
@@ -329,6 +330,7 @@ class GraphQLTypeMapper:
         self.schema = schema
         self.applied_schema_directives = []
         self.max_docstring_length = max_docstring_length
+        self.as_subscription = as_subscription
 
     def types(self) -> Set[GraphQLType]:
         return set(self.registry.values())
@@ -486,8 +488,20 @@ class GraphQLTypeMapper:
         if func_type == "mutable_field":
             field_class = GraphQLMutableField
 
+        # Subscriptions: use the resolver as the 'subscribe' function and return the payload as-is
+        subscribe_fn = None
+        resolve_fn = resolve
+        if getattr(self, "as_subscription", False):
+            subscribe_fn = resolve
+            # For each emitted payload, pass it through to field selection
+            resolve_fn = (lambda payload, *args, **kwargs: payload)
+
         field = field_class(
-            return_graphql_type, arguments, resolve, description=description
+            return_graphql_type,
+            arguments,
+            resolve_fn,
+            description=description,
+            subscribe=subscribe_fn,
         )
 
         self.add_applied_directives(field, f"{name}.{key}", function_type)
