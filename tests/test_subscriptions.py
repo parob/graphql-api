@@ -170,7 +170,7 @@ class TestSubscriptions:
         @api.type()
         class Subscription:
             @api.field
-            async def on_message(self, user_id: str = "", channel: str = "") -> Message:  # type: ignore
+            async def on_message(self, user_id: str = "", channel: str = "") -> AsyncGenerator[Message, None]:
                 # Filter messages based on arguments
                 if user_id == "user1" and channel == "general":
                     yield Message(id=1, content="Hello user1", user="user1", timestamp="2024-01-01T10:00:00Z")

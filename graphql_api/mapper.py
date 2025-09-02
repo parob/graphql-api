@@ -262,7 +262,7 @@ class GraphQLGenericEnum(enum.Enum):
     pass
 
 
-def _get_class_description(class_type: Type, max_docstring_length: Optional[int] = None) -> str:
+def _get_class_description(class_type: Type, max_docstring_length: Optional[int] = None) -> Optional[str]:
     """
     Get description for a class, filtering out auto-generated docstrings.
 
@@ -298,7 +298,7 @@ def _get_class_description(class_type: Type, max_docstring_length: Optional[int]
                 if parent_class in (dict, list, tuple, str, set, frozenset, Exception, object):
                     return None
                 # Also filter out if parent docstring is very long (likely auto-generated)
-                if len(parent_doc) > 200:
+                if parent_doc and len(parent_doc) > 200:
                     return None
 
     # Apply truncation if requested
@@ -612,8 +612,30 @@ class GraphQLTypeMapper:
         if not description or description == default_description:
             description = f"A {name}."
 
+        # Create GraphQLEnumValue objects for each enum value with directive support
+        enum_values = {}
+        for enum_member in enum_type:
+            # Get any applied directives from the enum member's value
+            # The enum member's value is what was assigned in the class definition
+            member_value = enum_member.value
+            applied_directives = get_applied_directives(member_value)
+
+            # Create GraphQLEnumValue with directives
+            from graphql import GraphQLEnumValue
+            enum_value = GraphQLEnumValue(
+                value=enum_member.name,
+                description=None,  # Could be enhanced to support descriptions
+                deprecation_reason=None,  # Could be enhanced to support deprecation
+            )
+
+            # Apply directives to the enum value if any exist
+            if applied_directives:
+                add_applied_directives(enum_value, applied_directives)
+
+            enum_values[enum_member.name] = enum_value
+
         enum_type = GraphQLMappedEnumType(
-            name=name, values=enum_type, description=description
+            name=name, values=enum_values, description=description
         )
 
         enum_type.enum_type = type_
