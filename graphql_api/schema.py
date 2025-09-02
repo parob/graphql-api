@@ -18,6 +18,33 @@ from graphql_api.directives import SchemaDirective
 from graphql_api.utils import to_camel_case
 
 
+class EnumValue:
+    """
+    A utility class for creating enum values that can hold directive information.
+    This allows enum values to be decorated with directives for GraphQL schema generation.
+    """
+    def __init__(self, value: str, directive=None):
+        self.value = value
+        self.directive = directive
+        # Store the directive as an applied directive so it can be detected
+        if directive:
+            self._applied_directives = [AppliedDirective(directive=directive, args={})]
+
+    def __str__(self):
+        return self.value
+
+    def __repr__(self):
+        return f"EnumValue('{self.value}')"
+
+    def __eq__(self, other):
+        if isinstance(other, EnumValue):
+            return self.value == other.value
+        return self.value == other
+
+    def __hash__(self):
+        return hash(self.value)
+
+
 class AppliedDirective:
     def __init__(self, directive: Union[GraphQLDirective, SchemaDirective], args: Dict):
         self.directive = (

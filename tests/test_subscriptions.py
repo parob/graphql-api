@@ -118,7 +118,7 @@ class TestSubscriptions:
         @api.type()
         class Subscription:
             @api.field
-            async def on_comment_added(self, by_user: str = "") -> Comment:  # type: ignore
+            async def on_comment_added(self, by_user: str = "") -> AsyncGenerator[Comment, None]:
                 # simple async generator emitting two comments
                 yield Comment(user="rob", comment="first")  # type: ignore
                 yield Comment(user="rob", comment="second")  # type: ignore
@@ -139,7 +139,7 @@ class TestSubscriptions:
         async_iter = await executor.subscribe(subscription_query)
 
         received = []
-        async for result in async_iter:  # type: ignore
+        async for result in async_iter:
             received.append(result.data)
             if len(received) >= 2:
                 break
@@ -234,7 +234,7 @@ class TestSubscriptions:
         @api.type()
         class Subscription:
             @api.field
-            async def on_post_created(self, category: str = "") -> Post:  # type: ignore
+            async def on_post_created(self, category: str = "") -> AsyncGenerator[Post, None]:
                 if category == "tech":
                     yield Post(
                         id="post1",
@@ -309,7 +309,7 @@ class TestSubscriptions:
         @api.type()
         class Subscription:
             @api.field
-            async def on_user_status_change(self, status_filter: str = "") -> UserStatus:
+            async def on_user_status_change(self, status_filter: str = "") -> AsyncGenerator[UserStatus, None]:
                 if status_filter == "online":
                     yield UserStatus(user_id="user1", status=Status.ONLINE, last_seen="2024-01-01T10:00:00Z")
                     yield UserStatus(user_id="user2", status=Status.ONLINE, last_seen="2024-01-01T10:01:00Z")
@@ -360,7 +360,7 @@ class TestSubscriptions:
         @api.type()
         class Subscription:
             @api.field
-            async def on_data_with_error(self, should_error: bool = False) -> Data:
+            async def on_data_with_error(self, should_error: bool = False) -> AsyncGenerator[Data, None]:
                 if should_error:
                     raise Exception("Simulated subscription error")
                 yield Data(value="success")

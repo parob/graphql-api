@@ -238,36 +238,23 @@ class TestGraphQLDirectives:
         assert "Interface directive description" in printed_schema
 
     def test_schema_directive_enum(self):
+        enum_directive = SchemaDirective(
+            name="enum_directive",
+            locations=[DirectiveLocation.ENUM],
+            args={},
+            description="Enum directive description",
+            is_repeatable=True,
+        )
+
         enum_value_directive = SchemaDirective(
             name="enum_value_directive",
             locations=[DirectiveLocation.ENUM_VALUE],
             description="Enum value directive description",
         )
 
-        # Create a custom enum value class that can hold directives
-        class EnumValue:
-            def __init__(self, value: str, directive=None):
-                self.value = value
-                self.directive = directive
-                # Store the directive as an applied directive so it can be detected
-                if directive:
-                    from graphql_api import AppliedDirective
-                    self._applied_directives = [AppliedDirective(directive=directive, args={})]
+        from graphql_api.schema import EnumValue
 
-            def __str__(self):
-                return self.value
-
-            def __repr__(self):
-                return f"EnumValue('{self.value}')"
-
-            def __eq__(self, other):
-                if isinstance(other, EnumValue):
-                    return self.value == other.value
-                return self.value == other
-
-            def __hash__(self):
-                return hash(self.value)
-
+        @enum_directive
         class AnimalType(enum.Enum):
             dog = EnumValue("dog", enum_value_directive)
             cat = EnumValue("cat", enum_value_directive)
@@ -289,8 +276,10 @@ class TestGraphQLDirectives:
         assert schema is not None
         printed_schema = print_schema(schema)
 
-        # Check that the enum value directive appears in the schema
+        # Check that both enum and enum value directives appear in the schema
+        assert "directive @enum_directive" in printed_schema
         assert "directive @enum_value_directive" in printed_schema
+        assert "Enum directive description" in printed_schema
         assert "Enum value directive description" in printed_schema
 
     def test_schema_directive_invalid_location(self):

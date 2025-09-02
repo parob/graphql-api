@@ -341,6 +341,15 @@ class GraphQLTypeMapper:
 
         return_type = type_hints.pop("return", None)
 
+        # Handle AsyncGenerator types for subscriptions
+        if return_type and typing_inspect.is_generic_type(return_type):
+            origin = typing_inspect.get_origin(return_type)
+            if origin is not None and hasattr(origin, '__name__') and origin.__name__ == 'AsyncGenerator':
+                # Extract the first type argument (the yielded type) from AsyncGenerator[T, None]
+                args = typing_inspect.get_args(return_type, evaluate=True)
+                if args and len(args) >= 1:
+                    return_type = args[0]
+
         # This is a bit nasty - looking up the function source code to determine this
         if has_single_type_union_return(function_type):
             return_type = Union[return_type, UnionFlagType]
@@ -612,49 +621,28 @@ class GraphQLTypeMapper:
         if not description or description == default_description:
             description = f"A {name}."
 
-        # Create GraphQLEnumValue objects for each enum value with directive support
-        enum_values = {}
-        for enum_member in enum_type:
-            # Get any applied directives from the enum member's value
-            # The enum member's value is what was assigned in the class definition
-            member_value = enum_member.value
-            applied_directives = get_applied_directives(member_value)
-
-            # Create GraphQLEnumValue with directives
-            from graphql import GraphQLEnumValue
-            enum_value = GraphQLEnumValue(
-                value=enum_member.name,
-                description=None,  # Could be enhanced to support descriptions
-                deprecation_reason=None,  # Could be enhanced to support deprecation
-            )
-
-            # Apply directives to the enum value if any exist
-            if applied_directives:
-                add_applied_directives(enum_value, applied_directives)
-
-            enum_values[enum_member.name] = enum_value
-
         enum_type = GraphQLMappedEnumType(
-            name=name, values=enum_values, description=description
+            name=name, values=enum_type, description=description
         )
 
         enum_type.enum_type = type_
 
         def serialize(_self, value) -> Union[str, None, UndefinedType]:
             if value and isinstance(value, collections.abc.Hashable):
-                # For both string and regular enums, we need to extract the .value attribute
+                # For enums, always return the enum name (which matches the GraphQL enum value)
                 if isinstance(value, enum.Enum):
-                    lookup_key = value.value
+                    return value.name
                 else:
-                    # If it's not an enum instance, use the value directly
+                    # For non-enum values, try to look them up in the value lookup
+                    # This handles cases where the value might be a string representation
                     lookup_key = value
-
-                # noinspection PyProtectedMember
-                lookup_value = _self._value_lookup.get(lookup_key)
-                if lookup_value:
-                    return lookup_value
-                else:
-                    return Undefined
+                    # noinspection PyProtectedMember
+                    lookup_value = _self._value_lookup.get(lookup_key)
+                    if lookup_value:
+                        return lookup_value
+                    else:
+                        # If lookup fails, the value might be invalid
+                        return Undefined
 
             return None
 

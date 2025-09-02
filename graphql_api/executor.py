@@ -1,10 +1,9 @@
-from typing import Any, Dict, Optional, List, Callable
+from typing import Any, Dict, Optional, List, Callable, AsyncIterator
 
 from graphql import (
     ExecutionContext,
     GraphQLError,
     GraphQLOutputType,
-    MapAsyncIterator,
     graphql,
     graphql_sync,
     subscribe,
@@ -193,7 +192,7 @@ class GraphQLExecutor(GraphQLBaseExecutor):
 
     async def subscribe(
         self, query: str, variables=None, operation_name=None, root_value=None
-    ):
+    ) -> AsyncIterator[ExecutionResult]:
         """
         Start a GraphQL subscription and return an async iterator of results.
         """
@@ -212,4 +211,4 @@ class GraphQLExecutor(GraphQLBaseExecutor):
             root_value=root_value,
             # execution_context_class is not a parameter for subscribe in graphql-core v3
         )
-        return async_iter
+        return async_iter  # type: ignore
