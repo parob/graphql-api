@@ -1,5 +1,5 @@
 from inspect import isfunction
-from typing import Any, Callable, Collection, Dict, List, Optional, Union, cast
+from typing import Any, Callable, Collection, Dict, List, Optional, Union, cast, TypeVar, overload
 
 from graphql import (
     DEFAULT_DEPRECATION_REASON,
@@ -36,6 +36,8 @@ from graphql.language import ast
 from graphql.language.block_string import is_printable_as_block_string
 from graphql.pyutils import inspect
 
+T = TypeVar('T')
+
 
 class SchemaDirective(GraphQLDirective):
     def __init__(
@@ -63,6 +65,12 @@ class SchemaDirective(GraphQLDirective):
             )
             self.directive = self
 
+    @overload
+    def __call__(self, cls: T) -> T: ...
+
+    @overload
+    def __call__(self, **kwargs) -> Callable[[T], T]: ...
+
     def __call__(self, *args, **kwargs):
         from graphql_api import AppliedDirective
         from graphql_api.schema import add_applied_directives
@@ -76,6 +84,7 @@ class SchemaDirective(GraphQLDirective):
                     func, [AppliedDirective(directive=self.directive, args=kwargs)]
                 )
                 return func
+            raise TypeError(f"Expected a function, got {type(func)}")
         else:
             return lambda t: add_applied_directives(
                 t, [AppliedDirective(directive=self.directive, args=kwargs)]

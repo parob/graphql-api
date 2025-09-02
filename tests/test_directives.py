@@ -1,5 +1,5 @@
 import enum
-from typing import List, Optional, Union, Callable
+from typing import List, Optional, Union, Callable, TypeVar, cast, Protocol
 
 import pytest
 from graphql import DirectiveLocation, GraphQLArgument, GraphQLDirective, GraphQLString
@@ -7,6 +7,10 @@ from graphql import DirectiveLocation, GraphQLArgument, GraphQLDirective, GraphQ
 from graphql_api import AppliedDirective, GraphQLAPI, field, type
 from graphql_api.directives import SchemaDirective, deprecated, print_schema
 from graphql_api.mapper import GraphQLTypeMapper
+
+T = TypeVar('T')
+
+# Type alias for SchemaDirective decorators
 
 
 class TestGraphQLDirectives:
@@ -66,12 +70,13 @@ class TestGraphQLDirectives:
     def test_builtin_directive(self):
         @type
         class TestSchema:
-                            @deprecated(reason="deprecated reason")  # type: ignore
-        @field
-        def test(self, a: int) -> int:
-            return a + 1
+            @deprecated(reason="deprecated reason")
+            @field
+            def test(self, a: int) -> int:
+                return a + 1
 
-        api = GraphQLAPI(root_type=TestSchema, directives=[deprecated])
+        deprecated_directive = deprecated
+        api = GraphQLAPI(root_type=TestSchema, directives=[deprecated_directive])
 
         schema, _ = api.build_schema()
         assert schema is not None
@@ -241,13 +246,13 @@ class TestGraphQLDirectives:
             is_repeatable=True,
         )
 
-        # enum_value_directive = SchemaDirective(
-        #     name="enum_value_directive",
-        #     locations=[DirectiveLocation.ENUM_VALUE],
-        #     description="Enum value directive description",
-        # )
+        enum_value_directive = SchemaDirective(
+            name="enum_value_directive",
+            locations=[DirectiveLocation.ENUM_VALUE],
+            description="Enum value directive description",
+        )
 
-        @enum_directive()
+        @enum_directive
         class AnimalType(enum.Enum):
             dog = "dog"
             cat = "cat"
@@ -297,7 +302,7 @@ class TestGraphQLDirectives:
             schema, _ = api.build_schema()
 
     def test_multiple_schema_directives(self):
-        key: Callable = SchemaDirective(
+        key = SchemaDirective(
             name="key",
             locations=[DirectiveLocation.OBJECT],
             args={
@@ -362,7 +367,7 @@ class TestGraphQLDirectives:
         assert "test3(a:Int!):Int!@tag}" in schema_nw
 
     @staticmethod
-    def get_directives(mapper: GraphQLTypeMapper):
+    def get_directives(mapper: Optional[GraphQLTypeMapper]):
         if mapper is None:
             return []
         query_applied_directives = mapper.applied_schema_directives
