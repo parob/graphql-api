@@ -10,8 +10,6 @@ from graphql_api.mapper import GraphQLTypeMapper
 
 T = TypeVar('T')
 
-# Type alias for SchemaDirective decorators
-
 
 class TestGraphQLDirectives:
     def test_operation_directive(self):
@@ -23,7 +21,6 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=TestSchema)
 
         executor = api.executor()
-
 
         test_query = """
             query Test($testBool: Boolean!) {
