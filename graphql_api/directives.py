@@ -80,10 +80,12 @@ class SchemaDirective(GraphQLDirective):
         if len(args) > 0:
             func = args[0]
             if func and (
-                isinstance(func, GraphQLSchema) or isfunction(func) or callable(func)
+                isinstance(func, GraphQLSchema) or isfunction(
+                    func) or callable(func)
             ):
                 add_applied_directives(
-                    func, [AppliedDirective(directive=self.directive, args=kwargs)]
+                    func, [AppliedDirective(
+                        directive=self.directive, args=kwargs)]
                 )
                 return func
             raise TypeError(f"Expected a function, got {type(func)}")
@@ -169,7 +171,8 @@ def print_schema_definition(
     return (
         print_description(schema)
         + "schema"
-        + print_applied_directives(schema, printed_directives=printed_directives)
+        + print_applied_directives(schema,
+                                   printed_directives=printed_directives)
         + " "
         + "{\n"
         + "\n".join(operation_types)

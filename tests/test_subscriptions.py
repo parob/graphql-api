@@ -44,7 +44,8 @@ schema = GraphQLSchema(
     ),
     mutation=GraphQLObjectType(
         "RootMutationType",
-        {"increaseCount": GraphQLField(GraphQLInt, resolve=resolve_increase_count)},
+        {"increaseCount": GraphQLField(
+            GraphQLInt, resolve=resolve_increase_count)},
     ),
     subscription=GraphQLObjectType(
         "RootSubscriptionType",
@@ -240,14 +241,16 @@ class TestSubscriptions:
                         id="post1",
                         title="GraphQL Subscriptions",
                         content="Learn about GraphQL subscriptions",
-                        author=User(id="user1", name="Alice", email="alice@example.com"),
+                        author=User(id="user1", name="Alice",
+                                    email="alice@example.com"),
                         tags=["graphql", "subscriptions", "tech"]
                     )
                     yield Post(
                         id="post2",
                         title="Async Programming",
                         content="Understanding async/await",
-                        author=User(id="user2", name="Bob", email="bob@example.com"),
+                        author=User(id="user2", name="Bob",
+                                    email="bob@example.com"),
                         tags=["python", "async", "tech"]
                     )
 

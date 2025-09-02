@@ -150,7 +150,8 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         Synchronously execute a GraphQL query.
         """
         # Build the context shared by resolvers
-        context = GraphQLContext(schema=self.schema, meta=self.meta, executor=self)
+        context = GraphQLContext(
+            schema=self.schema, meta=self.meta, executor=self)
 
         if root_value is None:
             root_value = self.root_value
@@ -174,7 +175,8 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         """
         Asynchronously execute a GraphQL query.
         """
-        context = GraphQLContext(schema=self.schema, meta=self.meta, executor=self)
+        context = GraphQLContext(
+            schema=self.schema, meta=self.meta, executor=self)
         if root_value is None:
             root_value = self.root_value
         # Execute asynchronously with graphql
@@ -196,7 +198,8 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         """
         Start a GraphQL subscription and return an async iterator of results.
         """
-        context = GraphQLContext(schema=self.schema, meta=self.meta, executor=self)
+        context = GraphQLContext(
+            schema=self.schema, meta=self.meta, executor=self)
         if root_value is None:
             root_value = self.root_value
         # graphql-core subscribe expects a parsed document

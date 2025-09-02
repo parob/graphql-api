@@ -47,7 +47,8 @@ class TestGraphQLSchema:
         assert AbstractNoSchema.test_abstract_mutation_no_schema._graphql
 
         # noinspection PyUnresolvedReferences
-        assert InterfaceNoSchema._graphql  # type: ignore[reportAttributeAccess]
+        # type: ignore[reportAttributeAccess]
+        assert InterfaceNoSchema._graphql
         assert InterfaceNoSchema.test_interface_query_no_schema._graphql
         assert InterfaceNoSchema.test_interface_mutation_no_schema._graphql
 
@@ -81,7 +82,8 @@ class TestGraphQLSchema:
                 ...
 
         # noinspection PyUnresolvedReferences
-        assert ObjectNoSchemaMeta._graphql  # type: ignore[reportAttributeAccess]
+        # type: ignore[reportAttributeAccess]
+        assert ObjectNoSchemaMeta._graphql
         assert ObjectNoSchemaMeta.test_query_no_schema_meta._graphql
         assert ObjectNoSchemaMeta.test_mutation_no_schema_meta._graphql
 

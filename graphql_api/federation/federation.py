@@ -96,7 +96,8 @@ def add_entity_type(api: GraphQLAPI, schema: GraphQLSchema):
 
             if callable(getattr(entity_python_type, "_resolve_reference", None)):
                 # noinspection PyProtectedMember
-                _entities.append(entity_python_type._resolve_reference(representation))
+                _entities.append(
+                    entity_python_type._resolve_reference(representation))
             else:
                 raise NotImplementedError(
                     f"Federation method '{entity_python_type.__name__}"
@@ -126,7 +127,8 @@ def add_entity_type(api: GraphQLAPI, schema: GraphQLSchema):
     union_type = Union[*python_entities]  # type: ignore
 
     union_entity_type: GraphQLUnionType = cast(
-        GraphQLUnionType, api.query_mapper.map_to_union(union_type)  # type: ignore
+        GraphQLUnionType, api.query_mapper.map_to_union(
+            union_type)  # type: ignore
     )
     union_entity_type.name = "_Entity"
 

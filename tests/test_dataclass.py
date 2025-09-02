@@ -85,21 +85,25 @@ class TestDataclass:
         class Stats:
             """Stats dataclass with multiple fields that should all be preserved"""
 
-            @field({"tags": ["admin"]})  # This field should be filtered out normally
+            # This field should be filtered out normally
+            @field({"tags": ["admin"]})
             def conversations_count(self) -> int:
                 return 42
 
-            @field({"tags": ["admin"]})  # This field should be filtered out normally
+            # This field should be filtered out normally
+            @field({"tags": ["admin"]})
             def messages_count(self) -> int:
                 return 100
 
-            @field({"tags": ["admin"]})  # Third field to make the bug more obvious
+            # Third field to make the bug more obvious
+            @field({"tags": ["admin"]})
             def users_count(self) -> int:
                 return 15
 
         @dataclass
         class Root:
-            @field({"tags": ["admin"]})  # This field should use ALLOW_TRANSITIVE
+            # This field should use ALLOW_TRANSITIVE
+            @field({"tags": ["admin"]})
             def get_stats(self, timeframe: Timeframe) -> Stats:
                 """Field that returns Stats - should preserve Stats type with ALLOW_TRANSITIVE"""
                 return Stats()
@@ -123,7 +127,8 @@ class TestDataclass:
 
         type_map = schema.type_map
 
-        print(f"Types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
+        print(
+            f"Types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
 
         # Stats should be preserved due to ALLOW_TRANSITIVE
         assert "Stats" in type_map, "Stats type should be preserved due to ALLOW_TRANSITIVE"
@@ -137,7 +142,8 @@ class TestDataclass:
         print(f"Stats fields: {stats_fields}")
 
         # ALLOW_TRANSITIVE should preserve ALL fields on the type, not just one
-        assert len(stats_fields) == 3, f"Expected 3 fields (conversationsCount, messagesCount, usersCount) but got {len(stats_fields)}: {stats_fields}"
+        assert len(
+            stats_fields) == 3, f"Expected 3 fields (conversationsCount, messagesCount, usersCount) but got {len(stats_fields)}: {stats_fields}"
 
         expected_fields = {"conversationsCount", "messagesCount", "usersCount"}
         actual_fields = set(stats_fields)
@@ -181,6 +187,7 @@ class TestDataclass:
 
         class UsedType:
             """This type will be used by a mutable field"""
+
             def __init__(self):
                 self._value = "used"
 
@@ -190,6 +197,7 @@ class TestDataclass:
 
         class UnusedType:
             """This type will NOT be used by any mutable field"""
+
             def __init__(self):
                 self._data = "unused"
 
@@ -199,6 +207,7 @@ class TestDataclass:
 
         class AnotherUnusedType:
             """Another unused type"""
+
             def __init__(self):
                 self._info = "also unused"
 
@@ -242,10 +251,12 @@ class TestDataclass:
         schema, _ = api.build_schema()
 
         type_map = schema.type_map
-        print(f"All types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
+        print(
+            f"All types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
 
         # Check that query types exist (should all be present)
-        expected_query_types = {"Root", "UsedType", "UnusedType", "AnotherUnusedType"}
+        expected_query_types = {"Root", "UsedType",
+                                "UnusedType", "AnotherUnusedType"}
         for type_name in expected_query_types:
             assert type_name in type_map, f"{type_name} should be present in query schema"
 
@@ -253,7 +264,8 @@ class TestDataclass:
         assert "UsedTypeMutable" in type_map, "UsedTypeMutable should exist since update_used returns UsedType"
 
         # Critical test: Other types should NOT have mutable versions
-        unused_mutable_types = {"UnusedTypeMutable", "AnotherUnusedTypeMutable"}
+        unused_mutable_types = {
+            "UnusedTypeMutable", "AnotherUnusedTypeMutable"}
 
         for mutable_type in unused_mutable_types:
             assert mutable_type not in type_map, f"{mutable_type} should be filtered out as it's unused"
@@ -356,15 +368,18 @@ class TestDataclass:
         type_map = schema.type_map
 
         print("\\nDemonstrating the bug:")
-        print(f"Types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
+        print(
+            f"Types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
 
         # This assertion SHOULD pass (UserMutable is needed)
         assert "UserMutable" in type_map, "UserMutable should exist since update_user returns User"
 
         # This assertion should now PASS - BookMutable should be filtered out
         if "BookMutable" in type_map:
-            print("❌ BUG STILL EXISTS: BookMutable exists even though no mutable field returns Book")
-            print("   This is the same issue from the library app where all types get mutable versions")
+            print(
+                "❌ BUG STILL EXISTS: BookMutable exists even though no mutable field returns Book")
+            print(
+                "   This is the same issue from the library app where all types get mutable versions")
         else:
             print("✅ Bug fixed: BookMutable correctly filtered out")
 
@@ -384,7 +399,8 @@ class TestDataclass:
             }
         """)
         assert not query_result.errors
-        assert query_result.data == {"book": {"title": "Great Gatsby", "author": "F. Scott Fitzgerald"}}
+        assert query_result.data == {
+            "book": {"title": "Great Gatsby", "author": "F. Scott Fitzgerald"}}
 
         # Mutation should work
         mutation_result = executor.execute("""
@@ -416,6 +432,7 @@ class TestDataclass:
 
         class TypeC:
             """Deepest nested type - only referenced by TypeB"""
+
             def __init__(self):
                 self._deep_value = "deep"
 
@@ -425,6 +442,7 @@ class TestDataclass:
 
         class TypeB:
             """Middle type - only referenced by TypeA"""
+
             def __init__(self):
                 self._middle_value = "middle"
 
@@ -439,6 +457,7 @@ class TestDataclass:
 
         class TypeA:
             """Top type - has mutable fields but NOT referenced by root mutations"""
+
             def __init__(self):
                 self._top_value = "top"
 
@@ -453,6 +472,7 @@ class TestDataclass:
 
         class UsedType:
             """This type IS used by root mutations"""
+
             def __init__(self):
                 self._value = "used"
 
@@ -483,7 +503,8 @@ class TestDataclass:
         type_map = schema.type_map
 
         print("\nTesting transitive unused mutable types:")
-        print(f"Types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
+        print(
+            f"Types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
 
         # These should exist (query types and UsedTypeMutable)
         # Note: TypeB and TypeC might not exist in query schema since they're not directly referenced
@@ -495,7 +516,8 @@ class TestDataclass:
         # - TypeA is not referenced by any root mutable fields
         # - TypeB is only referenced by TypeA (which is unreachable from root mutations)
         # - TypeC is only referenced by TypeB (which is also unreachable)
-        potentially_unused_mutable_types = {"TypeAMutable", "TypeBMutable", "TypeCMutable"}
+        potentially_unused_mutable_types = {
+            "TypeAMutable", "TypeBMutable", "TypeCMutable"}
 
         bugs_found = []
         for mutable_type in potentially_unused_mutable_types:
@@ -503,12 +525,16 @@ class TestDataclass:
                 bugs_found.append(mutable_type)
 
         if bugs_found:
-            print(f"ℹ️  EXPECTED BEHAVIOR: These mutable types exist because they have mutable fields: {bugs_found}")
+            print(
+                f"ℹ️  EXPECTED BEHAVIOR: These mutable types exist because they have mutable fields: {bugs_found}")
             print("   Current algorithm correctly keeps mutable types that:")
             print("   - Have their own mutable fields (TypeA, TypeB have mutable fields)")
-            print("   - Could be used in mutations even if not directly returned by root mutations")
-            print("   - This is the conservative approach that avoids breaking interface scenarios")
-            print("   Note: TypeC should theoretically be removable as it has no mutable fields")
+            print(
+                "   - Could be used in mutations even if not directly returned by root mutations")
+            print(
+                "   - This is the conservative approach that avoids breaking interface scenarios")
+            print(
+                "   Note: TypeC should theoretically be removable as it has no mutable fields")
 
             # Check if TypeC is incorrectly kept (it has no mutable fields)
             if "TypeCMutable" in bugs_found:
@@ -608,22 +634,29 @@ class TestDataclass:
         schema, type_map = api.build_schema()
 
         print("\nLibrary app bug demonstration:")
-        print(f"All types in schema: {sorted([str(t) for t in type_map.values()])}")
-        print(f"Mutable types in schema: {sorted([str(t) for t in type_map.values() if 'Mutable' in str(t)])}")
+        print(
+            f"All types in schema: {sorted([str(t) for t in type_map.values()])}")
+        print(
+            f"Mutable types in schema: {sorted([str(t) for t in type_map.values() if 'Mutable' in str(t)])}")
 
         # Correct behavior: Neither UserMutable nor AddressMutable should exist
         # because update_user doesn't have the resolve_to_mutable flag set
         # Mutable fields return query types by default, only creating mutable types when resolve_to_mutable: True
 
-        user_mutable_exists = any('UserMutable' in str(t) for t in type_map.values())
-        address_mutable_exists = any('AddressMutable' in str(t) for t in type_map.values())
+        user_mutable_exists = any('UserMutable' in str(t)
+                                  for t in type_map.values())
+        address_mutable_exists = any('AddressMutable' in str(t)
+                                     for t in type_map.values())
 
-        print(f"UserMutable exists: {user_mutable_exists} (should be False - no resolve_to_mutable flag)")
-        print(f"AddressMutable exists: {address_mutable_exists} (should be False - no resolve_to_mutable flag)")
+        print(
+            f"UserMutable exists: {user_mutable_exists} (should be False - no resolve_to_mutable flag)")
+        print(
+            f"AddressMutable exists: {address_mutable_exists} (should be False - no resolve_to_mutable flag)")
 
         # Correct behavior: Neither should exist without resolve_to_mutable flag
         if not user_mutable_exists and not address_mutable_exists:
-            print("✅ Working correctly: No mutable types created without resolve_to_mutable flag")
+            print(
+                "✅ Working correctly: No mutable types created without resolve_to_mutable flag")
         elif user_mutable_exists or address_mutable_exists:
             print("❌ Bug: Mutable types created without resolve_to_mutable flag")
         else:

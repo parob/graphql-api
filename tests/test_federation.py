@@ -13,7 +13,8 @@ class TestFederation:
     def test_federation_schema(self):
         names = {"1": "Rob", "2": "Tom"}
 
-        custom = SchemaDirective(name="custom", locations=[DirectiveLocation.OBJECT])
+        custom = SchemaDirective(name="custom", locations=[
+                                 DirectiveLocation.OBJECT])
 
         @custom
         @key(fields="name")  # type: ignore[reportIncompatibleMethodOverride]
@@ -95,7 +96,8 @@ class TestFederation:
 
         response = api.execute("{_service{ sdl }}")
 
-        sdl = response.data["_service"]["sdl"]  # type: ignore[reportIncompatibleMethodOverride]
+        # type: ignore[reportIncompatibleMethodOverride]
+        sdl = response.data["_service"]["sdl"]
 
         assert sdl
 
@@ -145,5 +147,6 @@ class TestFederation:
 
         response = api.execute("{_service{ sdl }}")
 
-        sdl = response.data["_service"]["sdl"]  # type: ignore[reportIncompatibleMethodOverride]
+        # type: ignore[reportIncompatibleMethodOverride]
+        sdl = response.data["_service"]["sdl"]
         assert sdl

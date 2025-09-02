@@ -102,7 +102,8 @@ def _convert_pydantic_arguments(args_dict: dict, type_hints: dict) -> dict:
 
                 # Convert dict to Pydantic model instance
                 try:
-                    converted_args[arg_name] = _convert_dict_to_pydantic_model(arg_value, param_type)
+                    converted_args[arg_name] = _convert_dict_to_pydantic_model(
+                        arg_value, param_type)
                 except Exception:
                     # If conversion fails, pass the original value and let normal error handling occur
                     converted_args[arg_name] = arg_value
@@ -117,7 +118,8 @@ def _convert_pydantic_arguments(args_dict: dict, type_hints: dict) -> dict:
                     # Convert each dict in the list to a Pydantic model instance
                     try:
                         converted_args[arg_name] = [
-                            _convert_dict_to_pydantic_model(item, list_item_type)
+                            _convert_dict_to_pydantic_model(
+                                item, list_item_type)
                             if isinstance(item, dict) else item
                             for item in arg_value
                         ]
@@ -151,7 +153,8 @@ def _extract_list_type(param_type):
 
     # Handle direct List[ItemType]
     if hasattr(param_type, '__origin__') and param_type.__origin__ is list:
-        list_item_type = param_type.__args__[0] if hasattr(param_type, '__args__') and param_type.__args__ else None
+        list_item_type = param_type.__args__[0] if hasattr(
+            param_type, '__args__') and param_type.__args__ else None
         return list, list_item_type
 
     # Handle Optional[List[ItemType]] or Union[List[ItemType], None]
@@ -202,7 +205,8 @@ def _convert_dict_to_pydantic_model(input_dict: dict, model_class):
 
             if inspect.isclass(field_annotation) and type_is_pydantic_model(field_annotation):
                 # Recursively convert nested model
-                converted_fields[field_name] = _convert_dict_to_pydantic_model(field_value, field_annotation)
+                converted_fields[field_name] = _convert_dict_to_pydantic_model(
+                    field_value, field_annotation)
             else:
                 converted_fields[field_name] = field_value
         elif isinstance(field_value, list) and field_name in model_fields:
@@ -210,7 +214,8 @@ def _convert_dict_to_pydantic_model(input_dict: dict, model_class):
             field_info = model_fields[field_name]
             # Check if it's List[SomeModel]
             if hasattr(field_info.annotation, '__origin__') and field_info.annotation.__origin__ is list:
-                list_item_type = field_info.annotation.__args__[0] if field_info.annotation.__args__ else None
+                list_item_type = field_info.annotation.__args__[
+                    0] if field_info.annotation.__args__ else None
                 if list_item_type and inspect.isclass(list_item_type) and type_is_pydantic_model(list_item_type):
                     # Convert each item in the list
                     converted_fields[field_name] = [
@@ -438,7 +443,8 @@ class GraphQLTypeMapper:
             arg_type = input_type_mapper.map(hint)
 
             if arg_type is None:
-                raise GraphQLTypeMapError(f"Unable to map argument {name}.{key}.{_key}")
+                raise GraphQLTypeMapError(
+                    f"Unable to map argument {name}.{key}.{_key}")
 
             if isinstance(arg_type, GraphQLEnumType):
                 enum_arguments[_key] = hint
@@ -448,7 +454,8 @@ class GraphQLTypeMapper:
                 arg_type = GraphQLNonNull(arg_type)  # type: ignore
 
             arguments[to_camel_case(_key)] = GraphQLArgument(
-                type_=arg_type, default_value=default_args.get(_key, Undefined)  # type: ignore
+                type_=arg_type, default_value=default_args.get(
+                    _key, Undefined)  # type: ignore
             )
 
         # noinspection PyUnusedLocal
@@ -581,7 +588,8 @@ class GraphQLTypeMapper:
         subtype = self.map(list_subtype)
 
         if subtype is None:
-            raise GraphQLTypeMapError(f"Unable to map list subtype {list_subtype}")
+            raise GraphQLTypeMapError(
+                f"Unable to map list subtype {list_subtype}")
 
         if not nullable:
             GRAPHQL_NULLABLE_TYPES = (
@@ -616,7 +624,8 @@ class GraphQLTypeMapper:
 
         # Enums don't include a suffix as they are immutable
         description = to_camel_case_text(inspect.getdoc(type_))
-        default_description = to_camel_case_text(inspect.getdoc(GraphQLGenericEnum))
+        default_description = to_camel_case_text(
+            inspect.getdoc(GraphQLGenericEnum))
 
         if not description or description == default_description:
             description = f"A {name}."
@@ -751,7 +760,8 @@ class GraphQLTypeMapper:
             func = class_type.__init__
 
         description = to_camel_case_text(
-            inspect.getdoc(func) or _get_class_description(class_type, self.max_docstring_length)
+            inspect.getdoc(func) or _get_class_description(
+                class_type, self.max_docstring_length)
         )
 
         try:
@@ -792,7 +802,8 @@ class GraphQLTypeMapper:
                     nullable = key in local_default_args
                     if not nullable:
                         # noinspection PyTypeChecker
-                        input_arg_type = GraphQLNonNull(input_arg_type)  # type: ignore
+                        input_arg_type = GraphQLNonNull(
+                            input_arg_type)  # type: ignore
 
                     # Use the raw Python default for input coercion.
                     # Do not convert to GraphQL query literals here.
@@ -809,7 +820,8 @@ class GraphQLTypeMapper:
             local_creator = creator
 
             def container_type(data):
-                data = {to_snake_case(key): value for key, value in data.items()}
+                data = {to_snake_case(key): value for key,
+                        value in data.items()}
                 return local_creator(**data)
 
             return container_type
@@ -857,7 +869,8 @@ class GraphQLTypeMapper:
             elif is_abstract_type(graphql_type):
                 type_str = "Abstract"
                 # unsupported
-                raise TypeError("Abstract types do not currently support directives")
+                raise TypeError(
+                    "Abstract types do not currently support directives")
             elif isinstance(graphql_type, GraphQLField):
                 location = DirectiveLocation.FIELD_DEFINITION
                 type_str = "Field"
@@ -877,13 +890,15 @@ class GraphQLTypeMapper:
 
     def map_to_object(self, class_type: Type) -> GraphQLType:
         name = f"{class_type.__name__}{self.suffix}"
-        description = to_camel_case_text(_get_class_description(class_type, self.max_docstring_length))
+        description = to_camel_case_text(
+            _get_class_description(class_type, self.max_docstring_length))
 
         class_funcs = get_class_funcs(class_type, self.schema, self.as_mutable)
 
         for key, func in class_funcs:
             func_meta = get_value(func, self.schema, "meta")
-            func_meta["graphql_type"] = get_value(func, self.schema, "graphql_type")  # type: ignore
+            func_meta["graphql_type"] = get_value(
+                func, self.schema, "graphql_type")  # type: ignore
 
             self.meta[(name, to_snake_case(key))] = func_meta
 
@@ -1072,7 +1087,8 @@ def get_class_funcs(class_type, schema, mutable=False) -> List[Tuple[Any, Any]]:
                 members.append((key, member))
 
     if hasattr(class_type, "graphql_fields"):
-        members += [(func.__name__, func) for func in class_type.graphql_fields()]
+        members += [(func.__name__, func)
+                    for func in class_type.graphql_fields()]
     func_members = []
 
     for key, member in reversed(members):

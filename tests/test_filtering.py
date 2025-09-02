@@ -147,7 +147,8 @@ class TestSchemaFiltering:
 
         expected = {"person": {"name": "Bob", "department": "Human Resources"}}
 
-        expected_2 = {"person": {"name": "Tom", "department": "Human Resources"}}
+        expected_2 = {"person": {"name": "Tom",
+                                 "department": "Human Resources"}}
 
         assert result.data == expected
 
@@ -222,7 +223,8 @@ class TestSchemaFiltering:
         result = executor.execute(test_mutable_query)
         assert not result.errors
 
-        expected = {"person": {"updateNameMutable": {"updateName": {"name": "phil"}}}}
+        expected = {"person": {"updateNameMutable": {
+            "updateName": {"name": "phil"}}}}
 
         assert result.data == expected
 
@@ -489,7 +491,8 @@ class TestSchemaFiltering:
 
         # Test explicit preserve_transitive=True
         api_preserve = GraphQLAPI(
-            root_type=Root, filters=[TagFilter(tags=[], preserve_transitive=True)]
+            root_type=Root, filters=[
+                TagFilter(tags=[], preserve_transitive=True)]
         )
         schema_preserve, _ = api_preserve.build_schema()
 
@@ -782,7 +785,8 @@ class TestSchemaFiltering:
         expected_user_fields = {"name", "email", "age"}
 
         print(f"User (query) fields: {user_fields}")
-        assert expected_user_fields.issubset(user_fields), f"User should have query fields {expected_user_fields}"
+        assert expected_user_fields.issubset(
+            user_fields), f"User should have query fields {expected_user_fields}"
 
         # Check that UserMutable has both mutable and query fields for compatibility
         user_mutable_type = schema.type_map["UserMutable"]
@@ -794,10 +798,12 @@ class TestSchemaFiltering:
         print(f"UserMutable fields: {user_mutable_fields}")
 
         # CRITICAL TEST: Mutable type should have mutable fields
-        assert expected_mutable_fields.issubset(user_mutable_fields), f"UserMutable should have mutable fields {expected_mutable_fields}"
+        assert expected_mutable_fields.issubset(
+            user_mutable_fields), f"UserMutable should have mutable fields {expected_mutable_fields}"
 
         # CRITICAL TEST: Non-root mutable type should also have query fields for compatibility
-        assert expected_query_fields.issubset(user_mutable_fields), f"UserMutable should have query fields {expected_query_fields} for GraphQL compatibility"
+        assert expected_query_fields.issubset(
+            user_mutable_fields), f"UserMutable should have query fields {expected_query_fields} for GraphQL compatibility"
 
         # Test that mutations work correctly
         executor = api.executor()
@@ -886,23 +892,28 @@ class TestSchemaFiltering:
         expected_query_fields = {"user", "counter"}
 
         print(f"Root (query) fields: {root_fields}")
-        assert expected_query_fields.issubset(root_fields), f"Root should have query fields {expected_query_fields}"
+        assert expected_query_fields.issubset(
+            root_fields), f"Root should have query fields {expected_query_fields}"
 
         # Check that RootMutable (mutation root) has mutable fields and fields providing mutable access
         root_mutation_type = schema.mutation_type
         assert root_mutation_type is not None
         assert isinstance(root_mutation_type, GraphQLObjectType)
         root_mutation_fields = set(root_mutation_type.fields.keys())
-        expected_fields = {"createUser", "incrementCounter", "user"}  # mutable fields + fields providing mutable access
-        unexpected_fields = {"counter"}  # pure query fields that don't provide mutable access
+        # mutable fields + fields providing mutable access
+        expected_fields = {"createUser", "incrementCounter", "user"}
+        # pure query fields that don't provide mutable access
+        unexpected_fields = {"counter"}
 
         print(f"RootMutable (mutation root) fields: {root_mutation_fields}")
 
         # CRITICAL TEST: Root mutation type should have mutable fields and mutable access fields
-        assert expected_fields.issubset(root_mutation_fields), f"RootMutable should have fields {expected_fields}"
+        assert expected_fields.issubset(
+            root_mutation_fields), f"RootMutable should have fields {expected_fields}"
 
         # CRITICAL TEST: Root mutation type should NOT have pure query fields
-        overlapping_fields = root_mutation_fields.intersection(unexpected_fields)
+        overlapping_fields = root_mutation_fields.intersection(
+            unexpected_fields)
         assert not overlapping_fields, f"RootMutable should NOT contain pure query fields: {overlapping_fields}"
 
         # Test that mutations work correctly
@@ -936,6 +947,7 @@ class TestSchemaFiltering:
 
         class AdminUser:
             """This type would normally be filtered out due to admin tags"""
+
             def __init__(self):
                 self._name = "Admin User"
                 self._secret = "classified"
@@ -950,6 +962,7 @@ class TestSchemaFiltering:
 
         class PublicData:
             """This type has no admin tags and should always be present"""
+
             def __init__(self):
                 self._info = "public info"
 
@@ -958,7 +971,8 @@ class TestSchemaFiltering:
                 return self._info
 
         class Root:
-            @field({"tags": ["admin"]})  # This field should use ALLOW_TRANSITIVE
+            # This field should use ALLOW_TRANSITIVE
+            @field({"tags": ["admin"]})
             def admin_user(self) -> AdminUser:
                 """Field that returns AdminUser - should preserve AdminUser type with ALLOW_TRANSITIVE"""
                 return AdminUser()
@@ -988,7 +1002,8 @@ class TestSchemaFiltering:
 
         type_map = schema.type_map
 
-        print(f"Types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
+        print(
+            f"Types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
 
         # The key test: AdminUser should be preserved because admin_user field uses ALLOW_TRANSITIVE
         assert "AdminUser" in type_map, "AdminUser type should be preserved due to ALLOW_TRANSITIVE on admin_user field"
@@ -1047,6 +1062,7 @@ class TestSchemaFiltering:
 
         class AdminUser:
             """This type would normally be filtered out due to admin tags"""
+
             def __init__(self):
                 self._name = "Admin User"
                 self._secret = "classified"
@@ -1114,7 +1130,8 @@ class TestSchemaFiltering:
         for schema, test_name in [(schema_strict, "REMOVE_STRICT"), (schema_remove, "REMOVE")]:
             type_map = schema.type_map
 
-            print(f"{test_name} - Types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
+            print(
+                f"{test_name} - Types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
 
             # AdminUser should be preserved in both cases
             assert "AdminUser" in type_map, f"AdminUser type should be preserved with ALLOW_TRANSITIVE + {test_name}"
@@ -1126,7 +1143,8 @@ class TestSchemaFiltering:
             admin_user_fields = set(admin_user_type.fields.keys())
 
             print(f"{test_name} - AdminUser fields: {admin_user_fields}")
-            assert len(admin_user_fields) > 0, f"AdminUser should have at least one field preserved with {test_name}"
+            assert len(
+                admin_user_fields) > 0, f"AdminUser should have at least one field preserved with {test_name}"
 
         # Both should work for queries
         for api, test_name in [(api_strict, "REMOVE_STRICT"), (api_remove, "REMOVE")]:
@@ -1161,6 +1179,7 @@ class TestSchemaFiltering:
 
         class SecretData:
             """This type will be preserved due to ALLOW_TRANSITIVE, but some fields should still be removed"""
+
             def __init__(self):
                 self._public_info = "public"
                 self._secret_info = "secret"
@@ -1216,7 +1235,8 @@ class TestSchemaFiltering:
 
         type_map = schema.type_map
 
-        print(f"Types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
+        print(
+            f"Types in schema: {sorted([k for k in type_map.keys() if not k.startswith('__')])}")
 
         # SecretData should be preserved due to ALLOW_TRANSITIVE
         assert "SecretData" in type_map, "SecretData type should be preserved due to ALLOW_TRANSITIVE"
@@ -1271,7 +1291,8 @@ class TestSchemaFiltering:
 
         # Should get an error trying to access the REMOVE_STRICT field
         assert result_with_forbidden.errors, "Should get error when trying to access REMOVE_STRICT field"
-        assert "Cannot query field 'secretInfo'" in str(result_with_forbidden.errors[0])
+        assert "Cannot query field 'secretInfo'" in str(
+            result_with_forbidden.errors[0])
 
     def test_unused_mutable_types_filtered_out(self):
         """
@@ -1459,7 +1480,8 @@ class TestSchemaFiltering:
                 return User()
 
         # Test with admin filter
-        filtered_api = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=["admin"])])
+        filtered_api = GraphQLAPI(root_type=Root, filters=[
+                                  TagFilter(tags=["admin"])])
         executor = filtered_api.executor()
 
         # Query should work for non-admin fields
@@ -1473,7 +1495,8 @@ class TestSchemaFiltering:
         """
         result = executor.execute(query_test)
         assert not result.errors
-        assert result.data == {"user": {"name": "John", "email": "john@example.com"}}
+        assert result.data == {
+            "user": {"name": "John", "email": "john@example.com"}}
 
         # Query should fail for admin fields
         admin_query_test = """
@@ -1561,7 +1584,8 @@ class TestSchemaFiltering:
                 return "Only for vets"
 
         # Test with vet filter
-        filtered_api = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=["vet"])])
+        filtered_api = GraphQLAPI(root_type=Root, filters=[
+                                  TagFilter(tags=["vet"])])
         executor = filtered_api.executor()
 
         # Should work for non-vet fields
@@ -1657,7 +1681,8 @@ class TestSchemaFiltering:
                 return User()
 
         # Test with private filter
-        filtered_api = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=["private"])])
+        filtered_api = GraphQLAPI(root_type=Root, filters=[
+                                  TagFilter(tags=["private"])])
         executor = filtered_api.executor()
 
         # Should work for non-private nested fields
@@ -1845,7 +1870,8 @@ class TestSchemaFiltering:
                 return MixedContent()
 
         # Test with admin filter
-        filtered_api = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=["admin"])])
+        filtered_api = GraphQLAPI(root_type=Root, filters=[
+                                  TagFilter(tags=["admin"])])
         executor = filtered_api.executor()
 
         # Should work for public union types
@@ -2030,7 +2056,8 @@ class TestSchemaFiltering:
                 return User()
 
         # Filter out all admin fields
-        filtered_api = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=["admin"])])
+        filtered_api = GraphQLAPI(root_type=Root, filters=[
+                                  TagFilter(tags=["admin"])])
         executor = filtered_api.executor()
 
         # Query should still work
@@ -2074,9 +2101,11 @@ class TestSchemaFiltering:
                 is_public = meta.get("public")
                 should_filter = not is_public
                 if should_filter:
-                    print(f"Filtering field {name} with meta {meta}: {should_filter}")
+                    print(
+                        f"Filtering field {name} with meta {meta}: {should_filter}")
                 else:
-                    print(f"Keeping field {name} with meta {meta}: {should_filter}")
+                    print(
+                        f"Keeping field {name} with meta {meta}: {should_filter}")
 
                 return should_filter
 
@@ -2257,25 +2286,29 @@ class TestSchemaFiltering:
 
         # Test with boolean filter response
         broken_filter_bool = BrokenFilter(return_type="bool")
-        filtered_api_bool = GraphQLAPI(root_type=Root, filters=[broken_filter_bool])
+        filtered_api_bool = GraphQLAPI(
+            root_type=Root, filters=[broken_filter_bool])
         executor = filtered_api_bool.executor()
         # Should not raise AttributeError
 
         # Test with None filter response
         broken_filter_none = BrokenFilter(return_type="none")
-        filtered_api_none = GraphQLAPI(root_type=Root, filters=[broken_filter_none])
+        filtered_api_none = GraphQLAPI(
+            root_type=Root, filters=[broken_filter_none])
         executor = filtered_api_none.executor()
         # Should not raise AttributeError
 
         # Test with string filter response
         broken_filter_string = BrokenFilter(return_type="string")
-        filtered_api_string = GraphQLAPI(root_type=Root, filters=[broken_filter_string])
+        filtered_api_string = GraphQLAPI(
+            root_type=Root, filters=[broken_filter_string])
         executor = filtered_api_string.executor()
         # Should not raise AttributeError
 
         # Test with int filter response
         broken_filter_int = BrokenFilter(return_type="int")
-        filtered_api_int = GraphQLAPI(root_type=Root, filters=[broken_filter_int])
+        filtered_api_int = GraphQLAPI(
+            root_type=Root, filters=[broken_filter_int])
         executor = filtered_api_int.executor()
         # Should not raise AttributeError
 
@@ -2363,7 +2396,8 @@ class TestSchemaFiltering:
         assert "getFilteredItem" in unfiltered_sdl
 
         # Test with filtering - filtered types should be removed
-        filtered_api = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=["admin"])])
+        filtered_api = GraphQLAPI(root_type=Root, filters=[
+                                  TagFilter(tags=["admin"])])
         filtered_schema, _ = filtered_api.build_schema()
 
         filtered_sdl = print_schema(filtered_schema)
@@ -2426,7 +2460,8 @@ class TestSchemaFiltering:
         # Test with cleanup DISABLED
         api_disabled = GraphQLAPI(
             root_type=Root,
-            filters=[TagFilter(tags=["admin"], cleanup_types=False)]  # Disable cleanup
+            # Disable cleanup
+            filters=[TagFilter(tags=["admin"], cleanup_types=False)]
         )
         disabled_schema, _ = api_disabled.build_schema()
 
@@ -2438,7 +2473,8 @@ class TestSchemaFiltering:
 
         # But types should be preserved even though unreferenced
         assert "FilteredModel" in disabled_sdl  # Should be preserved
-        assert "FilteredEnumEnum" in disabled_sdl  # Should be preserved (note: framework adds "Enum" suffix)
+        # Should be preserved (note: framework adds "Enum" suffix)
+        assert "FilteredEnumEnum" in disabled_sdl
 
         # Used types should remain
         assert "UsedModel" in disabled_sdl
@@ -2447,7 +2483,8 @@ class TestSchemaFiltering:
         # Test with cleanup ENABLED (default behavior)
         api_enabled = GraphQLAPI(
             root_type=Root,
-            filters=[TagFilter(tags=["admin"], cleanup_types=True)]  # Enable cleanup (this is the default)
+            # Enable cleanup (this is the default)
+            filters=[TagFilter(tags=["admin"], cleanup_types=True)]
         )
         enabled_schema, _ = api_enabled.build_schema()
 

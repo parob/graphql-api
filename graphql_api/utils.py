@@ -208,7 +208,8 @@ async def http_query(
             json = await r.json(content_type=None)
         except JSONDecodeError as e:
             text = await r.text()
-            raise ValueError(f"{e}, unable to decode JSON from response: `{str(text)}`")
+            raise ValueError(
+                f"{e}, unable to decode JSON from response: `{str(text)}`")
     return json
 
 
@@ -240,7 +241,8 @@ def has_single_type_union_return(func) -> bool:
     with exactly one argument (e.g. `Union[int]`).
     """
     func_def = get_function_def_node(func)
-    annotation_node = func_def.returns  # This is the AST node for the return annotation
+    # This is the AST node for the return annotation
+    annotation_node = func_def.returns
 
     # If there's no return annotation at all, we can stop
     if annotation_node is None:

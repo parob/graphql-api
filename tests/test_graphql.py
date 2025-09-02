@@ -1,3 +1,10 @@
+from graphql_api.utils import executor_to_ast
+from graphql_api.remote import GraphQLRemoteExecutor, remote_execute
+from graphql_api.reduce import TagFilter
+from graphql_api.error import GraphQLError
+from graphql_api.decorators import field
+from graphql_api.context import GraphQLContext
+from graphql_api.api import GraphQLAPI, GraphQLRootTypeDelegate
 import enum
 import sys
 from dataclasses import dataclass
@@ -16,13 +23,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # noinspection PyPackageRequirements
 # from graphql.utilities import print_schema
 
-from graphql_api.api import GraphQLAPI, GraphQLRootTypeDelegate
-from graphql_api.context import GraphQLContext
-from graphql_api.decorators import field
-from graphql_api.error import GraphQLError
-from graphql_api.reduce import TagFilter
-from graphql_api.remote import GraphQLRemoteExecutor, remote_execute
-from graphql_api.utils import executor_to_ast
 
 # Define Period at module level
 Period = Literal["1d", "5d", "1mo", "3mo", "6mo", "1y"]
@@ -641,7 +641,8 @@ class TestGraphQL:
             " ", ""
         )
 
-        assert set(schema_str.split("}")) == set(expected_schema_str.split("}"))
+        assert set(schema_str.split("}")) == set(
+            expected_schema_str.split("}"))
 
     # noinspection PyUnusedLocal
     def test_middleware(self):
@@ -818,7 +819,8 @@ class TestGraphQL:
         class Root:
             @api.field
             def all(self, animals: List[AnimalType]) -> List[AnimalType]:
-                assert all(isinstance(animal, AnimalType) for animal in animals)
+                assert all(isinstance(animal, AnimalType)
+                           for animal in animals)
 
                 return animals
 
@@ -1434,7 +1436,8 @@ class TestGraphQL:
 
         single_type_query_expected = {"owner": {"name": "rob"}}
 
-        single_type_query_result = executor.execute(test_union_single_type_query)
+        single_type_query_result = executor.execute(
+            test_union_single_type_query)
         assert not single_type_query_result.errors
         assert single_type_query_result.data == single_type_query_expected
 
@@ -1551,7 +1554,8 @@ class TestGraphQL:
         @api.type(is_root_type=True)
         class Root:
             @api.field
-            def star_wars(self, context: GraphQLContext) -> RemoteAPI:  # type: ignore[valid-type]
+            # type: ignore[valid-type]
+            def star_wars(self, context: GraphQLContext) -> RemoteAPI:
                 assert (
                     context.request is not None
                 ), "GraphQLContext.request cannot be None"
@@ -1583,7 +1587,8 @@ class TestGraphQL:
         assert not result.errors
         assert result.data is not None
         assert (
-            result.data.get("starWars", {}).get("allFilms", {}).get("totalCount", {})
+            result.data.get("starWars", {}).get(
+                "allFilms", {}).get("totalCount", {})
             >= 6
         )
 
@@ -1605,7 +1610,8 @@ class TestGraphQL:
         @api.type(is_root_type=True)
         class Root:
             @api.field
-            def pokemon(self, context: GraphQLContext) -> RemoteAPI:  # type: ignore[valid-type]
+            # type: ignore[valid-type]
+            def pokemon(self, context: GraphQLContext) -> RemoteAPI:
                 assert (
                     context.request is not None
                 ), "GraphQLContext.request cannot be None"
@@ -1662,7 +1668,8 @@ class TestGraphQL:
         @api.type(is_root_type=True)
         class Root:
             @api.field
-            def graphql(self, context: GraphQLContext) -> RemoteAPI:  # type: ignore[valid-type]
+            # type: ignore[valid-type]
+            def graphql(self, context: GraphQLContext) -> RemoteAPI:
                 return remote_execute(executor=RemoteAPI, context=context)
 
         executor = api.executor()
@@ -2042,7 +2049,8 @@ class TestGraphQL:
         # Create filtered API
         from graphql_api.reduce import TagFilter
 
-        filtered_api = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=["private"])])
+        filtered_api = GraphQLAPI(root_type=Root, filters=[
+                                  TagFilter(tags=["private"])])
 
         # Test that the object type with remaining fields should still be accessible
         schema, _ = filtered_api.build_schema()
@@ -2080,7 +2088,8 @@ class TestGraphQL:
         """
         )
         assert private_result.errors
-        assert "Cannot query field 'privateInfo'" in str(private_result.errors[0])
+        assert "Cannot query field 'privateInfo'" in str(
+            private_result.errors[0])
 
         # Verify UserData type has correct fields
         user_data_type = schema.type_map["UserData"]
@@ -2164,7 +2173,8 @@ class TestGraphQL:
 
         filtered_api = GraphQLAPI(
             root_type=Root,
-            filters=[TagFilter(tags=["admin", "private"], preserve_transitive=False)],
+            filters=[TagFilter(tags=["admin", "private"],
+                               preserve_transitive=False)],
         )
         executor = filtered_api.executor()
 
@@ -2213,7 +2223,8 @@ class TestGraphQL:
         """
         )
         assert result_filtered.errors
-        assert "Cannot query field 'socialSecurity'" in str(result_filtered.errors[0])
+        assert "Cannot query field 'socialSecurity'" in str(
+            result_filtered.errors[0])
 
         # Test that object types with ALL fields filtered are completely removed
         result_admin = executor.execute(
@@ -2275,7 +2286,8 @@ class TestGraphQL:
                 checkTag(tag: $tag)
             }
         """
-        result_enum = executor.execute(query_enum, variables={'tag': Tag.PYTHON.name})
+        result_enum = executor.execute(
+            query_enum, variables={'tag': Tag.PYTHON.name})
         assert result_enum.data == {'checkTag': True}
 
         # Schema should contain TagEnum
@@ -2317,7 +2329,8 @@ class TestGraphQL:
                 checkTag(tag: $tag)
             }
         """
-        result_enum = executor.execute(query_enum, variables={'tag': Tag.PYTHON.name})
+        result_enum = executor.execute(
+            query_enum, variables={'tag': Tag.PYTHON.name})
         assert result_enum.data == {'checkTag': True}
 
         # Schema should contain TagEnum

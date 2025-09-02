@@ -88,7 +88,8 @@ def tag_value(
 
     if is_root_type:
         if graphql_type != "object":
-            raise TypeError(f"Cannot set '{value}' of type '{graphql_type}' as a root.")
+            raise TypeError(
+                f"Cannot set '{value}' of type '{graphql_type}' as a root.")
 
         if schema:
             schema.set_root_type(value)
@@ -132,7 +133,8 @@ def build_decorator(
     # Figure out which args are which
     func = arg1 if callable(arg1) else (arg2 if callable(arg2) else None)
     meta_dict = (
-        arg1 if isinstance(arg1, dict) else (arg2 if isinstance(arg2, dict) else None)
+        arg1 if isinstance(arg1, dict) else (
+            arg2 if isinstance(arg2, dict) else None)
     )
     schema_obj = (
         arg1
@@ -309,7 +311,8 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
         if self.root_type:
             # Build root Query
-            query_mapper = GraphQLTypeMapper(schema=self, max_docstring_length=self.max_docstring_length)
+            query_mapper = GraphQLTypeMapper(
+                schema=self, max_docstring_length=self.max_docstring_length)
             _query = query_mapper.map(self.root_type)
 
             # Map additional types that aren't native GraphQLNamedType
@@ -318,7 +321,8 @@ class GraphQLAPI(GraphQLBaseExecutor):
                     query_mapper.map(typ)
 
             if not isinstance(_query, GraphQLObjectType):
-                raise GraphQLError(f"Query {_query} was not a valid GraphQLObjectType.")
+                raise GraphQLError(
+                    f"Query {_query} was not a valid GraphQLObjectType.")
 
             # Filter the Query
             filtered_query = GraphQLSchemaReducer.reduce_query(
@@ -385,12 +389,15 @@ class GraphQLAPI(GraphQLBaseExecutor):
             # Clean up unreferenced types after filtering (only when filters are applied and any filter has cleanup enabled)
             should_cleanup_types = False
             if self.filters:
-                should_cleanup_types = any(getattr(f, 'cleanup_types', True) for f in self.filters)
+                should_cleanup_types = any(
+                    getattr(f, 'cleanup_types', True) for f in self.filters)
             if self.filters and should_cleanup_types and (query_mapper or mutation_mapper):
                 if query_mapper and query:
-                    GraphQLSchemaReducer._remove_unreferenced_types(query_mapper, query)
+                    GraphQLSchemaReducer._remove_unreferenced_types(
+                        query_mapper, query)
                 if mutation_mapper and mutation:
-                    GraphQLSchemaReducer._remove_unreferenced_types(mutation_mapper, mutation)
+                    GraphQLSchemaReducer._remove_unreferenced_types(
+                        mutation_mapper, mutation)
 
                 # Recalculate types after cleanup
                 if query_mapper:
@@ -451,11 +458,14 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
         # Include directives that may have been attached through the mappers
         if self.query_mapper:
-            applied_directives_list = [self.query_mapper.applied_schema_directives]
+            applied_directives_list = [
+                self.query_mapper.applied_schema_directives]
             if self.mutation_mapper and mutation:  # Only include mutation directives if mutation is valid
-                applied_directives_list.append(self.mutation_mapper.applied_schema_directives)
+                applied_directives_list.append(
+                    self.mutation_mapper.applied_schema_directives)
             if self.subscription_mapper:
-                applied_directives_list.append(self.subscription_mapper.applied_schema_directives)
+                applied_directives_list.append(
+                    self.subscription_mapper.applied_schema_directives)
 
             for applied_directives in applied_directives_list:
                 for _, _, directives in applied_directives:

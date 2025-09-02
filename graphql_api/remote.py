@@ -318,7 +318,8 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
             raise type(e)(err_msg).with_traceback(sys.exc_info()[2])
 
         except ValueError as e:
-            raise ValueError(f"{e}, from remote service '{self.name}' at '{self.url}'.")
+            raise ValueError(
+                f"{e}, from remote service '{self.name}' at '{self.url}'.")
 
         return ExecutionResult(data=json_.get("data"), errors=json_.get("errors"))
 
@@ -553,7 +554,8 @@ class GraphQLRemoteObject:
             if isinstance(field_values, list):
                 # The code here assumes any lists are only scalar lists, which
                 # doesn't allow nested object sets in lists. Adjust if needed.
-                raise ValueError("GraphQLLists can only contain scalar values.")
+                raise ValueError(
+                    "GraphQLLists can only contain scalar values.")
             if field_values is None:
                 raise NullResponse()
             field_values = field_values.get(to_camel_case(field.name))
@@ -593,12 +595,14 @@ class GraphQLRemoteObject:
                 if isinstance(
                     unwrapped_field_type, (GraphQLScalarType, GraphQLEnumType)
                 ) and hasattr(unwrapped_field_type, "parse_literal"):
-                    parsed_val = unwrapped_field_type.parse_literal(ast_val, None)  # type: ignore
+                    parsed_val = unwrapped_field_type.parse_literal(
+                        ast_val, None)  # type: ignore
                     # If the field is an enum, convert to the Python enum if available
                     if isinstance(unwrapped_field_type, GraphQLEnumType) and hasattr(
                         unwrapped_field_type, "enum_type"
                     ):
-                        return unwrapped_field_type.enum_type(parsed_val)  # type: ignore
+                        # type: ignore
+                        return unwrapped_field_type.enum_type(parsed_val)
                     return parsed_val
                 return val  # Fallback for simple scalars
 
@@ -669,7 +673,8 @@ class GraphQLRemoteObject:
         respecting caching, call history, and GraphQL type conversions.
         """
         self._initialize_type_mappers()
-        cached_value, found, arg_hash = self._retrieve_cached_value(field, args)
+        cached_value, found, arg_hash = self._retrieve_cached_value(
+            field, args)
         if found:
             return cached_value
 
@@ -719,7 +724,8 @@ class GraphQLRemoteObject:
                 if isinstance(item_data, dict):
                     for sub_field, sub_args in fields:
                         val = item_data.get(to_camel_case(sub_field.name))
-                        nested_obj.values[(sub_field, self.hash(sub_args))] = val
+                        nested_obj.values[(
+                            sub_field, self.hash(sub_args))] = val
                 remote_objects.append(nested_obj)
             return remote_objects
 
@@ -753,7 +759,8 @@ class GraphQLRemoteObject:
         respecting caching, call history, and GraphQL type conversions.
         """
         self._initialize_type_mappers()
-        cached_value, found, arg_hash = self._retrieve_cached_value(field, args)
+        cached_value, found, arg_hash = self._retrieve_cached_value(
+            field, args)
         if found:
             return cached_value
 
@@ -800,7 +807,8 @@ class GraphQLRemoteObject:
                 if isinstance(item_data, dict):
                     for sub_field, sub_args in fields:
                         val = item_data.get(to_camel_case(sub_field.name))
-                        nested_obj.values[(sub_field, self.hash(sub_args))] = val
+                        nested_obj.values[(
+                            sub_field, self.hash(sub_args))] = val
                 remote_objects.append(nested_obj)
             return remote_objects
 
@@ -1143,7 +1151,8 @@ class GraphQLRemoteQueryBuilder:
             return str(value.value)
 
         unwrapped_type = (
-            get_named_type(expected_graphql_type) if expected_graphql_type else None
+            get_named_type(
+                expected_graphql_type) if expected_graphql_type else None
         )
 
         # Possibly an input object

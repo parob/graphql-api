@@ -80,7 +80,8 @@ def type_from_pydantic_model(
         return GraphQLInputObjectType(
             name=f"{pydantic_model.__name__}Input",
             fields=get_input_fields,
-            description=_get_pydantic_model_description(pydantic_model, mapper.max_docstring_length),
+            description=_get_pydantic_model_description(
+                pydantic_model, mapper.max_docstring_length),
         )
     else:
         # Create output type
@@ -113,5 +114,6 @@ def type_from_pydantic_model(
         return GraphQLObjectType(
             name=pydantic_model.__name__,
             fields=get_fields,
-            description=_get_pydantic_model_description(pydantic_model, mapper.max_docstring_length),
+            description=_get_pydantic_model_description(
+                pydantic_model, mapper.max_docstring_length),
         )

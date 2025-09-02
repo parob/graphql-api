@@ -23,12 +23,14 @@ class EnumValue:
     A utility class for creating enum values that can hold directive information.
     This allows enum values to be decorated with directives for GraphQL schema generation.
     """
+
     def __init__(self, value: str, directive=None):
         self.value = value
         self.directive = directive
         # Store the directive as an applied directive so it can be detected
         if directive:
-            self._applied_directives = [AppliedDirective(directive=directive, args={})]
+            self._applied_directives = [
+                AppliedDirective(directive=directive, args={})]
 
     def __str__(self):
         return self.value
@@ -48,7 +50,8 @@ class EnumValue:
 class AppliedDirective:
     def __init__(self, directive: Union[GraphQLDirective, SchemaDirective], args: Dict):
         self.directive = (
-            directive.directive if isinstance(directive, SchemaDirective) else directive
+            directive.directive if isinstance(
+                directive, SchemaDirective) else directive
         )
         self.args = args
 
@@ -61,7 +64,8 @@ class AppliedDirective:
         formatted_args = [
             (
                 f"{to_camel_case(key)}: "
-                + (f'"{value}"' if isinstance(value, str) else json.dumps(value))
+                + (f'"{value}"' if isinstance(value, str)
+                   else json.dumps(value))
             )
             for key, value in self.args.items()
             if value is not None and to_camel_case(key) in self.directive.args
@@ -76,7 +80,8 @@ class AppliedDirective:
 def add_applied_directives(value, directives: List[AppliedDirective]):
     if directives:
         if hasattr(value, "_applied_directives"):
-            directives = [*directives, *getattr(value, "_applied_directives", [])]
+            directives = [*directives, *
+                          getattr(value, "_applied_directives", [])]
 
         value._applied_directives = directives
     return value
@@ -90,7 +95,8 @@ def get_applied_directives(value) -> List[AppliedDirective]:
 
 def get_directives(
     graphql_type: Union[GraphQLType, GraphQLField],
-    _fetched_types: Optional[List[Union[GraphQLNamedType, GraphQLField]]] = None,
+    _fetched_types: Optional[List[Union[GraphQLNamedType,
+                                        GraphQLField]]] = None,
 ) -> Dict[str, GraphQLDirective]:
     _directives = {}
     if not _fetched_types:

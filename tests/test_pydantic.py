@@ -11,7 +11,8 @@ class TestPydantic:
 
     def test_pydantic(self):
         class Statistics(BaseModel):
-            conversations_count: int = Field(description="Number of conversations")
+            conversations_count: int = Field(
+                description="Number of conversations")
             messages_count: int
 
         class ExampleAPI:
@@ -30,7 +31,8 @@ class TestPydantic:
                 }
             }
         """
-        expected = {"getStats": {"conversationsCount": 10, "messagesCount": 25}}
+        expected = {"getStats": {
+            "conversationsCount": 10, "messagesCount": 25}}
         response = api.execute(query)
         assert response.data == expected
 
@@ -291,7 +293,8 @@ class TestPydantic:
                 }
             }
         """
-        expected = {"getConfig": {"name": "test_config", "value": "default_value"}}
+        expected = {"getConfig": {
+            "name": "test_config", "value": "default_value"}}
         response = api.execute(query)
         assert response.data == expected
 
@@ -314,7 +317,8 @@ class TestPydantic:
                 }
             }
         """
-        expected = {"getUserWithAlias": {"userName": "aliased_user", "userId": 123}}
+        expected = {"getUserWithAlias": {
+            "userName": "aliased_user", "userId": 123}}
         response = api.execute(query)
         assert response.data == expected
 
@@ -332,7 +336,8 @@ class TestPydantic:
             def get_mixed_model(self) -> ModelWithDataClass:
                 return ModelWithDataClass(
                     name="Mixed",
-                    details=DataClassDetails(detail="This is from a dataclass"),
+                    details=DataClassDetails(
+                        detail="This is from a dataclass"),
                 )
 
         api = GraphQLAPI(root_type=MixedAPI)
@@ -842,7 +847,8 @@ class TestPydantic:
                 # The dict will be passed as JSON scalar
                 return Config(
                     id=1,
-                    name=config_input.name if hasattr(config_input, 'name') else "dict_input",
+                    name=config_input.name if hasattr(
+                        config_input, 'name') else "dict_input",
                     total_settings=1
                 )
 
@@ -982,9 +988,12 @@ class TestPydantic:
 
                 for task in tasks:
                     # These should work because task is a Task instance, not a dict
-                    assert hasattr(task, 'title'), f"Expected Task object, got {type(task)}"
-                    assert hasattr(task, 'priority'), f"Expected Task object, got {type(task)}"
-                    assert isinstance(task, Task), f"Expected Task instance, got {type(task)}"
+                    assert hasattr(
+                        task, 'title'), f"Expected Task object, got {type(task)}"
+                    assert hasattr(
+                        task, 'priority'), f"Expected Task object, got {type(task)}"
+                    assert isinstance(
+                        task, Task), f"Expected Task instance, got {type(task)}"
 
                     # Test that we can access Pydantic model attributes
                     _ = task.title  # Should work
@@ -1040,7 +1049,8 @@ class TestPydantic:
                 multiplier: int = 1
             ) -> ProcessResult:
                 """Test mixed parameter types with List[PydanticModel]."""
-                total = sum(item.value for item in items)  # Should work with Item objects
+                total = sum(
+                    item.value for item in items)  # Should work with Item objects
                 return ProcessResult(
                     total_value=total * multiplier,
                     item_count=len(items),
@@ -1095,7 +1105,8 @@ class TestPydantic:
 
                 # Should receive Tag objects, not dicts
                 for tag in tags:
-                    assert isinstance(tag, Tag), f"Expected Tag object, got {type(tag)}"
+                    assert isinstance(
+                        tag, Tag), f"Expected Tag object, got {type(tag)}"
                     assert hasattr(tag, 'name')
                     assert hasattr(tag, 'color')
 

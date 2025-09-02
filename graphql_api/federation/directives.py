@@ -190,7 +190,8 @@ requiresScopes = SchemaDirective(
         "scopes": GraphQLArgument(
             GraphQLNonNull(
                 GraphQLList(
-                    GraphQLNonNull(GraphQLList(GraphQLNonNull(FederationScope)))
+                    GraphQLNonNull(GraphQLList(
+                        GraphQLNonNull(FederationScope)))
                 )
             ),
             description="List of lists of required scopes",
@@ -213,7 +214,8 @@ policy = SchemaDirective(
             # Similarly treat as nested lists or custom scalar if needed
             GraphQLNonNull(
                 GraphQLList(
-                    GraphQLNonNull(GraphQLList(GraphQLNonNull(FederationPolicy)))
+                    GraphQLNonNull(GraphQLList(
+                        GraphQLNonNull(FederationPolicy)))
                 )
             ),
             description="List of lists of policies",

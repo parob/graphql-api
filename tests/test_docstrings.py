@@ -338,14 +338,20 @@ class TestGraphQL:
             pass
 
         # Test the filtering logic directly
-        assert _get_class_description(ExceptionSubclass) is None  # Inherited from Exception
-        assert _get_class_description(ExceptionSubclassWithDoc) == "Custom exception subclass docstring."
+        assert _get_class_description(
+            ExceptionSubclass) is None  # Inherited from Exception
+        assert _get_class_description(
+            ExceptionSubclassWithDoc) == "Custom exception subclass docstring."
 
-        assert _get_class_description(DictSubclass) is None  # Inherited from dict
-        assert _get_class_description(DictSubclassWithDoc) == "Custom dict subclass docstring."
+        assert _get_class_description(
+            DictSubclass) is None  # Inherited from dict
+        assert _get_class_description(
+            DictSubclassWithDoc) == "Custom dict subclass docstring."
 
-        assert _get_class_description(InheritsVerbose) is None  # Verbose inherited docstring
-        assert _get_class_description(InheritsVerboseWithDoc) == "Custom docstring for verbose inheritance."
+        # Verbose inherited docstring
+        assert _get_class_description(InheritsVerbose) is None
+        assert _get_class_description(
+            InheritsVerboseWithDoc) == "Custom docstring for verbose inheritance."
 
     def test_long_user_docstrings_preserved(self):
         api = GraphQLAPI()
@@ -371,6 +377,7 @@ class TestGraphQL:
             is preserved even when it exceeds the typical length thresholds we use to filter
             out auto-generated or inherited docstrings from built-in types.
             """
+
             def __init__(self, name: str):
                 self.name = name
 
@@ -437,18 +444,21 @@ class TestGraphQL:
         pydantic_field = schema.query_type.fields["pydanticModel"]
         pydantic_type = pydantic_field.type.of_type
         assert pydantic_type.description is not None
-        assert len(pydantic_type.description) > 200  # Should be the full user docstring
+        # Should be the full user docstring
+        assert len(pydantic_type.description) > 200
         assert "comprehensive Pydantic model" in pydantic_type.description
 
         # Check that long user-written docstrings are preserved in dataclasses
         dataclass_field = schema.query_type.fields["dataclassModel"]
         dataclass_type = dataclass_field.type.of_type
         assert dataclass_type.description is not None
-        assert len(dataclass_type.description) > 200  # Should be the full user docstring
+        # Should be the full user docstring
+        assert len(dataclass_type.description) > 200
         assert "comprehensive dataclass" in dataclass_type.description
 
         # Test the filtering function directly on regular classes
-        long_user_docstring = _get_class_description(ClassWithLongUserDocstring, None)
+        long_user_docstring = _get_class_description(
+            ClassWithLongUserDocstring, None)
         assert long_user_docstring is not None
         assert len(long_user_docstring) > 500  # Should be the full docstring
         assert "intentional documentation" in long_user_docstring
@@ -545,6 +555,8 @@ class TestGraphQL:
         pydantic_field_no_truncation = schema_no_truncation.query_type.fields["pydanticModel"]
         pydantic_type_no_truncation = pydantic_field_no_truncation.type.of_type
         assert pydantic_type_no_truncation.description is not None
-        assert len(pydantic_type_no_truncation.description) > 500  # Should be full length
+        # Should be full length
+        assert len(pydantic_type_no_truncation.description) > 500
         assert not pydantic_type_no_truncation.description.endswith("...")
-        assert "validation rules" in pydantic_type_no_truncation.description  # Text that would be cut off
+        # Text that would be cut off
+        assert "validation rules" in pydantic_type_no_truncation.description

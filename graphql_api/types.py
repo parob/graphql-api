@@ -117,7 +117,8 @@ def parse_date_value(value):
         except ValueError:
             pass
 
-    raise ValueError(f"Date{value} did not fit any " f"of the formats {date_formats}.")
+    raise ValueError(
+        f"Date{value} did not fit any " f"of the formats {date_formats}.")
 
 
 def parse_date_literal(value_node: ValueNode, _variables: Any = None):
@@ -170,7 +171,8 @@ def serialize_bytes(bytes: bytes) -> str:
     try:
         data = bytes.decode("utf-8")
     except (binascii.Error, UnicodeDecodeError, Exception):
-        data = "UTF-8 ENCODED PREVIEW: " + bytes.decode("utf-8", errors="ignore")
+        data = "UTF-8 ENCODED PREVIEW: " + \
+            bytes.decode("utf-8", errors="ignore")
     return data
 
 

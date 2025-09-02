@@ -112,7 +112,8 @@ def type_from_dataclass(cls: Type, mapper) -> GraphQLType:
             # Only wrap if graph_type is a type that can be made non-null
             # and isn't already non-null.
             if is_nullable_type(graph_type):  # Check if it's a wrappable type
-                graph_type = GraphQLNonNull(graph_type)  # type: ignore[arg-type]
+                graph_type = GraphQLNonNull(
+                    graph_type)  # type: ignore[arg-type]
             # If is_non_null_type(graph_type) is true, it's already non-null, so no change needed.
             # If neither, it's not a type that can be wrapped by GraphQLNonNull (e.g. GraphQLSchema), so no change.
 
@@ -125,7 +126,8 @@ def type_from_dataclass(cls: Type, mapper) -> GraphQLType:
                 )
             # The is_input_type check should refine graph_type.
             # If the type checker still complains, a specific ignore is needed.
-            return GraphQLInputField(type_=graph_type, description=doc_description)  # type: ignore[arg-type]
+            # type: ignore[arg-type]
+            return GraphQLInputField(type_=graph_type, description=doc_description)
         else:
             if not is_output_type(graph_type):
                 raise TypeError(
@@ -140,7 +142,8 @@ def type_from_dataclass(cls: Type, mapper) -> GraphQLType:
             # The is_output_type check should refine graph_type.
             # If the type checker still complains, a specific ignore is needed.
             return GraphQLField(
-                type_=graph_type, resolve=resolver, description=doc_description  # type: ignore[arg-type]
+                # type: ignore[arg-type]
+                type_=graph_type, resolve=resolver, description=doc_description
             )
 
     # Define a factory function that returns a callable to generate all fields ---
@@ -166,7 +169,8 @@ def type_from_dataclass(cls: Type, mapper) -> GraphQLType:
 
                 # Generate the actual GraphQL field
                 # noinspection PyTypeChecker
-                graph_field = create_graphql_field(name, field_type, doc_description)
+                graph_field = create_graphql_field(
+                    name, field_type, doc_description)
 
                 # Use camelCase for the GraphQL field name
                 camel_case_name = to_camel_case(name)

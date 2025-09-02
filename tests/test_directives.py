@@ -46,7 +46,8 @@ class TestGraphQLDirectives:
                 DirectiveLocation.OBJECT,
                 DirectiveLocation.FIELD_DEFINITION,
             ],
-            args={"arg": GraphQLArgument(GraphQLString, description="arg description")},
+            args={"arg": GraphQLArgument(
+                GraphQLString, description="arg description")},
             description="test description",
             is_repeatable=True,
         )
@@ -57,7 +58,8 @@ class TestGraphQLDirectives:
             def test(self, a: int) -> int:
                 return a + 1
 
-        api = GraphQLAPI(root_type=TestSchema, directives=[custom_directive_definition])
+        api = GraphQLAPI(root_type=TestSchema, directives=[
+                         custom_directive_definition])
 
         schema, _ = api.build_schema()
         assert schema is not None
@@ -74,7 +76,8 @@ class TestGraphQLDirectives:
                 return a + 1
 
         deprecated_directive = deprecated
-        api = GraphQLAPI(root_type=TestSchema, directives=[deprecated_directive])
+        api = GraphQLAPI(root_type=TestSchema, directives=[
+                         deprecated_directive])
 
         schema, _ = api.build_schema()
         assert schema is not None
@@ -94,7 +97,8 @@ class TestGraphQLDirectives:
         )
 
         @type(
-            directives=[AppliedDirective(directive=key, args={"fields": "object_key"})]
+            directives=[AppliedDirective(
+                directive=key, args={"fields": "object_key"})]
         )
         class Person:
             @field
@@ -134,7 +138,8 @@ class TestGraphQLDirectives:
         @type
         class TestSchema:
             @field(
-                directives=[AppliedDirective(directive=tag, args={"name": "field_tag"})]
+                directives=[AppliedDirective(
+                    directive=tag, args={"name": "field_tag"})]
             )
             def test(self, a: int) -> int:
                 return a + 1
@@ -230,7 +235,8 @@ class TestGraphQLDirectives:
 
         assert interface_directive in self.get_directives(api.query_mapper)
         if api.mutation_mapper:
-            assert interface_directive in self.get_directives(api.mutation_mapper)
+            assert interface_directive in self.get_directives(
+                api.mutation_mapper)
 
         assert "directive @interface_directive" in printed_schema
         assert "Interface directive description" in printed_schema
@@ -316,7 +322,8 @@ class TestGraphQLDirectives:
         tag = SchemaDirective(
             name="tag",
             locations=[DirectiveLocation.FIELD_DEFINITION],
-            args={"name": GraphQLArgument(GraphQLString, description="tag name")},
+            args={"name": GraphQLArgument(
+                GraphQLString, description="tag name")},
             description="Tag Directive Description",
             is_repeatable=True,
         )
