@@ -1,5 +1,5 @@
 import enum
-from typing import List, Optional, Union, Callable, TypeVar, cast, Protocol
+from typing import List, Optional, Union, TypeVar
 
 import pytest
 from graphql import DirectiveLocation, GraphQLArgument, GraphQLDirective, GraphQLString
@@ -23,6 +23,7 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=TestSchema)
 
         executor = api.executor()
+
 
         test_query = """
             query Test($testBool: Boolean!) {

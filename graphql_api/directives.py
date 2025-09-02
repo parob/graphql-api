@@ -66,10 +66,12 @@ class SchemaDirective(GraphQLDirective):
             self.directive = self
 
     @overload
-    def __call__(self, cls: T) -> T: ...
+    def __call__(self, cls: T) -> T:
+        ...
 
     @overload
-    def __call__(self, **kwargs) -> Callable[[T], T]: ...
+    def __call__(self, **kwargs) -> Callable[[T], T]:
+        ...
 
     def __call__(self, *args, **kwargs):
         from graphql_api import AppliedDirective
