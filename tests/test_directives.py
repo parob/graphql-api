@@ -381,6 +381,7 @@ class TestGraphQLDirectives:
 
         return [query_directive.directive for query_directive in query_directives]
 
+    # TODO: Add test for schema directives locations
     # def test_schema_directives_locations(self):
     #     key = SchemaDirective(
     #         name="key",
