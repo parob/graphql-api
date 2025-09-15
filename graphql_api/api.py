@@ -353,7 +353,6 @@ class GraphQLAPI(GraphQLBaseExecutor):
         collected_types: Optional[List[GraphQLNamedType]] = None
 
         # Mode 1: Single root type - extract queries, mutations, subscriptions from one class
-        print(f"DEBUG: Mode check: self.root_type={self.root_type}, self.query_type={self.query_type}, self.mutation_type={self.mutation_type}")
         if self.root_type:
             # Build root Query
             query_mapper = GraphQLTypeMapper(
@@ -429,20 +428,9 @@ class GraphQLAPI(GraphQLBaseExecutor):
                 mutation = filtered_mutation
                 mutation_types = mutation_mapper.types()
                 
-                # Store mutation info for later filtering at schema assembly level
-                print(f"DEBUG: Mutation building: self.root_type={self.root_type is not None}, mutation={mutation is not None}")
-                if self.root_type and mutation:
-                    print("DEBUG: Setting up mutation field tracking")
-                    types_used_by_mutable_fields = set()
-                    self._find_types_used_by_mutable_fields(mutation, types_used_by_mutable_fields)
-                    # Store this for filtering at schema assembly
-                    self._types_used_by_mutable_fields = types_used_by_mutable_fields
-                    print(f"DEBUG: Tracked types: {[t.__name__ for t in types_used_by_mutable_fields]}")
             else:
                 mutation = None
                 mutation_types = set()  # Don't include any mutation types when validation fails
-            
-            print("DEBUG: Finished mutation building in Mode 1")
 
             # Clean up unreferenced types after filtering (only when filters are applied and any filter has cleanup enabled)
             should_cleanup_types = False
@@ -543,6 +531,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
             all_types = query_types | subscription_types | self.types
             if mutation:  # Only include mutation types if mutation is valid
                 all_types = all_types | mutation_types
+            
 
             collected_types = [  # type: ignore[assignment]
                 t
@@ -636,43 +625,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
             
             # Collect all types
             all_types = query_types | mutation_types | subscription_types | self.types
-            print("DEBUG: Reached schema assembly in Mode 1")
             
-            # Apply post-build filtering to remove unused mutable types
-            print(f"DEBUG: self.root_type={self.root_type is not None}")
-            print(f"DEBUG: has _types_used_by_mutable_fields={hasattr(self, '_types_used_by_mutable_fields')}")
-            if hasattr(self, '_types_used_by_mutable_fields'):
-                print(f"DEBUG: _types_used_by_mutable_fields = {[t.__name__ for t in self._types_used_by_mutable_fields]}")
-            
-            if self.root_type and hasattr(self, '_types_used_by_mutable_fields'):
-                filtered_types = set()
-                types_used_by_mutable_fields = self._types_used_by_mutable_fields
-                print(f"DEBUG: Schema-level filtering. Types used by mutable fields: {[t.__name__ for t in types_used_by_mutable_fields]}")
-                print(f"DEBUG: All types before filtering: {[getattr(t, 'name', str(t)) for t in all_types]}")
-                
-                for graphql_type in all_types:
-                    type_name = getattr(graphql_type, 'name', str(graphql_type))
-                    
-                    # Keep non-mutable types
-                    if not type_name.endswith("Mutable"):
-                        filtered_types.add(graphql_type)
-                    # Keep root mutable type
-                    elif type_name == f"{self.root_type.__name__}Mutable":
-                        filtered_types.add(graphql_type)
-                        print(f"DEBUG: Keeping root mutable type: {type_name}")
-                    # For other mutable types, only keep if used by mutable fields
-                    else:
-                        original_name = type_name[:-7]  # Remove "Mutable" suffix
-                        is_used = any(
-                            getattr(used_type, '__name__', str(used_type)) == original_name
-                            for used_type in types_used_by_mutable_fields
-                        )
-                        print(f"DEBUG: Checking mutable type {type_name} (original: {original_name}), is_used: {is_used}")
-                        if is_used:
-                            filtered_types.add(graphql_type)
-                
-                all_types = filtered_types
-                print(f"DEBUG: All types after filtering: {[getattr(t, 'name', str(t)) for t in all_types]}")
             collected_types = [
                 t for t in list(all_types) if is_named_type(t)
             ]
@@ -778,39 +731,3 @@ class GraphQLAPI(GraphQLBaseExecutor):
             error_protection=self.error_protection,
         )
     
-    def _find_types_used_by_mutable_fields(self, mutation_type, types_used):
-        """Find all types that are returned by mutable fields"""
-        from graphql_api.mapper import get_value
-        
-        if not hasattr(mutation_type, 'fields'):
-            return
-            
-        for field_name, field in mutation_type.fields.items():
-            # Check if this field is a mutable field
-            # We can identify mutable fields by checking the original function
-            try:
-                # Try to get the original function from the root type
-                # Convert camelCase GraphQL field name back to snake_case Python method name
-                import re
-                python_method_name = re.sub(r'([A-Z])', r'_\1', field_name).lower()
-                
-                if hasattr(self.root_type, python_method_name):
-                    original_func = getattr(self.root_type, python_method_name)
-                    graphql_type_value = get_value(original_func, self, "graphql_type")
-                    if graphql_type_value == "mutable_field":
-                        # This is a mutable field, extract its return type
-                        import typing
-                        type_hints = typing.get_type_hints(original_func)
-                        return_type = type_hints.get("return", None)
-                        if return_type:
-                            # Handle Optional types
-                            import typing_inspect
-                            if typing_inspect.is_union_type(return_type):
-                                union_args = typing_inspect.get_args(return_type, evaluate=True)
-                                non_none_args = [arg for arg in union_args if arg is not type(None)]
-                                if len(non_none_args) == 1:
-                                    return_type = non_none_args[0]
-                            types_used.add(return_type)
-            except Exception:
-                # If we can't determine the type, skip it
-                pass

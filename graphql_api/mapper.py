@@ -1175,9 +1175,25 @@ def get_class_funcs(class_type, schema, mutable=False, subscription=False, singl
         # For mutation filtering in Mode 1, include regular fields that provide access to mutable functionality
         # This allows mutation queries like: mutation { person { updateName(name: "new") { name } } }
         if mutable and func_type == "field" and single_root_mode:
-            # Special case: If we're building a mutable variant of a type, include ALL its fields
+            # Special case: If we're building a mutable variant of a type
             if building_mutable_variant:
-                return True
+                # Only exclude regular fields if the type also has mutable fields
+                # If a type has no mutable fields, include regular fields to avoid empty types
+                # Check if this type has any mutable fields at all
+                if hasattr(class_type, '__name__'):
+                    import inspect
+                    has_mutable_fields = False
+                    for name, method in inspect.getmembers(class_type, predicate=inspect.isfunction):
+                        if hasattr(method, '_schemas') and schema in method._schemas:
+                            method_type = get_value(method, schema, "graphql_type")
+                            if method_type == "mutable_field":
+                                has_mutable_fields = True
+                                break
+                    
+                    # If the type has mutable fields, exclude regular fields from mutable variant
+                    # If the type has NO mutable fields, include regular fields to prevent empty type
+                    return not has_mutable_fields
+                return False  # Default: exclude regular fields from mutable variants
             
             # Otherwise, apply root-level filtering: include object-returning fields, exclude primitives
             import typing
@@ -1262,7 +1278,7 @@ def is_graphql(type_, schema):
     schemas = getattr(type_, "_schemas", {})
     # noinspection PyBroadException
     try:
-        valid_schema = schema in schemas.keys() or None in schemas.keys() or bool(schemas)
+        valid_schema = schema in schemas.keys() or None in schemas.keys()
     except Exception:
         valid_schema = False
     return graphql and schemas and valid_schema
