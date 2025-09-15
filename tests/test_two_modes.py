@@ -24,14 +24,13 @@ class Message:
     user: User
 
 
-class TestUnifiedSubscriptionApproach:
+class TestTwoModes:
     
     def test_mode1_single_root_type_with_auto_detection(self):
         """Test Mode 1: Single root type with AsyncGenerator auto-detection"""
-        class DummyRoot:
-            pass
-            
-        api = GraphQLAPI(root_type=DummyRoot)
+        
+        # Create API first
+        api = GraphQLAPI()
         
         @api.type(is_root_type=True)
         class Root:
@@ -50,9 +49,9 @@ class TestUnifiedSubscriptionApproach:
             async def on_user_updated(self, user_id: int) -> AsyncGenerator[User, None]:
                 yield User(id=user_id, name="Updated User")
         
-        # Create API with root type
-        api_with_root = GraphQLAPI(root_type=Root)
-        schema, meta = api_with_root.build_schema()
+        # Update API to use the decorated Root type
+        api.root_type = Root
+        schema, meta = api.build_schema()
         
         # Verify all three types exist
         assert schema.query_type is not None
@@ -66,10 +65,8 @@ class TestUnifiedSubscriptionApproach:
     
     def test_mode1_single_root_type_with_explicit_subscription(self):
         """Test Mode 1: Single root type with explicit subscription=True"""
-        class DummyRoot:
-            pass
-            
-        api = GraphQLAPI(root_type=DummyRoot)
+        # Create API first
+        api = GraphQLAPI()
         
         @api.type(is_root_type=True)
         class Root:
@@ -86,8 +83,9 @@ class TestUnifiedSubscriptionApproach:
             async def on_message_sent(self) -> AsyncGenerator[Message, None]:
                 yield Message(id=456, content="New message", user=User(id=2, name="User"))
         
-        api_with_root = GraphQLAPI(root_type=Root)
-        schema, meta = api_with_root.build_schema()
+        # Update API to use the decorated Root type  
+        api.root_type = Root
+        schema, meta = api.build_schema()
         
         assert schema.query_type is not None
         assert schema.mutation_type is not None
@@ -99,38 +97,33 @@ class TestUnifiedSubscriptionApproach:
     
     def test_mode2_explicit_types(self):
         """Test Mode 2: Explicit query_type, mutation_type, subscription_type"""
-        # Create dummy root for decorators
-        class DummyRoot:
-            pass
-            
-        temp_api = GraphQLAPI(root_type=DummyRoot)
+        # Create API for explicit types mode
+        api = GraphQLAPI()
         
-        @temp_api.type
+        @api.type
         class Query:
-            @temp_api.field
+            @api.field
             def get_user(self, user_id: int) -> User:
                 return User(id=user_id, name=f"User {user_id}")
         
-        @temp_api.type  
+        @api.type  
         class Mutation:
-            @temp_api.field
+            @api.field
             def create_user(self, name: str) -> User:
                 return User(id=999, name=name)
         
-        @temp_api.type
+        @api.type
         class Subscription:
-            @temp_api.field
+            @api.field
             async def on_user_created(self) -> AsyncGenerator[User, None]:
                 yield User(id=888, name="New User")
         
-        # Use explicit types mode
-        api_explicit = GraphQLAPI(
-            query_type=Query,
-            mutation_type=Mutation, 
-            subscription_type=Subscription
-        )
+        # Set explicit types and build schema
+        api.query_type = Query
+        api.mutation_type = Mutation 
+        api.subscription_type = Subscription
         
-        schema, meta = api_explicit.build_schema()
+        schema, meta = api.build_schema()
         
         assert schema.query_type is not None
         assert schema.mutation_type is not None
@@ -142,20 +135,18 @@ class TestUnifiedSubscriptionApproach:
     
     def test_mode2_minimal_query_only(self):
         """Test Mode 2: Only query_type provided"""
-        # Create a dummy root for decorator usage
-        class DummyRoot:
-            pass
+        # Create API for minimal mode
+        api = GraphQLAPI()
         
-        temp_api = GraphQLAPI(root_type=DummyRoot)
-        
-        @temp_api.type
+        @api.type
         class Query:
-            @temp_api.field
+            @api.field
             def hello(self) -> str:
                 return "Hello World"
         
-        api_minimal = GraphQLAPI(query_type=Query)
-        schema, meta = api_minimal.build_schema()
+        # Set only query_type and build schema
+        api.query_type = Query
+        schema, meta = api.build_schema()
         
         assert schema.query_type is not None
         assert schema.mutation_type is None
@@ -213,10 +204,8 @@ class TestUnifiedSubscriptionApproach:
     @pytest.mark.asyncio
     async def test_mode1_subscription_execution(self):
         """Test that Mode 1 subscription actually works"""
-        class DummyRoot:
-            pass
-            
-        api = GraphQLAPI(root_type=DummyRoot)
+        # Create API first
+        api = GraphQLAPI()
         
         @api.type(is_root_type=True)
         class Root:
@@ -229,8 +218,9 @@ class TestUnifiedSubscriptionApproach:
                 for i in range(count):
                     yield f"ping {i + 1}"
         
-        api_with_root = GraphQLAPI(root_type=Root)
-        executor = api_with_root.executor()
+        # Update API to use the decorated Root type
+        api.root_type = Root
+        executor = api.executor()
         
         subscription_query = """
             subscription {

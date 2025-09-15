@@ -263,10 +263,6 @@ class GraphQLMutableField(GraphQLField):
     pass
 
 
-class GraphQLSubscriptionField(GraphQLField):
-    pass
-
-
 class GraphQLGenericEnum(enum.Enum):
     pass
 
@@ -328,7 +324,6 @@ class GraphQLTypeMapper:
         schema=None,
         max_docstring_length=None,
         as_subscription: bool = False,
-        single_root_mode: bool = False,
     ):
         self.as_mutable = as_mutable
         self.as_input = as_input
@@ -341,24 +336,20 @@ class GraphQLTypeMapper:
         self.applied_schema_directives = []
         self.max_docstring_length = max_docstring_length
         self.as_subscription = as_subscription
-        self.single_root_mode = single_root_mode
 
     def types(self) -> Set[GraphQLType]:
         return set(self.registry.values())
-    
 
     def map_to_field(self, function_type: Callable, name="", key="") -> GraphQLField:
         type_hints = typing.get_type_hints(function_type)
         description = to_camel_case_text(inspect.getdoc(function_type))
 
         return_type = type_hints.pop("return", None)
-        is_async_generator = False
 
         # Handle AsyncGenerator types for subscriptions
         if return_type and typing_inspect.is_generic_type(return_type):
             origin = typing_inspect.get_origin(return_type)
             if origin is not None and hasattr(origin, '__name__') and origin.__name__ == 'AsyncGenerator':
-                is_async_generator = True
                 # Extract the first type argument (the yielded type) from AsyncGenerator[T, None]
                 args = typing_inspect.get_args(return_type, evaluate=True)
                 if args and len(args) >= 1:
@@ -374,7 +365,6 @@ class GraphQLTypeMapper:
                 f"not specify a valid return type."
             )
 
-        
         return_graphql_type = self.map(return_type)
 
         nullable = False
@@ -511,22 +501,8 @@ class GraphQLTypeMapper:
 
         field_class = GraphQLField
         func_type = get_value(function_type, self.schema, "graphql_type")
-        
-        # Auto-detect subscription fields from AsyncGenerator return types
-        if is_async_generator and func_type == "field":
-            func_type = "subscription_field"
-        
-        # Auto-convert field types based on mapper context (Mode 2 support)
-        if func_type == "field":
-            if self.as_mutable:
-                func_type = "mutable_field"
-            elif self.as_subscription:
-                func_type = "subscription_field"
-            
         if func_type == "mutable_field":
             field_class = GraphQLMutableField
-        elif func_type == "subscription_field":
-            field_class = GraphQLSubscriptionField
 
         # Subscriptions: use the resolver as the 'subscribe' function and return the payload as-is
         subscribe_fn = None
@@ -725,11 +701,7 @@ class GraphQLTypeMapper:
             if not is_abstract(subclass, self.schema):
                 self.map(subclass)
 
-        # Determine if we're building a mutable variant of a non-root type
-        building_mutable_variant = (self.as_mutable and self.suffix == "Mutable" and 
-                                   not (hasattr(self.schema, 'root_type') and class_type == self.schema.root_type))
-        
-        class_funcs = get_class_funcs(class_type, self.schema, self.as_mutable, self.as_subscription, self.single_root_mode, self, building_mutable_variant)
+        class_funcs = get_class_funcs(class_type, self.schema, self.as_mutable, getattr(self, 'as_subscription', False))
 
         interface_name = f"{name}{self.suffix}Interface"
         description = to_camel_case_text(inspect.getdoc(class_type))
@@ -921,11 +893,7 @@ class GraphQLTypeMapper:
         description = to_camel_case_text(
             _get_class_description(class_type, self.max_docstring_length))
 
-        # Determine if we're building a mutable variant of a non-root type
-        building_mutable_variant = (self.as_mutable and self.suffix == "Mutable" and 
-                                   not (hasattr(self.schema, 'root_type') and class_type == self.schema.root_type))
-        
-        class_funcs = get_class_funcs(class_type, self.schema, self.as_mutable, self.as_subscription, self.single_root_mode, self, building_mutable_variant)
+        class_funcs = get_class_funcs(class_type, self.schema, self.as_mutable, getattr(self, 'as_subscription', False))
 
         for key, func in class_funcs:
             func_meta = get_value(func, self.schema, "meta")
@@ -1100,8 +1068,7 @@ class GraphQLTypeMapper:
         return True
 
 
-
-def get_class_funcs(class_type, schema, mutable=False, subscription=False, single_root_mode=False, mapper=None, building_mutable_variant=False) -> List[Tuple[Any, Any]]:
+def get_class_funcs(class_type, schema, mutable=False, subscription=False) -> List[Tuple[Any, Any]]:
     members = []
     try:
         class_types = class_type.mro()
@@ -1139,21 +1106,19 @@ def get_class_funcs(class_type, schema, mutable=False, subscription=False, singl
     def matches_criterion(func):
         func_type = get_value(func, schema, "graphql_type")
         
-        # Include fields based on the filtering context
-        # Always include regular fields when not filtering (mutable=False, subscription=False)
+        # Include regular fields when not filtering
         if not mutable and not subscription:
             return func_type == "field"
         
         # Include mutable fields when filtering for mutations
         if mutable and func_type == "mutable_field":
-            return True  
+            return True
         
         # Include subscription fields when filtering for subscriptions
         if subscription and func_type == "subscription_field":
             return True
         
-        # For subscription filtering, also include regular fields IF they have AsyncGenerator return type
-        # This supports auto-detection in both Mode 1 and Mode 2
+        # For subscription filtering, also include regular fields with AsyncGenerator return type
         if subscription and func_type == "field":
             # Check if this field has AsyncGenerator return type (auto-detected subscription)
             import typing
@@ -1168,46 +1133,9 @@ def get_class_funcs(class_type, schema, mutable=False, subscription=False, singl
             except Exception:
                 pass
         
-        # For mutation filtering in Mode 2, include all regular fields from mutation_type classes
-        if mutable and func_type == "field" and not single_root_mode:
+        # For mutation filtering, include regular fields (for root-level access)
+        if mutable and func_type == "field":
             return True
-        
-        # For mutation filtering in Mode 1, include regular fields that provide access to mutable functionality
-        # This allows mutation queries like: mutation { person { updateName(name: "new") { name } } }
-        if mutable and func_type == "field" and single_root_mode:
-            # Special case: If we're building a mutable variant of a type
-            if building_mutable_variant:
-                # Only exclude regular fields if the type also has mutable fields
-                # If a type has no mutable fields, include regular fields to avoid empty types
-                # Check if this type has any mutable fields at all
-                if hasattr(class_type, '__name__'):
-                    import inspect
-                    has_mutable_fields = False
-                    for name, method in inspect.getmembers(class_type, predicate=inspect.isfunction):
-                        if hasattr(method, '_schemas') and schema in method._schemas:
-                            method_type = get_value(method, schema, "graphql_type")
-                            if method_type == "mutable_field":
-                                has_mutable_fields = True
-                                break
-                    
-                    # If the type has mutable fields, exclude regular fields from mutable variant
-                    # If the type has NO mutable fields, include regular fields to prevent empty type
-                    return not has_mutable_fields
-                return False  # Default: exclude regular fields from mutable variants
-            
-            # Otherwise, apply root-level filtering: include object-returning fields, exclude primitives
-            import typing
-            try:
-                type_hints = typing.get_type_hints(func)
-                return_type = type_hints.get("return", None)
-                if return_type:
-                    # Include if return type is a custom class (has __module__ and not a built-in type)
-                    if hasattr(return_type, '__module__') and return_type.__module__ not in ('builtins', 'typing'):
-                        return True
-            except Exception:
-                pass
-            # Exclude primitive types and types we can't determine
-            return False
             
         return False
 
@@ -1264,13 +1192,7 @@ def get_class_funcs(class_type, schema, mutable=False, subscription=False, singl
 def get_value(type_, schema, key):
     if is_graphql(type_, schema):
         # noinspection PyProtectedMember
-        schema_data = type_._schemas.get(schema, type_._schemas.get(None))
-        
-        # If schema not found, use any available schema for cross-schema compatibility  
-        if not schema_data and type_._schemas:
-            schema_data = next(iter(type_._schemas.values()))
-            
-        return schema_data.get(key) if schema_data else None
+        return type_._schemas.get(schema, type_._schemas.get(None)).get(key)
 
 
 def is_graphql(type_, schema):
