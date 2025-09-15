@@ -10,14 +10,27 @@
 
 ## Defining Object Types
 
-To define a GraphQL object type, simply decorate a Python class with `@api.type`.
+`graphql-api` uses **implicit type inference** - you don't need to explicitly decorate most classes with `@api.type`. Types are automatically inferred when:
+
+- The class is a **Pydantic model** (inherits from `BaseModel`)
+- The class is a **dataclass** (decorated with `@dataclass`)
+- The class has at least one field decorated with `@api.field`
+- The class defines a custom mapper or is mappable by `graphql-api`
+
+You only need `@api.type` for special cases:
+- Root types: `@api.type(is_root_type=True)`
+- Interfaces: `@api.type(interface=True)`
+- When you need to override the default behavior
+
+### Basic Object Types
+
+To define a GraphQL object type, simply create a Python class with fields:
 
 ```python
 from graphql_api.api import GraphQLAPI
 
 api = GraphQLAPI()
 
-@api.type
 class User:
     """Represents a user in the system."""
     @api.field
@@ -93,7 +106,6 @@ GraphQL's type modifiers (List and Non-Null) are handled automatically based on 
 ```python
 from typing import List, Optional
 
-@api.type
 class Post:
     @api.field
     def id(self) -> int:

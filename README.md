@@ -12,6 +12,7 @@ A powerful and intuitive Python library for building GraphQL APIs, designed with
 
 - **Decorator-Based Schema:** Define your GraphQL schema declaratively using simple and intuitive decorators.
 - **Type Hinting:** Automatically converts Python type hints into GraphQL types.
+- **Implicit Type Inference:** Automatically maps Pydantic models, dataclasses, and classes with fields - no explicit decorators needed.
 - **Pydantic & Dataclass Support:** Seamlessly use Pydantic and Dataclass models as GraphQL types.
 - **Asynchronous Execution:** Full support for `async` and `await` for high-performance, non-blocking resolvers.
 - **Apollo Federation:** Built-in support for creating federated services.
@@ -84,6 +85,7 @@ class Book(BaseModel):
     title: str
     author: str
 
+@api.type(is_root_type=True)
 class BookAPI:
     @api.field
     def get_books(self) -> List[Book]:
@@ -92,7 +94,7 @@ class BookAPI:
             Book(title="1984", author="George Orwell"),
         ]
 
-api = GraphQLAPI(root_type=BookAPI)
+api = GraphQLAPI()
 
 graphql_query = """
     query {
@@ -115,13 +117,14 @@ Define async resolvers for non-blocking I/O operations.
 import asyncio
 from graphql_api.api import GraphQLAPI
 
+@api.type(is_root_type=True)
 class AsyncAPI:
     @api.field
     async def fetch_data(self) -> str:
         await asyncio.sleep(1)
         return "Data fetched successfully!"
 
-api = GraphQLAPI(root_type=AsyncAPI)
+api = GraphQLAPI()
 
 # To execute async queries, you'll need an async executor
 # or to run it within an async context.
@@ -142,11 +145,11 @@ if __name__ == "__main__":
 
 ### Mutations with Dataclasses
 
-Use dataclasses to define the structure of your mutation inputs.
+Use dataclasses to define the structure of your data, and mark fields as mutable to automatically separate them into the GraphQL Mutation type.
 
 ```python
 from dataclasses import dataclass
-from graphql_api.api import GraphQLAPI, field
+from graphql_api.api import GraphQLAPI
 
 @dataclass
 class User:
@@ -156,22 +159,66 @@ class User:
 # A simple in-memory database
 db = {1: User(id=1, name="Alice")}
 
+api = GraphQLAPI()
+
+@api.type(is_root_type=True)
 class Root:
-    @field
+    @api.field
     def get_user(self, user_id: int) -> User:
         return db.get(user_id)
 
-class Mutations:
-    @field
+    @api.field(mutable=True)
     def add_user(self, user_id: int, name: str) -> User:
         new_user = User(id=user_id, name=name)
         db[user_id] = new_user
         return new_user
-
-# The GraphQLAPI constructor will need to be updated to support mutations separately
-# api = GraphQLAPI(root_type=Root, mutation_type=Mutations)
 ```
-*Note: The mutation API is illustrative. The library's `GraphQLAPI` constructor may need to be extended to support mutations as shown.*
+
+GraphQL automatically separates queries and mutations - you don't need separate classes. Fields marked with `mutable=True` are placed in the Mutation type, while regular fields go in the Query type. Fields with `AsyncGenerator` return types are automatically detected as subscriptions. This automatic mapping means you can define all your operations in a single class and let `graphql-api` handle the schema organization for you.
+
+## Two Approaches for Complex Schemas
+
+`graphql-api` supports two approaches for organizing your GraphQL schema:
+
+### Single Root Type (Recommended)
+```python
+@api.type(is_root_type=True)
+class Root:
+    @api.field
+    def query_field(self) -> str: ...
+    
+    @api.field(mutable=True) 
+    def mutation_field(self) -> str: ...
+    
+    @api.field
+    async def subscription_field(self) -> AsyncGenerator[str, None]: ...
+
+api = GraphQLAPI(root_type=Root)
+```
+
+### Explicit Types
+```python
+@api.type
+class Query:
+    @api.field
+    def query_field(self) -> str: ...
+
+@api.type  
+class Mutation:
+    @api.field
+    def mutation_field(self) -> str: ...
+
+@api.type
+class Subscription:
+    @api.field
+    async def subscription_field(self) -> AsyncGenerator[str, None]: ...
+
+api = GraphQLAPI(
+    query_type=Query,
+    mutation_type=Mutation, 
+    subscription_type=Subscription
+)
+```
 
 ## Running Tests
 

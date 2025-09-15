@@ -1,0 +1,252 @@
+"""
+Test the new unified approach for subscriptions with both modes:
+- Mode 1: Single root type with mutable=True and AsyncGenerator auto-detection
+- Mode 2: Explicit query_type, mutation_type, subscription_type
+"""
+import asyncio
+from dataclasses import dataclass
+from typing import AsyncGenerator
+
+import pytest
+from graphql_api.api import GraphQLAPI
+
+
+@dataclass
+class User:
+    id: int
+    name: str
+
+
+@dataclass 
+class Message:
+    id: int
+    content: str
+    user: User
+
+
+class TestUnifiedSubscriptionApproach:
+    
+    def test_mode1_single_root_type_with_auto_detection(self):
+        """Test Mode 1: Single root type with AsyncGenerator auto-detection"""
+        class DummyRoot:
+            pass
+            
+        api = GraphQLAPI(root_type=DummyRoot)
+        
+        @api.type(is_root_type=True)
+        class Root:
+            # Query field
+            @api.field
+            def get_user(self, user_id: int) -> User:
+                return User(id=user_id, name=f"User {user_id}")
+            
+            # Mutation field
+            @api.field(mutable=True)
+            def update_user(self, user_id: int, name: str) -> User:
+                return User(id=user_id, name=name)
+            
+            # Subscription field - auto-detected by AsyncGenerator
+            @api.field
+            async def on_user_updated(self, user_id: int) -> AsyncGenerator[User, None]:
+                yield User(id=user_id, name="Updated User")
+        
+        # Create API with root type
+        api_with_root = GraphQLAPI(root_type=Root)
+        schema, meta = api_with_root.build_schema()
+        
+        # Verify all three types exist
+        assert schema.query_type is not None
+        assert schema.mutation_type is not None  
+        assert schema.subscription_type is not None
+        
+        # Verify field names
+        assert "getUser" in schema.query_type.fields
+        assert "updateUser" in schema.mutation_type.fields
+        assert "onUserUpdated" in schema.subscription_type.fields
+    
+    def test_mode1_single_root_type_with_explicit_subscription(self):
+        """Test Mode 1: Single root type with explicit subscription=True"""
+        class DummyRoot:
+            pass
+            
+        api = GraphQLAPI(root_type=DummyRoot)
+        
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def get_message(self, msg_id: int) -> Message:
+                return Message(id=msg_id, content="Test", user=User(id=1, name="Test"))
+            
+            @api.field(mutable=True)
+            def send_message(self, content: str) -> Message:
+                return Message(id=123, content=content, user=User(id=1, name="Sender"))
+            
+            # Explicit subscription field
+            @api.field(subscription=True)
+            async def on_message_sent(self) -> AsyncGenerator[Message, None]:
+                yield Message(id=456, content="New message", user=User(id=2, name="User"))
+        
+        api_with_root = GraphQLAPI(root_type=Root)
+        schema, meta = api_with_root.build_schema()
+        
+        assert schema.query_type is not None
+        assert schema.mutation_type is not None
+        assert schema.subscription_type is not None
+        
+        assert "getMessage" in schema.query_type.fields
+        assert "sendMessage" in schema.mutation_type.fields  
+        assert "onMessageSent" in schema.subscription_type.fields
+    
+    def test_mode2_explicit_types(self):
+        """Test Mode 2: Explicit query_type, mutation_type, subscription_type"""
+        # Create dummy root for decorators
+        class DummyRoot:
+            pass
+            
+        temp_api = GraphQLAPI(root_type=DummyRoot)
+        
+        @temp_api.type
+        class Query:
+            @temp_api.field
+            def get_user(self, user_id: int) -> User:
+                return User(id=user_id, name=f"User {user_id}")
+        
+        @temp_api.type  
+        class Mutation:
+            @temp_api.field
+            def create_user(self, name: str) -> User:
+                return User(id=999, name=name)
+        
+        @temp_api.type
+        class Subscription:
+            @temp_api.field
+            async def on_user_created(self) -> AsyncGenerator[User, None]:
+                yield User(id=888, name="New User")
+        
+        # Use explicit types mode
+        api_explicit = GraphQLAPI(
+            query_type=Query,
+            mutation_type=Mutation, 
+            subscription_type=Subscription
+        )
+        
+        schema, meta = api_explicit.build_schema()
+        
+        assert schema.query_type is not None
+        assert schema.mutation_type is not None
+        assert schema.subscription_type is not None
+        
+        assert "getUser" in schema.query_type.fields
+        assert "createUser" in schema.mutation_type.fields
+        assert "onUserCreated" in schema.subscription_type.fields
+    
+    def test_mode2_minimal_query_only(self):
+        """Test Mode 2: Only query_type provided"""
+        # Create a dummy root for decorator usage
+        class DummyRoot:
+            pass
+        
+        temp_api = GraphQLAPI(root_type=DummyRoot)
+        
+        @temp_api.type
+        class Query:
+            @temp_api.field
+            def hello(self) -> str:
+                return "Hello World"
+        
+        api_minimal = GraphQLAPI(query_type=Query)
+        schema, meta = api_minimal.build_schema()
+        
+        assert schema.query_type is not None
+        assert schema.mutation_type is None
+        assert schema.subscription_type is None
+        
+        assert "hello" in schema.query_type.fields
+    
+    def test_validation_cannot_mix_modes(self):
+        """Test that mixing modes raises ValueError"""
+        class DummyRoot:
+            pass
+            
+        api = GraphQLAPI(root_type=DummyRoot)
+        
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def test(self) -> str:
+                return "test"
+        
+        @api.type
+        class Query:
+            @api.field  
+            def hello(self) -> str:
+                return "hello"
+        
+        # Should raise error when mixing modes
+        with pytest.raises(ValueError, match="Cannot use root_type with query_type"):
+            GraphQLAPI(root_type=Root, query_type=Query)
+    
+    def test_empty_api_creates_placeholder(self):
+        """Test that empty API creates placeholder schema for backward compatibility"""
+        # Empty constructor is allowed for backward compatibility 
+        api = GraphQLAPI()
+        schema, meta = api.build_schema()
+        
+        # Should create a placeholder query type
+        assert schema.query_type is not None
+        assert schema.query_type.name == "PlaceholderQuery"
+        assert "placeholder" in schema.query_type.fields
+    
+    def test_field_cannot_be_both_mutable_and_subscription(self):
+        """Test that a field cannot be both mutable and subscription"""
+        class DummyRoot:
+            pass
+            
+        api = GraphQLAPI(root_type=DummyRoot)
+        
+        # This should raise error during decorator execution
+        with pytest.raises(ValueError, match="Field cannot be both mutable and subscription"):
+            @api.field(mutable=True, subscription=True)
+            def invalid_field(self) -> str:
+                return "invalid"
+
+    @pytest.mark.asyncio
+    async def test_mode1_subscription_execution(self):
+        """Test that Mode 1 subscription actually works"""
+        class DummyRoot:
+            pass
+            
+        api = GraphQLAPI(root_type=DummyRoot)
+        
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def ping(self) -> str:
+                return "pong"
+            
+            @api.field
+            async def on_ping(self, count: int = 2) -> AsyncGenerator[str, None]:
+                for i in range(count):
+                    yield f"ping {i + 1}"
+        
+        api_with_root = GraphQLAPI(root_type=Root)
+        executor = api_with_root.executor()
+        
+        subscription_query = """
+            subscription {
+                onPing(count: 2) 
+            }
+        """
+        
+        async_iter = await executor.subscribe(subscription_query)
+        
+        received = []
+        async for result in async_iter:
+            received.append(result.data)
+            if len(received) >= 2:
+                break
+        
+        assert received == [
+            {"onPing": "ping 1"},
+            {"onPing": "ping 2"}
+        ]

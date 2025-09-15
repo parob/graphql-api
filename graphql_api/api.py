@@ -17,7 +17,7 @@ from graphql import (
 from graphql_api.error import GraphQLError
 from graphql_api.directives import SchemaDirective
 from graphql_api.executor import GraphQLBaseExecutor, GraphQLExecutor
-from graphql_api.mapper import GraphQLTypeMapper
+from graphql_api.mapper import GraphQLTypeMapper, GraphQLSubscriptionField
 from graphql_api.reduce import GraphQLFilter, GraphQLSchemaReducer
 from graphql_api.schema import add_applied_directives, get_applied_directives
 
@@ -102,6 +102,7 @@ def build_decorator(
     arg2: Any,
     graphql_type: str,
     mutable: bool = False,
+    subscription: bool = False,
     interface: bool = False,
     abstract: bool = False,
     directives: Optional[List] = None,
@@ -114,6 +115,7 @@ def build_decorator(
     :param arg2: Possibly a function, a dict of metadata, or a `GraphQLAPI` instance.
     :param graphql_type: The type of the GraphQL element (e.g. "object", "field", etc.).
     :param mutable: Whether this field should be considered "mutable_field".
+    :param subscription: Whether this field should be considered "subscription_field".
     :param interface: If True, treat as a GraphQL interface.
     :param abstract: If True, treat as an abstract type.
     :param directives: Any directives to be added.
@@ -126,9 +128,14 @@ def build_decorator(
         elif abstract:
             graphql_type = "abstract"
 
-    # Adjust the graphql_type if 'mutable' is requested
-    if graphql_type == "field" and mutable:
-        graphql_type = "mutable_field"
+    # Adjust the graphql_type if 'mutable' or 'subscription' is requested
+    if graphql_type == "field":
+        if mutable and subscription:
+            raise ValueError("Field cannot be both mutable and subscription")
+        elif mutable:
+            graphql_type = "mutable_field"
+        elif subscription:
+            graphql_type = "subscription_field"
 
     # Figure out which args are which
     func = arg1 if callable(arg1) else (arg2 if callable(arg2) else None)
@@ -190,6 +197,9 @@ class GraphQLAPI(GraphQLBaseExecutor):
     def __init__(
         self,
         root_type=None,
+        query_type=None,
+        mutation_type=None,
+        subscription_type: Optional[Type] = None,
         middleware: Optional[List[Callable]] = None,
         directives: Optional[List[GraphQLDirective]] = None,
         types: Optional[List[Union[GraphQLNamedType, Type]]] = None,
@@ -197,25 +207,53 @@ class GraphQLAPI(GraphQLBaseExecutor):
         error_protection: bool = True,
         federation: bool = False,
         max_docstring_length: Optional[int] = 500,
-        subscription_type: Optional[Type] = None,
     ):
         """
         Initialize a new GraphQL API instance.
 
+        Two modes of operation:
+        
+        Mode 1 - Single Root Type (recommended):
+            api = GraphQLAPI(root_type=MyRootClass)
+            # MyRootClass contains @api.field, @api.field(mutable=True), and AsyncGenerator fields
+            
+        Mode 2 - Explicit Types:
+            api = GraphQLAPI(query_type=Query, mutation_type=Mutation, subscription_type=Subscription)
+
         Args:
-            root_type: The root query type class to use for the schema
+            root_type: Single root type containing queries, mutations, and subscriptions (Mode 1)
+            query_type: Explicit query type class (Mode 2)  
+            mutation_type: Explicit mutation type class (Mode 2)
+            subscription_type: Explicit subscription type class (Mode 2, also supports Mode 1)
             middleware: List of middleware functions to apply to queries
             directives: List of custom GraphQL directives to include in the schema
             types: List of additional types to explicitly include in the schema
-            filters: List of filters to apply when building the schema (removes matching fields).
-                Each filter can specify cleanup_types=False to prevent automatic removal of
-                unreferenced types after filtering.
+            filters: List of filters to apply when building the schema
             error_protection: Whether to enable error protection during execution
             federation: Whether to enable GraphQL federation support
             max_docstring_length: Maximum length for docstrings before truncation (None for no limit)
         """
         super().__init__()
+        
+        # Validate modes - cannot mix single root type with explicit types
+        if root_type and (query_type or mutation_type):
+            raise ValueError(
+                "Cannot use root_type with query_type/mutation_type. "
+                "Choose either single root type mode or explicit types mode."
+            )
+        
+        # Allow empty constructor for backward compatibility (root_type may be set later via decorators)
+        if not root_type and not query_type:
+            # Create a placeholder root that will be replaced when is_root_type=True is used
+            class _PlaceholderRoot:
+                pass
+            root_type = _PlaceholderRoot
+        
+        # Mode 1: Single root type
         self.root_type = root_type
+        # Mode 2: Explicit types  
+        self.query_type = query_type
+        self.mutation_type = mutation_type
         self.subscription_type = subscription_type
         self.middleware = middleware or []
         self.directives = [*specified_directives] + (directives or [])
@@ -236,6 +274,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
         self=None,
         meta=None,
         mutable: bool = False,
+        subscription: bool = False,
         directives: Optional[List] = None,
     ):
         """
@@ -244,12 +283,16 @@ class GraphQLAPI(GraphQLBaseExecutor):
             @api.field(mutable=True)
             def update_something(...):
                 ...
+            @api.field(subscription=True)
+            async def on_something_changed(...) -> AsyncGenerator[..., None]:
+                ...
         """
         return build_decorator(
             arg1=self,
             arg2=meta,
             graphql_type="field",
             mutable=mutable,
+            subscription=subscription,
             directives=directives,
         )
 
@@ -309,6 +352,8 @@ class GraphQLAPI(GraphQLBaseExecutor):
         subscription: Optional[GraphQLObjectType] = None
         collected_types: Optional[List[GraphQLNamedType]] = None
 
+        # Mode 1: Single root type - extract queries, mutations, subscriptions from one class
+        print(f"DEBUG: Mode check: self.root_type={self.root_type}, self.query_type={self.query_type}, self.mutation_type={self.mutation_type}")
         if self.root_type:
             # Build root Query
             query_mapper = GraphQLTypeMapper(
@@ -365,7 +410,8 @@ class GraphQLAPI(GraphQLBaseExecutor):
             # Build root Mutation - use a copy of the registry to avoid polluting the shared registry
             mutation_registry = registry.copy() if registry else {}
             mutation_mapper = GraphQLTypeMapper(
-                as_mutable=True, suffix="Mutable", registry=mutation_registry, schema=self, max_docstring_length=self.max_docstring_length
+                as_mutable=True, suffix="Mutable", registry=mutation_registry, schema=self, max_docstring_length=self.max_docstring_length,
+                single_root_mode=True
             )
             _mutation = mutation_mapper.map(self.root_type)
 
@@ -382,9 +428,21 @@ class GraphQLAPI(GraphQLBaseExecutor):
             if mutation_mapper.validate(filtered_mutation, evaluate=True):
                 mutation = filtered_mutation
                 mutation_types = mutation_mapper.types()
+                
+                # Store mutation info for later filtering at schema assembly level
+                print(f"DEBUG: Mutation building: self.root_type={self.root_type is not None}, mutation={mutation is not None}")
+                if self.root_type and mutation:
+                    print("DEBUG: Setting up mutation field tracking")
+                    types_used_by_mutable_fields = set()
+                    self._find_types_used_by_mutable_fields(mutation, types_used_by_mutable_fields)
+                    # Store this for filtering at schema assembly
+                    self._types_used_by_mutable_fields = types_used_by_mutable_fields
+                    print(f"DEBUG: Tracked types: {[t.__name__ for t in types_used_by_mutable_fields]}")
             else:
                 mutation = None
                 mutation_types = set()  # Don't include any mutation types when validation fails
+            
+            print("DEBUG: Finished mutation building in Mode 1")
 
             # Clean up unreferenced types after filtering (only when filters are applied and any filter has cleanup enabled)
             should_cleanup_types = False
@@ -405,12 +463,65 @@ class GraphQLAPI(GraphQLBaseExecutor):
                 if mutation_mapper:
                     mutation_types = mutation_mapper.types()
 
-            # Build root Subscription (optional)
+            # Build root Subscription (optional) - check both explicit subscription_type and subscription fields from root_type
             subscription_types = set()
-            if self.subscription_type:
+            subscription_mapper = None
+            
+            # Check for subscription fields in root_type (single root mode)
+            subscription_from_root = GraphQLTypeMapper(
+                as_mutable=False,
+                suffix="", 
+                registry=registry.copy() if registry else {},
+                schema=self,
+                max_docstring_length=self.max_docstring_length,
+                as_subscription=True,
+            )
+            _subscription_from_root = subscription_from_root.map(self.root_type)
+            
+            # Check if root type has any actual subscription fields (not auto-converted regular fields) 
+            has_subscription_fields = False
+            if isinstance(_subscription_from_root, GraphQLObjectType):
+                # Check the original field types in the root class to see if any are actual subscriptions
+                from graphql_api.mapper import get_class_funcs, get_value
+                class_funcs = get_class_funcs(self.root_type, self, mutable=False, subscription=True)
+                for key, func in class_funcs:
+                    original_func_type = get_value(func, self, "graphql_type")
+                    # Check if this was originally a subscription field or has AsyncGenerator
+                    if original_func_type == "subscription_field":
+                        has_subscription_fields = True
+                        break
+                    # Also check for AsyncGenerator return types (auto-detected subscriptions)
+                    import typing
+                    import typing_inspect
+                    try:
+                        type_hints = typing.get_type_hints(func)
+                        return_type = type_hints.get("return", None)
+                        if return_type and typing_inspect.is_generic_type(return_type):
+                            origin = typing_inspect.get_origin(return_type)
+                            if origin is not None and hasattr(origin, '__name__') and origin.__name__ == 'AsyncGenerator':
+                                has_subscription_fields = True
+                                break
+                    except Exception:
+                        pass
+            
+            # Use subscription from root_type if it has subscription fields
+            if has_subscription_fields:
+                # Create a clean subscription mapper that only includes actual subscription fields
                 subscription_mapper = GraphQLTypeMapper(
                     as_mutable=False,
-                    suffix="Subscription",
+                    suffix="Subscription", 
+                    registry=registry.copy() if registry else {},
+                    schema=self,
+                    max_docstring_length=self.max_docstring_length,
+                    as_subscription=True,
+                )
+                subscription = subscription_mapper.map(self.root_type)
+                subscription_types = subscription_mapper.types()
+            # Otherwise use explicit subscription_type if provided
+            elif self.subscription_type:
+                subscription_mapper = GraphQLTypeMapper(
+                    as_mutable=False,
+                    suffix="",
                     registry=registry,
                     schema=self,
                     max_docstring_length=self.max_docstring_length,
@@ -423,6 +534,9 @@ class GraphQLAPI(GraphQLBaseExecutor):
                     )
                 subscription = _subscription
                 subscription_types = subscription_mapper.types()
+            
+            # Store the final subscription mapper
+            if subscription_mapper:
                 self.subscription_mapper = subscription_mapper
 
             # Collect all types
@@ -444,6 +558,133 @@ class GraphQLAPI(GraphQLBaseExecutor):
                 meta.update(self.subscription_mapper.meta)
             self.query_mapper = query_mapper
             self.mutation_mapper = mutation_mapper
+
+        # Mode 2: Explicit types - use separate query_type, mutation_type, subscription_type
+        else:
+            registry = {}
+            query_types = set()
+            mutation_types = set() 
+            subscription_types = set()
+            
+            # Build Query type
+            if self.query_type:
+                query_mapper = GraphQLTypeMapper(
+                    schema=self, max_docstring_length=self.max_docstring_length)
+                _query = query_mapper.map(self.query_type)
+                
+                # Map additional types
+                for typ in list(self.types):
+                    if not is_named_type(typ):
+                        query_mapper.map(typ)
+                
+                if not isinstance(_query, GraphQLObjectType):
+                    raise GraphQLError(
+                        f"Query {_query} was not a valid GraphQLObjectType.")
+                
+                # Apply filters
+                filtered_query = GraphQLSchemaReducer.reduce_query(
+                    query_mapper, _query, filters=self.filters
+                )
+                
+                if query_mapper.validate(filtered_query, evaluate=True):
+                    query = filtered_query
+                    query_types = query_mapper.types()
+                    registry = query_mapper.registry
+                    self.query_mapper = query_mapper
+                else:
+                    query_types = set()
+            
+            # Build Mutation type
+            if self.mutation_type:
+                mutation_registry = registry.copy()
+                mutation_mapper = GraphQLTypeMapper(
+                    as_mutable=True, suffix="", registry=mutation_registry, 
+                    schema=self, max_docstring_length=self.max_docstring_length,
+                    single_root_mode=False
+                )
+                _mutation = mutation_mapper.map(self.mutation_type)
+                
+                if not isinstance(_mutation, GraphQLObjectType):
+                    raise GraphQLError(
+                        f"Mutation {_mutation} was not a valid GraphQLObjectType.")
+                
+                filtered_mutation = GraphQLSchemaReducer.reduce_mutation(
+                    mutation_mapper, _mutation, filters=self.filters
+                )
+                
+                if mutation_mapper.validate(filtered_mutation, evaluate=True):
+                    mutation = filtered_mutation
+                    mutation_types = mutation_mapper.types()
+                    self.mutation_mapper = mutation_mapper
+            
+            # Build Subscription type
+            if self.subscription_type:
+                subscription_mapper = GraphQLTypeMapper(
+                    as_mutable=False, suffix="", registry=registry.copy(),
+                    schema=self, max_docstring_length=self.max_docstring_length,
+                    as_subscription=True
+                )
+                _subscription = subscription_mapper.map(self.subscription_type)
+                
+                if not isinstance(_subscription, GraphQLObjectType):
+                    raise GraphQLError(
+                        f"Subscription {_subscription} was not a valid GraphQLObjectType.")
+                
+                subscription = _subscription
+                subscription_types = subscription_mapper.types()
+                self.subscription_mapper = subscription_mapper
+            
+            # Collect all types
+            all_types = query_types | mutation_types | subscription_types | self.types
+            print("DEBUG: Reached schema assembly in Mode 1")
+            
+            # Apply post-build filtering to remove unused mutable types
+            print(f"DEBUG: self.root_type={self.root_type is not None}")
+            print(f"DEBUG: has _types_used_by_mutable_fields={hasattr(self, '_types_used_by_mutable_fields')}")
+            if hasattr(self, '_types_used_by_mutable_fields'):
+                print(f"DEBUG: _types_used_by_mutable_fields = {[t.__name__ for t in self._types_used_by_mutable_fields]}")
+            
+            if self.root_type and hasattr(self, '_types_used_by_mutable_fields'):
+                filtered_types = set()
+                types_used_by_mutable_fields = self._types_used_by_mutable_fields
+                print(f"DEBUG: Schema-level filtering. Types used by mutable fields: {[t.__name__ for t in types_used_by_mutable_fields]}")
+                print(f"DEBUG: All types before filtering: {[getattr(t, 'name', str(t)) for t in all_types]}")
+                
+                for graphql_type in all_types:
+                    type_name = getattr(graphql_type, 'name', str(graphql_type))
+                    
+                    # Keep non-mutable types
+                    if not type_name.endswith("Mutable"):
+                        filtered_types.add(graphql_type)
+                    # Keep root mutable type
+                    elif type_name == f"{self.root_type.__name__}Mutable":
+                        filtered_types.add(graphql_type)
+                        print(f"DEBUG: Keeping root mutable type: {type_name}")
+                    # For other mutable types, only keep if used by mutable fields
+                    else:
+                        original_name = type_name[:-7]  # Remove "Mutable" suffix
+                        is_used = any(
+                            getattr(used_type, '__name__', str(used_type)) == original_name
+                            for used_type in types_used_by_mutable_fields
+                        )
+                        print(f"DEBUG: Checking mutable type {type_name} (original: {original_name}), is_used: {is_used}")
+                        if is_used:
+                            filtered_types.add(graphql_type)
+                
+                all_types = filtered_types
+                print(f"DEBUG: All types after filtering: {[getattr(t, 'name', str(t)) for t in all_types]}")
+            collected_types = [
+                t for t in list(all_types) if is_named_type(t)
+            ]
+            
+            # Gather meta info
+            meta = {}
+            if hasattr(self, 'query_mapper') and self.query_mapper:
+                meta.update(self.query_mapper.meta)
+            if hasattr(self, 'mutation_mapper') and self.mutation_mapper:
+                meta.update(self.mutation_mapper.meta)
+            if hasattr(self, 'subscription_mapper') and self.subscription_mapper:
+                meta.update(self.subscription_mapper.meta)
 
         # If there's no query, create a placeholder (this should now only happen for non-filtered cases)
         if not query:
@@ -536,3 +777,40 @@ class GraphQLAPI(GraphQLBaseExecutor):
             middleware=self.middleware,
             error_protection=self.error_protection,
         )
+    
+    def _find_types_used_by_mutable_fields(self, mutation_type, types_used):
+        """Find all types that are returned by mutable fields"""
+        from graphql_api.mapper import get_value
+        
+        if not hasattr(mutation_type, 'fields'):
+            return
+            
+        for field_name, field in mutation_type.fields.items():
+            # Check if this field is a mutable field
+            # We can identify mutable fields by checking the original function
+            try:
+                # Try to get the original function from the root type
+                # Convert camelCase GraphQL field name back to snake_case Python method name
+                import re
+                python_method_name = re.sub(r'([A-Z])', r'_\1', field_name).lower()
+                
+                if hasattr(self.root_type, python_method_name):
+                    original_func = getattr(self.root_type, python_method_name)
+                    graphql_type_value = get_value(original_func, self, "graphql_type")
+                    if graphql_type_value == "mutable_field":
+                        # This is a mutable field, extract its return type
+                        import typing
+                        type_hints = typing.get_type_hints(original_func)
+                        return_type = type_hints.get("return", None)
+                        if return_type:
+                            # Handle Optional types
+                            import typing_inspect
+                            if typing_inspect.is_union_type(return_type):
+                                union_args = typing_inspect.get_args(return_type, evaluate=True)
+                                non_none_args = [arg for arg in union_args if arg is not type(None)]
+                                if len(non_none_args) == 1:
+                                    return_type = non_none_args[0]
+                            types_used.add(return_type)
+            except Exception:
+                # If we can't determine the type, skip it
+                pass

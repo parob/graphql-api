@@ -55,12 +55,14 @@ class UserNotFoundError(GraphQLError):
         )
 
 # In a resolver, you can raise this exception
-@api.field
-def get_user_by_id(self, user_id: int) -> User:
-    user = find_user_in_db(user_id)
-    if not user:
-        raise UserNotFoundError(user_id)
-    return user
+@api.type(is_root_type=True)
+class Query:
+    @api.field
+    def get_user_by_id(self, user_id: int) -> User:
+        user = find_user_in_db(user_id)
+        if not user:
+            raise UserNotFoundError(user_id)
+        return user
 ```
 
 When this resolver is executed with an invalid ID, the client will receive a structured error in the response:
@@ -109,15 +111,17 @@ result = api.execute(
 The context is available via the `info` argument (which is of type `GraphQLResolveInfo`) that is passed to every resolver.
 
 ```python
-@api.field
-def get_my_profile(self, info) -> User:
-    # Access the context from the `info` object.
-    current_user = info.context.get("current_user")
+@api.type(is_root_type=True)
+class Query:
+    @api.field
+    def get_my_profile(self, info) -> User:
+        # Access the context from the `info` object.
+        current_user = info.context.get("current_user")
 
-    if not current_user:
-        raise PermissionError("You must be logged in to view your profile.")
+        if not current_user:
+            raise PermissionError("You must be logged in to view your profile.")
 
-    return current_user
+        return current_user
 ```
 
 Using the context is the recommended way to provide resolvers with request-scoped data, keeping them decoupled from the transport layer (e.g., HTTP).
