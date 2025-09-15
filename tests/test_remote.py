@@ -21,7 +21,7 @@ from tests.test_graphql import available
 
 
 class TestGraphQLRemote:
-    def test_remote_query(self):
+    def test_remote_query(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -31,11 +31,11 @@ class TestGraphQLRemote:
                 return 5
 
         # type: ignore[reportIncompatibleMethodOverride]
-        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)
+        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert house.number_of_doors() == 5
 
-    def test_remote_query_list(self):
+    def test_remote_query_list(self) -> None:
         api = GraphQLAPI()
 
         class Door:
@@ -80,7 +80,7 @@ class TestGraphQLRemote:
         assert woods_2 == {"oak"}
         assert tags_2 == [["oak", "white", "solid"], ["oak", "white", "solid"]]
 
-    def test_remote_query_list_nested(self):
+    def test_remote_query_list_nested(self) -> None:
         api = GraphQLAPI()
 
         class Person:
@@ -117,7 +117,7 @@ class TestGraphQLRemote:
         with pytest.raises(ValueError, match="can only contain scalar values"):
             assert {door.owner().name() for door in doors}
 
-    def test_remote_query_enum(self):
+    def test_remote_query_enum(self) -> None:
         api = GraphQLAPI()
 
         class HouseType(enum.Enum):
@@ -135,7 +135,7 @@ class TestGraphQLRemote:
 
         assert house.type() == HouseType.bungalow
 
-    def test_remote_query_send_enum(self):
+    def test_remote_query_send_enum(self) -> None:
         api = GraphQLAPI()
 
         class RoomType(enum.Enum):
@@ -166,7 +166,7 @@ class TestGraphQLRemote:
 
         assert house.get_room().room_type() == RoomType.bedroom
 
-    def test_remote_query_uuid(self):
+    def test_remote_query_uuid(self) -> None:
         api = GraphQLAPI()
 
         person_id = uuid.uuid4()
@@ -182,7 +182,7 @@ class TestGraphQLRemote:
 
         assert person.id() == person_id
 
-    def test_query_bytes(self):
+    def test_query_bytes(self) -> None:
         api = GraphQLAPI()
 
         a_value = b"hello "
@@ -203,7 +203,7 @@ class TestGraphQLRemote:
 
         assert test_bytes == b"".join([a_value, b_value])
 
-    def test_remote_query_list_parameter(self):
+    def test_remote_query_list_parameter(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -219,7 +219,7 @@ class TestGraphQLRemote:
         assert tags.join_tags(tags=[]) == ""
         assert tags.join_tags(tags=["a", "b"]) == "ab"
 
-    def test_remote_mutation(self):
+    def test_remote_mutation(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -250,7 +250,7 @@ class TestGraphQLRemote:
 
         assert counter.value == 11
 
-    def test_remote_positional_args(self):
+    def test_remote_positional_args(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -265,7 +265,7 @@ class TestGraphQLRemote:
 
         assert multiplier.calculate(4, 2) == 8
 
-    def test_remote_query_optional(self):
+    def test_remote_query_optional(self) -> None:
         api = GraphQLAPI()
 
         class Person:
@@ -288,7 +288,7 @@ class TestGraphQLRemote:
                 return Person()
 
         # type: ignore[reportIncompatibleMethodOverride]
-        bank: Bank = GraphQLRemoteObject(executor=api.executor(), api=api)
+        bank: Bank = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         # type: ignore[reportIncompatibleMethodOverride]
         assert bank.owner().age == 25
@@ -296,7 +296,7 @@ class TestGraphQLRemote:
         assert bank.owner().name() == "rob"
         assert bank.owner(respond_none=True) is None
 
-    def test_remote_mutation_with_input(self):
+    def test_remote_mutation_with_input(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -309,14 +309,13 @@ class TestGraphQLRemote:
                 self.value += value
                 return self.value
 
-        # type: ignore[reportIncompatibleMethodOverride]
         counter: Counter = GraphQLRemoteObject(
-            executor=api.executor(), api=api)
+            executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert counter.add(value=5) == 5
         assert counter.add(value=10) == 15
 
-    def test_remote_query_with_input(self):
+    def test_remote_query_with_input(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -325,13 +324,12 @@ class TestGraphQLRemote:
             def square(self, value: int) -> int:
                 return value * value
 
-        # type: ignore[reportIncompatibleMethodOverride]
         calculator: Calculator = GraphQLRemoteObject(
-            executor=api.executor(), api=api)
+            executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert calculator.square(value=5) == 25
 
-    def test_remote_query_with_enumerable_input(self):
+    def test_remote_query_with_enumerable_input(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -347,11 +345,11 @@ class TestGraphQLRemote:
 
         # type: ignore[reportIncompatibleMethodOverride]
         calculator: Calculator = GraphQLRemoteObject(
-            executor=api.executor(), api=api)
+            executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert calculator.add(values=[5, 2, 7]) == 14
 
-    def test_remote_input_object(self):
+    def test_remote_input_object(self) -> None:
         api = GraphQLAPI()
 
         class Garden:
@@ -370,10 +368,10 @@ class TestGraphQLRemote:
                 return (garden.size * 2) + (rooms * 10)
 
         # type: ignore[reportIncompatibleMethodOverride]
-        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)
+        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
         assert house.value(garden=Garden(size=10)) == 90
 
-    def test_remote_input_object_nested(self):
+    def test_remote_input_object_nested(self) -> None:
         api = GraphQLAPI()
 
         class Animal:
@@ -409,7 +407,7 @@ class TestGraphQLRemote:
                 return ((garden.size * 2) + (rooms * 10)) - garden.animal_age
 
         # type: ignore[reportIncompatibleMethodOverride]
-        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)
+        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         with pytest.raises(
             GraphQLError,
@@ -424,7 +422,7 @@ class TestGraphQLRemote:
             == 85
         )
 
-    def test_remote_return_object(self):
+    def test_remote_return_object(self) -> None:
         api = GraphQLAPI()
 
         @dataclass
@@ -442,12 +440,12 @@ class TestGraphQLRemote:
                 return Door(height=204)
 
         # type: ignore[reportIncompatibleMethodOverride]
-        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)
+        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert house.doors()[0].height == 180
         assert house.front_door().height == 204
 
-    def test_remote_return_object_call_count(self):
+    def test_remote_return_object_call_count(self) -> None:
         api = GraphQLAPI()
 
         @dataclass
@@ -474,7 +472,7 @@ class TestGraphQLRemote:
 
         house: House = GraphQLRemoteObject(executor=api.executor(
             # type: ignore[reportIncompatibleMethodOverride]
-            root_value=root_house), api=api)
+            root_value=root_house), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         front_door = house.front_door()
         assert root_house.api_calls == 0
@@ -500,7 +498,7 @@ class TestGraphQLRemote:
         assert root_house.number() == 18
         assert root_house.api_calls == 2
 
-    def test_remote_return_object_cache(self):
+    def test_remote_return_object_cache(self) -> None:
         api = GraphQLAPI()
 
         @dataclass
@@ -521,7 +519,7 @@ class TestGraphQLRemote:
 
         house: House = GraphQLRemoteObject(executor=api.executor(
             # type: ignore[reportIncompatibleMethodOverride]
-            root_value=root_house), api=api)
+            root_value=root_house), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         front_door = house.front_door(id="door_a")
         random_int = front_door.rand()
@@ -535,7 +533,7 @@ class TestGraphQLRemote:
         front_door_2 = house.front_door(id="door_b")
         assert random_int != front_door_2.rand()
 
-    def test_remote_recursive_mutated(self):
+    def test_remote_recursive_mutated(self) -> None:
         api = GraphQLAPI()
 
         class Flopper:
@@ -578,7 +576,7 @@ class TestGraphQLRemote:
 
         # type: ignore[reportIncompatibleMethodOverride]
         flipper: Flipper = GraphQLRemoteObject(
-            executor=api.executor(), api=api)
+            executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert flipper.value()
         flipped_flipper = flipper.flagged_flip()
@@ -609,7 +607,7 @@ class TestGraphQLRemote:
         assert mutated_flopper.value()
         assert mutated_mutated_flopper.value()
 
-    def test_remote_nested(self):
+    def test_remote_nested(self) -> None:
         api = GraphQLAPI()
 
         class Person:
@@ -654,7 +652,7 @@ class TestGraphQLRemote:
                 return self._rob
 
         # type: ignore[reportIncompatibleMethodOverride]
-        root: Root = GraphQLRemoteObject(executor=api.executor(), api=api)
+        root: Root = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         person: Person = root.rob()
 
@@ -673,7 +671,7 @@ class TestGraphQLRemote:
         person.update(name="pete").name()
         assert person.name() == "pete"
 
-    def test_remote_with_local_property(self):
+    def test_remote_with_local_property(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -692,7 +690,7 @@ class TestGraphQLRemote:
         assert person.age() == 50
         assert person.height == 183
 
-    def test_remote_with_local_method(self):
+    def test_remote_with_local_method(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -711,7 +709,7 @@ class TestGraphQLRemote:
         assert person.age() == 50
         assert person.hello() == "hello"
 
-    def test_remote_with_local_static_method(self):
+    def test_remote_with_local_static_method(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -724,13 +722,12 @@ class TestGraphQLRemote:
             def hello():
                 return "hello"
 
-        # type: ignore[reportIncompatibleMethodOverride]
         person: Person = GraphQLRemoteObject(executor=api.executor(), api=api)
 
         assert person.age() == 50
         assert person.hello() == "hello"
 
-    def test_remote_with_local_class_method(self):
+    def test_remote_with_local_class_method(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -744,8 +741,8 @@ class TestGraphQLRemote:
                 assert cls == Person
                 return "hello"
 
-        # type: ignore[reportIncompatibleMethodOverride]
-        person: Person = GraphQLRemoteObject(executor=api.executor(), api=api)
+
+        person: Person = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert person.age() == 50
         assert person.hello() == "hello"
@@ -756,7 +753,7 @@ class TestGraphQLRemote:
         not available(rick_and_morty_api_url, is_graphql=True),
         reason=f"The Rick and Morty API '{rick_and_morty_api_url}' is unavailable",
     )
-    def test_remote_get_async(self):
+    def test_remote_get_async(self) -> None:
         """
         Tests that a remote GraphQL API can be queried asynchronously.
         """
@@ -813,7 +810,7 @@ class TestGraphQLRemote:
         not available(rick_and_morty_api_url, is_graphql=True),
         reason=f"The Rick and Morty API '{rick_and_morty_api_url}' is unavailable",
     )
-    def test_remote_get_async_await(self):
+    def test_remote_get_async_await(self) -> None:
         """
         Tests that a remote GraphQL API can be queried asynchronously with awaits.
         """
@@ -848,7 +845,7 @@ class TestGraphQLRemote:
 
         assert asyncio.run(fetch()) == "Rick Sanchez"
 
-    def test_remote_field_call_async(self):
+    def test_remote_field_call_async(self) -> None:
         """
         Tests that a remote field can be invoked with call_async.
         """
@@ -882,7 +879,7 @@ class TestGraphQLRemote:
 
         assert asyncio.run(fetch()) == "Rick Sanchez"
 
-    def test_remote_query_fetch_str_list(self):
+    def test_remote_query_fetch_str_list(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)

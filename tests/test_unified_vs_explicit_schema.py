@@ -25,7 +25,7 @@ class Message:
 
 class TestUnifiedVsExplicitSchema:
 
-    def test_unified_schema_with_asyncgen_auto_detection(self):
+    def test_unified_schema_with_asyncgen_auto_detection(self) -> None:
         """Test unified schema with AsyncGenerator auto-detection for subscriptions"""
 
         # Create API first
@@ -62,7 +62,7 @@ class TestUnifiedVsExplicitSchema:
         assert "updateUser" in schema.mutation_type.fields
         assert "onUserUpdated" in schema.subscription_type.fields
 
-    def test_unified_schema_with_explicit_subscription(self):
+    def test_unified_schema_with_explicit_subscription(self) -> None:
         """Test unified schema with explicit subscription=True parameter"""
         # Create API first
         api = GraphQLAPI()
@@ -94,7 +94,7 @@ class TestUnifiedVsExplicitSchema:
         assert "sendMessage" in schema.mutation_type.fields
         assert "onMessageSent" in schema.subscription_type.fields
 
-    def test_explicit_schema_with_separate_types(self):
+    def test_explicit_schema_with_separate_types(self) -> None:
         """Test explicit schema with separate Query, Mutation, and Subscription classes"""
         # Create API for explicit types mode
         api = GraphQLAPI()
@@ -132,7 +132,7 @@ class TestUnifiedVsExplicitSchema:
         assert "createUser" in schema.mutation_type.fields
         assert "onUserCreated" in schema.subscription_type.fields
 
-    def test_explicit_schema_query_only(self):
+    def test_explicit_schema_query_only(self) -> None:
         """Test explicit schema with only Query type (minimal setup)"""
         # Create API for minimal mode
         api = GraphQLAPI()
@@ -153,7 +153,7 @@ class TestUnifiedVsExplicitSchema:
 
         assert "hello" in schema.query_type.fields
 
-    def test_validation_cannot_mix_schema_styles(self):
+    def test_validation_cannot_mix_schema_styles(self) -> None:
         """Test that mixing unified and explicit schema styles raises ValueError"""
         class DummyRoot:
             pass
@@ -176,7 +176,7 @@ class TestUnifiedVsExplicitSchema:
         with pytest.raises(ValueError, match="Cannot use root_type with query_type"):
             GraphQLAPI(root_type=Root, query_type=Query)
 
-    def test_empty_api_creates_placeholder(self):
+    def test_empty_api_creates_placeholder(self) -> None:
         """Test that empty API creates placeholder schema for backward compatibility"""
         # Empty constructor is allowed for backward compatibility
         api = GraphQLAPI()
@@ -187,7 +187,7 @@ class TestUnifiedVsExplicitSchema:
         assert schema.query_type.name == "PlaceholderQuery"
         assert "placeholder" in schema.query_type.fields
 
-    def test_field_cannot_be_both_mutable_and_subscription(self):
+    def test_field_cannot_be_both_mutable_and_subscription(self) -> None:
         """Test that a field cannot be both mutable and subscription"""
         class DummyRoot:
             pass
@@ -201,7 +201,7 @@ class TestUnifiedVsExplicitSchema:
                 return "invalid"
 
     @pytest.mark.asyncio
-    async def test_unified_schema_subscription_execution(self):
+    async def test_unified_schema_subscription_execution(self) -> None:
         """Test that unified schema subscription actually works"""
         # Create API first
         api = GraphQLAPI()

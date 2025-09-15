@@ -1,6 +1,6 @@
 from asyncio import create_task, sleep, wait
 from dataclasses import dataclass
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator
 import enum
 
 import pytest
@@ -22,18 +22,18 @@ count = 0
 pubsub = SimplePubSub()
 
 
-async def resolve_count(_root, info, **args):
+async def resolve_count(_root: Any, info: Any, **args: Any) -> Any:
     return count
 
 
-async def resolve_increase_count(_root, info, **args):
+async def resolve_increase_count(_root: Any, info: Any, **args: Any) -> Any:
     global count
     count += 1
     pubsub.emit(count)
     return count
 
 
-def subscribe_count(_root, info):
+def subscribe_count(_root: Any, info: Any) -> Any:
     return pubsub.get_subscriber()
 
 
@@ -62,7 +62,7 @@ schema = GraphQLSchema(
 
 class TestSubscriptions:
     @pytest.mark.asyncio
-    async def test_subscribe_to_count(self):
+    async def test_subscribe_to_count(self) -> None:
         a = await graphql(schema, "query {count}")
         b = await graphql(schema, "mutation {increaseCount}")
         c = await graphql(schema, "query {count}")
@@ -101,7 +101,7 @@ class TestSubscriptions:
         )
 
     @pytest.mark.asyncio
-    async def test_graphql_api_subscribe(self):
+    async def test_graphql_api_subscribe(self) -> None:
         api = GraphQLAPI()
 
         @dataclass
@@ -151,7 +151,7 @@ class TestSubscriptions:
         ]
 
     @pytest.mark.asyncio
-    async def test_subscription_with_arguments(self):
+    async def test_subscription_with_arguments(self) -> None:
         """Test subscription with arguments"""
         api = GraphQLAPI()
 
@@ -208,7 +208,7 @@ class TestSubscriptions:
         assert received[1]["onMessage"]["content"] == "Welcome to general"
 
     @pytest.mark.asyncio
-    async def test_subscription_with_complex_types(self):
+    async def test_subscription_with_complex_types(self) -> None:
         """Test subscription with complex nested types"""
         api = GraphQLAPI()
 
@@ -288,7 +288,7 @@ class TestSubscriptions:
         assert received[1]["onPostCreated"]["title"] == "Async Programming"
 
     @pytest.mark.asyncio
-    async def test_subscription_with_enum_types(self):
+    async def test_subscription_with_enum_types(self) -> None:
         """Test subscription with enum types"""
         api = GraphQLAPI()
 
@@ -346,7 +346,7 @@ class TestSubscriptions:
         assert received[1]["onUserStatusChange"]["userId"] == "user2"
 
     @pytest.mark.asyncio
-    async def test_subscription_error_handling(self):
+    async def test_subscription_error_handling(self) -> None:
         """Test subscription error handling"""
         api = GraphQLAPI()
 

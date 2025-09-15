@@ -37,7 +37,7 @@ class Root:
 
 
 class TestCalculator:
-    def test_calculator_add(self):
+    def test_calculator_add(self) -> None:
         executor = api.executor()  # Use module-level api
 
         test_query = """
@@ -52,7 +52,7 @@ class TestCalculator:
         assert not result.errors
         assert result.data == expected
 
-    def test_calculator_subtract(self):
+    def test_calculator_subtract(self) -> None:
         executor = api.executor()  # Use module-level api
 
         test_query = """
@@ -67,7 +67,7 @@ class TestCalculator:
         assert not result.errors
         assert result.data == expected
 
-    def test_calculator_multiply(self):
+    def test_calculator_multiply(self) -> None:
         executor = api.executor()  # Use module-level api
 
         test_query = """
@@ -82,7 +82,7 @@ class TestCalculator:
         assert not result.errors
         assert result.data == expected
 
-    def test_calculator_divide(self):
+    def test_calculator_divide(self) -> None:
         executor = api.executor()  # Use module-level api
 
         test_query = """
@@ -97,7 +97,7 @@ class TestCalculator:
         assert not result.errors
         assert result.data == expected
 
-    def test_calculator_divide_by_zero(self):
+    def test_calculator_divide_by_zero(self) -> None:
         executor = api.executor()
 
         test_query = """

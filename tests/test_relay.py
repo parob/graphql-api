@@ -6,7 +6,7 @@ from graphql_api.relay import Connection, Edge, Node, PageInfo
 
 
 class TestRelay:
-    def test_relay_query(self):
+    def test_relay_query(self) -> None:
         api = GraphQLAPI()
 
         class Person(Node):

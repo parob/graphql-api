@@ -12,7 +12,7 @@ T = TypeVar('T')
 
 
 class TestGraphQLDirectives:
-    def test_operation_directive(self):
+    def test_operation_directive(self) -> None:
         class TestSchema:
             @field
             def test(self, a: int) -> int:
@@ -38,7 +38,7 @@ class TestGraphQLDirectives:
         assert not result.errors
         assert result.data == {"test": 2}
 
-    def test_custom_directive(self):
+    def test_custom_directive(self) -> None:
         custom_directive_definition = GraphQLDirective(
             name="test1",
             locations=[
@@ -67,7 +67,7 @@ class TestGraphQLDirectives:
 
         assert "directive @test1" in printed_schema
 
-    def test_builtin_directive(self):
+    def test_builtin_directive(self) -> None:
         @type
         class TestSchema:
             @deprecated(reason="deprecated reason")
@@ -85,7 +85,7 @@ class TestGraphQLDirectives:
 
         assert '@deprecated(reason: "deprecated reason")' in printed_schema
 
-    def test_schema_directive_object(self):
+    def test_schema_directive_object(self) -> None:
         key = SchemaDirective(
             name="key",
             locations=[DirectiveLocation.OBJECT],
@@ -122,7 +122,7 @@ class TestGraphQLDirectives:
         assert "object_decorator_key" in printed_schema
         assert "object_key" in printed_schema
 
-    def test_schema_directive_field(self):
+    def test_schema_directive_field(self) -> None:
         tag = SchemaDirective(
             name="tag",
             locations=[DirectiveLocation.FIELD_DEFINITION],
@@ -170,7 +170,7 @@ class TestGraphQLDirectives:
 
         assert "mutable_field_decorator_tag" in printed_schema
 
-    def test_schema_directive_union(self):
+    def test_schema_directive_union(self) -> None:
         big = SchemaDirective(
             name="big",
             locations=[DirectiveLocation.UNION],
@@ -201,7 +201,7 @@ class TestGraphQLDirectives:
         # The big directive should be available in the schema since it's passed to GraphQLAPI
         assert "directive @big" in printed_schema
 
-    def test_schema_directive_interface(self):
+    def test_schema_directive_interface(self) -> None:
         interface_directive = SchemaDirective(
             name="interface_directive",
             locations=[DirectiveLocation.INTERFACE, DirectiveLocation.OBJECT],
@@ -241,7 +241,7 @@ class TestGraphQLDirectives:
         assert "directive @interface_directive" in printed_schema
         assert "Interface directive description" in printed_schema
 
-    def test_schema_directive_enum(self):
+    def test_schema_directive_enum(self) -> None:
         enum_directive = SchemaDirective(
             name="enum_directive",
             locations=[DirectiveLocation.ENUM],
@@ -286,7 +286,7 @@ class TestGraphQLDirectives:
         assert "Enum directive description" in printed_schema
         assert "Enum value directive description" in printed_schema
 
-    def test_schema_directive_invalid_location(self):
+    def test_schema_directive_invalid_location(self) -> None:
         object_directive = SchemaDirective(
             name="object_directive", locations=[DirectiveLocation.OBJECT]
         )
@@ -308,7 +308,7 @@ class TestGraphQLDirectives:
         with pytest.raises(TypeError, match="Directive '@object_directive' only supp"):
             schema, _ = api.build_schema()
 
-    def test_multiple_schema_directives(self):
+    def test_multiple_schema_directives(self) -> None:
         key = SchemaDirective(
             name="key",
             locations=[DirectiveLocation.OBJECT],
@@ -389,7 +389,7 @@ class TestGraphQLDirectives:
         return [query_directive.directive for query_directive in query_directives]
 
     # TODO: Add test for schema directives locations
-    # def test_schema_directives_locations(self):
+    # def test_schema_directives_locations(self) -> None:
     #     key = SchemaDirective(
     #         name="key",
     #         locations=[DirectiveLocation.OBJECT],

@@ -7,7 +7,7 @@ from graphql_api.api import GraphQLAPI
 
 
 class TestGraphQL:
-    def test_basic_docstring(self):
+    def test_basic_docstring(self) -> None:
         api = GraphQLAPI()
 
         class Node:
@@ -51,7 +51,7 @@ class TestGraphQL:
 
         assert node_field.description == "NODE_FIELD_DOCSTRING"
 
-    def test_enum_docstring(self):
+    def test_enum_docstring(self) -> None:
         api = GraphQLAPI()
 
         class TestEnumA(Enum):
@@ -86,7 +86,7 @@ class TestGraphQL:
 
         assert enum_field_b.type.of_type.description == "TEST_ENUM_B_DOCSTRING"
 
-    def test_basic_dataclass_docstring(self):
+    def test_basic_dataclass_docstring(self) -> None:
         api = GraphQLAPI()
 
         @dataclass
@@ -134,7 +134,7 @@ class TestGraphQL:
 
         assert node_field.description == "NODE_FIELD_DOCSTRING"
 
-    def test_parsed_dataclass_docstring(self):
+    def test_parsed_dataclass_docstring(self) -> None:
         api = GraphQLAPI()
 
         @dataclass
@@ -188,7 +188,7 @@ class TestGraphQL:
         assert int_field.description == "INT_FIELD_DOCSTRING"
         assert node_field.description == "NODE_FIELD_DOCSTRING"
 
-    def test_google_dataclass_docstring(self):
+    def test_google_dataclass_docstring(self) -> None:
         api = GraphQLAPI()
 
         @dataclass
@@ -229,7 +229,7 @@ class TestGraphQL:
         assert int_field.description == "INT_FIELD_DOCSTRING"
         assert node_field.description == "NODE_FIELD_DOCSTRING"
 
-    def test_pydantic_docstring_filtering(self):
+    def test_pydantic_docstring_filtering(self) -> None:
         api = GraphQLAPI()
 
         class PydanticModelNoDocstring(BaseModel):
@@ -263,7 +263,7 @@ class TestGraphQL:
         with_docstring_type = with_docstring_field.type.of_type
         assert with_docstring_type.description == "Custom docstring for this Pydantic model."
 
-    def test_dataclass_docstring_filtering(self):
+    def test_dataclass_docstring_filtering(self) -> None:
         api = GraphQLAPI()
 
         @dataclass
@@ -299,7 +299,7 @@ class TestGraphQL:
         with_docstring_type = with_docstring_field.type.of_type
         assert with_docstring_type.description == "Custom docstring for this dataclass."
 
-    def test_builtin_inheritance_docstring_filtering(self):
+    def test_builtin_inheritance_docstring_filtering(self) -> None:
         # Test the _get_class_description function directly since the GraphQL mapping
         # may not work well with Exception subclasses
         from graphql_api.mapper import _get_class_description
@@ -353,7 +353,7 @@ class TestGraphQL:
         assert _get_class_description(
             InheritsVerboseWithDoc) == "Custom docstring for verbose inheritance."
 
-    def test_long_user_docstrings_preserved(self):
+    def test_long_user_docstrings_preserved(self) -> None:
         api = GraphQLAPI()
         from graphql_api.mapper import _get_class_description
 
@@ -463,7 +463,7 @@ class TestGraphQL:
         assert len(long_user_docstring) > 500  # Should be the full docstring
         assert "intentional documentation" in long_user_docstring
 
-    def test_docstring_truncation_feature(self):
+    def test_docstring_truncation_feature(self) -> None:
         """Test that docstrings are truncated when max_docstring_length is set."""
 
         # Test Pydantic model with long docstring

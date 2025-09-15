@@ -61,7 +61,7 @@ def available(url, method="POST", is_graphql=False):
 
 # noinspection PyPep8Naming,DuplicatedCode
 class TestGraphQL:
-    def test_multiple_apis(self):
+    def test_multiple_apis(self) -> None:
         api_1 = GraphQLAPI()
         api_2 = GraphQLAPI()
 
@@ -127,7 +127,7 @@ class TestGraphQL:
 
         assert result_3.errors
 
-    def test_deep_query(self):
+    def test_deep_query(self) -> None:
         api = GraphQLAPI()
 
         class Math:
@@ -157,7 +157,7 @@ class TestGraphQL:
         assert not result.errors
         assert result.data == expected
 
-    def test_query_object_input(self):
+    def test_query_object_input(self) -> None:
         api = GraphQLAPI()
 
         class Person:
@@ -183,7 +183,7 @@ class TestGraphQL:
         assert not result.errors
         assert result.data == expected
 
-    def test_custom_query_input(self):
+    def test_custom_query_input(self) -> None:
         api = GraphQLAPI()
 
         class Person:
@@ -225,7 +225,7 @@ class TestGraphQL:
         assert not result.errors
         assert result.data == expected
 
-    def test_runtime_field(self):
+    def test_runtime_field(self) -> None:
         api = GraphQLAPI()
 
         class Person:
@@ -260,7 +260,7 @@ class TestGraphQL:
         assert not result.errors
         assert result.data == expected
 
-    def test_recursive_query(self):
+    def test_recursive_query(self) -> None:
         api = GraphQLAPI()
 
         class Root:
@@ -291,7 +291,7 @@ class TestGraphQL:
         assert not result.errors
         assert result.data == expected
 
-    def test_field_filter(self):
+    def test_field_filter(self) -> None:
         # noinspection PyUnusedLocal
         class Root:
             @field
@@ -325,7 +325,7 @@ class TestGraphQL:
 
         assert result.errors
 
-    def test_property(self):
+    def test_property(self) -> None:
         api = GraphQLAPI()
 
         # noinspection PyUnusedLocal
@@ -372,7 +372,7 @@ class TestGraphQL:
         assert not result.errors
         assert result.data == expected
 
-    def test_interface(self):
+    def test_interface(self) -> None:
         api = GraphQLAPI()
 
         @api.type(interface=True)
@@ -438,7 +438,7 @@ class TestGraphQL:
         assert not result.errors
         assert result.data == expected
 
-    def test_multiple_interfaces(self):
+    def test_multiple_interfaces(self) -> None:
         api = GraphQLAPI()
 
         @api.type(interface=True)
@@ -504,7 +504,7 @@ class TestGraphQL:
         assert not result.errors
         assert result.data == expected
 
-    def test_dataclass(self):
+    def test_dataclass(self) -> None:
         api = GraphQLAPI()
 
         # noinspection PyUnusedLocal
@@ -529,7 +529,7 @@ class TestGraphQL:
         assert not result.errors
         assert result.data == expected
 
-    def test_mutation(self):
+    def test_mutation(self) -> None:
         api = GraphQLAPI()
 
         # noinspection PyUnusedLocal
@@ -553,7 +553,7 @@ class TestGraphQL:
         assert not result.errors
         assert result.data == expected
 
-    def test_deep_mutation(self):
+    def test_deep_mutation(self) -> None:
         api = GraphQLAPI()
 
         class Math:
@@ -591,7 +591,7 @@ class TestGraphQL:
         assert not result.errors
         assert result.data == expected
 
-    def test_print(self):
+    def test_print(self) -> None:
         api = GraphQLAPI()
 
         class Math:
@@ -645,7 +645,7 @@ class TestGraphQL:
             expected_schema_str.split("}"))
 
     # noinspection PyUnusedLocal
-    def test_middleware(self):
+    def test_middleware(self) -> None:
         api = GraphQLAPI()
 
         was_called = []
@@ -696,7 +696,7 @@ class TestGraphQL:
         assert result.data == expected
 
     # noinspection PyUnusedLocal
-    def test_input(self):
+    def test_input(self) -> None:
         api = GraphQLAPI()
 
         class TestInputObject:
@@ -735,7 +735,7 @@ class TestGraphQL:
         assert result.data == expected
 
     # noinspection PyUnusedLocal
-    def test_enum(self):
+    def test_enum(self) -> None:
         api = GraphQLAPI()
 
         class AnimalType(enum.Enum):
@@ -766,7 +766,7 @@ class TestGraphQL:
 
         assert result.data == expected
 
-    def test_list(self):
+    def test_list(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -808,7 +808,7 @@ class TestGraphQL:
         }
 
     # noinspection PyUnusedLocal
-    def test_enum_list(self):
+    def test_enum_list(self) -> None:
         api = GraphQLAPI()
 
         class AnimalType(enum.Enum):
@@ -837,7 +837,7 @@ class TestGraphQL:
 
         assert result.data == expected
 
-    def test_optional_enum(self):
+    def test_optional_enum(self) -> None:
         api = GraphQLAPI()
 
         class AnimalType(enum.Enum):
@@ -873,7 +873,7 @@ class TestGraphQL:
         assert result.data == expected
 
     # noinspection PyUnusedLocal
-    def test_functional_enum(self):
+    def test_functional_enum(self) -> None:
         api = GraphQLAPI()
 
         AnimalType = enum.Enum("AnimalType", ["dog", "cat"])
@@ -902,7 +902,7 @@ class TestGraphQL:
 
         assert result.data == expected
 
-    def test_string_enum(self):
+    def test_string_enum(self) -> None:
         """Test string enum functionality"""
         api = GraphQLAPI()
 
@@ -941,7 +941,7 @@ class TestGraphQL:
         result2 = executor.execute(query2)
         assert result2.data == {'echoTimeframe': 'ALL_TIME'}
 
-    def test_string_enum_with_regular_enum(self):
+    def test_string_enum_with_regular_enum(self) -> None:
         """Test that both string enums and regular enums work together"""
         api = GraphQLAPI()
 
@@ -985,7 +985,7 @@ class TestGraphQL:
             'combine': 'active:3'
         }
 
-    def test_string_enum_optional(self):
+    def test_string_enum_optional(self) -> None:
         """Test optional string enum"""
         api = GraphQLAPI()
 
@@ -1022,7 +1022,7 @@ class TestGraphQL:
         result2 = executor.execute(query2)
         assert result2.data == {'getColor': 'No color specified'}
 
-    def test_string_enum_list(self):
+    def test_string_enum_list(self) -> None:
         """Test list of string enums"""
         api = GraphQLAPI()
 
@@ -1063,7 +1063,7 @@ class TestGraphQL:
         result2 = executor.execute(query2)
         assert result2.data == {'filterTags': ['PYTHON', 'RUST']}
 
-    def test_string_enum_argument(self):
+    def test_string_enum_argument(self) -> None:
         api = GraphQLAPI()
 
         class Tag(str, enum.Enum):
@@ -1089,7 +1089,7 @@ class TestGraphQL:
         result = executor.execute(query, variables={'tag': Tag.PYTHON.name})
         assert result.data == {'checkTag': True}
 
-    def test_string_enum_variable_rejects_value_literal(self):
+    def test_string_enum_variable_rejects_value_literal(self) -> None:
         api = GraphQLAPI()
 
         class Tag(str, enum.Enum):
@@ -1111,7 +1111,7 @@ class TestGraphQL:
         result = executor.execute(query, variables={"tag": "python"})
         assert result.errors and "does not exist in 'TagEnum'" in result.errors[0].message
 
-    def test_regular_enum_variable(self):
+    def test_regular_enum_variable(self) -> None:
         api = GraphQLAPI()
 
         class Priority(enum.Enum):
@@ -1129,7 +1129,7 @@ class TestGraphQL:
         result = executor.execute(q, variables={"p": "HIGH"})
         assert result.data == {"isHigh": True}
 
-    def test_input_object_enum_default_and_override(self):
+    def test_input_object_enum_default_and_override(self) -> None:
         api = GraphQLAPI()
 
         class Status(str, enum.Enum):
@@ -1156,7 +1156,7 @@ class TestGraphQL:
         r2 = executor.execute(q, variables={"s": "INACTIVE"})
         assert r2.data == {"getStatus": "INACTIVE"}
 
-    def test_string_enum_list_variable(self):
+    def test_string_enum_list_variable(self) -> None:
         api = GraphQLAPI()
 
         class Tag(str, enum.Enum):
@@ -1175,7 +1175,7 @@ class TestGraphQL:
         r = executor.execute(q, variables={"tags": ["PYTHON", "RUST"]})
         assert r.data == {"echo": ["PYTHON", "RUST"]}
 
-    def test_optional_enum_undefined_vs_null(self):
+    def test_optional_enum_undefined_vs_null(self) -> None:
         api = GraphQLAPI()
 
         class Color(str, enum.Enum):
@@ -1196,7 +1196,7 @@ class TestGraphQL:
         r2 = executor.execute(q, variables={"c": None})
         assert r2.data == {"show": "none"}
 
-    def test_returning_underlying_value_maps_to_enum_name(self):
+    def test_returning_underlying_value_maps_to_enum_name(self) -> None:
         api = GraphQLAPI()
 
         class Color(str, enum.Enum):
@@ -1213,7 +1213,7 @@ class TestGraphQL:
         r = executor.execute("query{ color }")
         assert r.data == {"color": "RED"}
 
-    def test_enum_variable_mixed_case_invalid(self):
+    def test_enum_variable_mixed_case_invalid(self) -> None:
         api = GraphQLAPI()
 
         class Tag(str, enum.Enum):
@@ -1231,7 +1231,7 @@ class TestGraphQL:
         assert res.errors and "does not exist in 'TagEnum'" in res.errors[0].message
 
     # noinspection PyUnusedLocal
-    def test_literal(self):
+    def test_literal(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -1258,7 +1258,7 @@ class TestGraphQL:
         assert result.data == expected
 
     # noinspection PyUnusedLocal
-    def test_required(self):
+    def test_required(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -1283,7 +1283,7 @@ class TestGraphQL:
         )
 
     # noinspection PyUnusedLocal
-    def test_optional(self):
+    def test_optional(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -1307,7 +1307,7 @@ class TestGraphQL:
         assert result.data == expected
 
     @pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python3.10")
-    def test_optional_311(self):
+    def test_optional_311(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -1331,7 +1331,7 @@ class TestGraphQL:
         assert result.data == expected
 
     # noinspection PyUnusedLocal
-    def test_union(self):
+    def test_union(self) -> None:
         api = GraphQLAPI()
 
         class Customer:
@@ -1476,7 +1476,7 @@ class TestGraphQL:
         }
 
     # noinspection PyUnusedLocal
-    def test_non_null(self):
+    def test_non_null(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -1515,7 +1515,7 @@ class TestGraphQL:
         assert null_result.data == expected
 
     # noinspection PyUnusedLocal
-    def test_context(self):
+    def test_context(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -1546,7 +1546,7 @@ class TestGraphQL:
         not available(star_wars_api_url),
         reason=f"The star wars API '{star_wars_api_url}' is unavailable",
     )
-    def test_remote_get(self):
+    def test_remote_get(self) -> None:
         api = GraphQLAPI()
 
         RemoteAPI = GraphQLRemoteExecutor(url=self.star_wars_api_url)
@@ -1554,8 +1554,7 @@ class TestGraphQL:
         @api.type(is_root_type=True)
         class Root:
             @api.field
-            # type: ignore[valid-type]
-            def star_wars(self, context: GraphQLContext) -> RemoteAPI:
+            def star_wars(self, context: GraphQLContext) -> RemoteAPI:  # type: ignore[valid-type]
                 assert (
                     context.request is not None
                 ), "GraphQLContext.request cannot be None"
@@ -1599,7 +1598,7 @@ class TestGraphQL:
         not available(pokemon_graphql_url),
         reason=f"The Pokemon API '{pokemon_graphql_url}' is unavailable",
     )
-    def test_remote_post(self):
+    def test_remote_post(self) -> None:
         api = GraphQLAPI()
 
         RemoteAPI = GraphQLRemoteExecutor(
@@ -1610,8 +1609,7 @@ class TestGraphQL:
         @api.type(is_root_type=True)
         class Root:
             @api.field
-            # type: ignore[valid-type]
-            def pokemon(self, context: GraphQLContext) -> RemoteAPI:
+            def pokemon(self, context: GraphQLContext) -> RemoteAPI:  # type: ignore[valid-type]
                 assert (
                     context.request is not None
                 ), "GraphQLContext.request cannot be None"
@@ -1657,7 +1655,7 @@ class TestGraphQL:
         not available(pokemon_graphql_url),
         reason=f"The pokemon API '{pokemon_graphql_url}' is unavailable",
     )
-    def test_remote_post_helper(self):
+    def test_remote_post_helper(self) -> None:
         api = GraphQLAPI()
 
         RemoteAPI = GraphQLRemoteExecutor(
@@ -1668,8 +1666,7 @@ class TestGraphQL:
         @api.type(is_root_type=True)
         class Root:
             @api.field
-            # type: ignore[valid-type]
-            def graphql(self, context: GraphQLContext) -> RemoteAPI:
+            def graphql(self, context: GraphQLContext) -> RemoteAPI:  # type: ignore[valid-type]
                 return remote_execute(executor=RemoteAPI, context=context)
 
         executor = api.executor()
@@ -1699,7 +1696,7 @@ class TestGraphQL:
         assert pokemon.get("types")[0].get("name") == "Electric"
 
     # noinspection PyUnusedLocal
-    def test_executor_to_ast(self):
+    def test_executor_to_ast(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -1715,7 +1712,7 @@ class TestGraphQL:
         # noinspection PyProtectedMember
         assert schema.type_map.keys() == executor.schema.type_map.keys()
 
-    def test_root_type_delegate(self):
+    def test_root_type_delegate(self) -> None:
         api = GraphQLAPI()
 
         updated_schema = GraphQLSchema()
@@ -1742,7 +1739,7 @@ class TestGraphQL:
         assert Root.input_schema
         assert schema == updated_schema
 
-    def test_schema_subclass(self):
+    def test_schema_subclass(self) -> None:
         class Interface:
             @field
             def hello(self) -> str:
@@ -1803,7 +1800,7 @@ class TestGraphQL:
         assert not result.errors
         assert result.data is not None and result.data["helloChanged"] == "hello world"
 
-    def test_class_update(self):
+    def test_class_update(self) -> None:
         @dataclass
         class Person:
             name: str
@@ -1838,7 +1835,7 @@ class TestGraphQL:
             result.data is not None and result.data["hello"] == f"hello {hash('rob')}"
         )
 
-    def test_class_update_same_name(self):
+    def test_class_update_same_name(self) -> None:
         @dataclass
         class PersonInterface:
             name: str
@@ -1874,7 +1871,7 @@ class TestGraphQL:
             result.data is not None and result.data["hello"] == f"hello {hash('rob')}"
         )
 
-    def test_debug_root_type_issue(self):
+    def test_debug_root_type_issue(self) -> None:
         """
         Debug test to understand why root type isn't being set properly
         """
@@ -1904,7 +1901,7 @@ class TestGraphQL:
         print("Query result:", result.data)
         print("Query errors:", result.errors)
 
-    def test_filter_removes_all_root_fields_causes_placeholder(self):
+    def test_filter_removes_all_root_fields_causes_placeholder(self) -> None:
         """
         Test that when ALL fields in the root type are filtered out,
         the root type name is preserved and a meaningful schema field is provided.
@@ -1946,7 +1943,7 @@ class TestGraphQL:
             result.data and "filtered" in result.data["_schema"].lower()
         ), "Should indicate filtered state"
 
-    def test_filter_behavior_comparison(self):
+    def test_filter_behavior_comparison(self) -> None:
         """
         Test filtering behavior with mixed scenarios:
         - Object types with some fields filtered should remain accessible
@@ -2026,7 +2023,7 @@ class TestGraphQL:
         assert "UserData" in filtered_schema.type_map
         assert "AdminData" not in filtered_schema.type_map  # Removed
 
-    def test_filter_should_preserve_object_types_with_remaining_fields(self):
+    def test_filter_should_preserve_object_types_with_remaining_fields(self) -> None:
         """
         Test that object types with some fields filtered remain accessible
         with only the filtered fields removed.
@@ -2097,7 +2094,7 @@ class TestGraphQL:
         assert "publicInfo" in user_data_type.fields
         assert "privateInfo" not in user_data_type.fields
 
-    def test_filter_object_type_field_removal_issue(self):
+    def test_filter_object_type_field_removal_issue(self) -> None:
         """
         Test filtering behavior for complex nested object types.
         Verifies that object types with remaining fields are preserved
@@ -2264,7 +2261,7 @@ class TestGraphQL:
         assert "bio" in profile_fields
         assert "socialSecurity" not in profile_fields
 
-    def test_graphql_api_enum_behavior(self):
+    def test_graphql_api_enum_behavior(self) -> None:
         api = GraphQLAPI()
 
         class Tag(str, enum.Enum):
@@ -2307,7 +2304,7 @@ class TestGraphQL:
         bad = executor.execute(query_enum, variables={'tag': 'python'})
         assert bad.errors and "does not exist in 'TagEnum'" in bad.errors[0].message
 
-    def test_graphql_api_enum_behavior_int(self):
+    def test_graphql_api_enum_behavior_int(self) -> None:
         api = GraphQLAPI()
 
         class Tag(int, enum.Enum):

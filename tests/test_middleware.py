@@ -6,7 +6,7 @@ from graphql_api.remote import GraphQLRemoteObject
 
 
 class TestMiddleware:
-    def test_middleware_local_proxy(self):
+    def test_middleware_local_proxy(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -16,7 +16,7 @@ class TestMiddleware:
                 return 5
 
         # noinspection PyTypeChecker
-        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)
+        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore
 
         def remote_iterable(root, info, **args):
             return house
@@ -28,7 +28,7 @@ class TestMiddleware:
 
         assert value == house
 
-    def test_middleware(self):
+    def test_middleware(self) -> None:
         def log_middleware(next_, root, info, **args) -> Any:
             print("before")
             value = next_(root, info, **args)

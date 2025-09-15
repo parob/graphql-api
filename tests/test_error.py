@@ -8,7 +8,7 @@ from graphql_api.mapper import GraphQLMetaKey
 
 # noinspection PyPep8Naming,DuplicatedCode
 class TestError:
-    def test_raise(self):
+    def test_raise(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -28,7 +28,7 @@ class TestError:
 
         assert result.errors
 
-    def test_nullable_raise(self):
+    def test_nullable_raise(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -48,7 +48,7 @@ class TestError:
 
         assert result.data == {"math": None}
 
-    def test_partial_raise(self):
+    def test_partial_raise(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -89,7 +89,7 @@ class TestError:
         assert result.errors
         assert result.data
 
-    def test_error_protection(self):
+    def test_error_protection(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -107,7 +107,7 @@ class TestError:
             """
             )
 
-    def test_api_error_protection(self):
+    def test_api_error_protection(self) -> None:
         api = GraphQLAPI(error_protection=False)
 
         @api.type(is_root_type=True)
@@ -125,7 +125,7 @@ class TestError:
             """
             )
 
-    def test_execute_error_protection(self):
+    def test_execute_error_protection(self) -> None:
         api = GraphQLAPI(error_protection=False)
 
         @api.type(is_root_type=True)

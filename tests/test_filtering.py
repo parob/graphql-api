@@ -4,7 +4,7 @@ from graphql_api.directives import print_schema
 
 
 class TestSchemaFiltering:
-    def test_query_remove_invalid(self):
+    def test_query_remove_invalid(self) -> None:
         api = GraphQLAPI()
 
         class Person:
@@ -39,7 +39,7 @@ class TestSchemaFiltering:
         assert result.errors
         assert "Cannot query field" in result.errors[0].message
 
-    def test_mutation_return_query(self):
+    def test_mutation_return_query(self) -> None:
         """
         Mutation fields by default should return queries
         :return:
@@ -85,14 +85,15 @@ class TestSchemaFiltering:
 
         assert result.data == expected
 
-    def test_keep_interface(self):
+    def test_keep_interface(self) -> None:
         api = GraphQLAPI()
 
         @api.type(interface=True)
         class Person:
+
             @api.field
             def name(self) -> str:
-                pass
+                return ""
 
         class Employee(Person):
             def __init__(self):
@@ -160,7 +161,7 @@ class TestSchemaFiltering:
 
         assert result.data == expected_2
 
-    def test_mutation_return_mutable_flag(self):
+    def test_mutation_return_mutable_flag(self) -> None:
         api = GraphQLAPI()
 
         @api.type
@@ -258,7 +259,7 @@ class TestSchemaFiltering:
         assert result.errors
         assert "Cannot query field 'name'" in result.errors[0].message
 
-    def test_filter_all_fields_removes_empty_type(self):
+    def test_filter_all_fields_removes_empty_type(self) -> None:
         """
         Test that when filtering removes all fields from a type,
         in strict mode the empty type is completely removed from the schema
@@ -327,7 +328,7 @@ class TestSchemaFiltering:
         assert "publicData" in root_fields
         assert "secretData" not in root_fields
 
-    def test_preserve_transitive_empty_types(self):
+    def test_preserve_transitive_empty_types(self) -> None:
         """
         Test that preserve_transitive=True preserves object types that have some accessible fields
         when they are referenced by unfiltered types, even if some of their fields are filtered.
@@ -413,7 +414,7 @@ class TestSchemaFiltering:
         assert len(strict_partial_type.fields) == 1
         assert "publicField" in strict_partial_type.fields
 
-    def test_preserve_transitive_vs_strict_difference(self):
+    def test_preserve_transitive_vs_strict_difference(self) -> None:
         """
         Test the difference between preserve_transitive=True and preserve_transitive=False.
         preserve_transitive=True should preserve more types that are referenced
@@ -467,7 +468,7 @@ class TestSchemaFiltering:
         assert "DirectlyReferenced" in strict_type_map
         assert "IndirectlyReferenced" in strict_type_map
 
-    def test_default_filtering_behavior_is_preserve_transitive(self):
+    def test_default_filtering_behavior_is_preserve_transitive(self) -> None:
         """
         Test that the default filtering behavior preserves transitive dependencies.
         This test verifies that TagFilter defaults to preserve_transitive=True.
@@ -512,7 +513,7 @@ class TestSchemaFiltering:
         assert "ReferencedType" in default_types
         assert "Root" in default_types
 
-    def test_filter_response_enum_properties(self):
+    def test_filter_response_enum_properties(self) -> None:
         """
         Test that the FilterResponse enum has correct properties
         """
@@ -534,7 +535,7 @@ class TestSchemaFiltering:
         assert FilterResponse.REMOVE_STRICT.should_filter
         assert not FilterResponse.REMOVE_STRICT.preserve_transitive
 
-    def test_all_filter_response_behaviors(self):
+    def test_all_filter_response_behaviors(self) -> None:
         """
         Test all 4 FilterResponse enum values in a comprehensive scenario
         """
@@ -657,7 +658,7 @@ class TestSchemaFiltering:
         }
         assert result.data == expected
 
-    def test_custom_filter_without_preserve_transitive_attribute(self):
+    def test_custom_filter_without_preserve_transitive_attribute(self) -> None:
         """
         Test that custom filters without preserve_transitive attributes work correctly.
         This addresses the issue where the system was trying to access preserve_transitive
@@ -728,7 +729,7 @@ class TestSchemaFiltering:
         assert not result.errors
         assert result.data == {"data": {"publicField": "public"}}
 
-    def test_non_root_mutable_types_contain_both_field_types(self):
+    def test_non_root_mutable_types_contain_both_field_types(self) -> None:
         """
         Test that non-root mutable types (like UserMutable) contain both mutable fields
         and query fields for GraphQL compatibility. This validates the core mutation behavior.
@@ -828,7 +829,7 @@ class TestSchemaFiltering:
             }
         }
 
-    def test_root_mutation_type_only_has_mutable_fields(self):
+    def test_root_mutation_type_only_has_mutable_fields(self) -> None:
         """
         Test that the root mutation type only contains mutable fields, not query fields.
         This validates that the mutation root filtering is working correctly.
@@ -937,7 +938,7 @@ class TestSchemaFiltering:
             "incrementCounter": 1
         }
 
-    def test_allow_transitive_preserves_object_types(self):
+    def test_allow_transitive_preserves_object_types(self) -> None:
         """
         Test that ALLOW_TRANSITIVE correctly preserves transitive object types
         that would otherwise be filtered out.
@@ -1052,7 +1053,7 @@ class TestSchemaFiltering:
             "publicData": {"info": "public info"}
         }
 
-    def test_allow_transitive_with_remove_vs_remove_strict(self):
+    def test_allow_transitive_with_remove_vs_remove_strict(self) -> None:
         """
         Test that ALLOW_TRANSITIVE works correctly with both REMOVE and REMOVE_STRICT
         for filtering out other fields on the preserved type.
@@ -1169,7 +1170,7 @@ class TestSchemaFiltering:
                 "publicData": {"info": "public info"}
             }, f"Query data should be correct with {test_name}"
 
-    def test_remove_strict_always_removed_regardless_of_transitive(self):
+    def test_remove_strict_always_removed_regardless_of_transitive(self) -> None:
         """
         Test that fields marked with REMOVE_STRICT are always removed,
         even when the type is preserved due to ALLOW_TRANSITIVE logic.
@@ -1294,7 +1295,7 @@ class TestSchemaFiltering:
         assert "Cannot query field 'secretInfo'" in str(
             result_with_forbidden.errors[0])
 
-    def test_unused_mutable_types_filtered_out(self):
+    def test_unused_mutable_types_filtered_out(self) -> None:
         """
         Test that mutable object types that are not used from the root mutation type are filtered out.
         Only mutable types that are actually reachable from the root should remain in the schema.
@@ -1435,7 +1436,7 @@ class TestSchemaFiltering:
             # Expected - the field shouldn't exist
             pass
 
-    def test_filter_mutable_fields(self):
+    def test_filter_mutable_fields(self) -> None:
         """
         Test filtering of mutable fields in both query and mutation contexts
         """
@@ -1538,7 +1539,7 @@ class TestSchemaFiltering:
         assert result.errors
         assert "Cannot query field 'updateAdminNotes'" in str(result.errors[0])
 
-    def test_filter_interface_fields(self):
+    def test_filter_interface_fields(self) -> None:
         """
         Test filtering of fields on interfaces and their implementations
         """
@@ -1624,7 +1625,7 @@ class TestSchemaFiltering:
         assert result.errors
         assert "Cannot query field 'vetData'" in str(result.errors[0])
 
-    def test_filter_nested_types(self):
+    def test_filter_nested_types(self) -> None:
         """
         Test filtering with deeply nested type structures
         """
@@ -1732,7 +1733,7 @@ class TestSchemaFiltering:
         assert result.errors
         assert "Cannot query field 'salary'" in str(result.errors[0])
 
-    def test_filter_list_and_optional_fields(self):
+    def test_filter_list_and_optional_fields(self) -> None:
         """
         Test filtering with list and optional field types
         """
@@ -1825,7 +1826,7 @@ class TestSchemaFiltering:
         assert result.errors
         assert "Cannot query field 'internalTags'" in str(result.errors[0])
 
-    def test_filter_union_types(self):
+    def test_filter_union_types(self) -> None:
         """
         Test filtering with union types
         """
@@ -1918,7 +1919,7 @@ class TestSchemaFiltering:
         assert not result.errors
         assert result.data == {"content": {}}
 
-    def test_filter_multiple_criteria(self):
+    def test_filter_multiple_criteria(self) -> None:
         """
         Test filtering with multiple filter criteria
         """
@@ -2022,7 +2023,7 @@ class TestSchemaFiltering:
         assert result.errors
         assert "Cannot query field 'internalUserData'" in str(result.errors[0])
 
-    def test_filter_empty_mutation_type(self):
+    def test_filter_empty_mutation_type(self) -> None:
         """
         Test that filtering can remove all mutable fields leaving empty mutation type
         """
@@ -2086,7 +2087,7 @@ class TestSchemaFiltering:
         assert result.errors
         # Should fail because updateName field is filtered out
 
-    def test_custom_public_filter(self):
+    def test_custom_public_filter(self) -> None:
         """
         Test that we can use a custom filter to keep public fields and remove non-public ones
         """
@@ -2127,7 +2128,7 @@ class TestSchemaFiltering:
         assert "publicField" in printed_schema
         assert "nonPublicField" not in printed_schema
 
-    def test_recursive_object_type_preservation(self):
+    def test_recursive_object_type_preservation(self) -> None:
         """
         Test that object types on fields of unfiltered objects (recursive)
         are still left on the schema, even if the referenced types would
@@ -2244,7 +2245,7 @@ class TestSchemaFiltering:
         }
         assert result.data == expected
 
-    def test_filter_response_type_safety(self):
+    def test_filter_response_type_safety(self) -> None:
         """Test that the filtering system handles unexpected filter response types gracefully"""
         from graphql_api.reduce import GraphQLFilter, FilterResponse
 
@@ -2321,7 +2322,7 @@ class TestSchemaFiltering:
         # All tests should pass without AttributeError
         assert executor is not None
 
-    def test_remove_unreferenced_types_after_filtering(self):
+    def test_remove_unreferenced_types_after_filtering(self) -> None:
         """Test that types referenced only by filtered fields are removed from the schema."""
         from graphql_api.reduce import TagFilter
         from graphql_api.decorators import field
@@ -2341,29 +2342,29 @@ class TestSchemaFiltering:
 
         class UsedModel:
             def __init__(self):
-                self.name = "test"
-                self.status = UsedEnum.VALUE_A
+                self._name = "test"
+                self._status = UsedEnum.VALUE_A
 
             @field
             def name(self) -> str:
-                return self.name
+                return self._name
 
             @field
             def status(self) -> UsedEnum:
-                return self.status
+                return self._status
 
         class FilteredModel:
             def __init__(self):
-                self.internal_field = "internal"
-                self.filtered_enum = FilteredEnum.FILTERED_X
+                self._internal_field = "internal"
+                self._filtered_enum = FilteredEnum.FILTERED_X
 
             @field
             def internal_field(self) -> str:
-                return self.internal_field
+                return self._internal_field
 
             @field
             def filtered_enum(self) -> FilteredEnum:
-                return self.filtered_enum
+                return self._filtered_enum
 
         @api.type(is_root_type=True)
         class Root:
@@ -2415,7 +2416,7 @@ class TestSchemaFiltering:
         assert "getUsedItem" in filtered_sdl
         assert "getSimpleString" in filtered_sdl
 
-    def test_remove_unreferenced_types_configurable(self):
+    def test_remove_unreferenced_types_configurable(self) -> None:
         """Test that unreferenced type removal can be disabled via configuration."""
         from graphql_api.reduce import TagFilter
         from graphql_api.decorators import field

@@ -9,7 +9,7 @@ from graphql_api.reduce import GraphQLFilter, FilterResponse
 
 
 class TestDataclass:
-    def test_dataclass(self):
+    def test_dataclass(self) -> None:
         api = GraphQLAPI()
 
         # noinspection PyUnusedLocal
@@ -34,7 +34,7 @@ class TestDataclass:
         assert not result.errors
         assert result.data == expected
 
-    def test_dataclass_inheritance(self):
+    def test_dataclass_inheritance(self) -> None:
         api = GraphQLAPI()
 
         @dataclass
@@ -68,7 +68,7 @@ class TestDataclass:
         assert not result.errors
         assert result.data == {"person": {"name": "rob", "embedding": [1, 2]}}
 
-    def test_allow_transitive_preserves_all_fields_on_dataclass(self):
+    def test_allow_transitive_preserves_all_fields_on_dataclass(self) -> None:
         """
         Test that ALLOW_TRANSITIVE correctly preserves all available fields
         on a dataclass-based GraphQL type when the type is kept by filtering.
@@ -177,7 +177,7 @@ class TestDataclass:
             }
         }, f"Expected all three fields but got: {result.data}"
 
-    def test_unused_mutable_types_filtered_out_simple(self):
+    def test_unused_mutable_types_filtered_out_simple(self) -> None:
         """
         Test that unused mutable types are correctly filtered out.
 
@@ -288,7 +288,7 @@ class TestDataclass:
             }
         }
 
-    def test_unused_mutable_types_bug_demonstration(self):
+    def test_unused_mutable_types_bug_demonstration(self) -> None:
         """
         This test demonstrates the BUG where mutable versions are created for ALL types
         used anywhere in the schema, not just types returned by mutable fields.
@@ -413,7 +413,7 @@ class TestDataclass:
         assert not mutation_result.errors
         assert mutation_result.data == {"updateUser": {"name": "Jane Doe"}}
 
-    def test_transitive_mutable_types_behavior(self):
+    def test_transitive_mutable_types_behavior(self) -> None:
         """
         Test the behavior of transitive mutable types filtering.
 
@@ -560,7 +560,7 @@ class TestDataclass:
         # Note: TypeCMutable should theoretically be removable but the current implementation
         # has timing issues with shared registries between query and mutation mappers
 
-    def test_library_app_mutable_types_bug(self):
+    def test_library_app_mutable_types_bug(self) -> None:
         """Reproduces the exact bug from the user's library app using their exact pattern"""
         api = GraphQLAPI()
 

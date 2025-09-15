@@ -87,7 +87,7 @@ class ProductVariation:
         self.data = data
 
     @field
-    def id(self) -> GraphQLID:
+    def id(self) -> GraphQLID:  # type: ignore[valid-type]
         return self.data["id"]
 
 
@@ -97,7 +97,7 @@ class CaseStudy:
         self.data = data
 
     @field
-    def case_number(self) -> GraphQLID:
+    def case_number(self) -> GraphQLID:  # type: ignore[valid-type]
         return self.data["caseNumber"]
 
     @field
@@ -161,10 +161,10 @@ class User:
 
     @external
     @field
-    def email(self) -> GraphQLID:
+    def email(self) -> GraphQLID:  # type: ignore[valid-type]
         return self.data.get("email")
 
-    @override(**{"from": "users"})
+    @override(**{"from": "users"})  # type: ignore[reportIncompatibleMethodOverride]
     @field
     def name(self) -> Optional[str]:
         return self.data.get("name")
@@ -222,7 +222,7 @@ class Inventory:
         return Inventory(data={"id": reference.get("id")})
 
     @field
-    def id(self) -> GraphQLID:
+    def id(self) -> GraphQLID:  # type: ignore[valid-type]
         return self.data["id"]
 
     @field
@@ -257,7 +257,7 @@ class Product:
         return None
 
     @field
-    def id(self) -> GraphQLID:
+    def id(self) -> GraphQLID:  # type: ignore[valid-type]
         return self.data["id"]
 
     @field
@@ -304,7 +304,7 @@ class Product:
 @type
 class Root:
     @field
-    def product(self, id: GraphQLID) -> Optional[Product]:
+    def product(self, id: GraphQLID) -> Optional[Product]:  # type: ignore[valid-type]
         for product_data in products:
             if product_data["id"] == id:
                 return Product(product_data)
@@ -334,6 +334,6 @@ def federation_example_api():
         }
     )
 
-    composeDirective(schema, name="@custom")
+    composeDirective(schema, name="@custom")  # type: ignore[reportIncompatibleMethodOverride]
 
     return api

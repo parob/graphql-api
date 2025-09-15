@@ -9,7 +9,7 @@ from graphql_api.decorators import field
 
 class TestPydantic:
 
-    def test_pydantic(self):
+    def test_pydantic(self) -> None:
         class Statistics(BaseModel):
             conversations_count: int = Field(
                 description="Number of conversations")
@@ -36,7 +36,7 @@ class TestPydantic:
         response = api.execute(query)
         assert response.data == expected
 
-    def test_nested_pydantic_models(self):
+    def test_nested_pydantic_models(self) -> None:
         class Author(BaseModel):
             name: str
 
@@ -72,7 +72,7 @@ class TestPydantic:
         response = api.execute(query)
         assert response.data == expected
 
-    def test_list_of_pydantic_models(self):
+    def test_list_of_pydantic_models(self) -> None:
         class ToDo(BaseModel):
             task: str
             completed: bool
@@ -103,7 +103,7 @@ class TestPydantic:
         response = api.execute(query)
         assert response.data == expected
 
-    def test_optional_fields_and_scalar_types(self):
+    def test_optional_fields_and_scalar_types(self) -> None:
         class UserProfile(BaseModel):
             username: str
             age: Optional[int] = None
@@ -137,7 +137,7 @@ class TestPydantic:
         response = api.execute(query)
         assert response.data == expected
 
-    def test_pydantic_model_with_enum(self):
+    def test_pydantic_model_with_enum(self) -> None:
         class StatusEnum(str, Enum):
             PENDING = "PENDING"
             COMPLETED = "COMPLETED"
@@ -164,7 +164,7 @@ class TestPydantic:
         response = api.execute(query)
         assert response.data == expected
 
-    def test_deeply_nested_pydantic_models(self):
+    def test_deeply_nested_pydantic_models(self) -> None:
         class User(BaseModel):
             id: int
             username: str
@@ -230,7 +230,7 @@ class TestPydantic:
         response = api.execute(query)
         assert response.data == expected
 
-    def test_list_with_optional_nested_model(self):
+    def test_list_with_optional_nested_model(self) -> None:
         class Chapter(BaseModel):
             title: str
             page_count: int
@@ -274,7 +274,7 @@ class TestPydantic:
         response = api.execute(query)
         assert response.data == expected
 
-    def test_pydantic_model_with_default_value(self):
+    def test_pydantic_model_with_default_value(self) -> None:
         class Config(BaseModel):
             name: str
             value: str = "default_value"
@@ -298,7 +298,7 @@ class TestPydantic:
         response = api.execute(query)
         assert response.data == expected
 
-    def test_pydantic_model_with_field_alias(self):
+    def test_pydantic_model_with_field_alias(self) -> None:
         class User(BaseModel):
             user_name: str = Field(..., alias="userName")
             user_id: int = Field(..., alias="userId")
@@ -322,7 +322,7 @@ class TestPydantic:
         response = api.execute(query)
         assert response.data == expected
 
-    def test_pydantic_with_dataclass_field(self):
+    def test_pydantic_with_dataclass_field(self) -> None:
         @dataclass
         class DataClassDetails:
             detail: str
@@ -360,7 +360,7 @@ class TestPydantic:
         response = api.execute(query)
         assert response.data == expected
 
-    def test_recursive_pydantic_model(self):
+    def test_recursive_pydantic_model(self) -> None:
         class Employee(BaseModel):
             name: str
             manager: Optional["Employee"] = None
@@ -394,7 +394,7 @@ class TestPydantic:
         response = api.execute(query)
         assert response.data == expected
 
-    def test_pydantic_model_with_union_field(self):
+    def test_pydantic_model_with_union_field(self) -> None:
         class Cat(BaseModel):
             name: str
             meow_volume: int
@@ -441,7 +441,7 @@ class TestPydantic:
         response = api.execute(query)
         assert response.data == expected
 
-    def test_pydantic_forward_ref(self):
+    def test_pydantic_forward_ref(self) -> None:
         class ModelA(BaseModel):
             b: "ModelB"
 
@@ -469,7 +469,7 @@ class TestPydantic:
         response = api.execute(query)
         assert response.data == expected
 
-    def test_pydantic_model_as_input_argument(self):
+    def test_pydantic_model_as_input_argument(self) -> None:
         """Test that Pydantic models work as input arguments to GraphQL fields."""
 
         class UserInput(BaseModel):
@@ -607,7 +607,7 @@ class TestPydantic:
         response3 = api.execute(mutation3)
         assert response3.data == expected3
 
-    def test_nested_pydantic_models_as_input(self):
+    def test_nested_pydantic_models_as_input(self) -> None:
         """Test nested Pydantic models as input arguments."""
 
         class AddressInput(BaseModel):
@@ -680,7 +680,7 @@ class TestPydantic:
         response = api.execute(mutation)
         assert response.data == expected
 
-    def test_pydantic_input_with_list_field(self):
+    def test_pydantic_input_with_list_field(self) -> None:
         """Test Pydantic model with list fields as input arguments."""
 
         class TagInput(BaseModel):
@@ -751,7 +751,7 @@ class TestPydantic:
         response = api.execute(mutation)
         assert response.data == expected
 
-    def test_pydantic_list_input_schema_generation(self):
+    def test_pydantic_list_input_schema_generation(self) -> None:
         """Test that List[PydanticModel] generates proper GraphQL list types, not JSON."""
 
         class ItemInput(BaseModel):
@@ -825,7 +825,7 @@ class TestPydantic:
         response = api.execute(mutation)
         assert response.data == expected
 
-    def test_dict_type_mapping_to_json_scalar(self):
+    def test_dict_type_mapping_to_json_scalar(self) -> None:
         """Test that Dict[str, str] and Dict[str, Any] map to JSON scalar instead of failing."""
         from typing import Dict, Any
 
@@ -874,7 +874,7 @@ class TestPydantic:
         # Before fix: "Unable to map pydantic field 'settings' with type typing.Dict[str, str]"
         # After fix: Dict fields properly map to JSON scalar type in GraphQL schema
 
-    def test_pydantic_response_status_pattern(self):
+    def test_pydantic_response_status_pattern(self) -> None:
         """Test a common API response pattern with status, message, and data fields."""
         from typing import Dict, Any
         from enum import Enum
@@ -962,7 +962,7 @@ class TestPydantic:
             }
         }
 
-    def test_list_pydantic_model_parameter_conversion(self):
+    def test_list_pydantic_model_parameter_conversion(self) -> None:
         """Test that List[PydanticModel] parameters are automatically converted from dicts to model instances."""
         from enum import Enum
 
@@ -1028,7 +1028,7 @@ class TestPydantic:
         }
         assert result.errors is None
 
-    def test_mixed_parameter_types_with_list_conversion(self):
+    def test_mixed_parameter_types_with_list_conversion(self) -> None:
         """Test that List[PydanticModel] conversion works alongside other parameter types."""
 
         class Item(BaseModel):
@@ -1085,7 +1085,7 @@ class TestPydantic:
             }
         }
 
-    def test_optional_list_pydantic_model_parameter_conversion(self):
+    def test_optional_list_pydantic_model_parameter_conversion(self) -> None:
         """Test that Optional[List[PydanticModel]] parameters are handled correctly."""
 
         class Tag(BaseModel):

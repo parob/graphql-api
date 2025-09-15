@@ -10,14 +10,14 @@ from graphql_api.types import JsonType
 
 
 class TestCustomTypes:
-    def test_id_type(self):
+    def test_id_type(self) -> None:
         api = GraphQLAPI()
 
         # noinspection PyUnusedLocal
         @api.type(is_root_type=True)
         class Root:
             @api.field
-            def test(self, id: GraphQLID) -> GraphQLID:
+            def test(self, id: GraphQLID) -> GraphQLID:  # type: ignore[valid-type]
                 return id
 
         executor = api.executor()
@@ -30,9 +30,9 @@ class TestCustomTypes:
         assert not result.errors
         assert result.data == expected
 
-        assert executor.schema.query_type.fields["test"].type.of_type == GraphQLID
+        assert executor.schema.query_type.fields["test"].type.of_type == GraphQLID  # type: ignore[reportIncompatibleMethodOverride]
 
-    def test_uuid_type(self):
+    def test_uuid_type(self) -> None:
         api = GraphQLAPI()
 
         user_id = uuid.uuid4()
@@ -75,7 +75,7 @@ class TestCustomTypes:
 
         assert result.errors
 
-    def test_datetime_type(self):
+    def test_datetime_type(self) -> None:
         api = GraphQLAPI()
 
         now = datetime.now()
@@ -96,7 +96,7 @@ class TestCustomTypes:
         assert not result.errors
         assert result.data == expected
 
-    def test_date_type(self):
+    def test_date_type(self) -> None:
         api = GraphQLAPI()
 
         now = date.today()
@@ -117,7 +117,7 @@ class TestCustomTypes:
         assert not result.errors
         assert result.data == expected
 
-    def test_json_type(self):
+    def test_json_type(self) -> None:
         api = GraphQLAPI()
 
         @api.type(is_root_type=True)
@@ -186,7 +186,7 @@ class TestCustomTypes:
         assert not result.errors
         assert result.data == expected
 
-    def test_bytes_type(self):
+    def test_bytes_type(self) -> None:
         api = GraphQLAPI()
 
         data_input = b"aW5wdXRfYnl0ZXM="
@@ -224,7 +224,7 @@ class TestCustomTypes:
         assert not result.errors
         assert result.data == expected
 
-    def test_custom_scalar_type(self):
+    def test_custom_scalar_type(self) -> None:
         api = GraphQLAPI()
 
         def parse_value(value):
@@ -239,21 +239,21 @@ class TestCustomTypes:
             description="The `Key` scalar type represents a key.",
             serialize=lambda value: str(value) + "_serialized",
             parse_value=parse_value,
-            parse_literal=parse_literal,
+            parse_literal=parse_literal,  # type: ignore[reportIncompatibleMethodOverride]
         )
 
         @api.type(is_root_type=True)
         class Root:
             @api.field
-            def return_key(self) -> GraphQLKey:
+            def return_key(self) -> GraphQLKey:  # type: ignore[valid-type]
                 return "a_key_value"
 
             @api.field
-            def set_key(self, key: GraphQLKey) -> str:
+            def set_key(self, key: GraphQLKey) -> str:  # type: ignore[valid-type]
                 return key
 
             @api.field
-            def test(self, key: List[GraphQLKey]) -> str:
+            def test(self, key: List[GraphQLKey]) -> str:  # type: ignore[valid-type]
                 return str(key)
 
         executor = api.executor()

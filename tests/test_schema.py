@@ -5,7 +5,7 @@ from graphql_api import GraphQLAPI, GraphQLRootTypeDelegate, field, type
 
 
 class TestGraphQLSchema:
-    def test_decorators_no_schema(self):
+    def test_decorators_no_schema(self) -> None:
         @type
         class ObjectNoSchema:
             @field
@@ -47,12 +47,11 @@ class TestGraphQLSchema:
         assert AbstractNoSchema.test_abstract_mutation_no_schema._graphql
 
         # noinspection PyUnresolvedReferences
-        # type: ignore[reportAttributeAccess]
-        assert InterfaceNoSchema._graphql
+        assert InterfaceNoSchema._graphql  # type: ignore[reportAttributeAccess]
         assert InterfaceNoSchema.test_interface_query_no_schema._graphql
         assert InterfaceNoSchema.test_interface_mutation_no_schema._graphql
 
-    def test_decorators_schema(self):
+    def test_decorators_schema(self) -> None:
         api_1 = GraphQLAPI()
 
         @api_1.type
@@ -70,7 +69,7 @@ class TestGraphQLSchema:
         assert ObjectSchema.test_query_schema._graphql
         assert ObjectSchema.test_mutation_schema._graphql
 
-    def test_decorators_no_schema_meta(self):
+    def test_decorators_no_schema_meta(self) -> None:
         @type(meta={"test": "test"})
         class ObjectNoSchemaMeta:
             @field(meta={"test": "test"})
@@ -83,11 +82,11 @@ class TestGraphQLSchema:
 
         # noinspection PyUnresolvedReferences
         # type: ignore[reportAttributeAccess]
-        assert ObjectNoSchemaMeta._graphql
+        assert ObjectNoSchemaMeta._graphql  # type: ignore[reportAttributeAccess]
         assert ObjectNoSchemaMeta.test_query_no_schema_meta._graphql
         assert ObjectNoSchemaMeta.test_mutation_no_schema_meta._graphql
 
-    def test_decorators_schema_meta(self):
+    def test_decorators_schema_meta(self) -> None:
         api_1 = GraphQLAPI()
 
         @api_1.type(meta={"test1": "test2"}, is_root_type=True)
@@ -110,7 +109,7 @@ class TestGraphQLSchema:
         assert schema is not None
         assert schema.query_type is not None
 
-    def test_schema_with_no_root_type(self):
+    def test_schema_with_no_root_type(self) -> None:
         """
         Tests that a schema can be built with no root type, resulting
         in a placeholder query type.
@@ -124,7 +123,7 @@ class TestGraphQLSchema:
         assert "placeholder" in schema.query_type.fields
         assert schema.mutation_type is None
 
-    def test_root_type_delegate_is_called(self):
+    def test_root_type_delegate_is_called(self) -> None:
         """
         Tests that for a root_type that inherits from GraphQLRootTypeDelegate,
         the validate_graphql_schema method is called when building the schema.
@@ -150,7 +149,7 @@ class TestGraphQLSchema:
         schema_arg = RootWithDelegate.validate_graphql_schema.call_args[0][0]
         assert schema_arg is schema
 
-    def test_interface_cannot_be_root_type(self):
+    def test_interface_cannot_be_root_type(self) -> None:
         """
         Tests that a TypeError is raised when trying to set an interface
         as the root type of a schema.
@@ -164,7 +163,7 @@ class TestGraphQLSchema:
             class MyInterface:
                 pass
 
-    def test_abstract_cannot_be_root_type(self):
+    def test_abstract_cannot_be_root_type(self) -> None:
         """
         Tests that a TypeError is raised when trying to set an abstract type
         as the root type of a schema.

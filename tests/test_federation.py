@@ -10,7 +10,7 @@ from tests.test_federation_example import federation_example_api
 
 
 class TestFederation:
-    def test_federation_schema(self):
+    def test_federation_schema(self) -> None:
         names = {"1": "Rob", "2": "Tom"}
 
         custom = SchemaDirective(name="custom", locations=[
@@ -96,8 +96,7 @@ class TestFederation:
 
         response = api.execute("{_service{ sdl }}")
 
-        # type: ignore[reportIncompatibleMethodOverride]
-        sdl = response.data["_service"]["sdl"]
+        sdl = response.data["_service"]["sdl"]  # type: ignore[reportIncompatibleMethodOverride]
 
         assert sdl
 
@@ -111,7 +110,7 @@ class TestFederation:
         assert "@link(url:" in sdl
         assert 'import: ["@key"])' in sdl
 
-    def test_federation_example(self):
+    def test_federation_example(self) -> None:
         api = federation_example_api()
         schema, meta = api.build_schema()
 
@@ -147,6 +146,5 @@ class TestFederation:
 
         response = api.execute("{_service{ sdl }}")
 
-        # type: ignore[reportIncompatibleMethodOverride]
-        sdl = response.data["_service"]["sdl"]
+        sdl = response.data["_service"]["sdl"]  # type: ignore[reportIncompatibleMethodOverride]
         assert sdl
