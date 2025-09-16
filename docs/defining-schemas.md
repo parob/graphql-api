@@ -5,19 +5,21 @@
 ## Core Concepts
 
 - **`@api.type`**: A class decorator that marks a Python class as a GraphQL object type.
-- **`@api.field`**: A method decorator that exposes a class method as a field on a GraphQL type.
+- **`@api.field`**: A method decorator that exposes a method as a field on a GraphQL type.
 - **Type Hinting**: Python type hints are used to determine the GraphQL types for fields, arguments, and return values.
 
 ## Defining Object Types
 
-`graphql-api` uses **implicit type inference** - you don't need to explicitly decorate most classes with `@api.type`. Types are automatically inferred when:
+`graphql-api` supports implicit inference for object types - so you don't have to explicitly decorate most classes with `@api.type` (although you can).
+
+An object type is automatically inferred for the following situations:
 
 - The class is a **Pydantic model** (inherits from `BaseModel`)
 - The class is a **dataclass** (decorated with `@dataclass`)
 - The class has at least one field decorated with `@api.field`
 - The class defines a custom mapper or is mappable by `graphql-api`
 
-You only need `@api.type` for special cases:
+Generally you only need `@api.type` for special cases:
 - Root types: `@api.type(is_root_type=True)`
 - Interfaces: `@api.type(interface=True)`
 - When you need to override the default behavior
@@ -266,4 +268,4 @@ query {
         }
     }
 }
-``` 
+```
