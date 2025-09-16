@@ -63,7 +63,7 @@ class TestGraphQLRemote:
                 return [Door(height=3), Door(height=5)]
 
         # type: ignore[reportIncompatibleMethodOverride]
-        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)
+        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         doors = house.doors()
         heights = {door.height() for door in doors}
@@ -109,8 +109,7 @@ class TestGraphQLRemote:
             def doors(self) -> List[Door]:
                 return [Door(height=3), Door(height=5)]
 
-        # type: ignore[reportIncompatibleMethodOverride]
-        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)
+        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         doors = house.doors()
 
@@ -130,8 +129,7 @@ class TestGraphQLRemote:
             def type(self) -> HouseType:
                 return HouseType.bungalow
 
-        # type: ignore[reportIncompatibleMethodOverride]
-        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)
+        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert house.type() == HouseType.bungalow
 
@@ -161,8 +159,7 @@ class TestGraphQLRemote:
             def get_room(self) -> Room:
                 return Room(name="robs_room", room_type=RoomType.bedroom)
 
-        # type: ignore[reportIncompatibleMethodOverride]
-        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)
+        house: House = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert house.get_room().room_type() == RoomType.bedroom
 
@@ -177,8 +174,7 @@ class TestGraphQLRemote:
             def id(self) -> UUID:
                 return person_id
 
-        # type: ignore[reportIncompatibleMethodOverride]
-        person: Person = GraphQLRemoteObject(executor=api.executor(), api=api)
+        person: Person = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert person.id() == person_id
 
@@ -196,9 +192,8 @@ class TestGraphQLRemote:
 
         executor = api.executor()
 
-        # type: ignore[reportIncompatibleMethodOverride]
         bytes_utils: BytesUtils = GraphQLRemoteObject(
-            executor=executor, api=api)
+            executor=executor, api=api)  # type: ignore[reportIncompatibleMethodOverride]
         test_bytes = bytes_utils.add_bytes(a_value, b_value)
 
         assert test_bytes == b"".join([a_value, b_value])
@@ -212,8 +207,7 @@ class TestGraphQLRemote:
             def join_tags(self, tags: Optional[List[str]] = None) -> str:
                 return "".join(tags) if tags else ""
 
-        # type: ignore[reportIncompatibleMethodOverride]
-        tags: Tags = GraphQLRemoteObject(executor=api.executor(), api=api)
+        tags: Tags = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert tags.join_tags() == ""
         assert tags.join_tags(tags=[]) == ""
@@ -237,9 +231,8 @@ class TestGraphQLRemote:
             def value(self) -> int:
                 return self._value
 
-        # type: ignore[reportIncompatibleMethodOverride]
         counter: Counter = GraphQLRemoteObject(
-            executor=api.executor(), api=api)
+            executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert counter.value == 0
         assert counter.increment() == 1
@@ -259,9 +252,8 @@ class TestGraphQLRemote:
             def calculate(self, value_one: int = 1, value_two: int = 1) -> int:
                 return value_one * value_two
 
-        # type: ignore[reportIncompatibleMethodOverride]
         multiplier: Multiplier = GraphQLRemoteObject(
-            executor=api.executor(), api=api)
+            executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert multiplier.calculate(4, 2) == 8
 
@@ -287,13 +279,12 @@ class TestGraphQLRemote:
 
                 return Person()
 
-        # type: ignore[reportIncompatibleMethodOverride]
         bank: Bank = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
-        # type: ignore[reportIncompatibleMethodOverride]
-        assert bank.owner().age == 25
-        # type: ignore[reportIncompatibleMethodOverride]
-        assert bank.owner().name() == "rob"
+        owner = bank.owner()
+        assert owner is not None
+        assert owner.age == 25
+        assert owner.name() == "rob"
         assert bank.owner(respond_none=True) is None
 
     def test_remote_mutation_with_input(self) -> None:
@@ -685,7 +676,7 @@ class TestGraphQLRemote:
                 return 183
 
         # type: ignore[reportIncompatibleMethodOverride]
-        person: Person = GraphQLRemoteObject(executor=api.executor(), api=api)
+        person: Person = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert person.age() == 50
         assert person.height == 183
@@ -704,7 +695,7 @@ class TestGraphQLRemote:
                 return "hello"
 
         # type: ignore[reportIncompatibleMethodOverride]
-        person: Person = GraphQLRemoteObject(executor=api.executor(), api=api)
+        person: Person = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert person.age() == 50
         assert person.hello() == "hello"
@@ -722,7 +713,7 @@ class TestGraphQLRemote:
             def hello():
                 return "hello"
 
-        person: Person = GraphQLRemoteObject(executor=api.executor(), api=api)
+        person: Person = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert person.age() == 50
         assert person.hello() == "hello"
@@ -740,7 +731,6 @@ class TestGraphQLRemote:
             def hello(cls):
                 assert cls == Person
                 return "hello"
-
 
         person: Person = GraphQLRemoteObject(executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
 
@@ -787,7 +777,7 @@ class TestGraphQLRemote:
             api.character(id=i).name()
             # noinspection PyUnresolvedReferences
             # Clear cache to ensure a new request is made  # type: ignore[reportIncompatibleMethodOverride]
-            api.clear_cache()
+            api.clear_cache()  # type: ignore[reportIncompatibleMethodOverride]
         sync_time = time.time() - sync_start
 
         async def fetch():
@@ -795,7 +785,7 @@ class TestGraphQLRemote:
             for i in range(1, request_count + 1):
                 character = api.character(id=i)
                 # type: ignore[reportIncompatibleMethodOverride]
-                tasks.append(character.name(aio=True))
+                tasks.append(character.name(aio=True))  # type: ignore[reportIncompatibleMethodOverride]
             return await asyncio.gather(*tasks)
 
         async_start = time.time()
@@ -841,7 +831,7 @@ class TestGraphQLRemote:
         async def fetch():
             character = rick_and_morty.character(id=1)
             # type: ignore[reportIncompatibleMethodOverride]
-            return await character.name(aio=True)
+            return await character.name(aio=True)  # type: ignore[reportIncompatibleMethodOverride]
 
         assert asyncio.run(fetch()) == "Rick Sanchez"
 
@@ -888,9 +878,8 @@ class TestGraphQLRemote:
             def students(self) -> List[str]:
                 return ["alice", "bob"]
 
-        # type: ignore[reportIncompatibleMethodOverride]
         roll: StudentRoll = GraphQLRemoteObject(
-            executor=api.executor(), api=api)
+            executor=api.executor(), api=api)  # type: ignore[reportIncompatibleMethodOverride]
         roll.fetch()  # type: ignore[reportIncompatibleMethodOverride]
 
         assert roll.students() == ["alice", "bob"]

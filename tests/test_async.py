@@ -4,6 +4,7 @@ from graphql_api.api import GraphQLAPI
 
 
 class TestAsync:
+
     def test_basic_async(self) -> None:
         api = GraphQLAPI()
 
