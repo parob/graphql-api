@@ -8,9 +8,6 @@ title = "GraphQL API for Python"
     extended = true
     min = "0.73.0"
 
-# Hugo Book theme
-theme = "hugo-book"
-
 # Site parameters
 [params]
   # Hugo Book theme specific parameters
@@ -64,11 +61,11 @@ theme = "hugo-book"
     # Uncomment if you want your chosen highlight style used for code blocks without a specified language
     # guessSyntax = "true"
 
-# Output formats
+# Output formats - ensure HTML is first/primary
 [outputs]
-  home = ["HTML", "RSS"]
+  home = ["HTML"]
   page = ["HTML"]
-  section = ["HTML", "RSS"]
+  section = ["HTML"]
 
 [params.print]
   disable_toc = false
