@@ -1,9 +1,6 @@
 ---
 title: "Examples & Tutorials"
-linkTitle: "Examples"
-weight: 2
-description: >
-  Practical examples and tutorials for building GraphQL APIs with graphql-api
+weight: 20
 ---
 
 # Examples & Tutorials

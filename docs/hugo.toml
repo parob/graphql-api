@@ -8,63 +8,25 @@ title = "GraphQL API for Python"
     extended = true
     min = "0.73.0"
 
-# Theme
-theme = "docsy"
+# Hugo Book theme
+theme = "hugo-book"
 
 # Site parameters
 [params]
-  version_menu = "Releases"
-  archived_version = false
-  version = "main"
-  url_latest_version = "https://parob.github.io/graphql-api"
-
+  # Hugo Book theme specific parameters
+  BookTheme = "auto"
+  BookToC = true
+  BookSection = "docs"
+  
   # Repository
-  github_repo = "https://github.com/parob/graphql-api"
-  github_branch = "main"
-
-  # Enable Lunr.js offline search
-  offlineSearch = true
-
-  # Enable syntax highlighting and copy buttons on code blocks with Prism
-  prism_syntax_highlighting = true
-
-  # User interface configuration
-  [params.ui]
-    # Enable to show the side bar menu in its compact state.
-    sidebar_menu_compact = false
-    # Set to true to disable breadcrumb navigation.
-    breadcrumb_disable = false
-    # Set to true to hide the sidebar search box (the top nav search box will still be displayed if search is enabled)
-    sidebar_search_disable = false
-    # Set to false if you don't want to display a logo (/assets/icons/logo.svg) in the top nav bar
-    navbar_logo = true
-    # Set to true to disable the About link in the site footer
-    footer_about_disable = false
-
-  # Links to user social networks
-  [params.links]
-    # End user relevant links. These will show up on left side of footer and in the community page if you have one.
-    [[params.links.user]]
-      name = "GitHub Discussions"
-      url = "https://github.com/parob/graphql-api/discussions"
-      icon = "fab fa-github"
-      desc = "Discussion and help from your fellow users"
-    [[params.links.user]]
-      name ="PyPI"
-      url = "https://pypi.org/project/graphql-api/"
-      icon = "fab fa-python"
-      desc = "Install from PyPI"
-    # Developer relevant links. These will show up on right side of footer and in the community page if you have one.
-    [[params.links.developer]]
-      name = "GitHub"
-      url = "https://github.com/parob/graphql-api"
-      icon = "fab fa-github"
-      desc = "Development takes place here!"
-    [[params.links.developer]]
-      name = "GitLab"
-      url = "https://gitlab.com/parob/graphql-api"
-      icon = "fab fa-gitlab"
-      desc = "Mirror repository on GitLab"
+  BookRepo = "https://github.com/parob/graphql-api"
+  BookEditPage = true
+  
+  # Search
+  BookSearch = true
+  
+  # Comments (optional)
+  BookComments = false
 
 # Configure how URLs look like per section.
 [permalinks]
@@ -102,11 +64,11 @@ theme = "docsy"
     # Uncomment if you want your chosen highlight style used for code blocks without a specified language
     # guessSyntax = "true"
 
-# Everything below this are Site Params
-
-# Comment out if you don't want the "print entire section" link enabled.
+# Output formats
 [outputs]
-  section = ["HTML", "print", "RSS"]
+  home = ["HTML", "RSS"]
+  page = ["HTML"]
+  section = ["HTML", "RSS"]
 
 [params.print]
   disable_toc = false

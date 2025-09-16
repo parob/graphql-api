@@ -43,11 +43,11 @@ jobs:
       - name: Install Node.js dependencies
         working-directory: ./docs
         run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
-      - name: Setup Docsy theme
+      - name: Setup Hugo Book theme
         working-directory: ./docs
         run: |
-          if [ ! -d "themes/docsy" ]; then
-            git submodule add https://github.com/google/docsy.git themes/docsy
+          if [ ! -d "themes/hugo-book" ]; then
+            git submodule add https://github.com/alex-shpak/hugo-book.git themes/hugo-book
           fi
           git submodule update --init --recursive --depth 1
       - name: Build with Hugo

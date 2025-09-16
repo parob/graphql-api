@@ -1,10 +1,7 @@
 ---
 title: "Documentation"
-linkTitle: "Documentation"
-weight: 20
-menu:
-  main:
-    weight: 20
+weight: 1
+bookCollapseSection: false
 ---
 
 > **Complete documentation for GraphQL API, from basic concepts to advanced features.**

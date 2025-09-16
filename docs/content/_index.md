@@ -1,11 +1,7 @@
 ---
 title: "GraphQL API for Python"
-linkTitle: "GraphQL API"
-weight: 10
 type: docs
-menu:
-  main:
-    weight: 10
+bookToc: false
 ---
 
 > **A powerful and intuitive Python library for building GraphQL APIs with a code-first, decorator-based approach.**
