@@ -7,9 +7,7 @@ menu:
     weight: 20
 ---
 
-{{% pageinfo %}}
-Complete documentation for GraphQL API, from basic concepts to advanced features.
-{{% /pageinfo %}}
+> **Complete documentation for GraphQL API, from basic concepts to advanced features.**
 
 Welcome to the GraphQL API documentation! This section contains everything you need to know to build powerful GraphQL APIs with Python.
 

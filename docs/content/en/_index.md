@@ -8,9 +8,7 @@ menu:
     weight: 10
 ---
 
-{{% pageinfo %}}
-A powerful and intuitive Python library for building GraphQL APIs with a code-first, decorator-based approach.
-{{% /pageinfo %}}
+> **A powerful and intuitive Python library for building GraphQL APIs with a code-first, decorator-based approach.**
 
 # GraphQL API for Python
 
@@ -22,31 +20,16 @@ A powerful and intuitive Python library for building GraphQL APIs with a code-fi
 
 `graphql-api` simplifies schema definition by leveraging Python's type hints, dataclasses, and Pydantic models, allowing you to build robust and maintainable GraphQL services with minimal boilerplate.
 
-{{< cardpane >}}
-{{< card header="🎯 Code-First Approach" >}}
-Define your GraphQL schema using Python decorators and type hints. No SDL required.
-{{< /card >}}
+## Key Features
 
-{{< card header="⚡ Type Safety" >}}
-Automatic type conversion from Python types to GraphQL types with full type checking support.
-{{< /card >}}
-
-{{< card header="🔄 Async Support" >}}
-Built-in support for async/await patterns and real-time subscriptions.
-{{< /card >}}
-
-{{< card header="🧩 Pydantic Integration" >}}
-Seamlessly use Pydantic models and dataclasses as GraphQL types.
-{{< /card >}}
-
-{{< card header="🌐 Federation Ready" >}}
-Built-in Apollo Federation support for microservice architectures.
-{{< /card >}}
-
-{{< card header="🎛️ Flexible Schema" >}}
-Choose between unified root types or explicit query/mutation/subscription separation.
-{{< /card >}}
-{{< /cardpane >}}
+| Feature | Description |
+|---------|-------------|
+| 🎯 **Code-First Approach** | Define your GraphQL schema using Python decorators and type hints. No SDL required. |
+| ⚡ **Type Safety** | Automatic type conversion from Python types to GraphQL types with full type checking support. |
+| 🔄 **Async Support** | Built-in support for async/await patterns and real-time subscriptions. |
+| 🧩 **Pydantic Integration** | Seamlessly use Pydantic models and dataclasses as GraphQL types. |
+| 🌐 **Federation Ready** | Built-in Apollo Federation support for microservice architectures. |
+| 🎛️ **Flexible Schema** | Choose between unified root types or explicit query/mutation/subscription separation. |
 
 ## Quick Start
 
@@ -88,16 +71,6 @@ print(result.data)  # {'hello': 'Hello, Developer!'}
 
 ## What's Next?
 
-{{< cardpane >}}
-{{< card header="📚 Get Started" >}}
-Learn the basics with our comprehensive [Getting Started guide]({{< relref "/docs/getting-started" >}}).
-{{< /card >}}
-
-{{< card header="💡 Examples" >}}
-Explore practical [examples and tutorials]({{< relref "/docs/examples" >}}) for real-world scenarios.
-{{< /card >}}
-
-{{< card header="📖 API Reference" >}}
-Check out the complete [API Reference]({{< relref "/docs/api-reference" >}}) documentation.
-{{< /card >}}
-{{< /cardpane >}}
+- 📚 **[Getting Started](docs/getting-started/)** - Learn the basics with our comprehensive guide
+- 💡 **[Examples](docs/examples/)** - Explore practical examples and tutorials for real-world scenarios  
+- 📖 **[API Reference](docs/api-reference/)** - Check out the complete API documentation
