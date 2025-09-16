@@ -182,14 +182,14 @@ GraphQL automatically separates queries and mutations - you don't need separate 
 
 ### Single Root Type (Recommended)
 ```python
-@api.type(is_root_type=True)
+@api.type
 class Root:
     @api.field
     def query_field(self) -> str: ...
-    
-    @api.field(mutable=True) 
+
+    @api.field(mutable=True)
     def mutation_field(self) -> str: ...
-    
+
     @api.field
     async def subscription_field(self) -> AsyncGenerator[str, None]: ...
 
@@ -203,7 +203,7 @@ class Query:
     @api.field
     def query_field(self) -> str: ...
 
-@api.type  
+@api.type
 class Mutation:
     @api.field
     def mutation_field(self) -> str: ...
@@ -215,7 +215,7 @@ class Subscription:
 
 api = GraphQLAPI(
     query_type=Query,
-    mutation_type=Mutation, 
+    mutation_type=Mutation,
     subscription_type=Subscription
 )
 ```

@@ -28,6 +28,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 from datetime import datetime
 from graphql_api.api import GraphQLAPI
+from graphql_api.decorators import field
 
 @dataclass
 class Author:
@@ -86,20 +87,35 @@ class BlogAPI:
         return next((a for a in authors if a.id == author_id), None)
 ```
 
-### Adding Resolvers for Related Data
+### Adding Methods for Related Data
 
 ```python
-# Add a resolver to get the author of a post
-@api.resolver(Post, "author")
-def resolve_author(post: Post) -> Optional[Author]:
-    """Resolve the author for a post."""
-    return next((a for a in authors if a.id == post.author_id), None)
+# Add methods to the dataclasses for related data
+from graphql_api.decorators import field
 
-# Add a resolver to get posts by an author
-@api.resolver(Author, "posts")
-def resolve_author_posts(author: Author) -> List[Post]:
-    """Resolve posts written by an author."""
-    return [p for p in posts if p.author_id == author.id]
+@dataclass
+class Post:
+    id: int
+    title: str
+    content: str
+    author_id: int
+    published_at: Optional[datetime] = None
+    
+    @field
+    def get_author(self) -> Optional[Author]:
+        """Get the author for this post."""
+        return next((a for a in authors if a.id == self.author_id), None)
+
+@dataclass
+class Author:
+    id: int
+    name: str
+    email: str
+    
+    @field
+    def get_posts(self) -> List[Post]:
+        """Get posts written by this author."""
+        return [p for p in posts if p.author_id == self.id]
 ```
 
 ### Testing the API
@@ -112,7 +128,7 @@ query = """
             id
             title
             content
-            author {
+            getAuthor {
                 name
                 email
             }

@@ -191,24 +191,6 @@ async def user_updates(self) -> AsyncGenerator[User, None]:
     pass
 ```
 
-### `@api.resolver`
-
-Add a resolver for a field on a type.
-
-```python
-@api.resolver(target_type: Type, field_name: str)
-```
-
-**Parameters:**
-- `target_type`: The type to add the resolver to
-- `field_name`: Name of the field to resolve
-
-**Example:**
-```python
-@api.resolver(User, "posts")
-def resolve_user_posts(user: User) -> List[Post]:
-    return get_posts_by_user(user.id)
-```
 
 ### `@api.enum`
 
