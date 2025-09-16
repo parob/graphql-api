@@ -22,7 +22,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      HUGO_VERSION: 0.128.0
+      HUGO_VERSION: 0.133.0
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,9 +47,8 @@ jobs:
         working-directory: ./docs
         run: |
           if [ ! -d "themes/hugo-book" ]; then
-            git submodule add https://github.com/alex-shpak/hugo-book.git themes/hugo-book
+            git clone --depth 1 https://github.com/alex-shpak/hugo-book.git themes/hugo-book
           fi
-          git submodule update --init --recursive --depth 1
       - name: Build with Hugo
         env:
           HUGO_ENVIRONMENT: production
