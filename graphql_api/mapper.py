@@ -1105,19 +1105,19 @@ def get_class_funcs(class_type, schema, mutable=False, subscription=False) -> Li
 
     def matches_criterion(func):
         func_type = get_value(func, schema, "graphql_type")
-        
+
         # Include regular fields when not filtering
         if not mutable and not subscription:
             return func_type == "field"
-        
+
         # Include mutable fields when filtering for mutations
         if mutable and func_type == "mutable_field":
             return True
-        
+
         # Include subscription fields when filtering for subscriptions
         if subscription and func_type == "subscription_field":
             return True
-        
+
         # For subscription filtering, also include regular fields with AsyncGenerator return type
         if subscription and func_type == "field":
             # Check if this field has AsyncGenerator return type (auto-detected subscription)
@@ -1132,11 +1132,11 @@ def get_class_funcs(class_type, schema, mutable=False, subscription=False) -> Li
                         return True
             except Exception:
                 pass
-        
+
         # For mutation filtering, include regular fields (for root-level access)
         if mutable and func_type == "field":
             return True
-            
+
         return False
 
     callable_funcs = []
