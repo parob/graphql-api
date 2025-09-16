@@ -12,27 +12,26 @@ Welcome to the GraphQL API documentation! This section contains everything you n
 
 New to GraphQL API? Start here:
 
-- **[Getting Started]({{< relref "getting-started" >}})** - Installation and your first API
-- **[Core Concepts]({{< relref "core-concepts" >}})** - Understanding the fundamentals
+- **[Getting Started](getting-started/)** - Installation and your first API
 
 ## Guides
 
 Step-by-step guides for common tasks:
 
-- **[Examples & Tutorials]({{< relref "examples" >}})** - Practical examples and tutorials
-- **[Schema Definition]({{< relref "defining-schemas" >}})** - How to define types and fields
-- **[Pydantic & Dataclasses]({{< relref "pydantic-and-dataclasses" >}})** - Working with data models
-- **[Async & Subscriptions]({{< relref "async-and-subscriptions" >}})** - Real-time functionality
+- **[Examples & Tutorials](examples/)** - Practical examples and tutorials
+- **[Schema Definition](defining-schemas/)** - How to define types and fields
+- **[Pydantic & Dataclasses](pydantic-and-dataclasses/)** - Working with data models
+- **[Async & Subscriptions](async-and-subscriptions/)** - Real-time functionality
 
 ## Advanced Topics
 
 For experienced users:
 
-- **[Apollo Federation]({{< relref "federation" >}})** - Building distributed graphs
-- **[Advanced Features]({{< relref "advanced" >}})** - Middleware, directives, and more
+- **[Apollo Federation](federation/)** - Building distributed graphs
+- **[Advanced Features](advanced/)** - Middleware, directives, and more
 
 ## Reference
 
 Complete API documentation:
 
-- **[API Reference]({{< relref "api-reference" >}})** - Classes, methods, and functions
+- **[API Reference](api-reference/)** - Classes, methods, and functions
