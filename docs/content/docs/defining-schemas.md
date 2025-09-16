@@ -14,9 +14,9 @@ description: >
 
 `graphql-api` offers two distinct patterns for defining types and fields:
 
-### 1. Instance Decorators (Recommended for simple applications)
+### 1. Instance Decorators (Recommended)
 
-Create an API instance and use its decorators:
+Create an API instance and use its decorators - this is the preferred approach:
 
 ```python
 from graphql_api.api import GraphQLAPI
@@ -30,9 +30,9 @@ class User:
         return "Alice"
 ```
 
-### 2. Global Decorators (Recommended for complex applications)
+### 2. Global Decorators (Use only when necessary)
 
-Import decorators directly from the module:
+Import decorators directly from the module - only use this to avoid circular imports:
 
 ```python
 from graphql_api.decorators import type, field
@@ -46,17 +46,18 @@ class User:
 
 ## Choosing Between Patterns
 
-**Use Global Decorators When:**
-- Building larger applications with multiple modules
-- Avoiding circular import dependencies is important
-- You want to define types across different files without sharing API instances
+**Use Instance Decorators (Recommended):**
+- **Better isolation**: Each API instance has its own isolated types and fields
+- **Explicit control**: Clear ownership of types within specific API instances
+- **Type safety**: Better IDE support and type checking
+- **Multiple APIs**: Ability to create separate API instances for different purposes
+- **Cleaner architecture**: More explicit and maintainable code structure
 
-**Use Instance Decorators When:**
-- Building smaller, single-module applications
-- You need multiple isolated API instances
-- You want explicit control over which types belong to which API
+**Use Global Decorators only when:**
+- You encounter circular import issues with instance decorators
+- You need to define types across modules where sharing an API instance is problematic
 
-**Important:** Stick to one pattern per project. Mixing patterns can lead to confusion and unexpected behavior.
+**Important:** Always prefer instance decorators unless you specifically need to avoid circular imports. Stick to one pattern per project.
 
 ### Circular Import Considerations
 
@@ -104,9 +105,9 @@ Generally you only need `@api.type` for special cases:
 
 ### Basic Object Types
 
-To define a GraphQL object type, simply create a Python class with fields. Here are both approaches:
+To define a GraphQL object type, simply create a Python class with fields. The preferred approach uses instance decorators:
 
-**Instance Decorator Pattern:**
+**Instance Decorator Pattern (Recommended):**
 ```python
 from graphql_api.api import GraphQLAPI
 
@@ -130,7 +131,7 @@ class Query:
         return User()
 ```
 
-**Global Decorator Pattern:**
+**Global Decorator Pattern (Only if needed for circular imports):**
 ```python
 from graphql_api.decorators import type, field
 
@@ -188,7 +189,7 @@ Each method decorated with `@api.field` within a GraphQL type class becomes a fi
 
 To add arguments to a field, simply add them as parameters to the resolver method, complete with type hints.
 
-**Instance Decorator Pattern:**
+**Instance Decorator Pattern (Recommended):**
 ```python
 @api.type(is_root_type=True)
 class Query:
@@ -197,7 +198,7 @@ class Query:
         return f"Hello, {name}!"
 ```
 
-**Global Decorator Pattern:**
+**Global Decorator Pattern (Only if needed for circular imports):**
 ```python
 @type(is_root_type=True)
 class Query:
@@ -221,7 +222,7 @@ GraphQL's type modifiers (List and Non-Null) are handled automatically based on 
 - **Non-Null**: By default, all fields and arguments are non-nullable. To make a type nullable, use `Optional` from the `typing` module.
 - **List**: To define a list of a certain type, use `List` from the `typing` module.
 
-**Instance Decorator Pattern:**
+**Instance Decorator Pattern (Recommended):**
 ```python
 from typing import List, Optional
 
@@ -245,7 +246,7 @@ class Query:
         return [Post()]
 ```
 
-**Global Decorator Pattern:**
+**Global Decorator Pattern (Only if needed for circular imports):**
 ```python
 from typing import List, Optional
 from graphql_api.decorators import type, field
@@ -305,7 +306,7 @@ class CreatePostInput(BaseModel):
 
 Now, you can use `CreatePostInput` as an argument in your mutation resolver. The resolver will receive an instance of the `CreatePostInput` model.
 
-**Instance Decorator Pattern:**
+**Instance Decorator Pattern (Recommended):**
 ```python
 # In your mutations class
 @api.field(mutable=True)
@@ -315,7 +316,7 @@ def create_post(self, input: CreatePostInput) -> Post:
     return Post(id=456, title=input.title, content=input.content)
 ```
 
-**Global Decorator Pattern:**
+**Global Decorator Pattern (Only if needed for circular imports):**
 ```python
 # In your mutations class  
 @field(mutable=True)
@@ -362,7 +363,7 @@ class Episode(enum.Enum):
 
 Create GraphQL interfaces by decorating a class with `@api.type(interface=True)` or `@type(interface=True)`. Other classes can then implement this interface by inheriting from it.
 
-**Instance Decorator Pattern:**
+**Instance Decorator Pattern (Recommended):**
 ```python
 @api.type(interface=True)
 class Character:
@@ -379,7 +380,7 @@ class Human(Character):
         return "Earth"
 ```
 
-**Global Decorator Pattern:**
+**Global Decorator Pattern (Only if needed for circular imports):**
 ```python
 @type(interface=True)
 class Character:
@@ -402,7 +403,7 @@ This feature allows you to build flexible and maintainable schemas that adhere t
 
 `graphql-api` can create `GraphQLUnionType`s from Python's `typing.Union`. This is useful when a field can return one of several different object types.
 
-**Instance Decorator Pattern:**
+**Instance Decorator Pattern (Recommended):**
 ```python
 from typing import Union
 
@@ -425,7 +426,7 @@ class Query:
             return Dog(name="Fido", bark_loudness=100)
 ```
 
-**Global Decorator Pattern:**
+**Global Decorator Pattern (Only if needed for circular imports):**
 ```python
 from typing import Union
 
