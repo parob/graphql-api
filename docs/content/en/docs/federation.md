@@ -1,3 +1,11 @@
+---
+title: "Apollo Federation"
+linkTitle: "Federation"
+weight: 6
+description: >
+  Build distributed GraphQL services with Apollo Federation
+---
+
 # Apollo Federation
 
 `graphql-api` provides built-in support for Apollo Federation, allowing you to build a distributed graph by composing multiple independent GraphQL services. This is essential for large-scale applications where different teams manage different parts of the overall API.

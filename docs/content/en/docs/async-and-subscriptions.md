@@ -1,3 +1,11 @@
+---
+title: "Async & Subscriptions"
+linkTitle: "Async & Subscriptions"
+weight: 5
+description: >
+  Build high-performance async resolvers and real-time subscriptions
+---
+
 # Asynchronous Resolvers and Subscriptions
 
 `graphql-api` fully supports modern asynchronous Python, allowing you to build high-performance, non-blocking GraphQL services.

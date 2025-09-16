@@ -1,3 +1,11 @@
+---
+title: "Advanced Topics"
+linkTitle: "Advanced"
+weight: 7
+description: >
+  Explore advanced features like middleware, directives, and Relay support
+---
+
 # Advanced Topics
 
 This section covers some of the more advanced features of `graphql-api`, including middleware, error handling, resolver context, directives, and Relay support.

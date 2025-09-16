@@ -1,3 +1,11 @@
+---
+title: "Pydantic & Dataclasses"
+linkTitle: "Pydantic & Dataclasses"
+weight: 4
+description: >
+  Integrate Pydantic models and dataclasses into your GraphQL schema
+---
+
 # Using Pydantic and Dataclasses
 
 `graphql-api` provides first-class support for Pydantic and dataclasses, allowing you to use them seamlessly as GraphQL types. This is a powerful feature that helps you build robust, self-documenting, and validated APIs with minimal boilerplate.

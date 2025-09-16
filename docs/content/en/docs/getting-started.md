@@ -1,3 +1,11 @@
+---
+title: "Getting Started"
+linkTitle: "Getting Started"
+weight: 1
+description: >
+  This guide will walk you through the process of setting up graphql-api and creating your first GraphQL service.
+---
+
 # Getting Started
 
 This guide will walk you through the process of setting up `graphql-api` and creating your first GraphQL service.

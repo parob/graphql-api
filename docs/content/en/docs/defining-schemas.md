@@ -1,3 +1,11 @@
+---
+title: "Defining Schemas"
+linkTitle: "Schema Definition"
+weight: 3
+description: >
+  Learn how to define GraphQL schemas using decorators and type hints
+---
+
 # Defining Schemas
 
 `graphql-api` uses a decorator-based, code-first approach to schema definition. This allows you to define your entire GraphQL schema using Python classes, methods, and type hints.
