@@ -2,6 +2,7 @@
 title: "Documentation"
 weight: 1
 bookCollapseSection: false
+bookFlatSection: true
 ---
 
 > **Complete documentation for GraphQL API, from basic concepts to advanced features.**
