@@ -38,12 +38,18 @@ jobs:
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v4
+        with:
+          enablement: true
       - name: Install Node.js dependencies
         working-directory: ./docs
         run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
-      - name: Install Go modules
+      - name: Setup Docsy theme
         working-directory: ./docs
-        run: go mod download
+        run: |
+          if [ ! -d "themes/docsy" ]; then
+            git submodule add https://github.com/google/docsy.git themes/docsy
+          fi
+          git submodule update --init --recursive --depth 1
       - name: Build with Hugo
         env:
           HUGO_ENVIRONMENT: production
