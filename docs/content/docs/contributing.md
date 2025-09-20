@@ -1,6 +1,5 @@
 ---
 title: "Contributing"
-linkTitle: "Contributing"
 weight: 20
 description: >
   How to contribute to the graphql-api project
@@ -125,16 +124,16 @@ mypy graphql_api
 **Good:**
 ```python
 def resolve_user_posts(
-    self, 
-    user_id: int, 
+    self,
+    user_id: int,
     published_only: bool = False
 ) -> List[Post]:
     """Resolve posts for a given user.
-    
+
     Args:
         user_id: The ID of the user
         published_only: Whether to filter for published posts only
-        
+
     Returns:
         List of posts for the user
     """
@@ -221,44 +220,44 @@ from graphql_api.api import GraphQLAPI
 
 class TestGraphQLAPI:
     """Tests for basic GraphQLAPI functionality."""
-    
+
     def test_simple_query_execution(self):
         """Test that a simple query executes successfully."""
         api = GraphQLAPI()
-        
+
         @api.type(is_root_type=True)
         class Query:
             @api.field
             def hello(self) -> str:
                 return "world"
-        
+
         result = api.execute('{ hello }')
         assert result.data == {"hello": "world"}
         assert result.errors is None
-    
+
     def test_query_with_arguments(self):
         """Test query execution with arguments."""
         api = GraphQLAPI()
-        
+
         @api.type(is_root_type=True)
         class Query:
             @api.field
             def greet(self, name: str) -> str:
                 return f"Hello, {name}!"
-        
+
         result = api.execute('{ greet(name: "Alice") }')
         assert result.data == {"greet": "Hello, Alice!"}
-    
+
     def test_error_handling(self):
         """Test that errors are properly handled."""
         api = GraphQLAPI()
-        
+
         @api.type(is_root_type=True)
         class Query:
             @api.field
             def failing_field(self) -> str:
                 raise ValueError("Something went wrong")
-        
+
         result = api.execute('{ failingField }')
         assert result.data is None
         assert len(result.errors) == 1
@@ -320,10 +319,10 @@ open public/index.html
    ```bash
    # Run tests
    python -m pytest
-   
+
    # Check code style
    flake8
-   
+
    # Verify types
    mypy graphql_api
    ```
@@ -347,7 +346,7 @@ Brief description of changes
 
 ## Type of Change
 - [ ] Bug fix
-- [ ] New feature  
+- [ ] New feature
 - [ ] Breaking change
 - [ ] Documentation update
 

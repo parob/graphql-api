@@ -1,14 +1,14 @@
 ---
-title: "Apollo Federation"
+title: "Federation"
 linkTitle: "Federation"
 weight: 6
 description: >
-  Build distributed GraphQL services with Apollo Federation
+  Build distributed GraphQL services with Federation
 ---
 
-# Apollo Federation
+# Federation
 
-`graphql-api` provides built-in support for Apollo Federation, allowing you to build a distributed graph by composing multiple independent GraphQL services. This is essential for large-scale applications where different teams manage different parts of the overall API.
+`graphql-api` provides built-in support for Federation, allowing you to build a distributed graph by composing multiple independent GraphQL services. This is essential for large-scale applications where different teams manage different parts of the overall API.
 
 ## Creating a Federated Service
 
@@ -144,4 +144,4 @@ In this case:
 2.  This field `@requires` the `username` field.
 3.  When a client queries for `getFormattedReviews`, the federated gateway sees the `@requires` directive. It will first query the `User` service to get the `username`, then pass that information to the `Reviews` service to resolve `getFormattedReviews`.
 
-This powerful pattern allows you to create computed fields that depend on data from multiple services while keeping the services themselves decoupled. 
+This powerful pattern allows you to create computed fields that depend on data from multiple services while keeping the services themselves decoupled.

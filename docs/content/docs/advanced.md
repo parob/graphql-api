@@ -199,4 +199,4 @@ class User(Node):
 
 Relay uses a standardized format for pagination called "Connections." `graphql-api` provides a `Connection` type to simplify the implementation of paginated fields.
 
-For a detailed example of how to implement Relay-compliant pagination, please refer to the `test_relay.py` file in the test suite. This feature allows you to build sophisticated, scalable APIs that integrate seamlessly with modern front-end frameworks like Relay. 
+For a detailed example of how to implement Relay-compliant pagination, please refer to the `test_relay.py` file in the test suite. This feature allows you to build sophisticated, scalable APIs that integrate seamlessly with modern front-end frameworks like Relay.

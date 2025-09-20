@@ -1,7 +1,6 @@
 ---
 title: "API Reference"
-linkTitle: "API Reference"
-weight: 10
+weight: 6
 description: >
   Complete API reference for graphql-api
 ---
@@ -44,7 +43,7 @@ class GraphQLAPI:
 **Parameters:**
 - `root_type`: Single root type containing all operations (unified approach)
 - `query_type`: Explicit query type class (explicit approach)
-- `mutation_type`: Explicit mutation type class (explicit approach)  
+- `mutation_type`: Explicit mutation type class (explicit approach)
 - `subscription_type`: Explicit subscription type class (explicit approach)
 - `directives`: List of custom GraphQL directives
 - `middleware`: List of middleware classes
@@ -171,7 +170,7 @@ Mark a method as a GraphQL field.
 
 **Parameters:**
 - `mutable`: If True, field goes in Mutation type (unified approach only)
-- `subscription`: If True, field goes in Subscription type (unified approach only) 
+- `subscription`: If True, field goes in Subscription type (unified approach only)
 - `name`: Custom field name (defaults to method name)
 - `description`: Field description
 - `deprecation_reason`: Deprecation notice
@@ -486,7 +485,7 @@ class User(Node):
     @api.field
     def id(self) -> str:
         return self.global_id
-    
+
     @connection_field
     def posts(self) -> Connection[Post]:
         return self.get_posts_connection()
@@ -502,15 +501,15 @@ class User(Node):
 api = GraphQLAPI(
     # Disable introspection in production
     introspection=False,
-    
+
     # Custom schema directives
     directives=[custom_directive],
-    
+
     # Type extensions
     type_extensions={
         "Query": ["extend type Query { version: String }"]
     },
-    
+
     # Validation rules
     validation_rules=[custom_validation_rule]
 )
@@ -523,10 +522,10 @@ result = api.execute(
     query,
     # Execution timeout
     timeout=30,
-    
+
     # Maximum query depth
     max_depth=10,
-    
+
     # Query complexity analysis
     max_complexity=1000
 )

@@ -1,6 +1,5 @@
 ---
 title: "Async & Subscriptions"
-linkTitle: "Async & Subscriptions"
 weight: 5
 description: >
   Build high-performance async resolvers and real-time subscriptions
@@ -84,12 +83,12 @@ class Root:
     @api.field
     def get_user(self, user_id: int) -> User:
         return get_user_from_db(user_id)
-    
+
     # Mutation field
     @api.field(mutable=True)
     def update_user(self, user_id: int, name: str) -> User:
         return update_user_in_db(user_id, name)
-    
+
     # Subscription field - automatically detected by AsyncGenerator return type
     @api.field
     async def on_user_updated(self, user_id: int) -> AsyncGenerator[User, None]:
@@ -98,9 +97,9 @@ class Root:
             # In a real app, this would listen to a message queue or database changes
             await asyncio.sleep(1)
             yield get_user_from_db(user_id)
-    
+
     # You can also explicitly mark fields as subscriptions
-    @api.field(subscription=True) 
+    @api.field(subscription=True)
     async def count(self, to: int = 5) -> AsyncGenerator[int, None]:
         """Counts up to a given number, yielding each number."""
         for i in range(1, to + 1):
@@ -158,4 +157,4 @@ type Subscription {
 }
 ```
 
-When a client initiates a subscription operation, they will open a persistent connection (e.g., a WebSocket) and receive a new value each time the `yield` statement is executed in the resolver. This powerful feature allows you to build engaging, real-time experiences for your users. 
+When a client initiates a subscription operation, they will open a persistent connection (e.g., a WebSocket) and receive a new value each time the `yield` statement is executed in the resolver. This powerful feature allows you to build engaging, real-time experiences for your users.

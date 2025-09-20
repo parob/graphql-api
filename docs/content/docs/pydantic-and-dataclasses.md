@@ -1,6 +1,5 @@
 ---
 title: "Pydantic & Dataclasses"
-linkTitle: "Pydantic & Dataclasses"
 weight: 4
 description: >
   Integrate Pydantic models and dataclasses into your GraphQL schema
@@ -181,4 +180,4 @@ type Query {
 }
 ```
 
-By leveraging Pydantic and dataclasses, you can create clean, maintainable, and robust GraphQL APIs, letting `graphql-api` handle the conversion to the GraphQL schema. 
+By leveraging Pydantic and dataclasses, you can create clean, maintainable, and robust GraphQL APIs, letting `graphql-api` handle the conversion to the GraphQL schema.

@@ -1,6 +1,6 @@
 ---
 title: "Getting Started"
-weight: 10
+weight: 2
 ---
 
 # Getting Started
@@ -137,4 +137,4 @@ Most of the time, you won't write these queries by hand. You'll use a GraphQL cl
 Now that you've covered the basics, you're ready to explore more advanced features:
 
 - **[Defining Schemas](./defining-schemas.md)**: Learn more about creating complex types, interfaces, and enums.
-- **[Pydantic & Dataclasses](./pydantic-and-dataclasses.md)**: Integrate Pydantic models and dataclasses into your schema. 
+- **[Pydantic & Dataclasses](./pydantic-and-dataclasses.md)**: Integrate Pydantic models and dataclasses into your schema.

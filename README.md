@@ -117,6 +117,8 @@ Define async resolvers for non-blocking I/O operations.
 import asyncio
 from graphql_api.api import GraphQLAPI
 
+api = GraphQLAPI()
+
 @api.type(is_root_type=True)
 class AsyncAPI:
     @api.field
@@ -124,12 +126,10 @@ class AsyncAPI:
         await asyncio.sleep(1)
         return "Data fetched successfully!"
 
-api = GraphQLAPI()
-
 # To execute async queries, you'll need an async executor
 # or to run it within an async context.
 async def main():
-    result = await api.execute_async("""
+    result = await api.execute("""
         query {
             fetchData
         }
@@ -140,7 +140,6 @@ if __name__ == "__main__":
     asyncio.run(main())
 
 ```
-*Note: `execute_async` is a conceptual example. Refer to `test_async.py` for concrete implementation details.*
 
 
 ### Mutations with Dataclasses

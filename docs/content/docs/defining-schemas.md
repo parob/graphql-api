@@ -1,6 +1,5 @@
 ---
 title: "Defining Schemas"
-linkTitle: "Schema Definition"
 weight: 3
 description: >
   Learn how to define GraphQL schemas using decorators and type hints
@@ -318,7 +317,7 @@ def create_post(self, input: CreatePostInput) -> Post:
 
 **Global Decorator Pattern (Only if needed for circular imports):**
 ```python
-# In your mutations class  
+# In your mutations class
 @field(mutable=True)
 def create_post(self, input: CreatePostInput) -> Post:
     print(f"Creating post '{input.title}' by {input.author_email}")
