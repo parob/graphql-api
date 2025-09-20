@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import List, Optional
 
+from graphql import GraphQLObjectType
+
 from graphql_api.api import GraphQLAPI
 from graphql_api.decorators import field
 
@@ -47,7 +49,7 @@ class TestDataclassRelationships:
                 return Author(**author_data)
             return None
 
-        Post.get_author = get_author
+        Post.get_author = get_author  # type: ignore[reportIncompatibleMethodOverride]
 
         api = GraphQLAPI()
 
@@ -66,10 +68,12 @@ class TestDataclassRelationships:
 
         # Check that Post type has getAuthor field
         post_type = schema.type_map["Post"]
+        assert isinstance(post_type, GraphQLObjectType)
         assert "getAuthor" in post_type.fields
 
         # Check that Author type has getPosts field
         author_type = schema.type_map["Author"]
+        assert isinstance(author_type, GraphQLObjectType)
         assert "getPosts" in author_type.fields
 
         # Test query execution
@@ -123,8 +127,10 @@ class TestDataclassRelationships:
         user_type = schema.type_map["User"]
 
         # publicMethod should be present (camelCase conversion)
+        assert isinstance(user_type, GraphQLObjectType)
         assert "publicMethod" in user_type.fields
 
         # privateMethod should NOT be present
+        assert isinstance(user_type, GraphQLObjectType)
         assert "privateMethod" not in user_type.fields
         assert "private_method" not in user_type.fields
