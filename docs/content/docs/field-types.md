@@ -123,6 +123,27 @@ class Root:
 
 The `JsonType` accepts any JSON-serializable Python value: `dict`, `list`, `str`, `int`, `float`, `bool`, or `None`.
 
+**Important note about dict/list return types**: When you return `dict` or `list` objects from fields, they are automatically serialized to JSON strings in the GraphQL response. If you need to return structured objects that clients can query with GraphQL field selection, use dataclasses or Pydantic models instead.
+
+```python
+# This returns a JSON string
+@api.field
+def get_metadata(self) -> dict:
+    return {"version": "1.0", "author": "dev"}
+# GraphQL response: {"getMetadata": "{\"version\": \"1.0\", \"author\": \"dev\"}"}
+
+# This returns a queryable object
+@dataclass
+class Metadata:
+    version: str
+    author: str
+
+@api.field
+def get_metadata(self) -> Metadata:
+    return Metadata(version="1.0", author="dev")
+# GraphQL response: {"getMetadata": {"version": "1.0", "author": "dev"}}
+```
+
 ## Enum Types
 
 Python enums are automatically converted to GraphQL enums:

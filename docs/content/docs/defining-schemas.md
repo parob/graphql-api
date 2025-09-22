@@ -170,12 +170,11 @@ class Subscription:
             await asyncio.sleep(1)
             yield get_user_from_db(user_id)
 
-# Create API instance with explicit types
-api_explicit = GraphQLAPI(
-    query_type=Query,
-    mutation_type=Mutation,
-    subscription_type=Subscription
-)
+# Create API instance and set explicit types
+api_explicit = GraphQLAPI()
+api_explicit.query_type = Query
+api_explicit.mutation_type = Mutation
+api_explicit.subscription_type = Subscription
 ```
 
 **Advantages:**
@@ -224,9 +223,12 @@ An object type is automatically inferred for the following situations:
 - The class defines a custom mapper or is mappable by `graphql-api`
 
 Generally you only need `@api.type` for special cases:
-- Root types: `@api.type(is_root_type=True)`
-- Interfaces: `@api.type(interface=True)`
-- When you need to override the default behavior
+- **Root types**: `@api.type(is_root_type=True)` - Required for the main query/mutation/subscription entry point
+- **Interfaces**: `@api.type(interface=True)` - Required to define GraphQL interfaces
+- **Explicit types mode**: When using Mode 2, you need `@api.type` to register classes with the API instance
+- **When you need to override the default behavior** or add metadata
+
+**Important**: If you use instance decorators (`@api.field`), you usually don't need `@api.type` unless it's a root type or interface. The type will be automatically inferred and registered.
 
 ### Basic Object Types
 

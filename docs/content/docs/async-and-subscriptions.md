@@ -38,26 +38,59 @@ class Query:
 
 ### Executing Async Queries
 
-To execute a schema with async resolvers, you'll need to use an async-native web framework like Starlette or FastAPI. The `graphql-api` library can be easily integrated.
-
-The following is a conceptual example of how you might integrate with Starlette. For a complete, runnable example, please refer to the `test_async.py` and `test_subscriptions.py` files in the test suite.
+**Important**: `graphql-api` automatically handles async resolvers! You can use the standard `api.execute()` method even with async resolvers - no special async execution is required.
 
 ```python
-# Conceptual integration with an ASGI framework like Starlette
-# from starlette.applications import Starlette
-# from starlette.responses import JSONResponse
-# from starlette.routing import Route
+# This works with async resolvers!
+result = api.execute("query { fetchRemoteData }")
+```
 
-# async def graphql_endpoint(request):
-#     data = await request.json()
-#     result = await api.execute_async(query=data['query'])
-#     return JSONResponse(result)
+The library internally manages the async execution, so you don't need to worry about `await` or event loops when using async resolvers.
 
-# routes = [
-#     Route("/graphql", endpoint=graphql_endpoint, methods=["POST"]),
-# ]
+#### Integration with Web Frameworks
 
-# app = Starlette(routes=routes)
+For web applications, you can integrate with both sync and async frameworks:
+
+**With FastAPI (async framework):**
+```python
+from fastapi import FastAPI
+from graphql_api.api import GraphQLAPI
+
+app = FastAPI()
+api = GraphQLAPI()
+
+@api.type(is_root_type=True)
+class Query:
+    @api.field
+    async def fetch_data(self) -> str:
+        # Your async logic here
+        return "data"
+
+@app.post("/graphql")
+async def graphql_endpoint(query: str):
+    result = api.execute(query)  # Works seamlessly!
+    return result.data
+```
+
+**With Flask (sync framework):**
+```python
+from flask import Flask
+from graphql_api.api import GraphQLAPI
+
+app = Flask(__name__)
+api = GraphQLAPI()
+
+@api.type(is_root_type=True)
+class Query:
+    @api.field
+    async def fetch_data(self) -> str:
+        # Your async logic here
+        return "data"
+
+@app.route("/graphql", methods=["POST"])
+def graphql_endpoint():
+    result = api.execute(request.json["query"])  # Also works!
+    return result.data
 ```
 
 ## Subscriptions

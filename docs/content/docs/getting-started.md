@@ -53,7 +53,26 @@ class Query:
         return f"Hello, {name}!"
 ```
 
-`graphql-api` uses Python's type hints to generate the GraphQL schema. In this case, `name: str` becomes a required `String` argument, and `-> str` makes the field return a non-null `String`.
+`graphql-api` uses Python's type hints to generate the GraphQL schema. In this case, `name: str = "World"` becomes an optional `String` argument (nullable because it has a default value), and `-> str` makes the field return a non-null `String`.
+
+#### Understanding Type Nullability
+
+In GraphQL and `graphql-api`:
+- **Arguments with default values** become nullable (optional) in GraphQL
+- **Arguments without defaults** become non-null (required) in GraphQL
+- **Return types** are non-null by default unless wrapped in `Optional[T]`
+
+For example:
+```python
+@api.field
+def example(self, required_arg: str, optional_arg: str = "default") -> str:
+    return f"{required_arg} {optional_arg}"
+```
+
+This generates:
+```graphql
+example(requiredArg: String!, optionalArg: String): String!
+```
 
 ### 3. Execute a Query
 
@@ -131,6 +150,40 @@ if __name__ == "__main__":
 ```
 
 Most of the time, you won't write these queries by hand. You'll use a GraphQL client or IDE that has a built-in schema explorer. Simply point the tool to your running API endpoint, and it will use introspection to provide you with a full, interactive guide to your API.
+
+## Error Handling
+
+GraphQL APIs can return both data and errors. Here's how to handle potential errors in your queries:
+
+```python
+result = api.execute(graphql_query)
+
+if result.errors:
+    print("GraphQL errors occurred:")
+    for error in result.errors:
+        print(f"- {error.message}")
+else:
+    print("Success:", result.data)
+```
+
+Common types of errors include:
+- **Syntax errors**: Invalid GraphQL query syntax
+- **Validation errors**: Query doesn't match the schema (e.g., requesting non-existent fields)
+- **Execution errors**: Errors thrown by your resolver functions
+
+```python
+@api.type(is_root_type=True)
+class Query:
+    @api.field
+    def divide(self, a: int, b: int) -> float:
+        if b == 0:
+            raise ValueError("Cannot divide by zero")
+        return a / b
+
+# This will return an execution error
+result = api.execute('query { divide(a: 10, b: 0) }')
+# result.errors will contain the ValueError
+```
 
 ## Next Steps
 
