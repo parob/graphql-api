@@ -1,6 +1,6 @@
 ---
 title: "Error Handling"
-weight: 9
+weight: 2
 description: >
   Comprehensive error handling strategies for robust GraphQL APIs
 ---

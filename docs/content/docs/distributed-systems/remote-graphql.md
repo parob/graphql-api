@@ -1,6 +1,6 @@
 ---
 title: "Remote GraphQL"
-weight: 17
+weight: 1
 description: >
   Working with remote GraphQL services and building distributed architectures
 ---

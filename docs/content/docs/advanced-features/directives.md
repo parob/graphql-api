@@ -1,6 +1,6 @@
 ---
 title: "Directives"
-weight: 14
+weight: 1
 description: >
   Creating and using custom GraphQL directives for declarative schema metadata
 ---

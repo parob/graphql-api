@@ -1,6 +1,6 @@
 ---
 title: "Object Types and Relationships"
-weight: 5
+weight: 4
 description: >
   Creating complex object types, dataclass relationships, and nested data structures
 ---

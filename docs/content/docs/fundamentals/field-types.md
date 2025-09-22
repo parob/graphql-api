@@ -1,6 +1,6 @@
 ---
 title: "Field Types"
-weight: 4
+weight: 3
 description: >
   Complete guide to supported field types and custom scalar types
 ---

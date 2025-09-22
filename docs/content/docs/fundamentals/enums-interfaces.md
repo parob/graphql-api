@@ -1,6 +1,6 @@
 ---
 title: "Enums and Interfaces"
-weight: 8
+weight: 7
 description: >
   Creating GraphQL enums and interfaces for flexible type definitions
 ---

@@ -1,6 +1,6 @@
 ---
 title: "Middleware"
-weight: 12
+weight: 1
 description: >
   Using middleware for cross-cutting concerns like authentication, logging, and performance monitoring
 ---

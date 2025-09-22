@@ -1,6 +1,6 @@
 ---
 title: "Examples & Tutorials"
-weight: 20
+weight: 1
 ---
 
 # Examples & Tutorials

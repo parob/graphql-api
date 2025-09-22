@@ -1,6 +1,6 @@
 ---
 title: "Defining Schemas"
-weight: 3
+weight: 2
 description: >
   Learn how to define GraphQL schemas using decorators and type hints
 ---

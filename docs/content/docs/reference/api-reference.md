@@ -1,6 +1,6 @@
 ---
 title: "API Reference"
-weight: 21
+weight: 2
 description: >
   Complete API reference for graphql-api
 ---

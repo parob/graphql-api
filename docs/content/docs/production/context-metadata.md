@@ -1,6 +1,6 @@
 ---
 title: "Context and Metadata"
-weight: 13
+weight: 2
 description: >
   Managing request context and field metadata for sophisticated GraphQL APIs
 ---

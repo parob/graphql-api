@@ -1,6 +1,6 @@
 ---
 title: "Mutations and Input Types"
-weight: 7
+weight: 6
 description: >
   Creating GraphQL mutations with input types for data modification operations
 ---

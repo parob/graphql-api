@@ -1,6 +1,6 @@
 ---
 title: "Schema Documentation"
-weight: 6
+weight: 1
 description: >
   Automatic schema documentation with Python docstrings and description generation
 ---

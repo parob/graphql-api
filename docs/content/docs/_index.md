@@ -16,38 +16,40 @@ The documentation is organized to support your development needs:
 ### Fundamentals
 Start here to understand GraphQL basics and build your first API:
 
-- **[Getting Started](getting-started/)** - Installation and your first GraphQL API
-- **[Schema Definition](defining-schemas/)** - Core concepts and decorator patterns
-- **[Field Types](field-types/)** - Scalars, collections, and custom types
-- **[Object Types & Relationships](object-types/)** - Model complex business entities
-- **[Documentation](documentation/)** - Self-documenting schemas with introspection
+- **[Getting Started](fundamentals/getting-started/)** - Installation and your first GraphQL API
+- **[Schema Definition](fundamentals/defining-schemas/)** - Core concepts and decorator patterns
+- **[Field Types](fundamentals/field-types/)** - Scalars, collections, and custom types
+- **[Object Types & Relationships](fundamentals/object-types/)** - Model complex business entities
+- **[Mutations & Input Types](fundamentals/mutations/)** - Data modifications and validation
+- **[Enums & Interfaces](fundamentals/enums-interfaces/)** - Advanced type modeling
+- **[Pydantic & Dataclasses](fundamentals/pydantic-and-dataclasses/)** - Data validation integration
+- **[Async & Subscriptions](fundamentals/async-and-subscriptions/)** - Real-time and async patterns
 
 ### Building Applications
-Create complete applications with mutations, validation, and error handling:
+Create complete, production-ready applications with documentation and error handling:
 
-- **[Input Types & Mutations](mutations/)** - Handle data modifications and validation
-- **[Enums & Interfaces](enums-interfaces/)** - Advanced type modeling
-- **[Error Handling](error-handling/)** - Robust error management
+- **[Schema Documentation](building-applications/documentation/)** - Self-documenting schemas with introspection
+- **[Error Handling](building-applications/error-handling/)** - Robust error management
 
-### Integration & Production
-Integrate with your stack and prepare for production deployment:
+### Production
+Prepare for production deployment with middleware and advanced request handling:
 
-- **[Pydantic & Dataclasses](pydantic-and-dataclasses/)** - Data validation integration
-- **[Async & Subscriptions](async-and-subscriptions/)** - Real-time and async patterns
-- **[Middleware](middleware/)** - Authentication, logging, and monitoring
-- **[Context & Metadata](context-metadata/)** - Request context and resolver metadata
+- **[Middleware](production/middleware/)** - Authentication, logging, and monitoring
+- **[Context & Metadata](production/context-metadata/)** - Request context and resolver metadata
 
 ### Advanced Features
 Implement sophisticated patterns and dynamic behavior:
 
-- **[Custom Directives](directives/)** - Schema directives and custom behavior
-- **[Schema Filtering](schema-filtering/)** - Dynamic access control
-- **[Performance](performance/)** - Optimization techniques and best practices
+- **[Custom Directives](advanced-features/directives/)** - Schema directives and custom behavior
+- **[Schema Filtering](advanced-features/schema-filtering/)** - Dynamic access control
+- **[Performance](advanced-features/performance/)** - Optimization techniques and best practices
 
 ### Distributed Systems
 Build microservices and distributed GraphQL architectures:
 
-- **[Remote GraphQL](remote-graphql/)** - Service integration and remote execution
+- **[Remote GraphQL](distributed-systems/remote-graphql/)** - Service integration and remote execution
+- **[Federation](distributed-systems/federation/)** - Microservices and distributed schemas
+- **[Relay Pagination](distributed-systems/pagination-relay/)** - Advanced client integration patterns
 - **[Federation](federation/)** - Microservices and distributed schemas
 - **[Relay Pagination](pagination-relay/)** - Advanced client integration patterns
 

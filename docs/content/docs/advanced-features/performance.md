@@ -1,6 +1,6 @@
 ---
 title: "Performance and Best Practices"
-weight: 16
+weight: 3
 description: >
   Optimizing GraphQL API performance and following development best practices
 ---

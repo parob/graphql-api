@@ -1,6 +1,6 @@
 ---
 title: "Pagination and Relay"
-weight: 19
+weight: 3
 description: >
   Implementing cursor-based pagination and Relay-compliant APIs
 ---

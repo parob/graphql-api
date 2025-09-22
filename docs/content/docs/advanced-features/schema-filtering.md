@@ -1,6 +1,6 @@
 ---
 title: "Schema Filtering"
-weight: 15
+weight: 2
 description: >
   Controlling field access and schema structure with automatic filtering capabilities
 ---
