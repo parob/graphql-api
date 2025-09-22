@@ -1,7 +1,8 @@
-baseURL = "https://parob.github.io/graphql-api"
+baseURL = "/"
 languageCode = "en-us"
 title = "GraphQL API for Python"
 theme = "hugo-book"
+relativeURLs = true
 
 # Hugo version
 [module]
