@@ -493,66 +493,7 @@ class Mutation:
 
 ## Enums and Interfaces
 
-`graphql-api` also supports more advanced GraphQL types like Enums and Interfaces.
-
-### Enums
-
-Define enums using Python's standard `Enum` class. `graphql-api` will automatically convert them to GraphQL enums.
-
-```python
-import enum
-
-class Episode(enum.Enum):
-    NEWHOPE = 4
-    EMPIRE = 5
-    JEDI = 6
-```
-
-### Interfaces
-
-Create GraphQL interfaces by decorating a class with `@api.type(interface=True)` or `@type(interface=True)`. Other classes can then implement this interface by inheriting from it.
-
-**Instance Decorator Pattern (Recommended):**
-```python
-@api.type(interface=True)
-class Character:
-    @api.field
-    def get_id(self) -> str:
-        return "default_id"
-
-    @api.field
-    def get_name(self) -> str:
-        return "default_name"
-
-class Human(Character):
-    # This class will automatically inherit the `get_id` and `get_name` methods
-    # from the Character interface, which become `getId` and `getName` fields in GraphQL.
-    @api.field
-    def home_planet(self) -> str:
-        return "Earth"
-```
-
-**Global Decorator Pattern (Only if needed for circular imports):**
-```python
-@type(interface=True)
-class Character:
-    @field
-    def get_id(self) -> str:
-        return "default_id"
-
-    @field
-    def get_name(self) -> str:
-        return "default_name"
-
-class Human(Character):
-    # This class will automatically inherit the `get_id` and `get_name` methods
-    # from the Character interface, which become `getId` and `getName` fields in GraphQL.
-    @field
-    def home_planet(self) -> str:
-        return "Earth"
-```
-
-This feature allows you to build flexible and maintainable schemas that adhere to GraphQL best practices.
+For more advanced GraphQL type definitions including enums and interfaces, see the dedicated [Enums and Interfaces](../enums-interfaces/) documentation.
 
 ## Field Types
 

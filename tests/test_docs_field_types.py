@@ -409,3 +409,109 @@ class TestFieldTypesExamples:
         assert str(fields["optionalString"].type) == "String"
         assert str(fields["stringList"].type) == "[String!]!"
         assert str(fields["optionalStringList"].type) == "[String!]"
+
+    def test_advanced_dataclass_relationships(self):
+        """Test advanced dataclass relationships with @field decorator"""
+        from dataclasses import dataclass
+        from typing import List, Optional
+        from graphql_api.decorators import field
+
+        api = GraphQLAPI()
+
+        # Sample data (in real apps, this would be from a database)
+        authors_db = [
+            {"id": 1, "name": "Alice", "email": "alice@example.com"},
+            {"id": 2, "name": "Bob", "email": "bob@example.com"},
+        ]
+
+        posts_db = [
+            {"id": 1, "title": "First Post", "content": "Content", "author_id": 1},
+            {"id": 2, "title": "Second Post", "content": "More content", "author_id": 2},
+        ]
+
+        @dataclass
+        class Post:
+            id: int
+            title: str
+            content: str
+            author_id: int
+
+        @dataclass
+        class Author:
+            id: int
+            name: str
+            email: str
+
+            @field
+            def get_posts(self) -> List[Post]:
+                """Get all posts by this author."""
+                return [Post(**p) for p in posts_db if p["author_id"] == self.id]
+
+        # Add relationship method to Post after Author is defined
+        @field
+        def get_author(self) -> Optional[Author]:
+            """Get the author of this post."""
+            author_data = next((a for a in authors_db if a["id"] == self.author_id), None)
+            if author_data:
+                return Author(**author_data)
+            return None
+
+        # Attach the method to the dataclass
+        Post.get_author = get_author
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def posts(self) -> List[Post]:
+                return [Post(**p) for p in posts_db]
+
+            @api.field
+            def authors(self) -> List[Author]:
+                return [Author(**a) for a in authors_db]
+
+        # Test schema generation
+        schema, _ = api.build_schema()
+        assert schema is not None
+
+        # Check that the relationships are in the schema
+        post_type = schema.type_map["Post"]
+        assert "getAuthor" in post_type.fields
+
+        author_type = schema.type_map["Author"]
+        assert "getPosts" in author_type.fields
+
+        # Test query execution with relationships
+        result = api.execute('''
+            query {
+                posts {
+                    id
+                    title
+                    getAuthor {
+                        name
+                        email
+                    }
+                }
+            }
+        ''')
+
+        assert not result.errors
+        assert len(result.data["posts"]) == 2
+        assert result.data["posts"][0]["getAuthor"]["name"] == "Alice"
+        assert result.data["posts"][1]["getAuthor"]["name"] == "Bob"
+
+        # Test reverse relationship
+        result = api.execute('''
+            query {
+                authors {
+                    name
+                    getPosts {
+                        title
+                    }
+                }
+            }
+        ''')
+
+        assert not result.errors
+        assert len(result.data["authors"]) == 2
+        assert len(result.data["authors"][0]["getPosts"]) == 1
+        assert result.data["authors"][0]["getPosts"][0]["title"] == "First Post"

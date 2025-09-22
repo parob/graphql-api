@@ -835,3 +835,364 @@ else:
 ```
 
 These patterns help you build robust, performant GraphQL APIs that scale with your application's needs.
+
+## Relay Pagination
+
+`graphql-api` provides full support for Relay-style cursor-based pagination, which is the GraphQL standard for handling large datasets efficiently.
+
+### Basic Relay Setup
+
+```python
+from graphql_api.relay import Connection, Edge, Node, PageInfo
+from typing import List, Optional
+import collections
+
+class Person(Node):
+    def __init__(self, name: Optional[str] = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._name = name
+
+    @property
+    @api.field
+    def name(self) -> Optional[str]:
+        return self._name
+
+class PersonConnection(Connection):
+    def __init__(self, people, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        cursors = list(people.keys())
+        start_index = 0
+        end_index = len(cursors) - 1
+
+        self.has_previous_page = False
+        self.has_next_page = False
+        self.filtered_cursors = []
+
+        # Handle 'after' cursor
+        if self._after is not None:
+            start_index = cursors.index(self._after)
+            if start_index > 0:
+                self.has_previous_page = True
+
+        # Handle 'before' cursor
+        if self._before is not None:
+            end_index = cursors.index(self._before)
+            if end_index < len(cursors) - 1:
+                self.has_next_page = True
+
+        self.filtered_cursors = cursors[start_index: end_index + 1]
+        self.people = people
+
+        # Handle 'first' pagination
+        if self._first is not None:
+            self.filtered_cursors = self.filtered_cursors[: self._first]
+
+        # Handle 'last' pagination
+        elif self._last is not None:
+            self.filtered_cursors = self.filtered_cursors[-self._last:]
+
+    @api.field
+    def edges(self) -> List[Edge]:
+        return [
+            Edge(cursor=cursor, node=self.people[cursor])
+            for cursor in self.filtered_cursors
+        ]
+
+    @api.field
+    def page_info(self) -> PageInfo:
+        return PageInfo(
+            start_cursor=self.filtered_cursors[0],
+            end_cursor=self.filtered_cursors[-1],
+            has_previous_page=self.has_previous_page,
+            has_next_page=self.has_next_page,
+            count=len(self.filtered_cursors),
+        )
+
+@api.type(is_root_type=True)
+class Query:
+    @api.field
+    def people(
+        self,
+        before: Optional[str] = None,
+        after: Optional[str] = None,
+        first: Optional[int] = None,
+        last: Optional[int] = None,
+    ) -> PersonConnection:
+        # Your data source - could be from database
+        people_data = collections.OrderedDict([
+            ("person_1", Person(name="Alice")),
+            ("person_2", Person(name="Bob")),
+            ("person_3", Person(name="Charlie")),
+        ])
+
+        return PersonConnection(
+            people_data, before=before, after=after, first=first, last=last
+        )
+```
+
+### Using Relay Pagination
+
+Client queries use the standard Relay pagination pattern:
+
+```graphql
+# Get first 2 people
+query {
+  people(first: 2) {
+    edges {
+      cursor
+      node {
+        ... on Person {
+          name
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+      count
+    }
+  }
+}
+```
+
+```graphql
+# Get next page after cursor
+query {
+  people(first: 2, after: "person_2") {
+    edges {
+      node {
+        ... on Person {
+          name
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+```
+
+### Relay Components
+
+**Node Interface**: Base class for paginated objects
+- Automatically provides `id` field required by Relay
+- Inherit from this for objects that will be paginated
+
+**Connection**: Container for paginated results
+- Handles pagination logic (`before`, `after`, `first`, `last`)
+- Contains `edges` and `pageInfo` fields
+- Extend this class with your pagination logic
+
+**Edge**: Individual item in a paginated list
+- Contains `cursor` (for pagination) and `node` (the actual object)
+- Automatically generated from your Connection implementation
+
+**PageInfo**: Pagination metadata
+- `hasNextPage` / `hasPreviousPage`: Boolean pagination state
+- `startCursor` / `endCursor`: First and last cursors in current page
+- `count`: Number of items in current page
+
+This Relay implementation provides efficient cursor-based pagination that works seamlessly with GraphQL clients like Apollo and Relay.
+
+## Remote GraphQL Execution
+
+`graphql-api` provides powerful capabilities for working with remote GraphQL services, enabling you to create distributed GraphQL architectures and proxy remote APIs.
+
+### GraphQLRemoteExecutor - Connecting to External APIs
+
+Connect to and query external GraphQL services:
+
+```python
+from graphql_api.remote import GraphQLRemoteExecutor
+
+# Connect to a remote GraphQL API
+remote_api = GraphQLRemoteExecutor(
+    url="https://api.example.com/graphql",
+    http_method="POST",  # or "GET"
+    verify=True,  # SSL verification
+    http_headers={"Authorization": "Bearer your-token"}
+)
+
+# Execute queries directly
+result = remote_api.execute('''
+    query {
+        user(id: "123") {
+            name
+            email
+        }
+    }
+''')
+```
+
+### Integrating Remote APIs into Local Schema
+
+Use remote APIs as fields in your local GraphQL schema:
+
+```python
+from graphql_api.api import GraphQLAPI
+from graphql_api.remote import GraphQLRemoteExecutor, remote_execute
+from graphql_api.context import GraphQLContext
+
+api = GraphQLAPI()
+
+# External API connection
+external_api = GraphQLRemoteExecutor(
+    url="https://api.external-service.com/graphql",
+    http_headers={"API-Key": "your-api-key"}
+)
+
+@api.type(is_root_type=True)
+class Query:
+    @api.field
+    def external_data(self, context: GraphQLContext) -> external_api:  # type: ignore[valid-type]
+        # Use the remote_execute helper to forward the current query
+        return remote_execute(executor=external_api, context=context)
+
+    @api.field
+    def custom_external_query(self) -> dict:
+        # Execute a custom query against the remote API
+        result = external_api.execute('''
+            query {
+                specificData {
+                    id
+                    value
+                }
+            }
+        ''')
+        return result.data
+```
+
+### GraphQLRemoteObject - Local Objects as Remote Queries
+
+Make local objects behave like remote GraphQL queries for testing or abstraction:
+
+```python
+from graphql_api.remote import GraphQLRemoteObject
+
+api = GraphQLAPI()
+
+@api.type(is_root_type=True)
+class House:
+    @api.field
+    def number_of_doors(self) -> int:
+        return 5
+
+    @api.field
+    def address(self) -> str:
+        return "123 Main St"
+
+# Create a remote-like object that queries the local API
+house: House = GraphQLRemoteObject(executor=api.executor(), api=api)
+
+# Use like a regular object, but it executes GraphQL queries behind the scenes
+doors = house.number_of_doors()  # Executes: query { numberOfDoors }
+address = house.address()        # Executes: query { address }
+
+assert doors == 5
+assert address == "123 Main St"
+```
+
+### Async Remote Execution
+
+All remote operations support async execution:
+
+```python
+import asyncio
+from graphql_api.remote import GraphQLRemoteExecutor
+
+async def fetch_remote_data():
+    remote_api = GraphQLRemoteExecutor(
+        url="https://api.example.com/graphql",
+        verify=False
+    )
+
+    result = await remote_api.execute_async('''
+        query {
+            users(first: 10) {
+                id
+                name
+            }
+        }
+    ''')
+
+    return result.data
+
+# Usage
+data = asyncio.run(fetch_remote_data())
+```
+
+### Federation and Schema Stitching
+
+Combine multiple remote GraphQL APIs into a unified schema:
+
+```python
+api = GraphQLAPI()
+
+# Multiple remote services
+user_service = GraphQLRemoteExecutor(url="https://users.example.com/graphql")
+order_service = GraphQLRemoteExecutor(url="https://orders.example.com/graphql")
+
+@api.type(is_root_type=True)
+class Query:
+    @api.field
+    def users(self, context: GraphQLContext) -> user_service:  # type: ignore[valid-type]
+        return remote_execute(executor=user_service, context=context)
+
+    @api.field
+    def orders(self, context: GraphQLContext) -> order_service:  # type: ignore[valid-type]
+        return remote_execute(executor=order_service, context=context)
+
+    @api.field
+    def user_with_orders(self, user_id: str) -> dict:
+        # Combine data from multiple services
+        user_result = user_service.execute(f'''
+            query {{
+                user(id: "{user_id}") {{
+                    id
+                    name
+                    email
+                }}
+            }}
+        ''')
+
+        orders_result = order_service.execute(f'''
+            query {{
+                orders(userId: "{user_id}") {{
+                    id
+                    total
+                    items
+                }}
+            }}
+        ''')
+
+        return {
+            "user": user_result.data["user"],
+            "orders": orders_result.data["orders"]
+        }
+```
+
+### Remote Execution Features
+
+**Configuration Options:**
+- `url`: Remote GraphQL endpoint
+- `http_method`: "GET" or "POST" requests
+- `verify`: SSL certificate verification
+- `http_headers`: Custom headers (auth, API keys, etc.)
+
+**Error Handling:**
+- Network errors are propagated as GraphQL errors
+- Remote GraphQL errors are passed through
+- Async and sync execution modes
+
+**Use Cases:**
+- Microservices architecture with GraphQL
+- API gateway and schema federation
+- Testing with local/remote API switching
+- Legacy API integration
+
+This remote execution capability enables building sophisticated distributed GraphQL architectures while maintaining type safety and developer experience.

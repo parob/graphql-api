@@ -2,6 +2,7 @@
 Test all code examples from the getting-started.md documentation
 """
 import pytest
+from typing import List
 from graphql_api.api import GraphQLAPI
 
 
@@ -143,3 +144,132 @@ class TestGettingStartedExamples:
 
         # Check return type
         assert str(hello_field.type) == 'String!'
+
+    def test_schema_documentation_with_docstrings(self):
+        """Test schema documentation with docstrings"""
+        api = GraphQLAPI()
+
+        @api.type(is_root_type=True)
+        class Query:
+            """
+            The root query type for our API.
+            This docstring becomes the type description.
+            """
+
+            @api.field
+            def get_user(self, user_id: str) -> str:
+                """
+                Retrieve a user by their unique ID.
+
+                This docstring becomes the field description in the GraphQL schema.
+                """
+                return f"User {user_id}"
+
+            @api.field
+            def search_users(self, query: str, limit: int = 10) -> List[str]:
+                """Search for users matching a query string."""
+                return [f"User matching '{query}'"]
+
+        # Test that the schema builds with docstrings
+        schema, _ = api.build_schema()
+        assert schema is not None
+
+        # Test that docstrings are preserved as descriptions
+        query_type = schema.query_type
+        assert "The root query type for our API" in query_type.description
+
+        get_user_field = query_type.fields["getUser"]
+        assert "Retrieve a user by their unique ID" in get_user_field.description
+
+        search_users_field = query_type.fields["searchUsers"]
+        assert search_users_field.description == "Search for users matching a query string."
+
+        # Test that queries still work
+        result = api.execute('query { getUser(userId: "123") }')
+        assert not result.errors
+        assert result.data["getUser"] == "User 123"
+
+    def test_dataclass_and_pydantic_documentation(self):
+        """Test docstrings work with dataclasses and Pydantic"""
+        from dataclasses import dataclass
+        from pydantic import BaseModel
+
+        api = GraphQLAPI()
+
+        @dataclass
+        class User:
+            """Represents a user in the system."""
+            id: str
+            name: str
+            email: str
+
+        class CreateUserInput(BaseModel):
+            """Input data for creating a new user."""
+            name: str
+            email: str
+
+        @api.type(is_root_type=True)
+        class Query:
+            @api.field
+            def user(self) -> User:
+                return User(id="1", name="Alice", email="alice@example.com")
+
+            @api.field(mutable=True)
+            def create_user(self, input: CreateUserInput) -> User:
+                return User(id="999", name=input.name, email=input.email)
+
+        schema, _ = api.build_schema()
+        assert schema is not None
+
+        # Check that type descriptions are preserved
+        user_type = schema.type_map["User"]
+        assert user_type.description == "Represents a user in the system."
+
+        # Input types are only included in schema if they're actually used in mutations
+        # Since this is just a query, the input type won't be in the schema
+
+        # Test functionality
+        result = api.execute('query { user { id name email } }')
+        assert not result.errors
+        assert result.data["user"]["name"] == "Alice"
+
+    def test_advanced_docstring_parsing(self):
+        """Test Google-style docstring parsing"""
+        from dataclasses import dataclass
+
+        api = GraphQLAPI()
+
+        @dataclass
+        class Product:
+            """
+            A product in our catalog.
+
+            Args:
+                id: The unique product identifier
+                name: The product display name
+                price: The product price in cents
+                category: The product category name
+            """
+            id: str
+            name: str
+            price: int
+            category: str
+
+        @api.type(is_root_type=True)
+        class Query:
+            @api.field
+            def product(self) -> Product:
+                return Product(id="p1", name="Widget", price=1000, category="gadgets")
+
+        schema, _ = api.build_schema()
+        assert schema is not None
+
+        # Check that the main description is preserved
+        product_type = schema.type_map["Product"]
+        assert "A product in our catalog" in product_type.description
+
+        # Test functionality
+        result = api.execute('query { product { id name price category } }')
+        assert not result.errors
+        assert result.data["product"]["name"] == "Widget"
+        assert result.data["product"]["price"] == 1000

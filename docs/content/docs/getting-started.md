@@ -185,6 +185,88 @@ result = api.execute('query { divide(a: 10, b: 0) }')
 # result.errors will contain the ValueError
 ```
 
+## Schema Documentation with Docstrings
+
+`graphql-api` automatically converts Python docstrings into GraphQL schema descriptions, making your API self-documenting:
+
+```python
+@api.type(is_root_type=True)
+class Query:
+    """
+    The root query type for our API.
+    This docstring becomes the type description.
+    """
+
+    @api.field
+    def get_user(self, user_id: str) -> str:
+        """
+        Retrieve a user by their unique ID.
+
+        This docstring becomes the field description in the GraphQL schema.
+        """
+        return f"User {user_id}"
+
+    @api.field
+    def search_users(self, query: str, limit: int = 10) -> List[str]:
+        """Search for users matching a query string."""
+        return [f"User matching '{query}'"]
+```
+
+### Dataclass and Pydantic Documentation
+
+Docstrings work with all type definitions:
+
+```python
+from dataclasses import dataclass
+from pydantic import BaseModel
+
+@dataclass
+class User:
+    """Represents a user in the system."""
+    id: str
+    """The unique identifier for the user."""
+    name: str
+    """The user's display name."""
+    email: str
+
+class CreateUserInput(BaseModel):
+    """Input data for creating a new user."""
+    name: str
+    email: str
+```
+
+### Advanced Docstring Parsing
+
+The library supports Google-style docstrings for more structured documentation:
+
+```python
+@dataclass
+class Product:
+    """
+    A product in our catalog.
+
+    Args:
+        id: The unique product identifier
+        name: The product display name
+        price: The product price in cents
+        category: The product category name
+    """
+    id: str
+    name: str
+    price: int
+    category: str
+```
+
+**Automatic Features:**
+- Class docstrings become GraphQL type descriptions
+- Method docstrings become field descriptions
+- Dataclass field docstrings are extracted
+- Google-style Args sections are parsed for field descriptions
+- Pydantic model docstrings are preserved
+- Default Pydantic docstrings are filtered out
+
+This documentation appears in GraphQL introspection and tools like GraphiQL, making your API easy to explore and understand.
+
 ## Next Steps
 
 Now that you've covered the basics, you're ready to explore more advanced features:

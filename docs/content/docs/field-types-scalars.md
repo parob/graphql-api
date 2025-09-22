@@ -1,13 +1,13 @@
 ---
-title: "Field Types"
+title: "Field Types and Scalars"
 weight: 4
 description: >
-  Complete guide to supported field types and custom scalar types
+  Complete guide to built-in scalar types, collections, and custom scalar types
 ---
 
-# Field Types
+# Field Types and Scalars
 
-`graphql-api` automatically maps Python types to GraphQL types. Here's a comprehensive overview of supported types:
+`graphql-api` automatically maps Python types to GraphQL types. This guide covers all supported scalar types and collection types.
 
 ## Built-in Scalar Types
 
@@ -99,6 +99,32 @@ type Root {
 }
 ```
 
+### Nullability Rules
+
+Understanding GraphQL nullability is crucial:
+
+```python
+@api.field
+def required_string(self) -> str:
+    # GraphQL: String! (non-null)
+    return "always has value"
+
+@api.field
+def optional_string(self) -> Optional[str]:
+    # GraphQL: String (nullable)
+    return None
+
+@api.field
+def string_list(self) -> List[str]:
+    # GraphQL: [String!]! (non-null list of non-null strings)
+    return ["a", "b", "c"]
+
+@api.field
+def optional_string_list(self) -> Optional[List[str]]:
+    # GraphQL: [String!] (nullable list of non-null strings)
+    return None
+```
+
 ## JSON and Dynamic Types
 
 For flexible data structures, use the built-in JSON support:
@@ -172,6 +198,22 @@ class Root:
         return f"Priority level: {priority.value}"
 ```
 
+This generates GraphQL enum types:
+
+```graphql
+enum Status {
+  ACTIVE
+  INACTIVE
+  PENDING
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+```
+
 ## Custom Scalar Types
 
 You can define custom GraphQL scalar types for specialized data handling:
@@ -224,6 +266,8 @@ class Root:
         return f"Found item with ID: {id}"
 ```
 
+The ID type accepts both strings and integers but serializes them as strings in the response.
+
 ## Union Types
 
 `graphql-api` can create `GraphQLUnionType`s from Python's `typing.Union`. This is useful when a field can return one of several different object types.
@@ -267,171 +311,16 @@ query {
 }
 ```
 
-## Object Types
+## Type Validation
 
-For complex nested data structures, you can define custom object types:
-
-```python
-from dataclasses import dataclass
-from pydantic import BaseModel
-
-# Using dataclasses
-@dataclass
-class Address:
-    street: str
-    city: str
-    country: str
-
-# Using Pydantic models
-class User(BaseModel):
-    id: int
-    name: str
-    email: str
-
-@api.type(is_root_type=True)
-class Root:
-    @api.field
-    def user_address(self) -> Address:
-        return Address(street="123 Main St", city="New York", country="USA")
-
-    @api.field
-    def current_user(self) -> User:
-        return User(id=1, name="Alice", email="alice@example.com")
-```
-
-Both dataclasses and Pydantic models are automatically converted to GraphQL object types with all their fields exposed.
-
-### Advanced Dataclass Relationships
-
-For complex object relationships, you can add methods to dataclasses using the standalone `@field` decorator:
+`graphql-api` performs automatic type validation:
 
 ```python
-from dataclasses import dataclass
-from typing import List, Optional
-from graphql_api.decorators import field
-
-# Sample data (in real apps, this would be from a database)
-authors_db = [
-    {"id": 1, "name": "Alice", "email": "alice@example.com"},
-    {"id": 2, "name": "Bob", "email": "bob@example.com"},
-]
-
-posts_db = [
-    {"id": 1, "title": "First Post", "content": "Content", "author_id": 1},
-    {"id": 2, "title": "Second Post", "content": "More content", "author_id": 2},
-]
-
-@dataclass
-class Post:
-    id: int
-    title: str
-    content: str
-    author_id: int
-
-@dataclass
-class Author:
-    id: int
-    name: str
-    email: str
-
-    @field
-    def get_posts(self) -> List[Post]:
-        """Get all posts by this author."""
-        return [Post(**p) for p in posts_db if p["author_id"] == self.id]
-
-# Add relationship method to Post after Author is defined
-@field
-def get_author(self) -> Optional[Author]:
-    """Get the author of this post."""
-    author_data = next((a for a in authors_db if a["id"] == self.author_id), None)
-    if author_data:
-        return Author(**author_data)
-    return None
-
-# Attach the method to the dataclass
-Post.get_author = get_author
-
-@api.type(is_root_type=True)
-class Root:
-    @api.field
-    def posts(self) -> List[Post]:
-        return [Post(**p) for p in posts_db]
-
-    @api.field
-    def authors(self) -> List[Author]:
-        return [Author(**a) for a in authors_db]
+@api.field
+def get_number(self) -> int:
+    return "not a number"  # This will cause a runtime error
 ```
 
-This creates a GraphQL schema with relationships:
+Always ensure your resolver return types match your type hints for predictable behavior.
 
-```graphql
-type Post {
-  id: Int!
-  title: String!
-  content: String!
-  authorId: Int!
-  getAuthor: Author
-}
-
-type Author {
-  id: Int!
-  name: String!
-  email: String!
-  getPosts: [Post!]!
-}
-```
-
-Query example:
-
-```graphql
-query {
-  posts {
-    id
-    title
-    getAuthor {
-      name
-      email
-    }
-  }
-}
-```
-
-**Key Points:**
-- Use the standalone `@field` decorator from `graphql_api.decorators`
-- Methods without `@field` are **not** exposed as GraphQL fields
-- You can add methods to dataclasses after definition for complex relationships
-- Both sync and async methods are supported
-- Docstrings become field descriptions in the schema
-
-## Input Types
-
-For mutations and complex field arguments, use input types:
-
-```python
-from pydantic import BaseModel
-
-class CreateUserInput(BaseModel):
-    name: str
-    email: str
-    age: int
-
-@api.type(is_root_type=True)
-class Root:
-    @api.field(mutable=True)
-    def create_user(self, input: CreateUserInput) -> User:
-        return User(id=999, name=input.name, email=input.email)
-```
-
-This generates a GraphQL input type that can be used in mutations:
-
-```graphql
-input CreateUserInput {
-  name: String!
-  email: String!
-  age: Int!
-}
-
-type Mutation {
-  createUser(input: CreateUserInput!): User!
-}
-```
+This covers all the basic scalar and collection types. Next, you'll learn about creating complex object types and relationships.
