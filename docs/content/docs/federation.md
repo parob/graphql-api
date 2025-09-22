@@ -1,7 +1,7 @@
 ---
 title: "Federation"
 linkTitle: "Federation"
-weight: 7
+weight: 18
 description: >
   Build distributed GraphQL services with Federation
 ---

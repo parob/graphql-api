@@ -574,3 +574,15 @@ query {
     }
 }
 ```
+
+## Related Topics
+
+Now that you understand schema definition fundamentals, explore these related areas:
+
+**Type system:** [Field Types](field-types/) covers all supported scalar and collection types in detail.
+
+**Advanced schemas:**
+- [Object Types & Relationships](object-types/) - Complex interconnected types
+- [Enums & Interfaces](enums-interfaces/) - Advanced type modeling
+
+**Building applications:** [Input Types & Mutations](mutations/) shows how to handle data modifications and validation.

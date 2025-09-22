@@ -1,6 +1,6 @@
 ---
 title: "Async & Subscriptions"
-weight: 6
+weight: 11
 description: >
   Build high-performance async resolvers and real-time subscriptions
 ---

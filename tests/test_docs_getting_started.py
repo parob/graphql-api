@@ -1,7 +1,6 @@
 """
 Test all code examples from the getting-started.md documentation
 """
-import pytest
 from typing import List
 from graphql_api.api import GraphQLAPI
 

@@ -1,6 +1,6 @@
 ---
 title: "Object Types and Relationships"
-weight: 6
+weight: 5
 description: >
   Creating complex object types, dataclass relationships, and nested data structures
 ---
@@ -329,3 +329,13 @@ class Author:
 - Forward references work for circular dependencies
 
 This gives you the foundation for building complex, interconnected GraphQL schemas with rich object relationships.
+
+## Building on This
+
+Object types work together with other GraphQL features:
+
+**Documentation:** [Documentation](documentation/) shows how to add rich documentation to your object types.
+
+**Data modifications:** [Input Types & Mutations](mutations/) covers handling data modifications for these object types.
+
+**Advanced patterns:** [Enums & Interfaces](enums-interfaces/) introduces polymorphism and advanced type modeling.

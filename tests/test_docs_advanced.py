@@ -2,13 +2,12 @@
 Test all code examples from the advanced.md documentation
 """
 import pytest
-from typing import Any, Optional, List
+from typing import Any, Optional
 from graphql import GraphQLError, DirectiveLocation, GraphQLArgument, GraphQLString
 from graphql_api.api import GraphQLAPI
 from graphql_api.context import GraphQLContext
 from graphql_api.mapper import GraphQLMetaKey
 from graphql_api.directives import SchemaDirective, deprecated
-from graphql_api import AppliedDirective
 
 
 class TestAdvancedExamples:

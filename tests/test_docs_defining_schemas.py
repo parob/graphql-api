@@ -1,9 +1,7 @@
 """
 Test all code examples from the defining-schemas.md documentation
 """
-import pytest
 from typing import List, Optional, Union
-from dataclasses import dataclass
 from pydantic import BaseModel
 from graphql_api.api import GraphQLAPI
 from graphql_api.decorators import type, field

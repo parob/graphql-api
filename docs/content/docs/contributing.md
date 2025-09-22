@@ -1,6 +1,6 @@
 ---
 title: "Contributing"
-weight: 20
+weight: 22
 description: >
   How to contribute to the graphql-api project
 ---

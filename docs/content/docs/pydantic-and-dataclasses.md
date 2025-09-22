@@ -1,6 +1,6 @@
 ---
 title: "Pydantic & Dataclasses"
-weight: 5
+weight: 10
 description: >
   Integrate Pydantic models and dataclasses into your GraphQL schema
 ---

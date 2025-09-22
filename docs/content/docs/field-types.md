@@ -435,3 +435,14 @@ type Mutation {
   createUser(input: CreateUserInput!): User!
 }
 ```
+
+## See Also
+
+Field types are building blocks for more complex schemas:
+
+**Schema documentation:** [Documentation](documentation/) shows how to add rich documentation and introspection to your schemas.
+
+**Using these types:**
+- [Object Types & Relationships](object-types/) - Build complex object structures using these field types
+- [Input Types & Mutations](mutations/) - Apply these types in mutations and input validation
+- [Custom Directives](directives/) - Add custom behavior to your field types

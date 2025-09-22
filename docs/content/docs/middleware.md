@@ -1,6 +1,6 @@
 ---
 title: "Middleware"
-weight: 11
+weight: 12
 description: >
   Using middleware for cross-cutting concerns like authentication, logging, and performance monitoring
 ---
@@ -418,3 +418,14 @@ def efficient_context_middleware(next_, root, info, **args):
 ```
 
 Middleware provides a powerful way to implement cross-cutting concerns in your GraphQL API while keeping your resolvers focused on business logic.
+
+## Related Topics
+
+Middleware integrates with other production features:
+
+**Error management:** [Error Handling](error-handling/) covers robust error management strategies that work well with middleware.
+
+**Advanced patterns:**
+- [Context & Metadata](context-metadata/) - Pass data between middleware and resolvers
+- [Custom Directives](directives/) - Add declarative behavior to your schema
+- [Schema Filtering](schema-filtering/) - Control field access dynamically

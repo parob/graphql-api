@@ -1,7 +1,6 @@
 """
 Test all code examples from the field-types.md documentation
 """
-import pytest
 from typing import List, Optional, Union
 from datetime import date, datetime
 from uuid import UUID

@@ -437,3 +437,13 @@ def create_user(self, input: CreateUserInput) -> bool:
 ```
 
 This foundation gives you everything needed to build robust GraphQL mutations with proper input validation and error handling.
+
+## Next Areas
+
+With mutations working, you can explore:
+
+**Advanced type modeling:** [Enums & Interfaces](enums-interfaces/) covers polymorphism and sophisticated type relationships.
+
+**Production concerns:** [Error Handling](error-handling/) provides comprehensive error management strategies.
+
+**Integration:** [Pydantic & Dataclasses](pydantic-and-dataclasses/) shows how to integrate with validation libraries.

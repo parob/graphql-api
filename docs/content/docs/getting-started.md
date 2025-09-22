@@ -267,9 +267,15 @@ class Product:
 
 This documentation appears in GraphQL introspection and tools like GraphiQL, making your API easy to explore and understand.
 
-## Next Steps
+## What's Next
 
-Now that you've covered the basics, you're ready to explore more advanced features:
+Now that you have a working GraphQL API, you can explore more features:
 
-- **[Defining Schemas](./defining-schemas.md)**: Learn more about creating complex types, interfaces, and enums.
-- **[Pydantic & Dataclasses](./pydantic-and-dataclasses.md)**: Integrate Pydantic models and dataclasses into your schema.
+**Building schemas:** [Schema Definition](defining-schemas/) covers decorator patterns and schema definition in detail.
+
+**Working with types:**
+- [Field Types](field-types/) - All supported scalar and collection types
+- [Object Types & Relationships](object-types/) - Complex interconnected types
+- [Documentation](documentation/) - Add rich documentation to your schemas
+
+**Building applications:** When you're ready to create full applications, explore [Input Types & Mutations](mutations/) for data modifications.

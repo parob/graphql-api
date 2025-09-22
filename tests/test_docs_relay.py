@@ -1,12 +1,10 @@
 """
 Test all code examples from the Relay pagination documentation
 """
-import pytest
 from typing import List, Optional
 import collections
 from graphql_api.api import GraphQLAPI
 from graphql_api.relay import Connection, Edge, Node, PageInfo
-from graphql_api import field, type
 
 
 class TestRelayExamples:
@@ -129,8 +127,8 @@ class TestRelayExamples:
         assert len(result.data["people"]["edges"]) == 2
         assert result.data["people"]["edges"][0]["node"]["name"] == "Alice"
         assert result.data["people"]["edges"][1]["node"]["name"] == "Bob"
-        assert result.data["people"]["pageInfo"]["hasNextPage"] == True
-        assert result.data["people"]["pageInfo"]["hasPreviousPage"] == False
+        assert result.data["people"]["pageInfo"]["hasNextPage"] is True
+        assert result.data["people"]["pageInfo"]["hasPreviousPage"] is False
         assert result.data["people"]["pageInfo"]["count"] == 2
 
     def test_relay_pagination_with_after(self):

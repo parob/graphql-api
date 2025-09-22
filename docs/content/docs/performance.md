@@ -1,6 +1,6 @@
 ---
 title: "Performance and Best Practices"
-weight: 19
+weight: 16
 description: >
   Optimizing GraphQL API performance and following development best practices
 ---
@@ -713,3 +713,17 @@ def live_stats(self): pass
 - Analyze query complexity trends
 
 Following these practices will help you build GraphQL APIs that scale efficiently and provide excellent performance for your users.
+
+## Advanced Topics
+
+For larger scale deployments, consider these specialized areas:
+
+**Distributed systems:**
+- [Remote GraphQL](remote-graphql/) - Integrate with remote GraphQL services
+- [Federation](federation/) - Scale with microservices architecture
+- [Relay Pagination](pagination-relay/) - Advanced client integration patterns
+
+**Reference materials:**
+- [Examples](examples/) - Real-world implementation patterns
+- [API Reference](api-reference/) - Complete API documentation
+- [Contributing](contributing/) - Help improve graphql-api
