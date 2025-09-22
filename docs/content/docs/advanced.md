@@ -1,7 +1,7 @@
 ---
 title: "Advanced Topics"
 linkTitle: "Advanced"
-weight: 7
+weight: 8
 description: >
   Explore advanced features like middleware, directives, and Relay support
 ---

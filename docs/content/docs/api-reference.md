@@ -41,14 +41,14 @@ class GraphQLAPI:
 ```
 
 **Parameters:**
-- `root_type`: Single root type containing all operations (unified approach)
-- `query_type`: Explicit query type class (explicit approach)
-- `mutation_type`: Explicit mutation type class (explicit approach)
-- `subscription_type`: Explicit subscription type class (explicit approach)
+- `root_type`: Single root type containing all operations (Mode 1 - Single Root Type)
+- `query_type`: Explicit query type class (Mode 2 - Explicit Types)
+- `mutation_type`: Explicit mutation type class (Mode 2 - Explicit Types)
+- `subscription_type`: Explicit subscription type class (Mode 2 - Explicit Types)
 - `directives`: List of custom GraphQL directives
 - `middleware`: List of middleware classes
 
-**Note:** Cannot mix root_type with explicit types (query_type, mutation_type, subscription_type).
+**Note:** Cannot mix root_type with explicit types (query_type, mutation_type, subscription_type). See [Schema Definition Modes](../defining-schemas/#schema-definition-modes) for more details.
 
 ### Methods
 

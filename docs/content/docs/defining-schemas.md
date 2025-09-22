@@ -80,6 +80,132 @@ class Post:
 
 Global decorators avoid this issue since they don't require importing an API instance across modules.
 
+## Schema Definition Modes
+
+`graphql-api` offers two distinct approaches for organizing your GraphQL operations (queries, mutations, subscriptions):
+
+### Mode 1: Single Root Type (Strongly Recommended)
+
+In this mode, you define all operations in a single root class. This is the **preferred approach** for most applications as it allows your GraphQL API to be used more like a normal application:
+
+```python
+from typing import AsyncGenerator
+from graphql_api.api import GraphQLAPI
+
+api = GraphQLAPI()
+
+@api.type(is_root_type=True)
+class Root:
+    # Query field
+    @api.field
+    def get_user(self, user_id: int) -> User:
+        return get_user_from_db(user_id)
+
+    # Mutation field - marked with mutable=True
+    @api.field(mutable=True)
+    def update_user(self, user_id: int, name: str) -> User:
+        return update_user_in_db(user_id, name)
+
+    # Subscription field - automatically detected by AsyncGenerator return type
+    @api.field
+    async def on_user_updated(self, user_id: int) -> AsyncGenerator[User, None]:
+        """Real-time user updates"""
+        while True:
+            await asyncio.sleep(1)
+            yield get_user_from_db(user_id)
+
+# Create API instance with the root type
+api_with_root = GraphQLAPI(root_type=Root)
+```
+
+**Advantages:**
+- **Natural application structure**: Operations are co-located like in a normal application
+- **Automatic operation type detection**: No need to explicitly categorize operations
+- **Simplified development**: All operations accessible from a single entry point
+- **Less boilerplate**: Minimal setup required
+- **Better for most use cases**: Works like a traditional application with a single API surface
+
+**Use when:**
+- Building any size application (recommended as the default choice)
+- You want your GraphQL API to feel like a normal application
+- You prefer co-location of related functionality
+- You want automatic operation type detection
+
+### Mode 2: Explicit Types
+
+For more complex applications, you can define separate classes for queries, mutations, and subscriptions:
+
+```python
+from typing import AsyncGenerator
+from graphql_api.api import GraphQLAPI
+
+api = GraphQLAPI()
+
+@api.type
+class Query:
+    @api.field
+    def get_user(self, user_id: int) -> User:
+        return get_user_from_db(user_id)
+
+    @api.field
+    def list_posts(self) -> List[Post]:
+        return get_all_posts()
+
+@api.type
+class Mutation:
+    @api.field
+    def update_user(self, user_id: int, name: str) -> User:
+        return update_user_in_db(user_id, name)
+
+    @api.field
+    def create_post(self, input: CreatePostInput) -> Post:
+        return create_new_post(input)
+
+@api.type
+class Subscription:
+    @api.field
+    async def on_user_updated(self, user_id: int) -> AsyncGenerator[User, None]:
+        """Real-time user updates"""
+        while True:
+            await asyncio.sleep(1)
+            yield get_user_from_db(user_id)
+
+# Create API instance with explicit types
+api_explicit = GraphQLAPI(
+    query_type=Query,
+    mutation_type=Mutation,
+    subscription_type=Subscription
+)
+```
+
+**Advantages:**
+- Clear separation of concerns
+- Better organization for large schemas
+- Easier to maintain in teams
+- Explicit control over operation types
+
+**Use when:**
+- You have a very specific architectural requirement for operation separation
+- Working with very large teams where explicit boundaries are helpful
+- Migrating from other GraphQL frameworks that use this pattern
+- You need maximum control over schema organization
+
+### Choosing the Right Mode
+
+**Use Mode 1 (Single Root Type) for:**
+- **Most applications** (recommended default choice)
+- Any size application where you want natural application structure
+- When you want your API to feel like a normal application
+- Better development experience with co-located operations
+
+**Use Mode 2 (Explicit Types) only when:**
+- You have specific architectural constraints requiring operation separation
+- Working with very large teams that benefit from explicit boundaries
+- You're migrating from other GraphQL frameworks and need compatibility
+- You have complex requirements that specifically benefit from separation
+
+Both modes are fully supported and can be mixed within the same application if needed (though this is not recommended for consistency).
+
 ## Core Concepts
 
 - **`@api.type` / `@type`**: A class decorator that marks a Python class as a GraphQL object type.
@@ -341,6 +467,28 @@ type Mutation {
 
 This approach is highly recommended as it makes your mutations cleaner and more extensible.
 
+### Marking Fields as Mutations
+
+When using Mode 1 (Single Root Type), you must explicitly mark mutation fields with `mutable=True`:
+
+```python
+@api.type(is_root_type=True)
+class Root:
+    @api.field(mutable=True)
+    def create_post(self, input: CreatePostInput) -> Post:
+        return create_new_post(input)
+```
+
+When using Mode 2 (Explicit Types), all fields in a `Mutation` class are automatically treated as mutations:
+
+```python
+@api.type
+class Mutation:
+    @api.field
+    def create_post(self, input: CreatePostInput) -> Post:
+        return create_new_post(input)  # Automatically a mutation
+```
+
 ## Enums and Interfaces
 
 `graphql-api` also supports more advanced GraphQL types like Enums and Interfaces.
@@ -367,13 +515,16 @@ Create GraphQL interfaces by decorating a class with `@api.type(interface=True)`
 @api.type(interface=True)
 class Character:
     @api.field
-    def get_id(self) -> str: ...
+    def get_id(self) -> str:
+        return "default_id"
+
     @api.field
-    def get_name(self) -> str: ...
+    def get_name(self) -> str:
+        return "default_name"
 
 class Human(Character):
-    # This class will automatically have the `id` and `name` fields
-    # from the Character interface.
+    # This class will automatically inherit the `get_id` and `get_name` methods
+    # from the Character interface, which become `getId` and `getName` fields in GraphQL.
     @api.field
     def home_planet(self) -> str:
         return "Earth"
@@ -384,13 +535,16 @@ class Human(Character):
 @type(interface=True)
 class Character:
     @field
-    def get_id(self) -> str: ...
+    def get_id(self) -> str:
+        return "default_id"
+
     @field
-    def get_name(self) -> str: ...
+    def get_name(self) -> str:
+        return "default_name"
 
 class Human(Character):
-    # This class will automatically have the `id` and `name` fields
-    # from the Character interface.
+    # This class will automatically inherit the `get_id` and `get_name` methods
+    # from the Character interface, which become `getId` and `getName` fields in GraphQL.
     @field
     def home_planet(self) -> str:
         return "Earth"
@@ -398,7 +552,20 @@ class Human(Character):
 
 This feature allows you to build flexible and maintainable schemas that adhere to GraphQL best practices.
 
-### Union Types
+## Field Types
+
+`graphql-api` supports a wide range of Python types and automatically maps them to appropriate GraphQL types. For a comprehensive guide to all supported types including scalars, collections, enums, custom types, and more, see the dedicated [Field Types](../field-types/) documentation.
+
+**Quick overview of supported types:**
+- Built-in scalars: `str`, `int`, `float`, `bool`, `UUID`, `datetime`, `date`, `bytes`
+- Collections: `List[T]`, `Optional[T]`, nested types
+- JSON types: `dict`, `list`, `JsonType`
+- Enums: Python `enum.Enum` classes
+- Custom scalars: Define your own GraphQL scalar types
+- Object types: Dataclasses, Pydantic models, custom classes
+- Union types: `typing.Union` for multiple return types
+
+## Union Types
 
 `graphql-api` can create `GraphQLUnionType`s from Python's `typing.Union`. This is useful when a field can return one of several different object types.
 

@@ -1,6 +1,6 @@
 ---
 title: "Async & Subscriptions"
-weight: 5
+weight: 6
 description: >
   Build high-performance async resolvers and real-time subscriptions
 ---
@@ -64,11 +64,11 @@ The following is a conceptual example of how you might integrate with Starlette.
 
 `graphql-api` supports GraphQL subscriptions to enable real-time communication with clients. Subscriptions are defined as `async` generators that `yield` data to the client over time.
 
-`graphql-api` offers two approaches for defining subscriptions:
+Subscriptions can be defined using either of the two schema definition modes described in the [Defining Schemas](../defining-schemas/#schema-definition-modes) documentation:
 
-### Mode 1: Single Root Type (Recommended)
+### Subscription Examples
 
-In this mode, you define all operations (queries, mutations, subscriptions) in a single root class. Subscription fields are automatically detected by their `AsyncGenerator` return type:
+**Using Mode 1 (Single Root Type):**
 
 ```python
 import asyncio
@@ -79,16 +79,6 @@ api = GraphQLAPI()
 
 @api.type(is_root_type=True)
 class Root:
-    # Query field
-    @api.field
-    def get_user(self, user_id: int) -> User:
-        return get_user_from_db(user_id)
-
-    # Mutation field
-    @api.field(mutable=True)
-    def update_user(self, user_id: int, name: str) -> User:
-        return update_user_in_db(user_id, name)
-
     # Subscription field - automatically detected by AsyncGenerator return type
     @api.field
     async def on_user_updated(self, user_id: int) -> AsyncGenerator[User, None]:
@@ -105,13 +95,9 @@ class Root:
         for i in range(1, to + 1):
             await asyncio.sleep(1)
             yield i
-
-api_with_root = GraphQLAPI(root_type=Root)
 ```
 
-### Mode 2: Explicit Types
-
-For more complex applications, you can define separate classes for queries, mutations, and subscriptions:
+**Using Mode 2 (Explicit Types):**
 
 ```python
 import asyncio
@@ -119,18 +105,6 @@ from typing import AsyncGenerator
 from graphql_api.api import GraphQLAPI
 
 api = GraphQLAPI()
-
-@api.type
-class Query:
-    @api.field
-    def get_user(self, user_id: int) -> User:
-        return get_user_from_db(user_id)
-
-@api.type
-class Mutation:
-    @api.field
-    def update_user(self, user_id: int, name: str) -> User:
-        return update_user_in_db(user_id, name)
 
 @api.type
 class Subscription:
@@ -141,12 +115,15 @@ class Subscription:
             await asyncio.sleep(1)
             yield get_user_from_db(user_id)
 
+    @api.field
+    async def count(self, to: int = 5) -> AsyncGenerator[int, None]:
+        """Counts up to a given number, yielding each number."""
+        for i in range(1, to + 1):
+            await asyncio.sleep(1)
+            yield i
+
 # Use explicit types mode
-api_explicit = GraphQLAPI(
-    query_type=Query,
-    mutation_type=Mutation,
-    subscription_type=Subscription
-)
+api_explicit = GraphQLAPI(subscription_type=Subscription)
 ```
 
 This would generate a `Subscription` type in your schema:
