@@ -1,4 +1,4 @@
-# GraphQL API for Python
+# GraphQL-API for Python
 
 A powerful and intuitive Python library for building GraphQL APIs, designed with a code-first, decorator-based approach.
 
@@ -236,9 +236,6 @@ pipenv run pytest
 
 ## Documentation
 
-For more in-depth information, you can build the documentation locally.
+For more in-depth information, vist the documentation website.
 
-```bash
-pipenv run sphinx-build docs ./public -b html
-```
-Then open `public/index.html` in your browser. Note that some documentation may be outdated. For the latest features, please refer to the tests.
+[`graphql-api` https://graphql-api.parob.com/](https://graphql-api.parob.com/)
