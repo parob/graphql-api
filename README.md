@@ -6,6 +6,8 @@ A powerful and intuitive Python library for building GraphQL APIs, designed with
 
 [![pipeline status](https://gitlab.com/parob/graphql-api/badges/master/pipeline.svg)](https://gitlab.com/parob/graphql-api/commits/master)
 
+[Click HERE for the graphql-api official documentation site](https://graphql-api.parob.com/)
+
 `graphql-api` simplifies schema definition by leveraging Python's type hints, dataclasses, and Pydantic models, allowing you to build robust and maintainable GraphQL services with minimal boilerplate.
 
 ## Key Features
