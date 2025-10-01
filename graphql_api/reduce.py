@@ -6,6 +6,8 @@ from graphql.type.definition import GraphQLInterfaceType
 
 from graphql_api.mapper import GraphQLMetaKey, GraphQLMutableField, GraphQLTypeMapError
 from graphql_api.utils import has_mutable, iterate_fields, to_snake_case
+from graphql_api.type_utils import TypeWrapper, TypeCollector, TypeRegistry, FieldCleaner
+from graphql_api.mutation_schema import MutationSchemaBuilder
 
 
 class FilterResponse(Enum):
@@ -100,296 +102,107 @@ class TagFilter(GraphQLFilter):
 
 
 class GraphQLSchemaReducer:
-    @staticmethod
-    def reduce_query(mapper, root, filters=None):
-        query: GraphQLObjectType = mapper.map(root)
+    """
+    Responsible for reducing/filtering GraphQL schemas.
 
-        # Remove any types that have no fields
-        # (and remove any fields that returned that type)
+    This class handles the complex logic of filtering schemas, removing unused types,
+    and managing the relationship between query and mutation schemas.
+    """
+
+    @staticmethod
+    def _apply_filtering(root_type, mapper, filters):
+        """
+        Apply filters to a schema and remove invalid types and fields.
+
+        Even without filters, this method removes types with no fields.
+
+        Args:
+            root_type: The root type (query or mutation)
+            mapper: GraphQLTypeMapper instance
+            filters: List of filters to apply (can be None/empty)
+
+        Returns:
+            Tuple of (invalid_types, all_invalid_fields) for reference
+        """
+        # Find invalid types and fields based on filters
+        # Note: invalid() handles None/empty filters and still removes empty types
         invalid_types, invalid_fields = GraphQLSchemaReducer.invalid(
-            root_type=query,
+            root_type=root_type,
             filters=filters,
             meta=mapper.meta,
         )
 
-        # Remove fields that reference invalid types
+        # Find fields that reference invalid types
         additional_invalid_fields = set()
         for type_ in list(mapper.registry.values()):
             if hasattr(type_, "fields"):
                 for field_name, field in list(type_.fields.items()):
-                    field_type = field.type
-                    # Unwrap NonNull and List wrappers
-                    while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
-                        field_type = field_type.of_type
-
+                    field_type = TypeWrapper.unwrap(field.type)
                     if field_type in invalid_types:
                         additional_invalid_fields.add((type_, field_name))
 
         # Combine all invalid fields
-        all_invalid_fields = (invalid_fields or set()).union(
-            additional_invalid_fields)
+        all_invalid_fields = (invalid_fields or set()).union(additional_invalid_fields)
 
-        for type_, key in all_invalid_fields:
-            if hasattr(type_, "fields") and key in type_.fields:
-                del type_.fields[key]
+        # Remove invalid fields
+        FieldCleaner.remove_field_list(all_invalid_fields)
 
+        # Remove invalid types from registry
         for key, value in dict(mapper.registry).items():
             if value in invalid_types:
                 del mapper.registry[key]
 
-        # Second pass: find and remove types that are no longer referenced after filtering
-        # Note: We don't have access to explicit types in reduce_query, so we skip this cleanup here
-        # The cleanup will happen in the API build_schema method if needed
+        return invalid_types, all_invalid_fields
+
+    @staticmethod
+    def reduce_query(mapper, root, filters=None):
+        """
+        Reduce and filter a query schema.
+
+        Args:
+            mapper: GraphQLTypeMapper instance
+            root: Root query type
+            filters: Optional list of filters to apply
+
+        Returns:
+            Filtered GraphQLObjectType for queries
+        """
+        query: GraphQLObjectType = mapper.map(root)
+
+        # Always apply filtering (even without filters, this removes empty types)
+        GraphQLSchemaReducer._apply_filtering(query, mapper, filters)
 
         return query
 
     @staticmethod
     def reduce_mutation(mapper, root, filters=None):
+        """
+        Reduce and filter a mutation schema.
+
+        This method handles both filtering and the complex mutation-specific logic
+        like removing unused mutable types, converting between mutable/immutable,
+        and cleaning query fields from mutation types.
+
+        Args:
+            mapper: GraphQLTypeMapper instance
+            root: Root mutation type
+            filters: Optional list of filters to apply
+
+        Returns:
+            Filtered GraphQLObjectType for mutations
+        """
         mutation: GraphQLObjectType = mapper.map(root)
 
-        # Apply filtering to mutation schema first
-        if filters:
-            invalid_types, invalid_fields = GraphQLSchemaReducer.invalid(
-                root_type=mutation,
-                filters=filters,
-                meta=mapper.meta,
-            )
+        # Apply filtering if specified
+        GraphQLSchemaReducer._apply_filtering(mutation, mapper, filters)
 
-            # Remove fields that reference invalid types
-            additional_invalid_fields = set()
-            for type_ in list(mapper.registry.values()):
-                if hasattr(type_, "fields"):
-                    for field_name, field in list(type_.fields.items()):
-                        field_type = field.type
-                        # Unwrap NonNull and List wrappers
-                        while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
-                            field_type = field_type.of_type
-
-                        if field_type in invalid_types:
-                            additional_invalid_fields.add((type_, field_name))
-
-            # Combine all invalid fields
-            all_invalid_fields = (invalid_fields or set()).union(
-                additional_invalid_fields
-            )
-
-            for type_, key in all_invalid_fields:
-                if hasattr(type_, "fields") and key in type_.fields:
-                    del type_.fields[key]
-
-            for key, value in dict(mapper.registry).items():
-                if value in invalid_types:
-                    del mapper.registry[key]
-
-        # Trigger dynamic fields to be called
+        # Trigger dynamic fields to be evaluated
         for _ in iterate_fields(mutation):
             pass
 
-        # EARLY CLEANUP: Remove unused mutable types before they get into the final schema
-        # This must happen before the schema is finalized but after all types are mapped
-        types_with_resolve_to_mutable = set()
-
-        def collect_resolve_to_mutable_types():
-            """
-            Collect only types returned by fields with resolve_to_mutable: True.
-            This is the correct flag that determines when mutable types should exist.
-            """
-            for type_, key, field in iterate_fields(mutation):
-                meta = mapper.meta.get((type_.name, to_snake_case(key)), {})
-                if meta.get(GraphQLMetaKey.resolve_to_mutable):
-                    field_type = field.type
-                    # Unwrap NonNull and List wrappers
-                    while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
-                        field_type = field_type.of_type
-
-                    if isinstance(field_type, GraphQLObjectType):
-                        # Get the base type (query version)
-                        base_type_name = str(field_type).replace(
-                            mapper.suffix, "", 1)
-                        base_type = mapper.registry.get(base_type_name)
-                        if base_type:
-                            types_with_resolve_to_mutable.add(base_type)
-
-        # Collect only types with resolve_to_mutable flag
-        collect_resolve_to_mutable_types()
-
-        # Remove mutable types whose base types don't have resolve_to_mutable flag
-        # Create a snapshot to avoid iteration issues
-        registry_snapshot = dict(mapper.registry)
-        types_to_remove = []
-
-        for key, type_obj in registry_snapshot.items():
-            if mapper.suffix in str(type_obj) and isinstance(type_obj, GraphQLObjectType):
-                # Get the base type to check if it has resolve_to_mutable flag
-                base_type_name = str(type_obj).replace(mapper.suffix, "", 1)
-                base_type = mapper.registry.get(base_type_name)
-
-                # Keep mutable types only if:
-                # 1. Their base type has resolve_to_mutable flag set, OR
-                # 2. The mutable type itself has mutable fields (it can be used in mutations), OR
-                # 3. It's the root mutation type
-                has_resolve_to_mutable = base_type in types_with_resolve_to_mutable
-                has_mutable_fields = has_mutable(
-                    type_obj, interfaces_default_mutable=False)
-                is_root_mutation = type_obj == mutation  # Never remove the root mutation type
-
-                # Remove mutable types only if:
-                # - Base type doesn't have resolve_to_mutable flag AND
-                # - The type doesn't have mutable fields itself AND
-                # - It's not the root mutation type
-                if not has_resolve_to_mutable and not has_mutable_fields and not is_root_mutation:
-                    types_to_remove.append(key)
-
-        # Remove types from the actual registry
-        for key in types_to_remove:
-            if key in mapper.registry:
-                del mapper.registry[key]
-
-        # Find all mutable Registry types
-        filtered_mutation_types = {root}
-        for type_ in mapper.types():
-            if has_mutable(type_, interfaces_default_mutable=False):
-                filtered_mutation_types.add(type_)
-
-        # Replace fields that have no mutable subtypes with their non-mutable equivalents
-        for type_, key, field in iterate_fields(mutation):
-            field_type = field.type
-            meta = mapper.meta.get((type_.name, to_snake_case(key)), {})
-            field_definition_type = meta.get("graphql_type", "field")
-
-            wraps = []
-            while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
-                wraps.append(field_type.__class__)
-                field_type = field_type.of_type
-
-            if meta.get(GraphQLMetaKey.resolve_to_mutable):
-                # Flagged as mutable
-                continue
-
-            if field_definition_type == "field":
-                if (
-                    mapper.suffix in str(field_type)
-                    or field_type in filtered_mutation_types
-                ):
-                    # Calculated as it as mutable
-                    continue
-
-            # convert it to immutable
-            query_type_name = str(field_type).replace(mapper.suffix, "", 1)
-            query_type = mapper.registry.get(query_type_name)
-
-            if query_type:
-                for wrap in wraps:
-                    query_type = wrap(query_type)
-                field.type = query_type  # This assignment was previously missing
-
-        # Remove query fields from mutable types that are flagged to resolve to mutable
-        # Only remove query fields from types that are actually being returned as mutable types (resolve_to_mutable: True)
-        mutable_return_types = set()
-
-        # Find all types that are returned by fields with resolve_to_mutable: True
-        for type_, key, field in iterate_fields(mutation):
-            meta = mapper.meta.get((type_.name, to_snake_case(key)), {})
-            if meta.get(GraphQLMetaKey.resolve_to_mutable):
-                field_type = field.type
-                # Unwrap NonNull and List wrappers
-                while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
-                    field_type = field_type.of_type
-                mutable_return_types.add(field_type)
-
-        # Find types that are returned by ANY mutable field (not just resolve_to_mutable ones)
-        types_returned_by_mutable_fields = set()
-        for type_, key, field in iterate_fields(mutation):
-            if isinstance(field, GraphQLMutableField):
-                field_type = field.type
-                # Unwrap NonNull and List wrappers
-                while isinstance(field_type, (GraphQLNonNull, GraphQLList)):
-                    field_type = field_type.of_type
-                types_returned_by_mutable_fields.add(field_type)
-
-        # Remove query fields from mutable return types that have their own mutable fields
-        # This ensures proper mutable semantics:
-        # - Types WITH mutable fields: Only mutable fields in their mutable version
-        # - Types WITHOUT mutable fields: Keep query fields in their mutable version
-        fields_to_remove = set()
-        for type_ in mutable_return_types:
-            if isinstance(type_, GraphQLObjectType):
-                # Only remove query fields if the type itself has mutable fields
-                if has_mutable(type_, interfaces_default_mutable=False):
-                    interface_fields = []
-                    for interface in type_.interfaces:
-                        interface_fields += [key for key,
-                                             field in interface.fields.items()]
-                    for key, field in type_.fields.items():
-                        if (
-                            key not in interface_fields
-                            and not isinstance(field, GraphQLMutableField)
-                            and not has_mutable(field.type)
-                        ):
-                            fields_to_remove.add((type_, key))
-
-        for type_, key in fields_to_remove:
-            if hasattr(type_, "fields") and key in type_.fields:
-                del type_.fields[key]
-
-        # Remove query fields from the root mutation type - it should only have mutable fields
-        # Keep fields that are explicitly mutable OR provide access to mutable functionality
-        root_fields_to_remove = set()
-        if isinstance(root, GraphQLObjectType):
-            interface_fields = []
-            for interface in root.interfaces:
-                interface_fields += [key for key,
-                                     field in interface.fields.items()]
-            for key, field in root.fields.items():
-                if (
-                    key not in interface_fields
-                    and not isinstance(field, GraphQLMutableField)
-                    and not has_mutable(field.type)
-                ):
-                    # Remove fields that are neither mutable nor provide access to mutable types
-                    root_fields_to_remove.add(key)
-
-        for key in root_fields_to_remove:
-            if hasattr(root, "fields") and key in root.fields:
-                del root.fields[key]
-
-        # For non-root mutable types, keep query fields for GraphQL compatibility
-        # This allows reading data after mutations on returned objects
-
-        # Clean up federation types from mutation schema - they should only exist in queries
-        # Only run this cleanup when federation is enabled to avoid unnecessary processing
-        if (
-            hasattr(mapper, "schema")
-            and mapper.schema
-            and getattr(mapper.schema, "federation", False)
-        ):
-            federation_cleanup_keys = []
-            for key, value in dict(mapper.registry).items():
-                if hasattr(value, "name"):
-                    type_name = value.name
-                    if type_name in [
-                        "_Service",
-                        "_ServiceMutable",
-                        "_Entity",
-                        "_EntityMutable",
-                        "_Any",
-                        "_AnyMutable",
-                    ]:
-                        federation_cleanup_keys.append(key)
-
-            for key in federation_cleanup_keys:
-                if key in mapper.registry:
-                    del mapper.registry[key]
-
-            # Also remove federation fields from mutation root
-            if hasattr(mutation, "fields"):
-                for field_name in ["_service", "_entities"]:
-                    if field_name in mutation.fields:
-                        del mutation.fields[field_name]
-
-        # Second pass: find and remove types that are no longer referenced after filtering
-        # Note: We don't have access to explicit types in reduce_mutation, so we skip this cleanup here
-        # The cleanup will happen in the API build_schema method if needed
+        # Build and clean mutation schema using dedicated builder
+        builder = MutationSchemaBuilder(mapper, root)
+        builder.build()
 
         return mutation
 

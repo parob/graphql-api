@@ -21,3 +21,4 @@ htmlcov/
 # Python
 *.pyc
 __pycache__/
+Pipfile

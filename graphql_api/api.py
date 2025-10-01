@@ -526,7 +526,8 @@ class GraphQLAPI(GraphQLBaseExecutor):
                                         origin.__name__ == 'AsyncGenerator'):
                                     should_create_subscription = True
                                     break
-                        except Exception:
+                        except (TypeError, AttributeError, NameError):
+                            # Skip methods with invalid type hints or missing references
                             pass
             if should_create_subscription:
                 subscription_mapper = GraphQLTypeMapper(

@@ -104,8 +104,9 @@ def _convert_pydantic_arguments(args_dict: dict, type_hints: dict) -> dict:
                 try:
                     converted_args[arg_name] = _convert_dict_to_pydantic_model(
                         arg_value, param_type)
-                except Exception:
-                    # If conversion fails, pass the original value and let normal error handling occur
+                except (TypeError, ValueError, AttributeError) as e:
+                    # If conversion fails due to validation or structure issues,
+                    # pass the original value and let normal error handling occur
                     converted_args[arg_name] = arg_value
 
             # Check if this parameter is a List[PydanticModel] or Optional[List[PydanticModel]]
@@ -123,7 +124,7 @@ def _convert_pydantic_arguments(args_dict: dict, type_hints: dict) -> dict:
                             if isinstance(item, dict) else item
                             for item in arg_value
                         ]
-                    except Exception:
+                    except (TypeError, ValueError, AttributeError):
                         # If conversion fails, pass the original value
                         converted_args[arg_name] = arg_value
                 else:
@@ -1010,8 +1011,10 @@ class GraphQLTypeMapper:
             if isinstance(type__, GraphQLType):
                 return type__
 
-        key_hash = abs(hash(str(type_))) % (10**8)
-        suffix = {"|" + self.suffix if self.suffix else ""}
+        # Use modulo to keep hash values within a reasonable range for consistent keys
+        REGISTRY_KEY_HASH_MODULO = 10**8
+        key_hash = abs(hash(str(type_))) % REGISTRY_KEY_HASH_MODULO
+        suffix = "|" + self.suffix if self.suffix else ""
         generic_key = (
             f"Registry({key_hash})" f"{suffix}|{self.as_input}|{self.as_mutable}"
         )
@@ -1130,7 +1133,8 @@ def get_class_funcs(class_type, schema, mutable=False, subscription=False) -> Li
                     origin = typing_inspect.get_origin(return_type)
                     if origin is not None and hasattr(origin, '__name__') and origin.__name__ == 'AsyncGenerator':
                         return True
-            except Exception:
+            except (TypeError, AttributeError, NameError):
+                # Skip functions with invalid type hints or missing references
                 pass
 
         # For mutation filtering, include regular fields (for root-level access)

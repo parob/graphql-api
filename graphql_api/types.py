@@ -30,7 +30,8 @@ class GraphQLMappedEnumType(GraphQLEnumType):
                 if enum_type is None:
                     return result
                 return cast(Type[enum.Enum], enum_type)(result)
-            except Exception:
+            except (ValueError, KeyError, TypeError):
+                # Invalid enum value or type casting error
                 return Undefined
         return result
 
@@ -47,19 +48,25 @@ class GraphQLMappedEnumType(GraphQLEnumType):
                 if enum_type is None:
                     return result
                 return cast(Type[enum.Enum], enum_type)(result)
-            except Exception:
+            except (ValueError, KeyError, TypeError):
+                # Invalid enum value or type casting error
                 return Undefined
         return result
 
 
 def parse_uuid_literal(
     value_node: ValueNode, _variables: Any = None
-) -> Optional[uuid.UUID | ValueError]:
+) -> Optional[uuid.UUID]:
+    """Parse a UUID from a GraphQL literal value node.
+
+    Returns a UUID object if valid, Undefined if invalid format, or None for non-string nodes.
+    """
     if isinstance(value_node, StringValueNode):
         try:
             return uuid.UUID(value_node.value)
         except ValueError:
             return Undefined
+    return Undefined
 
 
 GraphQLUUID = GraphQLScalarType(
@@ -190,7 +197,7 @@ GraphQLBytes = GraphQLScalarType(
     name="Bytes",
     description="The `Bytes` scalar type expects and returns a "
     "Byte array in UTF-8 string format that represents the Bytes. "
-    "If the data is not UTF-encodable the erros will be ignored",
+    "If the data is not UTF-encodable the errors will be ignored",
     serialize=serialize_bytes,
     parse_value=parse_bytes_value,
     parse_literal=parse_bytes_literal,
