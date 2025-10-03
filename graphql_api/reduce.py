@@ -4,9 +4,9 @@ from enum import Enum
 from graphql import GraphQLList, GraphQLNonNull, GraphQLObjectType
 from graphql.type.definition import GraphQLInterfaceType
 
-from graphql_api.mapper import GraphQLMetaKey, GraphQLMutableField, GraphQLTypeMapError
-from graphql_api.utils import has_mutable, iterate_fields, to_snake_case
-from graphql_api.type_utils import TypeWrapper, TypeCollector, TypeRegistry, FieldCleaner
+from graphql_api.mapper import GraphQLTypeMapError
+from graphql_api.utils import iterate_fields, to_snake_case
+from graphql_api.type_utils import TypeWrapper, FieldCleaner
 from graphql_api.mutation_schema import MutationSchemaBuilder
 
 

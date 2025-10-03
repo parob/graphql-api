@@ -104,7 +104,7 @@ def _convert_pydantic_arguments(args_dict: dict, type_hints: dict) -> dict:
                 try:
                     converted_args[arg_name] = _convert_dict_to_pydantic_model(
                         arg_value, param_type)
-                except (TypeError, ValueError, AttributeError) as e:
+                except (TypeError, ValueError, AttributeError):
                     # If conversion fails due to validation or structure issues,
                     # pass the original value and let normal error handling occur
                     converted_args[arg_name] = arg_value

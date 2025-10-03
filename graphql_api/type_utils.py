@@ -12,7 +12,6 @@ from graphql import (
     GraphQLNonNull,
     GraphQLList,
     GraphQLType,
-    GraphQLField,
 )
 
 

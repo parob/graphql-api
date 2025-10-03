@@ -6,7 +6,7 @@ Separated from mapper.py to keep the mapper focused on type mapping.
 """
 
 import inspect
-from typing import Any, Dict, get_type_hints, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 
 def type_is_pydantic_model(type_: Any) -> bool:
@@ -36,14 +36,13 @@ def extract_list_type(param_type) -> Tuple[Optional[Any], Optional[Any]]:
     Returns:
         Tuple of (list_type, item_type) or (None, None) if not a list
     """
-    import typing
     import typing_inspect
 
     # Handle Optional[List[T]]
     if typing_inspect.is_optional_type(param_type):
         args = typing_inspect.get_args(param_type, evaluate=True)
         for arg in args:
-            if arg != type(None):
+            if arg is not type(None):
                 param_type = arg
                 break
 
