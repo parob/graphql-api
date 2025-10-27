@@ -222,6 +222,50 @@ class TestCustomTypes:
         assert not result.errors, f"Got errors: {result.errors}"
         assert result.data == expected
 
+    def test_json_type_with_list_variable(self) -> None:
+        """Test that JSON type works with list variables"""
+        api = GraphQLAPI()
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def process_list(self, items: list) -> str:
+                return f"count={len(items)},first={items[0] if items else None}"
+
+        executor = api.executor()
+        query = "query($items: JSON!) { processList(items: $items) }"
+        variables = {"items": [1, 2, 3, 4, 5]}
+
+        result = executor.execute(query, variables=variables)
+        assert not result.errors, f"Got errors: {result.errors}"
+        assert result.data == {"processList": "count=5,first=1"}
+
+    def test_json_type_with_nested_structures(self) -> None:
+        """Test that JSON type works with deeply nested structures"""
+        api = GraphQLAPI()
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def process_nested(self, data: dict) -> str:
+                return f"name={data['user']['profile']['name']}"
+
+        executor = api.executor()
+        query = "query($data: JSON!) { processNested(data: $data) }"
+        variables = {
+            "data": {
+                "user": {
+                    "profile": {
+                        "name": "Alice"
+                    }
+                }
+            }
+        }
+
+        result = executor.execute(query, variables=variables)
+        assert not result.errors, f"Got errors: {result.errors}"
+        assert result.data == {"processNested": "name=Alice"}
+
     def test_bytes_type(self) -> None:
         api = GraphQLAPI()
 
