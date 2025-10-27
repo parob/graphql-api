@@ -52,6 +52,29 @@ result = api.execute('{ hello(name: "Developer") }')
 print(result.data)  # {'hello': 'Hello, Developer!'}
 ```
 
+## Need an HTTP Server?
+
+`graphql-api` focuses on schema definition and execution. To serve your GraphQL API over HTTP with production-ready features, check out **[graphql-http](https://github.com/parob/graphql-http)** - our companion package that provides:
+
+- 🚀 High-performance ASGI server built on Starlette
+- 🔐 JWT authentication with JWKS support
+- 🎨 Integrated GraphiQL interface
+- 🌐 CORS support and health checks
+
+```python
+from graphql_api import GraphQLAPI
+from graphql_http import GraphQLHTTP
+
+api = GraphQLAPI()
+# ... define your schema ...
+
+# Create production-ready HTTP server
+server = GraphQLHTTP.from_api(api)
+server.run()
+```
+
+Learn more in the [graphql-http documentation](https://parob.github.io/graphql-http).
+
 ## Key Features
 
 - **Decorator-Based Schema:** Define your GraphQL schema declaratively using simple and intuitive decorators
