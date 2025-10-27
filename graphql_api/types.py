@@ -150,7 +150,14 @@ def serialize_json(data: JsonType) -> str:
     return json.dumps(data)
 
 
-def parse_json_value(value: str) -> JsonType:
+def parse_json_value(value: Union[str, JsonType]) -> JsonType:
+    # If it's already a dict/list/etc (from GraphQL variables), return as-is
+    if isinstance(value, (dict, list, bool, int, float, type(None))):
+        return value
+    # If it's a string, parse it as JSON
+    if isinstance(value, str):
+        return json.loads(value)
+    # Fallback: try to parse as JSON string
     return json.loads(value)
 
 

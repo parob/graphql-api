@@ -186,6 +186,42 @@ class TestCustomTypes:
         assert not result.errors
         assert result.data == expected
 
+    def test_json_type_with_variables(self) -> None:
+        """Test that JSON type works correctly with GraphQL variables (not just inline literals)."""
+        api = GraphQLAPI()
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def process_config(self, config: dict) -> str:
+                # Return a summary of the config to verify it was received correctly
+                return f"keys={sorted(config.keys())},access_token_len={len(config.get('access_token', ''))}"
+
+        executor = api.executor()
+
+        # Test with variables (this was previously broken)
+        query_with_variables = """
+            query ProcessConfig($config: JSON!) {
+                processConfig(config: $config)
+            }
+        """
+
+        # Simulate what happens when frontend sends JSON variables
+        variables = {
+            "config": {
+                "access_token": "test_token_123456",
+                "verify_token": "verify_abc"
+            }
+        }
+
+        result = executor.execute(query_with_variables, variables=variables)
+
+        expected = {
+            "processConfig": "keys=['access_token', 'verify_token'],access_token_len=17"
+        }
+        assert not result.errors, f"Got errors: {result.errors}"
+        assert result.data == expected
+
     def test_bytes_type(self) -> None:
         api = GraphQLAPI()
 
