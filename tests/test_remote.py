@@ -743,7 +743,7 @@ class TestGraphQLRemote:
         the executor with controlled delays. This proves async is faster than sync
         when multiple requests are made.
         """
-        from unittest.mock import AsyncMock, patch
+        from unittest.mock import patch
 
         api = GraphQLAPI()
 
@@ -850,6 +850,113 @@ class TestGraphQLRemote:
             assert speedup >= 2.0, \
                 f"Async should be at least 2x faster, got {speedup:.2f}x speedup " \
                 f"(sync: {sync_time:.2f}s, async: {async_time:.2f}s)"
+
+    def test_async_with_nested_objects(self) -> None:
+        """
+        Tests that async works correctly with nested objects and complex queries.
+        """
+        from unittest.mock import patch
+
+        api = GraphQLAPI()
+
+        class Address:
+            @api.field
+            def street(self) -> str:
+                return "123 Main St"
+
+            @api.field
+            def city(self) -> str:
+                return "Springfield"
+
+        class Person:
+            @api.field
+            def name(self) -> str:
+                return "John Doe"
+
+            @api.field
+            def address(self) -> Address:
+                return Address()
+
+        @api.type(is_root_type=True)
+        class Query:
+            @api.field
+            def person(self, id: int) -> Person:
+                return Person()
+
+        executor = api.executor()
+        call_count = {"count": 0}
+
+        async def mock_execute_async(query, **kwargs):
+            call_count["count"] += 1
+            await asyncio.sleep(0.05)
+
+            # Parse query to determine response
+            if "address" in query:
+                return type('obj', (object,), {
+                    'data': {'person': {'name': 'John Doe', 'address': {'street': '123 Main St', 'city': 'Springfield'}}},
+                    'errors': None
+                })()
+            else:
+                return type('obj', (object,), {
+                    'data': {'person': {'name': 'John Doe'}},
+                    'errors': None
+                })()
+
+        with patch.object(executor, 'execute_async', side_effect=mock_execute_async):
+            remote_obj: Query = GraphQLRemoteObject(
+                executor=executor, api=api
+            )  # type: ignore[reportIncompatibleMethodOverride]
+
+            async def fetch_nested():
+                person = remote_obj.person(id=1)
+                # This should work with nested field access
+                name = await person.name(aio=True)  # type: ignore[reportIncompatibleMethodOverride]
+                return name
+
+            result = asyncio.run(fetch_nested())
+            assert result == "John Doe"
+            assert call_count["count"] == 1
+
+    def test_async_error_handling(self) -> None:
+        """
+        Tests that async requests properly handle and propagate errors.
+        """
+        from unittest.mock import patch
+
+        api = GraphQLAPI()
+
+        class Person:
+            @api.field
+            def name(self) -> str:
+                return "Test"
+
+        @api.type(is_root_type=True)
+        class Query:
+            @api.field
+            def person(self, id: int) -> Person:
+                return Person()
+
+        executor = api.executor()
+
+        async def mock_execute_async_with_error(query, **kwargs):
+            await asyncio.sleep(0.01)
+            return type('obj', (object,), {
+                'data': None,
+                'errors': [{'message': 'Person not found'}]
+            })()
+
+        with patch.object(executor, 'execute_async', side_effect=mock_execute_async_with_error):
+            remote_obj: Query = GraphQLRemoteObject(
+                executor=executor, api=api
+            )  # type: ignore[reportIncompatibleMethodOverride]
+
+            async def fetch_with_error():
+                person = remote_obj.person(id=999)
+                return await person.name(aio=True)  # type: ignore[reportIncompatibleMethodOverride]
+
+            # Should raise an error
+            with pytest.raises(Exception):  # GraphQLRemoteError
+                asyncio.run(fetch_with_error())
 
     rick_and_morty_api_url = "https://rickandmortyapi.com/graphql"
 
