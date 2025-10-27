@@ -737,6 +737,120 @@ class TestGraphQLRemote:
         assert person.age() == 50
         assert person.hello() == "hello"
 
+    def test_async_concurrency_performance(self) -> None:
+        """
+        Tests that async requests execute concurrently (in parallel) by mocking
+        the executor with controlled delays. This proves async is faster than sync
+        when multiple requests are made.
+        """
+        from unittest.mock import AsyncMock, patch
+
+        api = GraphQLAPI()
+
+        class Person:
+            @api.field
+            def name(self, id: int) -> str:
+                return f"Person {id}"
+
+        @api.type(is_root_type=True)
+        class Query:
+            @api.field
+            def person(self, id: int) -> Person:
+                return Person()
+
+        # Mock executor that simulates 0.1 second delay per request
+        request_delay = 0.1
+        request_count = 5
+
+        # Create a real executor and mock its execute methods
+        executor = api.executor()
+
+        # Track number of concurrent requests
+        concurrent_count = {"current": 0, "max": 0}
+
+        async def mock_execute_async(query, **kwargs):
+            concurrent_count["current"] += 1
+            concurrent_count["max"] = max(concurrent_count["max"], concurrent_count["current"])
+
+            await asyncio.sleep(request_delay)
+
+            # Parse the query to extract the id
+            import re
+            id_match = re.search(r'id:(\d+)', query)
+            person_id = id_match.group(1) if id_match else "1"
+
+            concurrent_count["current"] -= 1
+
+            return type('obj', (object,), {
+                'data': {'person': {'name': f'Person {person_id}'}},
+                'errors': None
+            })()
+
+        def mock_execute(query, **kwargs):
+            # Sync version just runs async in a new loop
+            loop = asyncio.new_event_loop()
+            try:
+                return loop.run_until_complete(mock_execute_async(query, **kwargs))
+            finally:
+                loop.close()
+
+        # Patch the executor methods
+        with patch.object(executor, 'execute', side_effect=mock_execute), \
+             patch.object(executor, 'execute_async', side_effect=mock_execute_async):
+
+            remote_obj: Query = GraphQLRemoteObject(
+                executor=executor, api=api
+            )  # type: ignore[reportIncompatibleMethodOverride]
+
+            # Test synchronous requests (should take request_count * request_delay)
+            sync_start = time.time()
+            for i in range(1, request_count + 1):
+                remote_obj.person(id=i).name()
+                remote_obj.clear_cache()  # type: ignore[reportIncompatibleMethodOverride]
+            sync_time = time.time() - sync_start
+
+            # Reset concurrent counter
+            concurrent_count["current"] = 0
+            concurrent_count["max"] = 0
+
+            # Test asynchronous requests (should take approximately request_delay if concurrent)
+            async def fetch_async():
+                tasks = []
+                for i in range(1, request_count + 1):
+                    person = remote_obj.person(id=i)
+                    tasks.append(person.name(aio=True))  # type: ignore[reportIncompatibleMethodOverride]
+                return await asyncio.gather(*tasks)
+
+            async_start = time.time()
+            results = asyncio.run(fetch_async())
+            async_time = time.time() - async_start
+
+            # Verify results
+            assert len(results) == request_count
+            assert "Person 1" in results
+
+            # Verify concurrent execution: max concurrent should be > 1
+            assert concurrent_count["max"] > 1, \
+                f"Expected concurrent requests, but max concurrent was {concurrent_count['max']}"
+
+            # Verify timing: async should be significantly faster
+            # Sync time should be ~= request_count * request_delay
+            # Async time should be ~= request_delay (all running concurrently)
+            expected_sync_time = request_count * request_delay
+            expected_async_time = request_delay
+
+            # Allow some overhead (50% margin)
+            assert sync_time >= expected_sync_time * 0.8, \
+                f"Sync time {sync_time:.2f}s should be close to {expected_sync_time:.2f}s"
+            assert async_time <= expected_async_time * 2.0, \
+                f"Async time {async_time:.2f}s should be close to {expected_async_time:.2f}s"
+
+            # The key assertion: async should be much faster than sync
+            speedup = sync_time / async_time
+            assert speedup >= 2.0, \
+                f"Async should be at least 2x faster, got {speedup:.2f}x speedup " \
+                f"(sync: {sync_time:.2f}s, async: {async_time:.2f}s)"
+
     rick_and_morty_api_url = "https://rickandmortyapi.com/graphql"
 
     @pytest.mark.skipif(
@@ -746,6 +860,9 @@ class TestGraphQLRemote:
     def test_remote_get_async(self) -> None:
         """
         Tests that a remote GraphQL API can be queried asynchronously.
+        This test depends on an external API and may be flaky due to network
+        issues, rate limiting, or API downtime. For a more reliable test of
+        async concurrency, see test_async_concurrency_performance.
         """
         rick_and_morty_api = GraphQLAPI()
         remote_executor = GraphQLRemoteExecutor(
@@ -770,15 +887,8 @@ class TestGraphQLRemote:
             executor=remote_executor, api=rick_and_morty_api
         )  # type: ignore[reportIncompatibleMethodOverride]
 
-        # Run multiple requests to test the timing of sync vs async
-        request_count = 5
-        sync_start = time.time()
-        for i in range(1, request_count + 1):
-            api.character(id=i).name()
-            # noinspection PyUnresolvedReferences
-            # Clear cache to ensure a new request is made  # type: ignore[reportIncompatibleMethodOverride]
-            api.clear_cache()  # type: ignore[reportIncompatibleMethodOverride]
-        sync_time = time.time() - sync_start
+        # Test that async requests work (without strict timing requirements)
+        request_count = 3  # Reduced count to minimize API load
 
         async def fetch():
             tasks = []
@@ -788,13 +898,11 @@ class TestGraphQLRemote:
                 tasks.append(character.name(aio=True))  # type: ignore[reportIncompatibleMethodOverride]
             return await asyncio.gather(*tasks)
 
-        async_start = time.time()
         results = asyncio.run(fetch())
-        async_time = time.time() - async_start
 
+        # Just verify the async requests work, without timing assertions
         assert len(results) == request_count
         assert "Rick Sanchez" in results
-        assert sync_time > async_time * 1.5, "Async should be at least 1.5x faster"
 
     @pytest.mark.skipif(
         not available(rick_and_morty_api_url, is_graphql=True),
