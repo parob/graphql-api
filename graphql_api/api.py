@@ -205,6 +205,9 @@ class GraphQLAPI(GraphQLBaseExecutor):
         error_protection: bool = True,
         federation: bool = False,
         max_docstring_length: Optional[int] = 500,
+        enum_suffix: str = "Enum",
+        interface_suffix: str = "Interface",
+        input_suffix: str = "Input",
     ):
         """
         Initialize a new GraphQL API instance.
@@ -233,6 +236,9 @@ class GraphQLAPI(GraphQLBaseExecutor):
             error_protection: Whether to enable error protection during execution
             federation: Whether to enable GraphQL federation support
             max_docstring_length: Maximum length for docstrings before truncation (None for no limit)
+            enum_suffix: Suffix to append to enum type names (default: "Enum"). Set to "" to disable.
+            interface_suffix: Suffix to append to interface type names (default: "Interface"). Set to "" to disable.
+            input_suffix: Suffix to append to input object type names (default: "Input"). Set to "" to disable.
         """
         super().__init__()
 
@@ -257,6 +263,9 @@ class GraphQLAPI(GraphQLBaseExecutor):
         self.federation = federation
         self._cached_schema: Optional[Tuple[GraphQLSchema, Dict]] = None
         self.max_docstring_length = max_docstring_length
+        self.enum_suffix = enum_suffix
+        self.interface_suffix = interface_suffix
+        self.input_suffix = input_suffix
 
     # --------------------------------------------------------------------------
     # DECORATORS
@@ -352,7 +361,12 @@ class GraphQLAPI(GraphQLBaseExecutor):
             # Build query type
             if self.query_type:
                 query_mapper = GraphQLTypeMapper(
-                    schema=self, max_docstring_length=self.max_docstring_length)
+                    schema=self,
+                    max_docstring_length=self.max_docstring_length,
+                    enum_suffix=self.enum_suffix,
+                    interface_suffix=self.interface_suffix,
+                    input_suffix=self.input_suffix,
+                )
                 _query = query_mapper.map(self.query_type)
 
                 if not isinstance(_query, GraphQLObjectType):
@@ -366,8 +380,13 @@ class GraphQLAPI(GraphQLBaseExecutor):
             # Build mutation type
             if self.mutation_type:
                 mutation_mapper = GraphQLTypeMapper(
-                    as_mutable=True, suffix="Mutable", schema=self,
-                    max_docstring_length=self.max_docstring_length
+                    as_mutable=True,
+                    suffix="Mutable",
+                    schema=self,
+                    max_docstring_length=self.max_docstring_length,
+                    enum_suffix=self.enum_suffix,
+                    interface_suffix=self.interface_suffix,
+                    input_suffix=self.input_suffix,
                 )
                 _mutation = mutation_mapper.map(self.mutation_type)
 
@@ -383,8 +402,13 @@ class GraphQLAPI(GraphQLBaseExecutor):
             # Build subscription type
             if self.subscription_type:
                 subscription_mapper = GraphQLTypeMapper(
-                    as_subscription=True, suffix="Subscription", schema=self,
-                    max_docstring_length=self.max_docstring_length
+                    as_subscription=True,
+                    suffix="Subscription",
+                    schema=self,
+                    max_docstring_length=self.max_docstring_length,
+                    enum_suffix=self.enum_suffix,
+                    interface_suffix=self.interface_suffix,
+                    input_suffix=self.input_suffix,
                 )
                 _subscription = subscription_mapper.map(self.subscription_type)
                 if not isinstance(_subscription, GraphQLObjectType):
@@ -400,7 +424,12 @@ class GraphQLAPI(GraphQLBaseExecutor):
             for typ in list(self.types):
                 if not is_named_type(typ):
                     # Use query_mapper if available, otherwise create a temporary one
-                    mapper = self.query_mapper or GraphQLTypeMapper(schema=self)
+                    mapper = self.query_mapper or GraphQLTypeMapper(
+                        schema=self,
+                        enum_suffix=self.enum_suffix,
+                        interface_suffix=self.interface_suffix,
+                        input_suffix=self.input_suffix,
+                    )
                     mapper.map(typ)
                     all_types.update(mapper.types())
 
@@ -411,7 +440,12 @@ class GraphQLAPI(GraphQLBaseExecutor):
         elif self.root_type:
             # Build root Query
             query_mapper = GraphQLTypeMapper(
-                schema=self, max_docstring_length=self.max_docstring_length)
+                schema=self,
+                max_docstring_length=self.max_docstring_length,
+                enum_suffix=self.enum_suffix,
+                interface_suffix=self.interface_suffix,
+                input_suffix=self.input_suffix,
+            )
             _query = query_mapper.map(self.root_type)
 
             # Map additional types that aren't native GraphQLNamedType
@@ -464,8 +498,14 @@ class GraphQLAPI(GraphQLBaseExecutor):
             # Build root Mutation - use a copy of the registry to avoid polluting the shared registry
             mutation_registry = registry.copy() if registry else {}
             mutation_mapper = GraphQLTypeMapper(
-                as_mutable=True, suffix="Mutable", registry=mutation_registry,
-                schema=self, max_docstring_length=self.max_docstring_length
+                as_mutable=True,
+                suffix="Mutable",
+                registry=mutation_registry,
+                schema=self,
+                max_docstring_length=self.max_docstring_length,
+                enum_suffix=self.enum_suffix,
+                interface_suffix=self.interface_suffix,
+                input_suffix=self.input_suffix,
             )
             _mutation = mutation_mapper.map(self.root_type)
 
@@ -536,6 +576,9 @@ class GraphQLAPI(GraphQLBaseExecutor):
                     registry=registry,
                     schema=self,
                     max_docstring_length=self.max_docstring_length,
+                    enum_suffix=self.enum_suffix,
+                    interface_suffix=self.interface_suffix,
+                    input_suffix=self.input_suffix,
                     as_subscription=True,
                 )
                 # Use explicit subscription_type if provided, otherwise use root_type

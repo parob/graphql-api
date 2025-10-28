@@ -322,6 +322,9 @@ class GraphQLTypeMapper:
         registry=None,
         reverse_registry=None,
         suffix="",
+        enum_suffix="Enum",
+        interface_suffix="Interface",
+        input_suffix="Input",
         schema=None,
         max_docstring_length=None,
         as_subscription: bool = False,
@@ -331,6 +334,9 @@ class GraphQLTypeMapper:
         self.registry = registry or {}
         self.reverse_registry = reverse_registry or {}
         self.suffix = suffix
+        self.enum_suffix = enum_suffix
+        self.interface_suffix = interface_suffix
+        self.input_suffix = input_suffix
         self.meta = {}
         self.input_type_mapper = None
         self.schema = schema
@@ -621,9 +627,9 @@ class GraphQLTypeMapper:
     # noinspection PyMethodMayBeStatic
     def map_to_enum(self, type_: Type[enum.Enum]) -> GraphQLEnumType:
         enum_type = type_
-        name = f"{type_.__name__}Enum"
+        name = f"{type_.__name__}{self.enum_suffix}"
 
-        # Enums don't include a suffix as they are immutable
+        # Enums don't include the object suffix (Mutable/Subscription) as they are immutable
         description = to_camel_case_text(inspect.getdoc(type_))
         default_description = to_camel_case_text(
             inspect.getdoc(GraphQLGenericEnum))
@@ -704,7 +710,7 @@ class GraphQLTypeMapper:
 
         class_funcs = get_class_funcs(class_type, self.schema, self.as_mutable, getattr(self, 'as_subscription', False))
 
-        interface_name = f"{name}{self.suffix}Interface"
+        interface_name = f"{name}{self.suffix}{self.interface_suffix}"
         description = to_camel_case_text(inspect.getdoc(class_type))
 
         def local_resolve_type():
@@ -749,7 +755,7 @@ class GraphQLTypeMapper:
         return interface
 
     def map_to_input(self, class_type: Type) -> GraphQLType:
-        name = f"{class_type.__name__}{self.suffix}Input"
+        name = f"{class_type.__name__}{self.suffix}{self.input_suffix}"
 
         if hasattr(class_type, "graphql_from_input"):
             creator = class_type.graphql_from_input
