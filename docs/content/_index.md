@@ -73,7 +73,7 @@ server = GraphQLHTTP.from_api(api)
 server.run()
 ```
 
-Learn more in the [graphql-http documentation](https://parob.github.io/graphql-http).
+Learn more in the [graphql-http documentation](https://graphql-http.parob.com).
 
 ## Key Features
 

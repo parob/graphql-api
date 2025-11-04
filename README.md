@@ -1,12 +1,16 @@
 # GraphQL-API for Python
 
+[![PyPI version](https://badge.fury.io/py/graphql-api.svg)](https://badge.fury.io/py/graphql-api)
+[![Python versions](https://img.shields.io/pypi/pyversions/graphql-api.svg)](https://pypi.org/project/graphql-api/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Coverage](https://gitlab.com/parob/graphql-api/badges/master/coverage.svg)](https://gitlab.com/parob/graphql-api/commits/master)
+[![Pipeline](https://gitlab.com/parob/graphql-api/badges/master/pipeline.svg)](https://gitlab.com/parob/graphql-api/commits/master)
+
+**[📚 Documentation](https://graphql-api.parob.com/)** | **[📦 PyPI](https://pypi.org/project/graphql-api/)** | **[🔧 GitHub](https://github.com/parob/graphql-api)**
+
+---
+
 A powerful and intuitive Python library for building GraphQL APIs, designed with a code-first, decorator-based approach.
-
-[![coverage report](https://gitlab.com/parob/graphql-api/badges/master/coverage.svg)](https://gitlab.com/parob/graphql-api/commits/master)
-
-[![pipeline status](https://gitlab.com/parob/graphql-api/badges/master/pipeline.svg)](https://gitlab.com/parob/graphql-api/commits/master)
-
-[Click HERE for the graphql-api official documentation site](https://graphql-api.parob.com/)
 
 `graphql-api` simplifies schema definition by leveraging Python's type hints, dataclasses, and Pydantic models, allowing you to build robust and maintainable GraphQL services with minimal boilerplate.
 
@@ -221,6 +225,20 @@ api = GraphQLAPI(
 )
 ```
 
+## Documentation
+
+**Visit the [official documentation](https://graphql-api.parob.com/)** for comprehensive guides, tutorials, and API reference.
+
+### Key Topics
+
+- **[Getting Started](https://graphql-api.parob.com/docs/fundamentals/getting-started/)** - Quick introduction and basic usage
+- **[Defining Schemas](https://graphql-api.parob.com/docs/fundamentals/defining-schemas/)** - Learn schema definition patterns
+- **[Field Types](https://graphql-api.parob.com/docs/fundamentals/field-types/)** - Understanding GraphQL type system
+- **[Mutations](https://graphql-api.parob.com/docs/fundamentals/mutations/)** - Implementing data modifications
+- **[Remote GraphQL](https://graphql-api.parob.com/docs/distributed-systems/remote-graphql/)** - Connect to remote APIs
+- **[Federation](https://graphql-api.parob.com/docs/distributed-systems/federation/)** - Apollo Federation support
+- **[API Reference](https://graphql-api.parob.com/docs/reference/api-reference/)** - Complete API documentation
+
 ## Running Tests
 
 To contribute or run the test suite locally:
@@ -233,9 +251,3 @@ pipenv install --dev
 # Run tests
 pipenv run pytest
 ```
-
-## Documentation
-
-For more in-depth information, vist the documentation website.
-
-[`graphql-api` https://graphql-api.parob.com/](https://graphql-api.parob.com/)

@@ -71,6 +71,14 @@ filterwarnings = [
 
 [tool.flake8]
 max-line-length = 170
+exclude = [
+    ".venv",
+    "venv",
+    "env",
+    ".git",
+    "__pycache__",
+    ".pytest_cache",
+]
 ignore = [
     "E203",  # whitespace before ':' (conflicts with black)
     "W503",  # line break before binary operator (conflicts with black)

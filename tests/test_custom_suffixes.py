@@ -1,6 +1,5 @@
 import enum
 
-import pytest
 from graphql import print_schema
 
 from graphql_api.api import GraphQLAPI
