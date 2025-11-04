@@ -225,7 +225,7 @@ class TestCustomSuffixes:
             active = "active"
             inactive = "inactive"
 
-        @api.interface
+        @api.type(interface=True)
         class Entity:
             @api.field
             def id(self) -> str:
@@ -280,7 +280,7 @@ class TestCustomSuffixes:
             active = "active"
             inactive = "inactive"
 
-        @api.interface
+        @api.type(interface=True)
         class Entity:
             @api.field
             def id(self) -> str:

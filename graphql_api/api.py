@@ -323,27 +323,6 @@ class GraphQLAPI(GraphQLBaseExecutor):
             is_root_type=is_root_type,
         )
 
-    def interface(
-        self=None,
-        meta=None,
-        directives: Optional[List] = None,
-    ):
-        """
-        Convenience method for marking a class as a GraphQL interface.
-        Equivalent to @api.type(interface=True).
-        Example usage:
-            @api.interface
-            class MyInterface:
-                ...
-        """
-        return build_decorator(
-            arg1=self,
-            arg2=meta,
-            graphql_type="object",
-            interface=True,
-            directives=directives,
-        )
-
     def set_root_type(self, root_type):
         """
         Explicitly sets the root query type for this API instance.
