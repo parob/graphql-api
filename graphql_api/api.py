@@ -70,17 +70,17 @@ def tag_value(
     if not hasattr(value, "_defined_on"):
         value._defined_on = value
 
-    if not hasattr(value, "_schemas"):
+    # Ensure each class has its own _schemas dict, not an inherited one
+    if "_schemas" not in getattr(value, "__dict__", {}):
         value._schemas = {}
 
-    if hasattr(value, "_schemas"):
-        # noinspection PyProtectedMember
-        value._schemas[schema] = {
-            "defined_on": value,
-            "meta": meta or {},
-            "graphql_type": graphql_type,
-            "schema": schema,
-        }
+    # noinspection PyProtectedMember
+    value._schemas[schema] = {
+        "defined_on": value,
+        "meta": meta or {},
+        "graphql_type": graphql_type,
+        "schema": schema,
+    }
 
     from graphql_api.schema import add_applied_directives
 
@@ -323,6 +323,27 @@ class GraphQLAPI(GraphQLBaseExecutor):
             is_root_type=is_root_type,
         )
 
+    def interface(
+        self=None,
+        meta=None,
+        directives: Optional[List] = None,
+    ):
+        """
+        Convenience method for marking a class as a GraphQL interface.
+        Equivalent to @api.type(interface=True).
+        Example usage:
+            @api.interface
+            class MyInterface:
+                ...
+        """
+        return build_decorator(
+            arg1=self,
+            arg2=meta,
+            graphql_type="object",
+            interface=True,
+            directives=directives,
+        )
+
     def set_root_type(self, root_type):
         """
         Explicitly sets the root query type for this API instance.
@@ -357,6 +378,8 @@ class GraphQLAPI(GraphQLBaseExecutor):
         # Mode 2: Explicit query_type, mutation_type, subscription_type
         if self.query_type or self.mutation_type or self.subscription_type:
             all_types = set()
+            query_mapper = None
+            mutation_mapper = None
 
             # Build query type
             if self.query_type:
@@ -379,9 +402,13 @@ class GraphQLAPI(GraphQLBaseExecutor):
                 self.query_mapper = query_mapper
             # Build mutation type
             if self.mutation_type:
+                # Share the SAME registry object with query mapper to avoid duplicate types
+                # (don't copy because field resolution is lazy and types may not be in registry yet)
+                mutation_registry = query_mapper.registry if query_mapper else {}
                 mutation_mapper = GraphQLTypeMapper(
                     as_mutable=True,
                     suffix="Mutable",
+                    registry=mutation_registry,
                     schema=self,
                     max_docstring_length=self.max_docstring_length,
                     enum_suffix=self.enum_suffix,
@@ -401,9 +428,14 @@ class GraphQLAPI(GraphQLBaseExecutor):
 
             # Build subscription type
             if self.subscription_type:
+                # Share the SAME registry object with query/mutation mapper to avoid duplicate types
+                # (don't copy because field resolution is lazy and types may not be in registry yet)
+                base_mapper = query_mapper or mutation_mapper
+                subscription_registry = base_mapper.registry if base_mapper else {}
                 subscription_mapper = GraphQLTypeMapper(
                     as_subscription=True,
                     suffix="Subscription",
+                    registry=subscription_registry,
                     schema=self,
                     max_docstring_length=self.max_docstring_length,
                     enum_suffix=self.enum_suffix,

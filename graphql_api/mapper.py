@@ -430,6 +430,9 @@ class GraphQLTypeMapper:
             registry=self.registry,
             reverse_registry=self.reverse_registry,
             suffix=self.suffix,
+            enum_suffix=self.enum_suffix,
+            interface_suffix=self.interface_suffix,
+            input_suffix=self.input_suffix,
             schema=self.schema,
         )
         self.input_type_mapper = input_type_mapper
@@ -755,7 +758,8 @@ class GraphQLTypeMapper:
         return interface
 
     def map_to_input(self, class_type: Type) -> GraphQLType:
-        name = f"{class_type.__name__}{self.suffix}{self.input_suffix}"
+        # Input types should only use the input_suffix, not the object suffix (Mutable/Subscription)
+        name = f"{class_type.__name__}{self.input_suffix}"
 
         if hasattr(class_type, "graphql_from_input"):
             creator = class_type.graphql_from_input

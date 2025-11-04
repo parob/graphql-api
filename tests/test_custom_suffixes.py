@@ -158,9 +158,8 @@ class TestCustomSuffixes:
         api = GraphQLAPI()
 
         class PersonInput:
-            @api.field
-            def name(self) -> str:
-                ...
+            def __init__(self, name: str):
+                self.name = name
 
         @api.type(is_root_type=True)
         class Query:
@@ -178,9 +177,8 @@ class TestCustomSuffixes:
         api = GraphQLAPI(input_suffix="In")
 
         class PersonInput:
-            @api.field
-            def name(self) -> str:
-                ...
+            def __init__(self, name: str):
+                self.name = name
 
         @api.type(is_root_type=True)
         class Query:
@@ -200,9 +198,8 @@ class TestCustomSuffixes:
         api = GraphQLAPI(input_suffix="")
 
         class PersonInput:
-            @api.field
-            def name(self) -> str:
-                ...
+            def __init__(self, name: str):
+                self.name = name
 
         @api.type(is_root_type=True)
         class Query:
@@ -235,9 +232,8 @@ class TestCustomSuffixes:
                 ...
 
         class CreateInput:
-            @api.field
-            def name(self) -> str:
-                ...
+            def __init__(self, name: str):
+                self.name = name
 
         @api.type
         class User(Entity):
@@ -291,9 +287,8 @@ class TestCustomSuffixes:
                 ...
 
         class CreateInput:
-            @api.field
-            def name(self) -> str:
-                ...
+            def __init__(self, name: str):
+                self.name = name
 
         @api.type
         class User(Entity):
@@ -337,9 +332,8 @@ class TestCustomSuffixes:
             high = 3
 
         class TaskInput:
-            @api.field
-            def priority(self) -> Priority:
-                ...
+            def __init__(self, priority: Priority):
+                self.priority = priority
 
         @api.type(is_root_type=True)
         class Root:
@@ -372,9 +366,8 @@ class TestCustomSuffixes:
             inactive = "inactive"
 
         class UpdateInput:
-            @api.field
-            def status(self) -> Status:
-                ...
+            def __init__(self, status: Status):
+                self.status = status
 
         @api.type
         class Query:
