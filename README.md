@@ -181,49 +181,12 @@ class Root:
 
 GraphQL automatically separates queries and mutations - you don't need separate classes. Fields marked with `mutable=True` are placed in the Mutation type, while regular fields go in the Query type. Fields with `AsyncGenerator` return types are automatically detected as subscriptions. This automatic mapping means you can define all your operations in a single class and let `graphql-api` handle the schema organization for you.
 
-## Two Approaches for Complex Schemas
+## Related Projects
 
-`graphql-api` supports two approaches for organizing your GraphQL schema:
+- **[graphql-http](https://graphql-http.parob.com/)** - Serve your API over HTTP with authentication and GraphiQL
+- **[graphql-mcp](https://graphql-mcp.parob.com/)** - Expose your API as MCP tools for AI agents
 
-### Single Root Type (Recommended)
-```python
-@api.type
-class Root:
-    @api.field
-    def query_field(self) -> str: ...
-
-    @api.field(mutable=True)
-    def mutation_field(self) -> str: ...
-
-    @api.field
-    async def subscription_field(self) -> AsyncGenerator[str, None]: ...
-
-api = GraphQLAPI(root_type=Root)
-```
-
-### Explicit Types
-```python
-@api.type
-class Query:
-    @api.field
-    def query_field(self) -> str: ...
-
-@api.type
-class Mutation:
-    @api.field
-    def mutation_field(self) -> str: ...
-
-@api.type
-class Subscription:
-    @api.field
-    async def subscription_field(self) -> AsyncGenerator[str, None]: ...
-
-api = GraphQLAPI(
-    query_type=Query,
-    mutation_type=Mutation,
-    subscription_type=Subscription
-)
-```
+See the [documentation](https://graphql-api.parob.com/) for advanced schema patterns, federation, remote GraphQL, and more.
 
 ## Documentation
 

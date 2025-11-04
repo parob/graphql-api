@@ -52,9 +52,13 @@ result = api.execute('{ hello(name: "Developer") }')
 print(result.data)  # {'hello': 'Hello, Developer!'}
 ```
 
-## Need an HTTP Server?
+## Related Projects
 
-`graphql-api` focuses on schema definition and execution. To serve your GraphQL API over HTTP with production-ready features, check out **[graphql-http](https://github.com/parob/graphql-http)** - our companion package that provides:
+`graphql-api` focuses on schema definition and execution. For additional functionality:
+
+### HTTP Server: graphql-http
+
+Serve your GraphQL API over HTTP with [graphql-http](https://graphql-http.parob.com/):
 
 - 🚀 High-performance ASGI server built on Starlette
 - 🔐 JWT authentication with JWKS support
@@ -68,12 +72,28 @@ from graphql_http import GraphQLHTTP
 api = GraphQLAPI()
 # ... define your schema ...
 
-# Create production-ready HTTP server
 server = GraphQLHTTP.from_api(api)
 server.run()
 ```
 
-Learn more in the [graphql-http documentation](https://graphql-http.parob.com).
+**Learn more**: [graphql-http documentation](https://graphql-http.parob.com/)
+
+### MCP Tools: graphql-mcp
+
+Expose your GraphQL API as MCP tools for AI agents with [graphql-mcp](https://graphql-mcp.parob.com/):
+
+```python
+from graphql_api import GraphQLAPI
+from graphql_mcp.server import GraphQLMCP
+
+api = GraphQLAPI()
+# ... define your schema ...
+
+server = GraphQLMCP.from_api(api)
+app = server.http_app()
+```
+
+**Learn more**: [graphql-mcp documentation](https://graphql-mcp.parob.com/)
 
 ## Key Features
 
@@ -89,6 +109,6 @@ Learn more in the [graphql-http documentation](https://graphql-http.parob.com).
 
 ## What's Next?
 
-- 📚 **[Getting Started](docs/getting-started/)** - Learn the basics with our comprehensive guide
-- 💡 **[Examples](docs/examples/)** - Explore practical examples and tutorials for real-world scenarios  
-- 📖 **[API Reference](docs/api-reference/)** - Check out the complete API documentation
+- 📚 **[Getting Started](docs/fundamentals/getting-started/)** - Learn the basics with our comprehensive guide
+- 💡 **[Examples](docs/reference/examples/)** - Explore practical examples and tutorials for real-world scenarios
+- 📖 **[API Reference](docs/reference/api-reference/)** - Check out the complete API documentation
