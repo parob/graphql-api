@@ -184,6 +184,7 @@ GraphQL automatically separates queries and mutations - you don't need separate 
 ## Related Projects
 
 - **[graphql-http](https://graphql-http.parob.com/)** - Serve your API over HTTP with authentication and GraphiQL
+- **[graphql-db](https://graphql-db.parob.com/)** - SQLAlchemy integration for database-backed APIs
 - **[graphql-mcp](https://graphql-mcp.parob.com/)** - Expose your API as MCP tools for AI agents
 
 See the [documentation](https://graphql-api.parob.com/) for advanced schema patterns, federation, remote GraphQL, and more.

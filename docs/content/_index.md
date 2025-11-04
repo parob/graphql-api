@@ -78,6 +78,21 @@ server.run()
 
 **Learn more**: [graphql-http documentation](https://graphql-http.parob.com/)
 
+### Database Integration: graphql-db
+
+Build database-backed APIs with SQLAlchemy using [graphql-db](https://graphql-db.parob.com/):
+
+```python
+from graphql_api import GraphQLAPI
+from graphql_db.orm_base import DatabaseManager, ModelBase
+
+# Define models and create API
+api = GraphQLAPI()
+# ... graphql-db handles database integration ...
+```
+
+**Learn more**: [graphql-db documentation](https://graphql-db.parob.com/)
+
 ### MCP Tools: graphql-mcp
 
 Expose your GraphQL API as MCP tools for AI agents with [graphql-mcp](https://graphql-mcp.parob.com/):
