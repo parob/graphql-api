@@ -416,7 +416,7 @@ class GraphQLRemoteObject:
                 raise ValueError(
                     "Cannot initialize type mappers without a GraphQLAPI instance."
                 )
-            self.api.build_schema()
+            self.api.build()
             self.mappers = GraphQLMappers(
                 query_mapper=self.api.query_mapper,  # type: ignore
                 mutable_mapper=self.api.mutation_mapper,  # type: ignore

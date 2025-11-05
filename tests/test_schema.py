@@ -104,7 +104,7 @@ class TestGraphQLSchema:
         assert ObjectSchemaMeta.test_query_schema_meta._graphql
         assert ObjectSchemaMeta.test_mutation_schema_meta._graphql
 
-        schema, _ = api_1.build_schema()
+        schema, _ = api_1.build()
 
         assert schema is not None
         assert schema.query_type is not None
@@ -115,7 +115,7 @@ class TestGraphQLSchema:
         in a placeholder query type.
         """
         api = GraphQLAPI()
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         assert schema is not None
         assert schema.query_type is not None
@@ -140,7 +140,7 @@ class TestGraphQLSchema:
         )
 
         api = GraphQLAPI(root_type=RootWithDelegate)
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         assert schema is not None
         RootWithDelegate.validate_graphql_schema.assert_called_once()

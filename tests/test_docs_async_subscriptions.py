@@ -229,7 +229,7 @@ class TestAsyncSubscriptionsExamples:
             async def subscription_field(self) -> AsyncGenerator[str, None]:
                 yield "subscription"
 
-        schema, meta = api.build_schema()
+        schema, meta = api.build()
 
         # Verify all three types exist
         assert schema.query_type is not None

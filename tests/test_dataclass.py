@@ -123,7 +123,7 @@ class TestDataclass:
 
         # Build the API with the custom filter
         api = GraphQLAPI(root_type=Root, filters=[TestFilter()])
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         type_map = schema.type_map
 
@@ -248,7 +248,7 @@ class TestDataclass:
         api.type(AnotherUnusedType)
         api.type(Root, is_root_type=True)
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         type_map = schema.type_map
         print(
@@ -364,7 +364,7 @@ class TestDataclass:
             # NOTE: No mutable fields return Book, so BookMutable should NOT exist
 
         api = GraphQLAPI(root_type=Root)
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         type_map = schema.type_map
 
         print("\\nDemonstrating the bug:")
@@ -499,7 +499,7 @@ class TestDataclass:
             # NOTE: No root mutable fields reference TypeA, TypeB, or TypeC
 
         api = GraphQLAPI(root_type=Root)
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         type_map = schema.type_map
 
         print("\nTesting transitive unused mutable types:")
@@ -631,7 +631,7 @@ class TestDataclass:
                 address = Address("789 Main St", "Springfield", "IL", "62701")
                 return User("123", "John Doe", "john@example.com", address)
 
-        schema, type_map = api.build_schema()
+        schema, type_map = api.build()
 
         print("\nLibrary app bug demonstration:")
         print(

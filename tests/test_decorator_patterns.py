@@ -41,7 +41,7 @@ class TestDecoratorPatterns:
             def users(self) -> List[UserWithMethods]:
                 return [UserWithMethods(id=1)]
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         # Verify the schema includes the global field
         assert "UserWithMethods" in schema.type_map
@@ -76,7 +76,7 @@ class TestDecoratorPatterns:
             def users(self) -> List[UserWithMethods]:
                 return [UserWithMethods(id=1)]
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         # Verify the schema includes the instance field
         assert "UserWithMethods" in schema.type_map
@@ -115,7 +115,7 @@ class TestDecoratorPatterns:
             def get_user(self) -> UserWithMixedMethods:
                 return UserWithMixedMethods(id=1)
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         user_type = schema.type_map["UserWithMixedMethods"]
 
@@ -176,8 +176,8 @@ class TestDecoratorPatterns:
                 return Math()
 
         # Build separate schemas
-        schema1, _ = api1.build_schema()
-        schema2, _ = api2.build_schema()
+        schema1, _ = api1.build()
+        schema2, _ = api2.build()
 
         math_type_1 = schema1.type_map["Math"]
         math_type_2 = schema2.type_map["Math"]
@@ -229,8 +229,8 @@ class TestDecoratorPatterns:
                 return Calculator(value=7)
 
         # Build schemas
-        schema1, _ = api1.build_schema()
-        schema2, _ = api2.build_schema()
+        schema1, _ = api1.build()
+        schema2, _ = api2.build()
 
         # Global field should be available in both schemas
         calc_type_1 = schema1.type_map["Calculator"]
@@ -287,7 +287,7 @@ class TestDecoratorPatterns:
 
         # This works here because everything is in the same module,
         # but in a real app with separate modules, this could cause circular imports
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         post_type = schema.type_map["Post"]
         author_type = schema.type_map["Author"]
@@ -357,7 +357,7 @@ class TestDecoratorPatterns:
             def instance_product(self) -> ProductInstance:
                 return ProductInstance(id=2)
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         # Both should work identically in the final schema
         global_type = schema.type_map["ProductGlobal"]

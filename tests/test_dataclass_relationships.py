@@ -64,7 +64,7 @@ class TestDataclassRelationships:
                 return [Author(**a) for a in authors]
 
         # Test that the schema includes the field-decorated methods
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         # Check that Post type has getAuthor field
         post_type = schema.type_map["Post"]
@@ -123,7 +123,7 @@ class TestDataclassRelationships:
             def user(self) -> User:
                 return User(id=1, name="Test User")
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         user_type = schema.type_map["User"]
 
         # publicMethod should be present (camelCase conversion)

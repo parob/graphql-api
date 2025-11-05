@@ -209,7 +209,7 @@ class TestAdvancedExamples:
                 return User()
 
         # Test the schema can be built with directives
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         assert schema is not None
 
         # Test query execution works

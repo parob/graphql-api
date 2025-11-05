@@ -61,7 +61,7 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=TestSchema, directives=[
                          custom_directive_definition])
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         assert schema is not None
         printed_schema = print_schema(schema)
 
@@ -79,7 +79,7 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=TestSchema, directives=[
                          deprecated_directive])
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         assert schema is not None
         printed_schema = print_schema(schema)
 
@@ -114,7 +114,7 @@ class TestGraphQLDirectives:
 
         api = GraphQLAPI(root_type=TestSchema)
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         assert schema is not None
         printed_schema = print_schema(schema)
 
@@ -156,7 +156,7 @@ class TestGraphQLDirectives:
 
         api = GraphQLAPI(root_type=TestSchema)
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         assert schema is not None
         printed_schema = print_schema(schema)
 
@@ -195,7 +195,7 @@ class TestGraphQLDirectives:
 
         api = GraphQLAPI(root_type=Bank, directives=[big])
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         printed_schema = print_schema(schema)
 
         # The big directive should be available in the schema since it's passed to GraphQLAPI
@@ -229,7 +229,7 @@ class TestGraphQLDirectives:
 
         api = GraphQLAPI(root_type=Root)
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         assert schema is not None
         printed_schema = print_schema(schema)
 
@@ -276,7 +276,7 @@ class TestGraphQLDirectives:
 
         api = GraphQLAPI(root_type=Root, directives=[enum_value_directive])
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         assert schema is not None
         printed_schema = print_schema(schema)
 
@@ -306,7 +306,7 @@ class TestGraphQLDirectives:
         api = GraphQLAPI(root_type=Root)
 
         with pytest.raises(TypeError, match="Directive '@object_directive' only supp"):
-            schema, _ = api.build_schema()
+            schema, _ = api.build()
 
     def test_multiple_schema_directives(self) -> None:
         key = SchemaDirective(
@@ -358,7 +358,7 @@ class TestGraphQLDirectives:
 
         api = GraphQLAPI(root_type=TestSchema)
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         printed_schema = print_schema(schema)
 
         assert tag in self.get_directives(api.query_mapper)

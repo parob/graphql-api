@@ -469,7 +469,7 @@ class TestFieldTypesExamples:
                 return [Author(**a) for a in authors_db]
 
         # Test schema generation
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         assert schema is not None
 
         # Check that the relationships are in the schema

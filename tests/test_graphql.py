@@ -610,7 +610,7 @@ class TestGraphQL:
             def math(self) -> Math:
                 return Math()
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         schema_str = print_schema(schema)
         schema_str = schema_str.strip().replace(" ", "")
@@ -1441,7 +1441,7 @@ class TestGraphQL:
         assert not single_type_query_result.errors
         assert single_type_query_result.data == single_type_query_expected
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         # Check that single type unions was sucesfully created as a union type.
         assert (
@@ -1733,7 +1733,7 @@ class TestGraphQL:
             def hello(self) -> str:
                 return "hello world"
 
-        schema = api.build_schema()[0]
+        schema = api.build()[0]
 
         assert Root.was_called
         assert Root.input_schema
@@ -1887,7 +1887,7 @@ class TestGraphQL:
         print("api.root_type:", api.root_type)
         print("SimpleRoot class:", SimpleRoot)
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         print(
             "Schema query type:",
             schema.query_type.name if schema.query_type else "None",
@@ -1923,7 +1923,7 @@ class TestGraphQL:
         filtered_api = GraphQLAPI(
             root_type=Root, filters=[TagFilter(tags=["admin", "private"])]
         )
-        filtered_schema, _ = filtered_api.build_schema()
+        filtered_schema, _ = filtered_api.build()
 
         # Verify the fix: root type name should be preserved
         assert filtered_schema.query_type is not None
@@ -1987,7 +1987,7 @@ class TestGraphQL:
             root_type=Root,
             filters=[TagFilter(tags=["admin"], preserve_transitive=False)],
         )
-        filtered_schema, _ = filtered_api.build_schema()
+        filtered_schema, _ = filtered_api.build()
         executor = filtered_api.executor()
 
         # UserData should work - has remaining fields
@@ -2050,7 +2050,7 @@ class TestGraphQL:
                                   TagFilter(tags=["private"])])
 
         # Test that the object type with remaining fields should still be accessible
-        schema, _ = filtered_api.build_schema()
+        schema, _ = filtered_api.build()
 
         # Verify schema structure
         assert schema.query_type is not None
@@ -2237,7 +2237,7 @@ class TestGraphQL:
         assert "Cannot query field 'adminData'" in str(result_admin.errors[0])
 
         # Verify schema structure
-        schema, _ = filtered_api.build_schema()
+        schema, _ = filtered_api.build()
         type_map = schema.type_map
 
         # Types with remaining fields should exist
@@ -2288,7 +2288,7 @@ class TestGraphQL:
         assert result_enum.data == {'checkTag': True}
 
         # Schema should contain TagEnum
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         assert 'TagEnum' in schema.type_map
 
         # Field argument type should be NonNull(TagEnum)
@@ -2331,7 +2331,7 @@ class TestGraphQL:
         assert result_enum.data == {'checkTag': True}
 
         # Schema should contain TagEnum
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         assert 'TagEnum' in schema.type_map
 
         # Field argument type should be NonNull(TagEnum)

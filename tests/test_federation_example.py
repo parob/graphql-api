@@ -324,7 +324,7 @@ class Root:
 def federation_example_api():
     api = GraphQLAPI(root_type=Root, types=[Inventory], federation=True)
 
-    schema, _ = api.build_schema()
+    schema, _ = api.build()
 
     link(
         schema,

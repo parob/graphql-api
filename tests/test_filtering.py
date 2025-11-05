@@ -318,7 +318,7 @@ class TestSchemaFiltering:
         assert "Cannot query field 'secretData'" in str(result.errors[0])
 
         # Verify schema structure - SecretData should be completely absent
-        schema, _ = filtered_api.build_schema()
+        schema, _ = filtered_api.build()
         type_map = schema.type_map
         assert "SecretData" not in type_map
 
@@ -368,7 +368,7 @@ class TestSchemaFiltering:
         )
 
         # Build schema and verify PartiallyFiltered is preserved
-        schema, _ = preserve_api.build_schema()
+        schema, _ = preserve_api.build()
         type_map = schema.type_map
 
         assert "HasValidFields" in type_map
@@ -400,7 +400,7 @@ class TestSchemaFiltering:
             filters=[TagFilter(tags=["admin"], preserve_transitive=False)],
         )
 
-        strict_schema, _ = strict_api.build_schema()
+        strict_schema, _ = strict_api.build()
         strict_type_map = strict_schema.type_map
 
         assert "HasValidFields" in strict_type_map
@@ -446,7 +446,7 @@ class TestSchemaFiltering:
 
         # Test preserve_transitive=True (default)
         preserve_api = GraphQLAPI(root_type=Root)
-        preserve_schema, _ = preserve_api.build_schema()
+        preserve_schema, _ = preserve_api.build()
         preserve_type_map = preserve_schema.type_map
 
         # Both types should be preserved
@@ -460,7 +460,7 @@ class TestSchemaFiltering:
                 TagFilter(tags=[], preserve_transitive=False)
             ],  # Empty filter with strict behavior
         )
-        strict_schema, _ = strict_api.build_schema()
+        strict_schema, _ = strict_api.build()
         strict_type_map = strict_schema.type_map
 
         # Both types should also be preserved in this case since no filtering is applied
@@ -488,14 +488,14 @@ class TestSchemaFiltering:
 
         # Test default behavior (TagFilter should default to preserve_transitive=True)
         api_default = GraphQLAPI(root_type=Root, filters=[TagFilter(tags=[])])
-        schema_default, _ = api_default.build_schema()
+        schema_default, _ = api_default.build()
 
         # Test explicit preserve_transitive=True
         api_preserve = GraphQLAPI(
             root_type=Root, filters=[
                 TagFilter(tags=[], preserve_transitive=True)]
         )
-        schema_preserve, _ = api_preserve.build_schema()
+        schema_preserve, _ = api_preserve.build()
 
         # Both should have the same types
         default_types = {
@@ -600,7 +600,7 @@ class TestSchemaFiltering:
 
         # Test with the comprehensive filter
         api = GraphQLAPI(root_type=Root, filters=[AllBehaviorsFilter()])
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         executor = api.executor()
 
         # Verify schema structure
@@ -700,7 +700,7 @@ class TestSchemaFiltering:
 
         # This should work without errors (no preserve_transitive attribute access)
         api = GraphQLAPI(root_type=Root, filters=[CustomFilter()])
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         executor = api.executor()
 
         # Verify schema structure
@@ -776,7 +776,7 @@ class TestSchemaFiltering:
 
         # Build the API
         api = GraphQLAPI(root_type=Root)
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         # Check that User (query type) has all fields
         from graphql import GraphQLObjectType
@@ -883,7 +883,7 @@ class TestSchemaFiltering:
 
         # Build the API
         api = GraphQLAPI(root_type=Root)
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         # Check that Root (query type) has all fields
         from graphql import GraphQLObjectType
@@ -999,7 +999,7 @@ class TestSchemaFiltering:
 
         # Build the API with the custom filter
         api = GraphQLAPI(root_type=Root, filters=[TestFilter()])
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         type_map = schema.type_map
 
@@ -1111,7 +1111,7 @@ class TestSchemaFiltering:
                 return FilterResponse.KEEP
 
         api_strict = GraphQLAPI(root_type=Root, filters=[TestFilterStrict()])
-        schema_strict, _ = api_strict.build_schema()
+        schema_strict, _ = api_strict.build()
 
         # Test 2: ALLOW_TRANSITIVE with REMOVE (new test case)
         class TestFilterRemove(GraphQLFilter):
@@ -1125,7 +1125,7 @@ class TestSchemaFiltering:
                 return FilterResponse.KEEP
 
         api_remove = GraphQLAPI(root_type=Root, filters=[TestFilterRemove()])
-        schema_remove, _ = api_remove.build_schema()
+        schema_remove, _ = api_remove.build()
 
         # Both schemas should preserve AdminUser type
         for schema, test_name in [(schema_strict, "REMOVE_STRICT"), (schema_remove, "REMOVE")]:
@@ -1232,7 +1232,7 @@ class TestSchemaFiltering:
 
         # Build the API with the test filter
         api = GraphQLAPI(root_type=Root, filters=[TestFilter()])
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         type_map = schema.type_map
 
@@ -1368,7 +1368,7 @@ class TestSchemaFiltering:
 
         # Build the API
         api = GraphQLAPI(root_type=Root)
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         # Check that only used types are in the schema
         type_map = schema.type_map
@@ -2123,7 +2123,7 @@ class TestSchemaFiltering:
             def non_public_field(self) -> str:
                 return "non-public"
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         printed_schema = print_schema(schema)
         assert "publicField" in printed_schema
         assert "nonPublicField" not in printed_schema
@@ -2180,7 +2180,7 @@ class TestSchemaFiltering:
         )
 
         # Build the schema to check its structure
-        schema, _ = filtered_api.build_schema()
+        schema, _ = filtered_api.build()
         type_map = schema.type_map
 
         # All object types should be preserved because they're reachable
@@ -2385,7 +2385,7 @@ class TestSchemaFiltering:
 
         # Test without filtering - all types should be present
         unfiltered_api = GraphQLAPI(root_type=Root)
-        unfiltered_schema, _ = unfiltered_api.build_schema()
+        unfiltered_schema, _ = unfiltered_api.build()
 
         from graphql import print_schema
         unfiltered_sdl = print_schema(unfiltered_schema)
@@ -2399,7 +2399,7 @@ class TestSchemaFiltering:
         # Test with filtering - filtered types should be removed
         filtered_api = GraphQLAPI(root_type=Root, filters=[
                                   TagFilter(tags=["admin"])])
-        filtered_schema, _ = filtered_api.build_schema()
+        filtered_schema, _ = filtered_api.build()
 
         filtered_sdl = print_schema(filtered_schema)
 
@@ -2464,7 +2464,7 @@ class TestSchemaFiltering:
             # Disable cleanup
             filters=[TagFilter(tags=["admin"], cleanup_types=False)]
         )
-        disabled_schema, _ = api_disabled.build_schema()
+        disabled_schema, _ = api_disabled.build()
 
         from graphql import print_schema
         disabled_sdl = print_schema(disabled_schema)
@@ -2487,7 +2487,7 @@ class TestSchemaFiltering:
             # Enable cleanup (this is the default)
             filters=[TagFilter(tags=["admin"], cleanup_types=True)]
         )
-        enabled_schema, _ = api_enabled.build_schema()
+        enabled_schema, _ = api_enabled.build()
 
         enabled_sdl = print_schema(enabled_schema)
 

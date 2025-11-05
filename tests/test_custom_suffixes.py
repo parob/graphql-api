@@ -22,7 +22,7 @@ class TestCustomSuffixes:
             def animal(self) -> AnimalType:
                 return AnimalType.dog
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         schema_sdl = print_schema(schema)
         assert "AnimalTypeEnum" in schema_sdl
         assert "enum AnimalTypeEnum" in schema_sdl
@@ -41,7 +41,7 @@ class TestCustomSuffixes:
             def animal(self) -> Animal:
                 return Animal.dog
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         schema_sdl = print_schema(schema)
         assert "AnimalType" in schema_sdl
         assert "enum AnimalType" in schema_sdl
@@ -62,7 +62,7 @@ class TestCustomSuffixes:
             def animal(self) -> AnimalType:
                 return AnimalType.dog
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         schema_sdl = print_schema(schema)
         assert "AnimalType" in schema_sdl
         assert "enum AnimalType" in schema_sdl
@@ -91,7 +91,7 @@ class TestCustomSuffixes:
             def animal(self) -> Animal:
                 return Dog()
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         schema_sdl = print_schema(schema)
         assert "AnimalInterface" in schema_sdl
         assert "interface AnimalInterface" in schema_sdl
@@ -118,7 +118,7 @@ class TestCustomSuffixes:
             def animal(self) -> Animal:
                 return Dog()
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         schema_sdl = print_schema(schema)
         assert "AnimalIface" in schema_sdl
         assert "interface AnimalIface" in schema_sdl
@@ -147,7 +147,7 @@ class TestCustomSuffixes:
             def animal(self) -> Animal:
                 return Dog()
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         schema_sdl = print_schema(schema)
         assert "interface Animal {" in schema_sdl
         # Should not have any suffix
@@ -167,7 +167,7 @@ class TestCustomSuffixes:
             def greet(self, person: PersonInput) -> str:
                 return f"Hello {person.name}"
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         schema_sdl = print_schema(schema)
         assert "PersonInputInput" in schema_sdl
         assert "input PersonInputInput" in schema_sdl
@@ -186,7 +186,7 @@ class TestCustomSuffixes:
             def greet(self, person: PersonInput) -> str:
                 return f"Hello {person.name}"
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         schema_sdl = print_schema(schema)
         assert "PersonInputIn" in schema_sdl
         assert "input PersonInputIn" in schema_sdl
@@ -207,7 +207,7 @@ class TestCustomSuffixes:
             def greet(self, person: PersonInput) -> str:
                 return f"Hello {person.name}"
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         schema_sdl = print_schema(schema)
         assert "input PersonInput {" in schema_sdl
         # Should not have double Input
@@ -255,7 +255,7 @@ class TestCustomSuffixes:
             def status(self) -> Status:
                 return Status.active
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         schema_sdl = print_schema(schema)
 
         # Check custom suffixes are applied
@@ -310,7 +310,7 @@ class TestCustomSuffixes:
             def status(self) -> Status:
                 return Status.active
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         schema_sdl = print_schema(schema)
 
         # Check no suffixes are applied
@@ -341,7 +341,7 @@ class TestCustomSuffixes:
             def create_task(self, input: TaskInput) -> str:
                 return f"Task created with priority {input.priority.value}"
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         schema_sdl = print_schema(schema)
 
         # Check no suffixes in mutation
@@ -385,7 +385,7 @@ class TestCustomSuffixes:
         api.query_type = Query
         api.mutation_type = Mutation
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         schema_sdl = print_schema(schema)
 
         # Check custom suffix for enum

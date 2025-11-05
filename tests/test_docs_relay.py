@@ -264,7 +264,7 @@ class TestRelayExamples:
             def people(self) -> PersonSchemaConnection:
                 return PersonSchemaConnection()
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         assert schema is not None
 
         # Verify the schema has proper Relay types

@@ -35,7 +35,7 @@ class TestGraphQL:
                 """
                 return Node()
 
-        schema = api.build_schema()[0]
+        schema = api.build()[0]
 
         assert schema.query_type.description == "ROOT_DOCSTRING"
 
@@ -76,7 +76,7 @@ class TestGraphQL:
             def enum_field_b(self) -> TestEnumB:
                 return TestEnumB.VALUE_A
 
-        schema = api.build_schema()[0]
+        schema = api.build()[0]
 
         enum_field = schema.query_type.fields["enumFieldA"]
 
@@ -118,7 +118,7 @@ class TestGraphQL:
                 """
                 return Node()
 
-        schema = api.build_schema()[0]
+        schema = api.build()[0]
 
         assert schema.query_type.description == "ROOT_DOCSTRING"
 
@@ -168,7 +168,7 @@ class TestGraphQL:
                 """
                 return Node()
 
-        schema = api.build_schema()[0]
+        schema = api.build()[0]
 
         assert schema.query_type.description == "ROOT_DOCSTRING"
 
@@ -217,7 +217,7 @@ class TestGraphQL:
             def root_field(self) -> Node:
                 return Node()
 
-        schema = api.build_schema()[0]
+        schema = api.build()[0]
         root_field = schema.query_type.fields["rootField"]
         root_field_type = root_field.type.of_type
 
@@ -251,7 +251,7 @@ class TestGraphQL:
             def model_with_docstring(self) -> PydanticModelWithDocstring:
                 return PydanticModelWithDocstring(name="test", age=25)
 
-        schema = api.build_schema()[0]
+        schema = api.build()[0]
 
         # Model without custom docstring should have None description (filtered out default)
         no_docstring_field = schema.query_type.fields["modelNoDocstring"]
@@ -287,7 +287,7 @@ class TestGraphQL:
             def dataclass_with_docstring(self) -> DataclassWithDocstring:
                 return DataclassWithDocstring(name="test", age=25)
 
-        schema = api.build_schema()[0]
+        schema = api.build()[0]
 
         # Dataclass without custom docstring should have None description (filtered out auto-generated constructor)
         no_docstring_field = schema.query_type.fields["dataclassNoDocstring"]
@@ -438,7 +438,7 @@ class TestGraphQL:
             def dataclass_model(self) -> DataclassWithLongDocstring:
                 return DataclassWithLongDocstring(name="test", value=42)
 
-        schema = api.build_schema()[0]
+        schema = api.build()[0]
 
         # Check that long user-written docstrings are preserved in Pydantic models
         pydantic_field = schema.query_type.fields["pydanticModel"]
@@ -522,7 +522,7 @@ class TestGraphQL:
             def dataclass_model(self) -> DataclassWithLongDocstring:
                 return DataclassWithLongDocstring(name="test", value=42)
 
-        schema = api_with_truncation.build_schema()[0]
+        schema = api_with_truncation.build()[0]
 
         # Check that Pydantic docstring is truncated
         pydantic_field = schema.query_type.fields["pydanticModel"]
@@ -549,7 +549,7 @@ class TestGraphQL:
             def pydantic_model(self) -> PydanticModelWithLongDocstring:
                 return PydanticModelWithLongDocstring(name="test", description="test desc")
 
-        schema_no_truncation = api_no_truncation.build_schema()[0]
+        schema_no_truncation = api_no_truncation.build()[0]
 
         # Check that docstring is not truncated
         pydantic_field_no_truncation = schema_no_truncation.query_type.fields["pydanticModel"]

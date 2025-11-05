@@ -170,7 +170,7 @@ class TestGettingStartedExamples:
                 return [f"User matching '{query}'"]
 
         # Test that the schema builds with docstrings
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         assert schema is not None
 
         # Test that docstrings are preserved as descriptions
@@ -217,7 +217,7 @@ class TestGettingStartedExamples:
             def create_user(self, input: CreateUserInput) -> User:
                 return User(id="999", name=input.name, email=input.email)
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         assert schema is not None
 
         # Check that type descriptions are preserved
@@ -260,7 +260,7 @@ class TestGettingStartedExamples:
             def product(self) -> Product:
                 return Product(id="p1", name="Widget", price=1000, category="gadgets")
 
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
         assert schema is not None
 
         # Check that the main description is preserved

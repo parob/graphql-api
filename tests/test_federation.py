@@ -54,7 +54,7 @@ class TestFederation:
                 return [User(id="1"), User(id="2")]
 
         api = GraphQLAPI(root_type=Root, types=[Food], federation=True)
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         link(
             **{
@@ -112,7 +112,7 @@ class TestFederation:
 
     def test_federation_example(self) -> None:
         api = federation_example_api()
-        schema, meta = api.build_schema()
+        schema, meta = api.build()
 
         response = api.execute(
             'query { _entities(representations: ["{ \\"__typename\\": \\"User\\", '

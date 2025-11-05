@@ -50,7 +50,7 @@ class TestUnifiedVsExplicitSchema:
 
         # Update API to use the decorated Root type
         api.root_type = Root
-        schema, meta = api.build_schema()
+        schema, meta = api.build()
 
         # Verify all three types exist
         assert schema.query_type is not None
@@ -84,7 +84,7 @@ class TestUnifiedVsExplicitSchema:
 
         # Update API to use the decorated Root type
         api.root_type = Root
-        schema, meta = api.build_schema()
+        schema, meta = api.build()
 
         assert schema.query_type is not None
         assert schema.mutation_type is not None
@@ -122,7 +122,7 @@ class TestUnifiedVsExplicitSchema:
         api.mutation_type = Mutation
         api.subscription_type = Subscription
 
-        schema, meta = api.build_schema()
+        schema, meta = api.build()
 
         assert schema.query_type is not None
         assert schema.mutation_type is not None
@@ -145,7 +145,7 @@ class TestUnifiedVsExplicitSchema:
 
         # Set only query_type and build schema
         api.query_type = Query
-        schema, meta = api.build_schema()
+        schema, meta = api.build()
 
         assert schema.query_type is not None
         assert schema.mutation_type is None
@@ -180,7 +180,7 @@ class TestUnifiedVsExplicitSchema:
         """Test that empty API creates placeholder schema for backward compatibility"""
         # Empty constructor is allowed for backward compatibility
         api = GraphQLAPI()
-        schema, meta = api.build_schema()
+        schema, meta = api.build()
 
         # Should create a placeholder query type
         assert schema.query_type is not None

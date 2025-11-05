@@ -333,7 +333,10 @@ class GraphQLAPI(GraphQLBaseExecutor):
     # --------------------------------------------------------------------------
     # SCHEMA BUILDING & EXECUTION
     # --------------------------------------------------------------------------
-    def build_schema(self, ignore_cache: bool = False) -> Tuple[GraphQLSchema, Dict]:
+    def schema(self, ignore_cache: bool = False) -> GraphQLSchema:
+        return self.build(ignore_cache)[0]
+
+    def build(self, ignore_cache: bool = False) -> Tuple[GraphQLSchema, Dict]:
         """
         Builds the GraphQL schema using decorators, directives, filters, etc.
         :param ignore_cache: If True, force rebuild the schema even if cached.
@@ -703,7 +706,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
         self,
         root_value: Any = None,
     ) -> GraphQLExecutor:
-        schema, meta = self.build_schema()
+        schema, meta = self.build()
 
         if callable(self.root_type) and root_value is None:
             root_value = self.root_type()

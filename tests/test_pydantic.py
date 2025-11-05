@@ -778,7 +778,7 @@ class TestPydantic:
                 )
 
         api = GraphQLAPI(root_type=API)
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         # Get the GraphQL SDL to inspect the schema
         from graphql import print_schema
@@ -853,7 +853,7 @@ class TestPydantic:
                 )
 
         api = GraphQLAPI(root_type=ConfigAPI)
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         # Get the GraphQL SDL to inspect the schema
         from graphql import print_schema
@@ -911,7 +911,7 @@ class TestPydantic:
                 )
 
         api = GraphQLAPI(root_type=ResponseAPI)
-        schema, _ = api.build_schema()
+        schema, _ = api.build()
 
         # Verify schema generation
         from graphql import print_schema
