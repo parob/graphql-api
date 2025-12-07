@@ -83,7 +83,16 @@ def serialize_datetime(dt):
 
 
 def parse_datetime_value(value):
-    datetime_formats = ["%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S.%f"]
+    # Handle ISO 8601 Z suffix (UTC timezone indicator)
+    if value.endswith("Z"):
+        value = value[:-1]
+
+    datetime_formats = [
+        "%Y-%m-%dT%H:%M:%S.%f",  # ISO 8601 with microseconds
+        "%Y-%m-%dT%H:%M:%S",     # ISO 8601 without microseconds
+        "%Y-%m-%d %H:%M:%S.%f",  # Space separator with microseconds
+        "%Y-%m-%d %H:%M:%S",     # Space separator without microseconds
+    ]
 
     for datetime_format in datetime_formats:
         try:
