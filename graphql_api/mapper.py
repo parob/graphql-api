@@ -908,8 +908,6 @@ class GraphQLTypeMapper:
                 type_str = "Argument"
 
             for applied_directive in applied_directives:
-                from graphql_api import AppliedDirective
-
                 applied_directive: AppliedDirective
 
                 if location not in applied_directive.directive.locations:
