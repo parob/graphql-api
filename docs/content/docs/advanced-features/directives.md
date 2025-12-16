@@ -263,6 +263,103 @@ class Priority(enum.Enum):
     HIGH = "high"
 ```
 
+## Argument Directives
+
+Directives can also be applied to field arguments using Python's `Annotated` type hint:
+
+```python
+from typing import Annotated
+from graphql import DirectiveLocation, GraphQLArgument, GraphQLString, GraphQLInt
+from graphql_api.directives import SchemaDirective
+
+# Define a constraint directive for arguments
+constraint = SchemaDirective(
+    name="constraint",
+    locations=[DirectiveLocation.ARGUMENT_DEFINITION],
+    args={
+        "min": GraphQLArgument(GraphQLInt, description="Minimum value"),
+        "max": GraphQLArgument(GraphQLInt, description="Maximum value"),
+        "pattern": GraphQLArgument(GraphQLString, description="Regex pattern"),
+    },
+    description="Validation constraints for arguments"
+)
+
+# Define a directive without arguments
+sensitive = SchemaDirective(
+    name="sensitive",
+    locations=[DirectiveLocation.ARGUMENT_DEFINITION],
+    description="Marks argument as containing sensitive data"
+)
+
+@api.type(is_root_type=True)
+class Root:
+    @api.field
+    def search(
+        self,
+        # Shorthand syntax with arguments
+        query: Annotated[str, constraint(min=1, max=100)],
+        # Shorthand syntax without arguments (no parentheses needed)
+        password: Annotated[str, sensitive],
+        # Multiple directives on one argument
+        limit: Annotated[int, constraint(min=1, max=50), sensitive] = 10
+    ) -> str:
+        return f"Searching for: {query}"
+```
+
+This generates the following schema:
+
+```graphql
+type Query {
+  search(
+    query: String! @constraint(min: 1, max: 100)
+    password: String! @sensitive
+    limit: Int = 10 @constraint(min: 1, max: 50) @sensitive
+  ): String!
+}
+```
+
+### Argument Directive Syntax Options
+
+There are three ways to apply directives to arguments:
+
+```python
+from typing import Annotated
+from graphql_api import AppliedDirective
+
+@api.field
+def example(
+    self,
+    # 1. Shorthand with args - most concise
+    arg1: Annotated[str, constraint(max=100)],
+
+    # 2. Shorthand without args - for directives with no arguments
+    arg2: Annotated[str, sensitive],
+
+    # 3. Explicit AppliedDirective - verbose but flexible
+    arg3: Annotated[str, AppliedDirective(directive=constraint, args={"max": 50})],
+) -> str:
+    return "example"
+```
+
+### Using Built-in Directives on Arguments
+
+You can use the built-in `deprecated` directive on arguments:
+
+```python
+from graphql_api.directives import deprecated
+
+@api.type(is_root_type=True)
+class Root:
+    @api.field
+    def get_user(
+        self,
+        id: str,
+        # Mark old parameter as deprecated
+        name: Annotated[str, deprecated(reason="Use id parameter instead")] = ""
+    ) -> str:
+        return f"User: {id or name}"
+```
+
 ## Registering Directives
 
 Make sure to register your custom directives with the API:
