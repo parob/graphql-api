@@ -55,6 +55,11 @@ class AppliedDirective:
         )
         self.args = args
 
+    def __call__(self, target):
+        """Allow AppliedDirective to be used as a decorator."""
+        add_applied_directives(target, [self])
+        return target
+
     def print(self) -> str:
         directive_name = str(self.directive)
         if len(self.directive.args) == 0:

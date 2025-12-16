@@ -4,7 +4,7 @@ import inspect
 import types
 import typing
 from datetime import date, datetime
-from typing import Any, Callable, List, Optional, Set, Tuple, Type, Union, cast
+from typing import Any, Annotated, Callable, List, Optional, Set, Tuple, Type, Union, cast, get_origin, get_args
 from uuid import UUID
 from abc import abstractmethod
 
@@ -40,13 +40,13 @@ from graphql.type.definition import (
     is_scalar_type,
     is_nullable_type,
 )
-from typing_inspect import get_origin
+from typing_inspect import get_origin as typing_inspect_get_origin
 
 from graphql_api.context import GraphQLContext
 from graphql_api.dataclass_mapping import type_from_dataclass, type_is_dataclass
 from graphql_api.exception import GraphQLBaseException
 from graphql_api.pydantic import type_from_pydantic_model, type_is_pydantic_model
-from graphql_api.schema import add_applied_directives, get_applied_directives
+from graphql_api.schema import add_applied_directives, get_applied_directives, AppliedDirective
 from graphql_api.types import (
     GraphQLBytes,
     GraphQLDate,
@@ -348,7 +348,7 @@ class GraphQLTypeMapper:
         return set(self.registry.values())
 
     def map_to_field(self, function_type: Callable, name="", key="") -> GraphQLField:
-        type_hints = typing.get_type_hints(function_type)
+        type_hints = typing.get_type_hints(function_type, include_extras=True)
         description = to_camel_case_text(inspect.getdoc(function_type))
 
         return_type = type_hints.pop("return", None)
@@ -442,31 +442,44 @@ class GraphQLTypeMapper:
         include_context = False
 
         for _key, hint in type_hints.items():
+            # Extract base type and directives from Annotated types
+            base_hint, arg_directives = extract_annotated_directives(hint)
+
             if (
                 _key == "context"
-                and inspect.isclass(hint)
-                and issubclass(hint, GraphQLContext)
+                and inspect.isclass(base_hint)
+                and issubclass(base_hint, GraphQLContext)
             ):
                 include_context = True
                 continue
 
-            arg_type = input_type_mapper.map(hint)
+            arg_type = input_type_mapper.map(base_hint)
 
             if arg_type is None:
                 raise GraphQLTypeMapError(
                     f"Unable to map argument {name}.{key}.{_key}")
 
             if isinstance(arg_type, GraphQLEnumType):
-                enum_arguments[_key] = hint
+                enum_arguments[_key] = base_hint
 
             nullable = _key in default_args
             if not nullable:
                 arg_type = GraphQLNonNull(arg_type)  # type: ignore
 
-            arguments[to_camel_case(_key)] = GraphQLArgument(
+            argument = GraphQLArgument(
                 type_=arg_type, default_value=default_args.get(
                     _key, Undefined)  # type: ignore
             )
+
+            # Attach any directives from Annotated metadata
+            if arg_directives:
+                self.add_applied_directives(
+                    argument,
+                    f"{name}.{key}.{_key}",
+                    directives=arg_directives
+                )
+
+            arguments[to_camel_case(_key)] = argument
 
         # noinspection PyUnusedLocal
         def resolve(_self, info=None, context=None, *args, **kwargs):
@@ -849,9 +862,14 @@ class GraphQLTypeMapper:
         return input_object
 
     def add_applied_directives(
-        self, graphql_type: GraphQLType | GraphQLField, key: str, value
+        self,
+        graphql_type: GraphQLType | GraphQLField | GraphQLArgument,
+        key: str,
+        value=None,
+        directives: Optional[List] = None
     ):
-        applied_directives = get_applied_directives(value)
+        # Use pre-extracted directives if provided, otherwise get from value
+        applied_directives = directives if directives is not None else get_applied_directives(value)
         if applied_directives:
             self.applied_schema_directives.append(
                 (key, graphql_type, applied_directives)
@@ -885,6 +903,9 @@ class GraphQLTypeMapper:
             elif isinstance(graphql_type, GraphQLField):
                 location = DirectiveLocation.FIELD_DEFINITION
                 type_str = "Field"
+            elif isinstance(graphql_type, GraphQLArgument):
+                location = DirectiveLocation.ARGUMENT_DEFINITION
+                type_str = "Argument"
 
             for applied_directive in applied_directives:
                 from graphql_api import AppliedDirective
@@ -990,7 +1011,7 @@ class GraphQLTypeMapper:
             if typing_inspect.is_literal_type(type__):
                 return self.map_to_literal(type__)
 
-            origin_type = get_origin(type__)
+            origin_type = typing_inspect_get_origin(type__)
 
             if origin_type is list or origin_type is set:
                 return self.map_to_list(cast(List, type__))
@@ -1240,3 +1261,39 @@ def is_scalar(type_):
             if issubclass(type_, test_type):
                 return True
     return False
+
+
+def extract_annotated_directives(hint):
+    """
+    Extract the base type and any AppliedDirective instances from an Annotated type hint.
+
+    Supports multiple syntaxes:
+    - Annotated[str, AppliedDirective(directive=d, args={...})]  # explicit
+    - Annotated[str, directive(arg="value")]  # shorthand with args
+    - Annotated[str, directive]  # shorthand without args
+
+    Args:
+        hint: A type hint, possibly Annotated[T, ...]
+
+    Returns:
+        Tuple of (base_type, list of AppliedDirective instances)
+    """
+    from graphql_api.directives import SchemaDirective
+    from graphql import GraphQLDirective
+
+    if get_origin(hint) is Annotated:
+        args = get_args(hint)
+        base_type = args[0]
+        metadata = args[1:]
+        directives = []
+        for m in metadata:
+            if isinstance(m, AppliedDirective):
+                directives.append(m)
+            elif isinstance(m, SchemaDirective):
+                # Support: Annotated[str, my_directive] without parentheses
+                directives.append(AppliedDirective(directive=m.directive, args={}))
+            elif isinstance(m, GraphQLDirective):
+                # Support: Annotated[str, GraphQLDirective(...)] directly
+                directives.append(AppliedDirective(directive=m, args={}))
+        return base_type, directives
+    return hint, []

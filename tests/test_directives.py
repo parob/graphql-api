@@ -1,5 +1,5 @@
 import enum
-from typing import List, Optional, Union, TypeVar
+from typing import Annotated, List, Optional, Union, TypeVar
 
 import pytest
 from graphql import DirectiveLocation, GraphQLArgument, GraphQLDirective, GraphQLString
@@ -387,6 +387,185 @@ class TestGraphQLDirectives:
             ]
 
         return [query_directive.directive for query_directive in query_directives]
+
+    def test_argument_directive_with_annotated(self) -> None:
+        """Test that directives can be applied to arguments using Annotated."""
+        arg_directive = SchemaDirective(
+            name="constraint",
+            locations=[DirectiveLocation.ARGUMENT_DEFINITION],
+            args={
+                "max": GraphQLArgument(GraphQLString, description="max value")
+            },
+            description="Constraint directive for arguments",
+        )
+
+        @type
+        class TestSchema:
+            @field
+            def search(
+                self,
+                query: Annotated[str, AppliedDirective(directive=arg_directive, args={"max": "100"})]
+            ) -> str:
+                return query
+
+        api = GraphQLAPI(root_type=TestSchema)
+        schema, _ = api.build()
+        printed_schema = print_schema(schema)
+
+        assert "directive @constraint" in printed_schema
+        assert '@constraint(max: "100")' in printed_schema
+
+    def test_argument_directive_multiple_args(self) -> None:
+        """Test multiple arguments with directives."""
+        constraint = SchemaDirective(
+            name="constraint",
+            locations=[DirectiveLocation.ARGUMENT_DEFINITION],
+            args={
+                "min": GraphQLArgument(GraphQLString),
+                "max": GraphQLArgument(GraphQLString),
+            },
+        )
+
+        @type
+        class TestSchema:
+            @field
+            def search(
+                self,
+                query: Annotated[str, AppliedDirective(directive=constraint, args={"min": "1"})],
+                limit: Annotated[int, AppliedDirective(directive=constraint, args={"max": "100"})] = 10
+            ) -> str:
+                return query
+
+        api = GraphQLAPI(root_type=TestSchema)
+        schema, _ = api.build()
+        printed_schema = print_schema(schema)
+
+        assert '@constraint(min: "1")' in printed_schema
+        assert '@constraint(max: "100")' in printed_schema
+
+    def test_argument_directive_with_deprecated(self) -> None:
+        """Test using the built-in deprecated directive on arguments."""
+        @type
+        class TestSchema:
+            @field
+            def search(
+                self,
+                query: str,
+                old_param: Annotated[str, AppliedDirective(directive=deprecated.directive, args={"reason": "Use query instead"})] = ""
+            ) -> str:
+                return query
+
+        api = GraphQLAPI(root_type=TestSchema)
+        schema, _ = api.build()
+        printed_schema = print_schema(schema)
+
+        assert '@deprecated(reason: "Use query instead")' in printed_schema
+
+    def test_argument_directive_invalid_location(self) -> None:
+        """Test that using a directive with wrong location raises error."""
+        object_directive = SchemaDirective(
+            name="object_only",
+            locations=[DirectiveLocation.OBJECT],
+        )
+
+        @type
+        class TestSchema:
+            @field
+            def test(
+                self,
+                arg: Annotated[int, AppliedDirective(directive=object_directive, args={})]
+            ) -> int:
+                return arg
+
+        api = GraphQLAPI(root_type=TestSchema)
+
+        with pytest.raises(TypeError, match="Directive '@object_only' only supp"):
+            api.build()
+
+    def test_argument_directive_execution(self) -> None:
+        """Test that field with argument directives still executes correctly."""
+        constraint = SchemaDirective(
+            name="constraint",
+            locations=[DirectiveLocation.ARGUMENT_DEFINITION],
+            args={"max": GraphQLArgument(GraphQLString)},
+        )
+
+        @type
+        class TestSchema:
+            @field
+            def add(
+                self,
+                a: Annotated[int, AppliedDirective(directive=constraint, args={"max": "100"})],
+                b: int
+            ) -> int:
+                return a + b
+
+        api = GraphQLAPI(root_type=TestSchema)
+        executor = api.executor()
+
+        result = executor.execute("{ add(a: 5, b: 3) }")
+        assert not result.errors
+        assert result.data == {"add": 8}
+
+    def test_argument_directive_shorthand_syntax(self) -> None:
+        """Test shorthand syntax: Annotated[type, directive(args)] instead of AppliedDirective."""
+        constraint = SchemaDirective(
+            name="constraint",
+            locations=[DirectiveLocation.ARGUMENT_DEFINITION],
+            args={
+                "min": GraphQLArgument(GraphQLString),
+                "max": GraphQLArgument(GraphQLString),
+            },
+        )
+
+        @type
+        class TestSchema:
+            @field
+            def search(
+                self,
+                # Shorthand: directive(args) instead of AppliedDirective(directive=..., args=...)
+                query: Annotated[str, constraint(min="1", max="100")],
+                limit: Annotated[int, constraint(max="50")] = 10
+            ) -> str:
+                return query
+
+        api = GraphQLAPI(root_type=TestSchema)
+        schema, _ = api.build()
+        printed_schema = print_schema(schema)
+
+        assert '@constraint(min: "1", max: "100")' in printed_schema
+        assert '@constraint(max: "50")' in printed_schema
+
+        # Verify execution still works
+        executor = api.executor()
+        result = executor.execute('{ search(query: "test") }')
+        assert not result.errors
+        assert result.data == {"search": "test"}
+
+    def test_argument_directive_no_args(self) -> None:
+        """Test directive without arguments: Annotated[type, directive] (no parens)."""
+        required = SchemaDirective(
+            name="required",
+            locations=[DirectiveLocation.ARGUMENT_DEFINITION],
+            description="Marks an argument as required",
+        )
+
+        @type
+        class TestSchema:
+            @field
+            def search(
+                self,
+                # No parentheses needed when directive has no args
+                query: Annotated[str, required]
+            ) -> str:
+                return query
+
+        api = GraphQLAPI(root_type=TestSchema)
+        schema, _ = api.build()
+        printed_schema = print_schema(schema)
+
+        assert "@required" in printed_schema
+        assert "directive @required" in printed_schema
 
     # TODO: Add test for schema directives locations
     # def test_schema_directives_locations(self) -> None:

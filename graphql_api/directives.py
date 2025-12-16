@@ -90,9 +90,10 @@ class SchemaDirective(GraphQLDirective):
                 return func
             raise TypeError(f"Expected a function, got {type(func)}")
         else:
-            return lambda t: add_applied_directives(
-                t, [AppliedDirective(directive=self.directive, args=kwargs)]
-            )
+            # Return AppliedDirective which is callable, so it works both as:
+            # - A decorator: @constraint(max="100")
+            # - Annotation metadata: Annotated[str, constraint(max="100")]
+            return AppliedDirective(directive=self.directive, args=kwargs)
 
 
 def print_applied_directives(value, printed_directives: Optional[list] = None):
