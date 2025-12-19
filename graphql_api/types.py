@@ -83,10 +83,17 @@ def serialize_datetime(dt):
 
 
 def parse_datetime_value(value):
-    # Handle ISO 8601 Z suffix (UTC timezone indicator)
+    # Handle ISO 8601 Z suffix - replace with +00:00 for fromisoformat
     if value.endswith("Z"):
-        value = value[:-1]
+        value = value[:-1] + "+00:00"
 
+    # Try Python's built-in ISO 8601 parser first (handles timezone offsets)
+    try:
+        return datetime.datetime.fromisoformat(value)
+    except ValueError:
+        pass
+
+    # Fallback to legacy formats for backward compatibility
     datetime_formats = [
         "%Y-%m-%dT%H:%M:%S.%f",  # ISO 8601 with microseconds
         "%Y-%m-%dT%H:%M:%S",     # ISO 8601 without microseconds
@@ -101,7 +108,7 @@ def parse_datetime_value(value):
             pass
 
     raise ValueError(
-        f"Datetime {value} did not fit any " f"of the formats {datetime_formats}."
+        f"Datetime {value} did not fit any of the formats {datetime_formats}."
     )
 
 

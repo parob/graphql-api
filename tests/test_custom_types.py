@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import List
 from uuid import UUID
 
@@ -95,6 +95,47 @@ class TestCustomTypes:
         expected = {"addOneHour": str(now + timedelta(hours=1))}
         assert not result.errors
         assert result.data == expected
+
+    def test_datetime_iso8601_formats(self) -> None:
+        """Test ISO 8601 datetime parsing with timezone support."""
+        from graphql_api.types import parse_datetime_value
+
+        # Test Z suffix (UTC) - should return timezone-aware datetime
+        result = parse_datetime_value("2024-11-16T23:59:59.999999Z")
+        assert result.year == 2024
+        assert result.month == 11
+        assert result.day == 16
+        assert result.hour == 23
+        assert result.minute == 59
+        assert result.second == 59
+        assert result.tzinfo is not None
+        assert result.tzinfo.utcoffset(None) == timedelta(0)
+
+        # Test positive timezone offset
+        result = parse_datetime_value("2024-11-16T23:59:59.999999+00:00")
+        assert result.tzinfo is not None
+        assert result.tzinfo.utcoffset(None) == timedelta(0)
+
+        # Test negative timezone offset
+        result = parse_datetime_value("2024-11-16T15:59:59.999999-08:00")
+        assert result.hour == 15
+        assert result.tzinfo is not None
+        assert result.tzinfo.utcoffset(None) == timedelta(hours=-8)
+
+        # Test timezone offset without microseconds
+        result = parse_datetime_value("2024-11-16T23:59:59+05:30")
+        assert result.tzinfo is not None
+        assert result.tzinfo.utcoffset(None) == timedelta(hours=5, minutes=30)
+
+        # Test legacy format (space separator) still works - returns naive datetime
+        result = parse_datetime_value("2024-11-16 23:59:59")
+        assert result.year == 2024
+        assert result.tzinfo is None
+
+        # Test legacy format with microseconds
+        result = parse_datetime_value("2024-11-16 23:59:59.123456")
+        assert result.microsecond == 123456
+        assert result.tzinfo is None
 
     def test_date_type(self) -> None:
         api = GraphQLAPI()
