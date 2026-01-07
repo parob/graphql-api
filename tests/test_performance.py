@@ -8,7 +8,7 @@ which has deeply nested structures like:
 """
 import time
 import tracemalloc
-from dataclasses import dataclass, field as dataclass_field
+from dataclasses import dataclass
 from typing import List, Optional, Dict, Any
 from enum import Enum
 from pydantic import BaseModel
@@ -420,7 +420,7 @@ class TestQueryExecution:
             assert result.errors is None
 
         avg_time = sum(times) / len(times)
-        print(f"\nNested query execution (5 orgs, 3 apps, 10 users, 2 identities each):")
+        print("\nNested query execution (5 orgs, 3 apps, 10 users, 2 identities each):")
         print(f"  Average: {avg_time:.2f}ms")
         print(f"  Min: {min(times):.2f}ms, Max: {max(times):.2f}ms")
 
@@ -577,7 +577,7 @@ class TestMemoryUsage:
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
 
-        print(f"\nSchema memory usage:")
+        print("\nSchema memory usage:")
         print(f"  Current: {current / 1024:.2f} KB")
         print(f"  Peak: {peak / 1024:.2f} KB")
 
@@ -608,7 +608,7 @@ class TestSchemaRebuilding:
             end_time = time.perf_counter()
             times.append((end_time - start_time) * 1000)
 
-        print(f"\n10 repeated schema builds:")
+        print("\n10 repeated schema builds:")
         print(f"  Times: {[f'{t:.2f}' for t in times]}")
         print(f"  Average: {sum(times)/len(times):.2f}ms")
 
