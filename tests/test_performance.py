@@ -610,7 +610,7 @@ class TestSchemaRebuilding:
 
         print("\n10 repeated schema builds:")
         print(f"  Times: {[f'{t:.2f}' for t in times]}")
-        print(f"  Average: {sum(times)/len(times):.2f}ms")
+        print(f"  Average: {sum(times) / len(times):.2f}ms")
 
         # Later builds should not be significantly slower than first
         # Allow 50% variance
