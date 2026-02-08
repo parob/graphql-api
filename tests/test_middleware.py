@@ -1,7 +1,8 @@
+import asyncio
 from typing import Any
 
 from graphql_api import GraphQLAPI
-from graphql_api.middleware import middleware_local_proxy
+from graphql_api.middleware import middleware_local_proxy, middleware_call_coroutine
 from graphql_api.remote import GraphQLRemoteObject
 
 
@@ -46,3 +47,22 @@ class TestMiddleware:
         result = api.execute(query="{number}")
 
         assert result.data
+
+    def test_middleware_call_coroutine_sync_context(self) -> None:
+        async def _next(_root, _info, **_args):
+            return 123
+
+        value = middleware_call_coroutine(_next, None, None)
+        assert value == 123
+
+    @staticmethod
+    async def _run_middleware_in_async_context() -> int:
+        async def _next(_root, _info, **_args):
+            return 456
+
+        value = middleware_call_coroutine(_next, None, None)
+        return await value
+
+    def test_middleware_call_coroutine_async_context(self) -> None:
+        value = asyncio.run(self._run_middleware_in_async_context())
+        assert value == 456

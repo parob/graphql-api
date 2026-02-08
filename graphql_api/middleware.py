@@ -68,7 +68,12 @@ def middleware_call_coroutine(next_, root, info, **args):
     """
     value = next_(root, info, **args)
     if inspect.iscoroutine(value):
-        value = asyncio.run(value)
+        # Async GraphQL execution already awaits resolver coroutines.
+        # Only force resolution when called from a sync context.
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            value = asyncio.run(value)
 
     return value
 
