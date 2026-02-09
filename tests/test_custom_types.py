@@ -187,7 +187,7 @@ class TestCustomTypes:
         result = executor.execute(test_profile_query)
 
         expected = {
-            "adaptProfile": '{"name": "rob", "age": 26, "location": "london"}'}
+            "adaptProfile": {"name": "rob", "age": 26, "location": "london"}}
         assert not result.errors
         assert result.data == expected
 
@@ -197,7 +197,7 @@ class TestCustomTypes:
 
         result = executor.execute(test_number_query)
 
-        expected = {"addNumber": "[1, 2, 3, 4, 5]"}
+        expected = {"addNumber": [1, 2, 3, 4, 5]}
         assert not result.errors
         assert result.data == expected
 

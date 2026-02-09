@@ -162,8 +162,8 @@ GraphQLDate = GraphQLScalarType(
 JsonType = Union[None, int, float, str, bool, List, Dict]
 
 
-def serialize_json(data: JsonType) -> str:
-    return json.dumps(data)
+def serialize_json(data: JsonType) -> JsonType:
+    return data
 
 
 def parse_json_value(value: Union[str, JsonType]) -> JsonType:

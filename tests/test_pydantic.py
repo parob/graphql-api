@@ -937,7 +937,7 @@ class TestPydantic:
                 "status": "SUCCESS",
                 "message": "User created successfully",
                 "errorMessage": None,
-                "data": '{"user_id": 123, "name": "John Doe", "email": "john@example.com"}'
+                "data": {"user_id": 123, "name": "John Doe", "email": "john@example.com"}
             }
         }
 

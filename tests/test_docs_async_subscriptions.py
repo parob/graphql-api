@@ -130,7 +130,7 @@ class TestAsyncSubscriptionsExamples:
 
         result = await async_iter.__anext__()
         assert not result.errors
-        assert result.data == {"onUserUpdated": '{"id": 123, "name": "User 123"}'}
+        assert result.data == {"onUserUpdated": {"id": 123, "name": "User 123"}}
 
     def test_sync_resolvers_still_work(self):
         """Test that synchronous resolvers still work alongside async ones"""

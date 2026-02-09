@@ -136,12 +136,12 @@ class TestFieldTypesExamples:
         # Test dict field
         result = api.execute("query { dictField }")
         assert not result.errors
-        assert result.data["dictField"] == '{"key": "value", "number": 42}'
+        assert result.data["dictField"] == {"key": "value", "number": 42}
 
         # Test list field
         result = api.execute("query { listField }")
         assert not result.errors
-        assert result.data["listField"] == '[1, "mixed", true]'
+        assert result.data["listField"] == [1, "mixed", True]
 
         # Test json field with input
         result = api.execute('query { jsonField(data: "{\\"test\\": true}") }')
