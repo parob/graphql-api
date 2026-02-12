@@ -75,6 +75,29 @@ class TestCustomTypes:
 
         assert result.errors
 
+    def test_uuid_variable(self) -> None:
+        """UUID passed as a variable (parse_value) should be a uuid.UUID, not str."""
+        api = GraphQLAPI()
+
+        user_id = uuid.uuid4()
+
+        @api.type(is_root_type=True)
+        class Root:
+            @api.field
+            def name(self, id: UUID) -> str:
+                assert isinstance(id, UUID), f"Expected UUID, got {type(id)}"
+                assert id == user_id
+                return "rob"
+
+        executor = api.executor()
+
+        # Pass UUID as a variable (uses parse_value, not parse_literal)
+        query = "query GetName($id: UUID!) { name(id: $id) }"
+        result = executor.execute(query, variables={"id": str(user_id)})
+
+        assert not result.errors
+        assert result.data == {"name": "rob"}
+
     def test_datetime_type(self) -> None:
         api = GraphQLAPI()
 

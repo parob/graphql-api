@@ -69,11 +69,24 @@ def parse_uuid_literal(
     return Undefined
 
 
+def parse_uuid_value(value: Any) -> uuid.UUID:
+    """Parse a UUID from a GraphQL variable value.
+
+    Accepts both string and uuid.UUID inputs, returns a uuid.UUID object.
+    """
+    if isinstance(value, uuid.UUID):
+        return value
+    try:
+        return uuid.UUID(str(value))
+    except ValueError:
+        raise ValueError(f"Invalid UUID value: {value!r}")
+
+
 GraphQLUUID = GraphQLScalarType(
     name="UUID",
     description="The `UUID` scalar type represents a unique identifer.",
     serialize=str,
-    parse_value=str,
+    parse_value=parse_uuid_value,
     parse_literal=parse_uuid_literal,
 )
 
