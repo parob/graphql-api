@@ -7,7 +7,7 @@ from graphql import GraphQLField, GraphQLObjectType, GraphQLOutputType, GraphQLI
 from graphql.type.definition import is_output_type, is_input_type
 from pydantic import BaseModel
 
-from graphql_api.utils import to_camel_case
+from graphql_api.utils import to_camel_case, to_snake_case
 
 if typing.TYPE_CHECKING:
     from graphql_api.mapper import GraphQLTypeMapper
@@ -77,9 +77,31 @@ def type_from_pydantic_model(
                 )
             return fields
 
+        def _make_out_type(model_cls: Type[BaseModel]):
+            """Create an out_type that converts GraphQL input dicts to Pydantic models.
+
+            Mirrors the pattern in mapper.py's map_to_input for dataclass types.
+            """
+            def out_type(data):
+                # Convert camelCase GraphQL keys to snake_case Python keys
+                converted = {to_snake_case(key): value for key, value in data.items()}
+                # Strip None values so Pydantic uses its field defaults
+                # (graphql-core sets None for nullable fields not provided in input)
+                fields_with_defaults = {
+                    name for name, info in model_cls.model_fields.items()
+                    if info.default is not None or info.default_factory is not None
+                }
+                converted = {
+                    k: v for k, v in converted.items()
+                    if v is not None or k not in fields_with_defaults
+                }
+                return model_cls(**converted)
+            return out_type
+
         return GraphQLInputObjectType(
             name=f"{pydantic_model.__name__}Input",
             fields=get_input_fields,
+            out_type=_make_out_type(pydantic_model),
             description=_get_pydantic_model_description(
                 pydantic_model, mapper.max_docstring_length),
         )

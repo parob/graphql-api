@@ -1170,3 +1170,95 @@ class TestPydantic:
                 "tagCount": 0
             }
         }
+
+    def test_pydantic_input_with_variables_and_enum_defaults(self) -> None:
+        """Test that List[PydanticModel] with enum defaults works via GraphQL variables.
+
+        When using variables (as graphql-mcp does), graphql-core coerces input
+        objects via out_type. Without out_type, dicts pass through uncoerced.
+        With out_type, Pydantic models should be properly constructed with
+        defaults applied for omitted fields.
+        """
+        class Role(str, Enum):
+            USER = "user"
+            ADMIN = "admin"
+
+        class Message(BaseModel):
+            text: str
+            role: Role = Role.USER
+
+        class Result(BaseModel):
+            count: int
+            roles: List[str]
+
+        class VariableAPI:
+            @field(mutable=True)
+            def send(self, messages: List[Message]) -> Result:
+                """Send messages."""
+                roles = []
+                for msg in messages:
+                    assert isinstance(
+                        msg, Message), f"Expected Message, got {type(msg)}"
+                    roles.append(msg.role.value)
+                return Result(count=len(messages), roles=roles)
+
+        api = GraphQLAPI(root_type=VariableAPI)
+
+        # Test with variables (the path graphql-mcp uses)
+        mutation = """
+            mutation ($messages: [MessageInput!]!) {
+                send(messages: $messages) {
+                    count
+                    roles
+                }
+            }
+        """
+        # Omit 'role' — should default to "user"
+        variables = {
+            "messages": [
+                {"text": "hello"},
+                {"text": "world", "role": "ADMIN"},
+            ]
+        }
+        result = api.execute(mutation, variables=variables)
+        assert result.errors is None
+        assert result.data == {
+            "send": {
+                "count": 2,
+                "roles": ["user", "admin"]
+            }
+        }
+
+    def test_pydantic_input_out_type_converts_to_model(self) -> None:
+        """Test that Pydantic input types have out_type that produces model instances."""
+        class Item(BaseModel):
+            name: str
+            active: bool = True
+
+        class ItemResult(BaseModel):
+            is_model: bool
+
+        class OutTypeAPI:
+            @field(mutable=True)
+            def check_item(self, item: Item) -> ItemResult:
+                """Check if item is a Pydantic model instance."""
+                return ItemResult(is_model=isinstance(item, Item))
+
+        api = GraphQLAPI(root_type=OutTypeAPI)
+
+        # With inline args
+        result = api.execute("""
+            mutation {
+                checkItem(item: {name: "test"}) { isModel }
+            }
+        """)
+        assert result.errors is None
+        assert result.data["checkItem"]["isModel"] is True
+
+        # With variables
+        result = api.execute(
+            'mutation ($item: ItemInput!) { checkItem(item: $item) { isModel } }',
+            variables={"item": {"name": "test"}}
+        )
+        assert result.errors is None
+        assert result.data["checkItem"]["isModel"] is True
