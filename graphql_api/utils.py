@@ -20,6 +20,15 @@ from graphql.type.definition import GraphQLInterfaceType, GraphQLType
 
 # From this response in Stackoverflow
 # http://stackoverflow.com/a/19053800/1072990
+def _capitalize_first(s):
+    """Capitalize only the first character, preserving the rest.
+
+    Unlike str.title(), this doesn't capitalize letters after digits.
+    e.g. "30d" stays "30d" instead of becoming "30D".
+    """
+    return s[0].upper() + s[1:] if s else s
+
+
 def to_camel_case(snake_str, title=False):
     underscore_prefix = False
     if snake_str.startswith("_"):
@@ -27,12 +36,10 @@ def to_camel_case(snake_str, title=False):
         snake_str = snake_str[1:]
 
     components = snake_str.split("_")
-    # We capitalize the first letter of each component except the first one
-    # with the 'title' method and join them together.
     if not snake_str:
         return ""
-    prefix = components[0].title() if title else components[0]
-    value = prefix + "".join(x.title() if x else "_" for x in components[1:])
+    prefix = _capitalize_first(components[0]) if title else components[0]
+    value = prefix + "".join(_capitalize_first(x) if x else "_" for x in components[1:])
     return ("_" if underscore_prefix else "") + value
 
 
