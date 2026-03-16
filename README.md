@@ -3,8 +3,6 @@
 [![PyPI version](https://badge.fury.io/py/graphql-api.svg)](https://badge.fury.io/py/graphql-api)
 [![Python versions](https://img.shields.io/pypi/pyversions/graphql-api.svg)](https://pypi.org/project/graphql-api/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Coverage](https://gitlab.com/parob/graphql-api/badges/master/coverage.svg)](https://gitlab.com/parob/graphql-api/commits/master)
-[![Pipeline](https://gitlab.com/parob/graphql-api/badges/master/pipeline.svg)](https://gitlab.com/parob/graphql-api/commits/master)
 
 **[📚 Documentation](https://graphql-api.parob.com/)** | **[📦 PyPI](https://pypi.org/project/graphql-api/)** | **[🔧 GitHub](https://github.com/parob/graphql-api)**
 
@@ -209,9 +207,8 @@ To contribute or run the test suite locally:
 
 ```bash
 # Install dependencies
-pip install pipenv
-pipenv install --dev
+uv sync
 
 # Run tests
-pipenv run pytest
+uv run pytest
 ```
