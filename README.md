@@ -4,7 +4,7 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/graphql-api.svg)](https://pypi.org/project/graphql-api/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**[📚 Documentation](https://graphql-api.parob.com/)** | **[📦 PyPI](https://pypi.org/project/graphql-api/)** | **[🔧 GitHub](https://github.com/parob/graphql-api)**
+**[Documentation](https://graphql-api.parob.com/)** | **[PyPI](https://pypi.org/project/graphql-api/)** | **[GitHub](https://github.com/parob/graphql-api)**
 
 ---
 
