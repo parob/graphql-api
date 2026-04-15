@@ -30,8 +30,9 @@ uv run flake8 graphql_api tests
 
 - **Automatic snake_case to camelCase**: All Python field names, arguments, and dataclass/Pydantic fields are auto-converted to camelCase in GraphQL. Input arguments are converted back to snake_case. Conversion lives in `graphql_api/utils.py` (`to_camel_case()`, `to_snake_case()`)
 - `@field` marks a method as a query; `@field(mutable=True)` makes it a mutation; `AsyncGenerator` return type or `subscription=True` makes it a subscription
+- Plain functions: `@api.query` / `@api.mutation` / `@api.subscription` register a free function as a root-level field — no class required. Composes with class-based roots (registered fns are folded onto the user-provided `query_type` / `mutation_type` / `subscription_type` / `root_type`)
 - Python types auto-map: `str`→String, `int`→Int, `bool`→Boolean, `float`→Float, `UUID`→UUID scalar, `datetime`→DateTime, `Optional[T]`→nullable, `List[T]`→list, dataclasses/Pydantic models→object types, enums→enum types
-- Schema setup: `GraphQLAPI(query_type=Q, mutation_type=M, subscription_type=S)` or legacy `root_type=Root`
+- Schema setup: `GraphQLAPI(query_type=Q, mutation_type=M, subscription_type=S)` or legacy `root_type=Root` (or neither — just `@api.query`/`@api.mutation`/`@api.subscription`)
 
 ## Releasing
 

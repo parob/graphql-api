@@ -191,6 +191,55 @@ async def user_updates(self) -> AsyncGenerator[User, None]:
 ```
 
 
+### `@api.query`, `@api.mutation`, `@api.subscription`
+
+Register a plain (free) function as a root-level GraphQL field. Useful when you don't want to wrap root fields in a class.
+
+```python
+@api.query(
+    meta: Optional[Dict] = None,
+    directives: Optional[List] = None,
+)
+
+@api.mutation(
+    meta: Optional[Dict] = None,
+    directives: Optional[List] = None,
+)
+
+@api.subscription(
+    meta: Optional[Dict] = None,
+    directives: Optional[List] = None,
+)
+```
+
+**Parameters:**
+- `meta`: Optional metadata dictionary, retrievable in middleware (same semantics as `@api.field(meta=...)`).
+- `directives`: Optional list of applied schema directives.
+
+**Behavior:**
+- `@api.query` adds the function to the root `Query` type.
+- `@api.mutation` adds the function to the root `Mutation` type.
+- `@api.subscription` adds the function to the root `Subscription` type. The function must return `AsyncGenerator[T, None]`.
+- Registered functions compose with `query_type=` / `mutation_type=` / `subscription_type=` / `root_type=` — they are folded onto the user-supplied class so you can mix class-based and function-based root fields freely.
+- Type hints, default values, `Optional[T]`, dataclass/Pydantic inputs, enum args, and `context: GraphQLContext` injection all work identically to `@api.field`.
+- Plain functions have no `self`; use a `GraphQLContext` parameter for request-scoped state, and module-level or captured state otherwise.
+
+**Bare and parameterized usage:**
+```python
+@api.query
+def hello(name: str = "World") -> str:
+    return f"Hello, {name}!"
+
+@api.mutation(meta={"audit": True})
+def set_counter(value: int) -> int:
+    return value
+
+@api.subscription
+async def ticks(to: int = 3) -> AsyncGenerator[int, None]:
+    for i in range(1, to + 1):
+        yield i
+```
+
 ### `@api.enum`
 
 Mark an enum class as a GraphQL enum.

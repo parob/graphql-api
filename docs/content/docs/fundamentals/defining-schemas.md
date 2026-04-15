@@ -82,7 +82,39 @@ Global decorators avoid this issue since they don't require importing an API ins
 
 ## Schema Definition Modes
 
-`graphql-api` offers two distinct approaches for organizing your GraphQL operations (queries, mutations, subscriptions):
+`graphql-api` offers three approaches for organizing your GraphQL operations (queries, mutations, subscriptions). They can be mixed in the same API.
+
+### Mode 0: Plain Functions (Simplest)
+
+Register free functions directly on the API — no class required. Good for small APIs, scripts, and cases where you don't need nested object types at the root.
+
+```python
+from graphql_api.api import GraphQLAPI
+
+api = GraphQLAPI()
+
+@api.query
+def hello(name: str = "World") -> str:
+    return f"Hello, {name}!"
+
+@api.mutation
+def set_counter(value: int) -> int:
+    return value
+
+@api.subscription
+async def ticks(to: int = 3):  # AsyncGenerator[int, None]
+    for i in range(1, to + 1):
+        yield i
+```
+
+Registered functions compose with any of the class-based modes below — they're folded onto whatever root/query/mutation/subscription type you supply, so you can gradually migrate from plain functions to classes (or vice versa) without breaking changes.
+
+**Use when:**
+- Building a small API or script where class boilerplate isn't earning its keep
+- You want the lowest-friction onboarding for teammates new to GraphQL
+- Mixing a handful of root fields onto an existing class-based schema
+
+**Limitations:** plain functions have no `self` — so they can't share instance state. For request-scoped state, declare `context: GraphQLContext` as a parameter (same mechanism used by class-based fields). For nested object types, define them as classes and return instances from your registered function.
 
 ### Mode 1: Single Root Type (Strongly Recommended)
 

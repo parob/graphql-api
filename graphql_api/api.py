@@ -266,6 +266,9 @@ class GraphQLAPI(GraphQLBaseExecutor):
         self.enum_suffix = enum_suffix
         self.interface_suffix = interface_suffix
         self.input_suffix = input_suffix
+        self._registered_queries: List[Callable] = []
+        self._registered_mutations: List[Callable] = []
+        self._registered_subscriptions: List[Callable] = []
 
     # --------------------------------------------------------------------------
     # DECORATORS
@@ -330,9 +333,207 @@ class GraphQLAPI(GraphQLBaseExecutor):
         self.root_type = root_type
         return root_type
 
+    def _register_plain(
+        self,
+        arg,
+        graphql_type: str,
+        meta: Optional[Dict],
+        directives: Optional[List],
+        target_list: List[Callable],
+    ):
+        """
+        Shared implementation for api.query / api.mutation / api.subscription.
+
+        Supports both bare `@api.query` and parameterized `@api.query(meta={...})`
+        usage. In the bare form, `arg` is the function being decorated. In the
+        parameterized form, `arg` is None (only keyword args were given) and we
+        return a decorator.
+        """
+
+        def tag_and_register(func):
+            tagged = tag_value(
+                value=func,
+                graphql_type=graphql_type,
+                schema=self,
+                meta=meta,
+                directives=directives,
+            )
+            if tagged not in target_list:
+                target_list.append(tagged)
+            self._cached_schema = None
+            return tagged
+
+        if arg is not None and callable(arg):
+            return tag_and_register(arg)
+        return tag_and_register
+
+    def query(
+        self=None,
+        func: Optional[Callable] = None,
+        meta: Optional[Dict] = None,
+        directives: Optional[List] = None,
+    ):
+        """
+        Register a plain function as a root-level GraphQL query field.
+
+        Usage:
+            @api.query
+            def hello(name: str) -> str: ...
+
+            @api.query(meta={"note": "..."})
+            def goodbye(name: str) -> str: ...
+        """
+        return self._register_plain(
+            arg=func,
+            graphql_type="field",
+            meta=meta,
+            directives=directives,
+            target_list=self._registered_queries,
+        )
+
+    def mutation(
+        self=None,
+        func: Optional[Callable] = None,
+        meta: Optional[Dict] = None,
+        directives: Optional[List] = None,
+    ):
+        """
+        Register a plain function as a root-level GraphQL mutation field.
+        """
+        return self._register_plain(
+            arg=func,
+            graphql_type="mutable_field",
+            meta=meta,
+            directives=directives,
+            target_list=self._registered_mutations,
+        )
+
+    def subscription(
+        self=None,
+        func: Optional[Callable] = None,
+        meta: Optional[Dict] = None,
+        directives: Optional[List] = None,
+    ):
+        """
+        Register a plain function as a root-level GraphQL subscription field.
+        The function should return `AsyncGenerator[T, None]`.
+        """
+        return self._register_plain(
+            arg=func,
+            graphql_type="subscription_field",
+            meta=meta,
+            directives=directives,
+            target_list=self._registered_subscriptions,
+        )
+
     # --------------------------------------------------------------------------
     # SCHEMA BUILDING & EXECUTION
     # --------------------------------------------------------------------------
+    def _fold_registered_functions(self):
+        """
+        Synthesize root classes from functions registered via
+        @api.query / @api.mutation / @api.subscription, or subclass existing
+        user-supplied root types to include them.
+
+        Each registered function is attached to the synthesized class as a
+        method wrapper that accepts (and discards) the leading `self` arg,
+        forwarding keyword args to the real function. This matches the
+        resolver's call convention at graphql_api/mapper.py:485-517 — which
+        ends up calling `function_type(_self, **_args)` for root-level fields
+        where `_self` is typically None — so the wrapper absorbs `_self` and
+        the free function sees only its declared keyword args.
+
+        The wrapper preserves `__annotations__`, `__wrapped__`, and the
+        `_graphql` / `_schemas` tags so `typing.get_type_hints` and
+        `inspect.signature` (which follows `__wrapped__`) return the original
+        function's hints and defaults.
+        """
+        if not (
+            self._registered_queries
+            or self._registered_mutations
+            or self._registered_subscriptions
+        ):
+            return
+
+        def make_method(fn: Callable) -> Callable:
+            def _method(_self, **kwargs):
+                return fn(**kwargs)
+            _method.__name__ = fn.__name__
+            _method.__qualname__ = getattr(fn, "__qualname__", fn.__name__)
+            _method.__doc__ = fn.__doc__
+            _method.__module__ = getattr(fn, "__module__", None)
+            _method.__annotations__ = dict(getattr(fn, "__annotations__", {}))
+            _method.__wrapped__ = fn  # inspect.signature follows this
+            # Preserve the @field-style tags attached by tag_value()
+            for attr in ("_graphql", "_schemas", "_defined_on",
+                         "_applied_directives"):
+                if hasattr(fn, attr):
+                    setattr(_method, attr, getattr(fn, attr))
+            return _method
+
+        def unwrap(base: Optional[Type]) -> Optional[Type]:
+            # If we previously synthesized on top of this slot, peel that
+            # layer off so re-builds don't stack subclasses.
+            while base is not None and getattr(
+                base, "__graphql_api_synthesized__", False
+            ):
+                parents = [b for b in base.__bases__ if b is not object]
+                base = parents[0] if parents else None
+            return base
+
+        def synthesize(name: str, base: Optional[Type], fns: List[Callable]):
+            if not fns:
+                return base
+            attrs: Dict[str, Any] = {fn.__name__: make_method(fn) for fn in fns}
+            attrs["__graphql_api_synthesized__"] = True
+            bases: Tuple[type, ...] = (base,) if base else ()
+            return type(name, bases, attrs)
+
+        # root_type path: legacy single-class mode. Fold every registered
+        # function (queries + mutations) onto a subclass of root_type.
+        if self.root_type is not None:
+            if self._registered_subscriptions:
+                raise GraphQLError(
+                    "api.subscription is not supported together with "
+                    "root_type=. Use query_type/mutation_type/subscription_type "
+                    "instead."
+                )
+            combined = [
+                *self._registered_queries,
+                *self._registered_mutations,
+            ]
+            base_root = unwrap(self.root_type)
+            if base_root is None:
+                return
+            self.root_type = synthesize(
+                base_root.__name__, base_root, combined
+            )
+            return
+
+        # Explicit mode: fold each list onto its matching *_type, always
+        # starting from the unwrapped original so re-builds are idempotent.
+        base_query = unwrap(self.query_type)
+        base_mutation = unwrap(self.mutation_type)
+        base_subscription = unwrap(self.subscription_type)
+
+        self.query_type = synthesize(
+            "Query" if base_query is None else base_query.__name__,
+            base_query,
+            self._registered_queries,
+        )
+        self.mutation_type = synthesize(
+            "Mutation" if base_mutation is None else base_mutation.__name__,
+            base_mutation,
+            self._registered_mutations,
+        )
+        self.subscription_type = synthesize(
+            "Subscription"
+            if base_subscription is None
+            else base_subscription.__name__,
+            base_subscription,
+            self._registered_subscriptions,
+        )
+
     def schema(self, ignore_cache: bool = False) -> GraphQLSchema:
         return self.build(ignore_cache)[0]
 
@@ -344,6 +545,13 @@ class GraphQLAPI(GraphQLBaseExecutor):
         """
         if not ignore_cache and self._cached_schema:
             return self._cached_schema
+
+        # Fold any plain functions registered via @api.query / @api.mutation /
+        # @api.subscription into query_type / mutation_type / subscription_type
+        # (or subclass them onto root_type). The synthesized classes attach each
+        # registered function as a staticmethod so the resolver in
+        # graphql_api/mapper.py treats them as free functions (no self injected).
+        self._fold_registered_functions()
 
         # Federation support
         if self.federation:

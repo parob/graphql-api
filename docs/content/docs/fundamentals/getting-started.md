@@ -19,9 +19,44 @@ pip install graphql-api
 
 Let's create a simple GraphQL API that returns a classic "Hello, World!" greeting.
 
-### 1. Initialize the API
+There are two ways to define root fields — pick whichever fits the shape of your API:
 
-First, create a new Python file (e.g., `main.py`) and initialize `GraphQLAPI`:
+- **Plain functions** — register a free function as a root query/mutation/subscription. Great for small APIs, scripts, and anything that doesn't need nested object types.
+- **Class-based** — define a root class and decorate its methods. Use this when you have nested object types, shared state, or interrelated resolvers.
+
+You can mix both in the same API. We'll show the plain-function version first, then the class-based version.
+
+### Option A: Plain functions (simplest)
+
+```python
+# main.py
+from graphql_api.api import GraphQLAPI
+
+api = GraphQLAPI()
+
+@api.query
+def hello(name: str = "World") -> str:
+    """A classic greeting. This docstring becomes the field description."""
+    return f"Hello, {name}!"
+
+if __name__ == "__main__":
+    result = api.execute('query { hello(name: "Developer") }')
+    print(result.data)  # {'hello': 'Hello, Developer!'}
+```
+
+Three decorators are available on the API instance:
+
+- `@api.query` — register a query field
+- `@api.mutation` — register a mutation field
+- `@api.subscription` — register a subscription field (function must return `AsyncGenerator[T, None]`)
+
+They accept the same `meta={...}` and `directives=[...]` parameters as `@api.field`. Type hints, defaults, `Optional[T]`, dataclass/Pydantic inputs, and `GraphQLContext` injection all work identically to class-based fields.
+
+### Option B: Class-based
+
+Use a class when you need nested object types, shared state, or multiple interrelated resolvers.
+
+#### 1. Initialize the API
 
 ```python
 # main.py
@@ -30,9 +65,9 @@ from graphql_api.api import GraphQLAPI
 api = GraphQLAPI()
 ```
 
-### 2. Define the Root Query
+#### 2. Define the Root Query
 
-Next, define a class that will serve as your root query object. Use the `@api.type` decorator to mark it as the root type for your schema and the `@api.field` decorator to expose a method as a GraphQL field.
+Define a class that will serve as your root query object. Use the `@api.type` decorator to mark it as the root type for your schema and the `@api.field` decorator to expose a method as a GraphQL field.
 
 ```python
 # main.py
@@ -74,7 +109,7 @@ This generates:
 example(requiredArg: String!, optionalArg: String): String!
 ```
 
-### 3. Execute a Query
+#### 3. Execute a Query
 
 Now you're ready to execute a query against your API.
 

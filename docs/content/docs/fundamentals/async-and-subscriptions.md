@@ -101,6 +101,29 @@ Subscriptions can be defined using either of the two schema definition modes des
 
 ### Subscription Examples
 
+**Using Plain Functions (Simplest):**
+
+Register an async generator directly with `@api.subscription`:
+
+```python
+import asyncio
+from typing import AsyncGenerator
+from graphql_api.api import GraphQLAPI
+
+api = GraphQLAPI()
+
+@api.query
+def placeholder() -> str:
+    return "ok"
+
+@api.subscription
+async def count(to: int = 5) -> AsyncGenerator[int, None]:
+    """Counts up to a given number, yielding each number."""
+    for i in range(1, to + 1):
+        await asyncio.sleep(1)
+        yield i
+```
+
 **Using Mode 1 (Single Root Type):**
 
 ```python

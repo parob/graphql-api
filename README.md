@@ -32,46 +32,56 @@ pip install graphql-api
 
 ## Quick Start
 
-Create a simple GraphQL API in just a few lines of code.
+For simple APIs, register plain functions directly — no class required:
 
 ```python
 # example.py
 from graphql_api.api import GraphQLAPI
 
-# 1. Initialize the API
 api = GraphQLAPI()
 
-# 2. Define your root type with decorators
-@api.type(is_root_type=True)
-class Query:
-    """
-    The root query for our amazing API.
-    """
-    @api.field
-    def hello(self, name: str = "World") -> str:
-        """
-        A classic greeting.
-        """
-        return f"Hello, {name}!"
+@api.query
+def hello(name: str = "World") -> str:
+    """A classic greeting."""
+    return f"Hello, {name}!"
 
-# 3. Define a query
-graphql_query = """
-    query Greetings {
-        hello(name: "Developer")
-    }
-"""
+@api.mutation
+def set_name(name: str) -> str:
+    return f"Name set to {name}"
 
-# 4. Execute the query
 if __name__ == "__main__":
-    result = api.execute(graphql_query)
+    result = api.execute('query { hello(name: "Developer") }')
     print(result.data)
 ```
 
-Running this script will produce:
-
 ```bash
 $ python example.py
-{'hello': 'Hello, Developer'}
+{'hello': 'Hello, Developer!'}
+```
+
+Use `@api.query`, `@api.mutation`, and `@api.subscription` for root-level
+fields. For nested object types, reach for the class-based form below.
+
+### Class-based form
+
+When you need object types with their own fields (relationships, computed
+properties, nested resolvers), define a root class:
+
+```python
+from graphql_api.api import GraphQLAPI
+
+api = GraphQLAPI()
+
+@api.type(is_root_type=True)
+class Query:
+    """The root query for our amazing API."""
+    @api.field
+    def hello(self, name: str = "World") -> str:
+        return f"Hello, {name}!"
+
+result = api.execute('query { hello(name: "Developer") }')
+print(result.data)
+# {'hello': 'Hello, Developer!'}
 ```
 
 ## Examples

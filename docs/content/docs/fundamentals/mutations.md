@@ -9,7 +9,34 @@ description: >
 
 GraphQL mutations allow clients to modify data on the server. This guide covers how to create mutations and define input types for complex data operations.
 
-## Basic Mutations
+## Plain Functions (Simplest)
+
+The lowest-friction way to define a mutation is a free function decorated with `@api.mutation` — no class required:
+
+```python
+from graphql_api.api import GraphQLAPI
+
+api = GraphQLAPI()
+
+@api.query
+def get_user(user_id: str):
+    return find_user_by_id(user_id)
+
+@api.mutation
+def create_user(name: str, email: str) -> User:
+    """Create a new user account."""
+    user = User(id=generate_id(), name=name, email=email)
+    save_user(user)
+    return user
+
+@api.mutation
+def delete_user(user_id: str) -> bool:
+    return delete_user_by_id(user_id)
+```
+
+Input types, `Optional[T]`, defaults, dataclass/Pydantic inputs, and `GraphQLContext` injection all work exactly as they do for class-based mutations (covered below).
+
+## Basic Mutations (Class-based)
 
 In Mode 1 (Single Root Type), mark mutation fields with `mutable=True`:
 
