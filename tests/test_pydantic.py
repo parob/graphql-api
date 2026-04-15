@@ -1229,6 +1229,104 @@ class TestPydantic:
             }
         }
 
+    def test_pydantic_required_input_fields_become_nonnull(self) -> None:
+        """Required Pydantic fields on input types must be GraphQLNonNull.
+
+        Without this, the GraphQL API silently accepts ``null`` for fields the
+        Pydantic model considers required, and downstream JSON Schema (e.g.
+        graphql-mcp) loses required-ness for LLM tool calls.
+        """
+        from graphql import GraphQLNonNull, GraphQLInputObjectType
+
+        class CreateUserInput(BaseModel):
+            name: str           # required
+            email: str          # required
+            age: Optional[int] = None  # optional
+
+        class API:
+            @field(mutable=True)
+            def create_user(self, input: CreateUserInput) -> str:
+                return f"created:{input.name}"
+
+        api = GraphQLAPI(root_type=API)
+        schema = api.schema()
+
+        input_arg_type = schema.mutation_type.fields["createUser"].args["input"].type
+        # `input` itself is non-null (method arg with no default).
+        assert isinstance(input_arg_type, GraphQLNonNull)
+        input_object: GraphQLInputObjectType = input_arg_type.of_type
+        assert isinstance(input_object, GraphQLInputObjectType)
+
+        fields = input_object.fields
+        assert isinstance(fields["name"].type, GraphQLNonNull), (
+            "Required Pydantic field 'name' should map to a NonNull GraphQL type"
+        )
+        assert isinstance(fields["email"].type, GraphQLNonNull), (
+            "Required Pydantic field 'email' should map to a NonNull GraphQL type"
+        )
+        assert not isinstance(fields["age"].type, GraphQLNonNull), (
+            "Optional Pydantic field 'age' should remain nullable"
+        )
+
+    def test_pydantic_required_input_rejects_null_at_graphql_layer(self) -> None:
+        """Once required fields are NonNull, the GraphQL layer should reject
+        a mutation that omits or nulls a required input field."""
+
+        class CreateUserInput(BaseModel):
+            name: str
+            email: str
+
+        class API:
+            @field(mutable=True)
+            def create_user(self, input: CreateUserInput) -> str:
+                return f"created:{input.name}"
+
+        api = GraphQLAPI(root_type=API)
+
+        # Omitting a required field should be a GraphQL validation error,
+        # not a silent success or a runtime Pydantic error.
+        result = api.execute(
+            'mutation { createUser(input: {name: "Alice"}) }'
+        )
+        assert result.errors, "GraphQL should reject omission of required input field"
+        assert any(
+            "email" in str(err) for err in result.errors
+        ), f"Error should mention the missing 'email' field, got: {result.errors}"
+
+    def test_pydantic_required_output_fields_become_nonnull(self) -> None:
+        """Required Pydantic fields on output types must be GraphQLNonNull,
+        so the schema correctly advertises which fields are guaranteed."""
+        from graphql import GraphQLNonNull, GraphQLObjectType
+
+        class User(BaseModel):
+            id: str             # required
+            name: str           # required
+            nickname: Optional[str] = None  # optional
+
+        class API:
+            @field
+            def get_user(self) -> User:
+                return User(id="1", name="Alice")
+
+        api = GraphQLAPI(root_type=API)
+        schema = api.schema()
+
+        return_type = schema.query_type.fields["getUser"].type
+        assert isinstance(return_type, GraphQLNonNull)
+        user_type: GraphQLObjectType = return_type.of_type
+        assert isinstance(user_type, GraphQLObjectType)
+
+        fields = user_type.fields
+        assert isinstance(fields["id"].type, GraphQLNonNull), (
+            "Required Pydantic output field 'id' should map to NonNull"
+        )
+        assert isinstance(fields["name"].type, GraphQLNonNull), (
+            "Required Pydantic output field 'name' should map to NonNull"
+        )
+        assert not isinstance(fields["nickname"].type, GraphQLNonNull), (
+            "Optional Pydantic output field 'nickname' should remain nullable"
+        )
+
     def test_pydantic_input_out_type_converts_to_model(self) -> None:
         """Test that Pydantic input types have out_type that produces model instances."""
         class Item(BaseModel):

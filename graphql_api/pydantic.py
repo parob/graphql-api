@@ -3,7 +3,7 @@ import typing
 
 from typing import Any, Type, cast, Optional
 
-from graphql import GraphQLField, GraphQLObjectType, GraphQLOutputType, GraphQLInputField, GraphQLInputObjectType, GraphQLInputType
+from graphql import GraphQLField, GraphQLObjectType, GraphQLOutputType, GraphQLInputField, GraphQLInputObjectType, GraphQLInputType, GraphQLNonNull
 from graphql.type.definition import is_output_type, is_input_type
 from pydantic import BaseModel
 
@@ -18,6 +18,19 @@ def type_is_pydantic_model(type_: Any) -> bool:
         return issubclass(type_, BaseModel)
     except TypeError:
         return False
+
+
+def _annotation_allows_none(annotation: Any) -> bool:
+    """True if the annotation explicitly permits ``None`` (e.g. ``Optional[X]``).
+
+    Pydantic v2 distinguishes "required" (must be supplied) from
+    "non-nullable" (cannot be None). ``email: Optional[str]`` with no default
+    is required but nullable, so it must NOT become a NonNull GraphQL field.
+    """
+    if annotation is type(None):
+        return True
+    args = typing.get_args(annotation)
+    return type(None) in args
 
 
 def _get_pydantic_model_description(pydantic_model: Type[BaseModel], max_docstring_length: Optional[int] = None) -> str:
@@ -72,9 +85,19 @@ def type_from_pydantic_model(
                         f"Mapped type for pydantic field '{name}' is not a valid GraphQL Input Type."
                     )
 
-                fields[to_camel_case(name)] = GraphQLInputField(
-                    cast(GraphQLInputType, graphql_type)
-                )
+                gql_type = cast(GraphQLInputType, graphql_type)
+                # Required, non-nullable Pydantic fields become NonNull GraphQL
+                # inputs so the GraphQL layer enforces the same contract.
+                # ``Optional[X]`` (no default) stays nullable: it's required to
+                # supply but allowed to be None.
+                if (
+                    field.is_required()
+                    and not _annotation_allows_none(field.annotation)
+                    and not isinstance(gql_type, GraphQLNonNull)
+                ):
+                    gql_type = GraphQLNonNull(gql_type)
+
+                fields[to_camel_case(name)] = GraphQLInputField(gql_type)
             return fields
 
         def _make_out_type(model_cls: Type[BaseModel]):
@@ -128,8 +151,19 @@ def type_from_pydantic_model(
 
                     return resolver
 
+                gql_type = cast(GraphQLOutputType, graphql_type)
+                # Required, non-nullable Pydantic fields become NonNull GraphQL
+                # outputs so the schema accurately advertises which fields are
+                # guaranteed. ``Optional[X]`` (no default) stays nullable.
+                if (
+                    field.is_required()
+                    and not _annotation_allows_none(field.annotation)
+                    and not isinstance(gql_type, GraphQLNonNull)
+                ):
+                    gql_type = GraphQLNonNull(gql_type)
+
                 fields[to_camel_case(name)] = GraphQLField(
-                    cast(GraphQLOutputType, graphql_type), resolve=create_resolver(name)
+                    gql_type, resolve=create_resolver(name)
                 )
             return fields
 
