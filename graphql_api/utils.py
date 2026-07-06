@@ -4,6 +4,7 @@ import enum
 import inspect
 import re
 import textwrap
+from functools import lru_cache
 from json.decoder import JSONDecodeError
 
 from graphql import (
@@ -29,6 +30,10 @@ def _capitalize_first(s):
     return s[0].upper() + s[1:] if s else s
 
 
+# Cached: called once per field/argument on every request's hot path, but the
+# input space is bounded by schema names. Bounded so hostile clients can't grow
+# it without limit via arbitrary input keys.
+@lru_cache(maxsize=16384)
 def to_camel_case(snake_str, title=False):
     underscore_prefix = False
     if snake_str.startswith("_"):
@@ -45,6 +50,7 @@ def to_camel_case(snake_str, title=False):
 
 # From this response in Stackoverflow
 # http://stackoverflow.com/a/1176023/1072990
+@lru_cache(maxsize=16384)
 def to_snake_case(name):
     s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
     return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()

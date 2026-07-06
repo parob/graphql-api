@@ -1,15 +1,21 @@
-from typing import Any, Dict, Optional, List, Callable, AsyncIterator
+from functools import lru_cache
+from inspect import isawaitable
+from typing import Any, Dict, Optional, List, Callable, AsyncIterator, Tuple
 
 from graphql import (
     ExecutionContext,
     GraphQLError,
     GraphQLOutputType,
-    graphql,
-    graphql_sync,
+    execute,
+    execute_sync,
     subscribe,
     parse,
+    validate,
+    validate_schema,
 )
 from graphql.execution import ExecutionResult
+from graphql.execution.middleware import MiddlewareManager
+from graphql.language import DocumentNode
 from graphql.type.schema import GraphQLSchema
 
 from graphql_api.context import GraphQLContext
@@ -136,12 +142,54 @@ class GraphQLExecutor(GraphQLBaseExecutor):
             middleware_call_coroutine,
         ]
 
+        # Build the middleware chain once. graphql-core constructs a fresh
+        # MiddlewareManager per execution when handed a raw list, throwing away
+        # its per-resolver wrapped-chain cache every request. Middleware here
+        # holds no request state (that lives on info.context), so one manager
+        # can serve every execution.
+        self._middleware_manager = MiddlewareManager(*self.middleware)
+
         # Set the custom ExecutionContext class to handle error protection
         self.execution_context_class = (
             ErrorProtectionExecutionContext
             if error_protection
             else NoErrorProtectionExecutionContext
         )
+
+        # The schema is fixed for the lifetime of this executor, so validate it
+        # once here instead of on every execute() call.
+        self._schema_validation_errors = validate_schema(schema)
+
+        # Query parse + validation depend only on the (fixed) schema and the
+        # query string, so cache them per executor. lru_cache is thread-safe
+        # and does not cache raised exceptions (syntax errors re-raise).
+        @lru_cache(maxsize=256)
+        def _parse_and_validate(
+            query: str,
+        ) -> Tuple[DocumentNode, Tuple[GraphQLError, ...]]:
+            document = parse(query)
+            return document, tuple(validate(schema, document))
+
+        self._parse_and_validate = _parse_and_validate
+
+    def _prepare(
+        self, query
+    ) -> Tuple[Optional[DocumentNode], Optional[List[GraphQLError]]]:
+        """
+        Parse and validate a query using the per-executor cache, mirroring the
+        early-exit behaviour of graphql-core's graphql()/graphql_sync().
+        Returns (document, errors); errors is non-None when execution must not
+        proceed.
+        """
+        if self._schema_validation_errors:
+            return None, list(self._schema_validation_errors)
+        try:
+            document, validation_errors = self._parse_and_validate(query)
+        except GraphQLError as error:
+            return None, [error]
+        if validation_errors:
+            return None, list(validation_errors)
+        return document, None
 
     def execute(
         self, query, variables=None, operation_name=None, root_value=None
@@ -156,14 +204,18 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         if root_value is None:
             root_value = self.root_value
 
-        # Execute synchronously with graphql_sync, with our custom adapters and context
-        result = graphql_sync(
+        document, errors = self._prepare(query)
+        if errors is not None or document is None:
+            return ExecutionResult(data=None, errors=errors)
+
+        # Execute synchronously with our custom adapters and context
+        result = execute_sync(
             schema=self.schema,
-            source=query,
+            document=document,
             context_value=context,
             variable_values=variables,
             operation_name=operation_name,
-            middleware=self.middleware,
+            middleware=self._middleware_manager,
             root_value=root_value,
             execution_context_class=self.execution_context_class,
         )
@@ -179,17 +231,23 @@ class GraphQLExecutor(GraphQLBaseExecutor):
             schema=self.schema, meta=self.meta, executor=self)
         if root_value is None:
             root_value = self.root_value
-        # Execute asynchronously with graphql
-        result = await graphql(
+
+        document, errors = self._prepare(query)
+        if errors is not None or document is None:
+            return ExecutionResult(data=None, errors=errors)
+
+        result = execute(
             schema=self.schema,
-            source=query,
+            document=document,
             context_value=context,
             variable_values=variables,
             operation_name=operation_name,
-            middleware=self.middleware,
+            middleware=self._middleware_manager,
             root_value=root_value,
             execution_context_class=self.execution_context_class,
         )
+        if isawaitable(result):
+            result = await result
         return result
 
     async def subscribe(
