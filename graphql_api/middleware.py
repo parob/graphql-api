@@ -145,3 +145,98 @@ def middleware_field_context(next_, root, info, **args):
         info.context.field = None
 
     return value
+
+
+def middleware_combined(next_, root, info, **args):
+    """
+    All six built-in middleware merged into one function.
+
+    Runs on every field resolution, so the individual middleware — each a
+    trivial check — cost more in nested call frames than in work. This
+    preserves their exact composed semantics (outermost to innermost:
+    call_coroutine, adapt_enum, local_proxy, request_context, field_context,
+    catch_exception) in a single frame. The individual functions above remain
+    exported and behaviourally identical.
+    """
+    from graphql_api.api import GraphQLFieldContext, GraphQLRequestContext
+
+    context = info.context
+
+    # -- field_context (set up) --
+    field_meta = context.meta.get(
+        (info.parent_type.name, to_snake_case(info.field_name)), {}
+    )
+    if field_meta is None:
+        field_meta = {}
+    return_type = info.return_type
+    unwrapped_type = (
+        return_type.of_type
+        if return_type and isinstance(return_type, GraphQLNonNull)
+        else return_type
+    )
+    kwargs = {}
+    if unwrapped_type and isinstance(unwrapped_type, GraphQLObjectType):
+        sub_loc = info.field_nodes[0].selection_set.loc
+        kwargs["query"] = sub_loc.source.body[sub_loc.start: sub_loc.end]
+    context.field = GraphQLFieldContext(meta=field_meta, **kwargs)
+
+    # -- request_context (set up) --
+    request_created = False
+    if not context.request:
+        context.request = GraphQLRequestContext(
+            args={to_snake_case(key): arg for key, arg in args.items()}, info=info
+        )
+        request_created = True
+
+    try:
+        # -- catch_exception --
+        try:
+            value = next_(root, info, **args)
+        except Exception as err:
+            from graphql_api.executor import ErrorProtectionExecutionContext
+
+            if field_meta.get(GraphQLMetaKey.error_protection) is not None:
+                setattr(
+                    err,
+                    ErrorProtectionExecutionContext.error_protection,
+                    field_meta.get(GraphQLMetaKey.error_protection),
+                )
+            ignored = isinstance(info.return_type, GraphQLNonNull)
+            print(
+                f"GraphQLField '{info.field_name}' on '{info.parent_type.name}' "
+                f"resolver {'(ignored) ' if ignored else ''}Exception: {err} ",
+                file=sys.stderr,
+            )
+            traceback.print_exc()
+            raise err
+    finally:
+        if request_created:
+            context.request = None
+        context.field = None
+
+    # -- local_proxy --
+    try:
+        if hasattr(value, "_get_current_object"):
+            # noinspection PyProtectedMember
+            value = value._get_current_object()
+    except GraphQLError:
+        # hasattr calls getattr and remote.getattr() can raise a GraphQLError
+        # if the object doesn't have the attr
+        pass
+    if isinstance(value, Exception):
+        raise value
+
+    # -- adapt_enum --
+    if isinstance(value, enum.Enum) and not isinstance(value, TypeKind):
+        value = value.value
+
+    # -- call_coroutine --
+    if inspect.iscoroutine(value):
+        # Async GraphQL execution already awaits resolver coroutines.
+        # Only force resolution when called from a sync context.
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            value = asyncio.run(value)
+
+    return value

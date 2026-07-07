@@ -19,14 +19,7 @@ from graphql.language import DocumentNode
 from graphql.type.schema import GraphQLSchema
 
 from graphql_api.context import GraphQLContext
-from graphql_api.middleware import (
-    middleware_adapt_enum,
-    middleware_call_coroutine,
-    middleware_catch_exception,
-    middleware_field_context,
-    middleware_local_proxy,
-    middleware_request_context,
-)
+from graphql_api.middleware import middleware_combined
 
 
 class GraphQLBaseExecutor:
@@ -132,14 +125,13 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         self.meta = meta if meta is not None else {}
         self.root_value = root_value
 
+        # The six built-in middleware are merged into one function: they run
+        # on every field resolution, and separate functions cost five extra
+        # call frames per field. Custom middleware stay innermost (closest to
+        # the resolver), exactly as with the individual built-ins.
         self.middleware = [
             *(middleware if middleware else []),
-            middleware_catch_exception,
-            middleware_field_context,
-            middleware_request_context,
-            middleware_local_proxy,
-            middleware_adapt_enum,
-            middleware_call_coroutine,
+            middleware_combined,
         ]
 
         # Build the middleware chain once. graphql-core constructs a fresh

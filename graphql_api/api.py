@@ -262,6 +262,7 @@ class GraphQLAPI(GraphQLBaseExecutor):
         self.error_protection = error_protection
         self.federation = federation
         self._cached_schema: Optional[Tuple[GraphQLSchema, Dict]] = None
+        self._cached_executor: Optional[GraphQLExecutor] = None
         self.max_docstring_length = max_docstring_length
         self.enum_suffix = enum_suffix
         self.interface_suffix = interface_suffix
@@ -904,10 +905,32 @@ class GraphQLAPI(GraphQLBaseExecutor):
         operation_name=None,
         root_value: Any = None,
     ) -> ExecutionResult:
-        return self.executor(root_value=root_value).execute(
+        # Reuse one executor across execute() calls: constructing one
+        # validates the schema and builds the middleware chain, which only
+        # depend on the (cached) schema. The root value keeps its per-call
+        # semantics — a fresh root instance per execution when root_type is
+        # callable — by being passed to execute() rather than frozen into
+        # the executor.
+        schema, meta = self.build()
+        executor = self._cached_executor
+        if executor is None or executor.schema is not schema:
+            executor = GraphQLExecutor(
+                schema=schema,
+                meta=meta,
+                root_value=None,
+                middleware=self.middleware,
+                error_protection=self.error_protection,
+            )
+            self._cached_executor = executor
+
+        if callable(self.root_type) and root_value is None:
+            root_value = self.root_type()
+
+        return executor.execute(
             query=query,
             variables=variables,
             operation_name=operation_name,
+            root_value=root_value,
         )
 
     def executor(
