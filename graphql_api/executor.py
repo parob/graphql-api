@@ -68,10 +68,21 @@ class ErrorProtectionExecutionContext(ExecutionContext):
         self,
         error: GraphQLError,
         return_type: GraphQLOutputType,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         """
         Intercept field errors to decide whether to raise or suppress them based on the
         'error_protection' attribute, either on the error or its original error.
+
+        Anything after ``return_type`` is forwarded to graphql-core untouched.
+        graphql-core added a ``path`` argument to this method in 3.2.8, and an
+        override with a fixed arity turns every field error into a TypeError
+        raised from inside the executor — so the resolver's real error never
+        reaches the caller and a validation failure reads as a crash. Since
+        this class exists precisely to sit in the error path, it must not be
+        the thing that breaks it: accepting whatever the installed version
+        passes keeps it working across both signatures.
         """
         error_protection = self.default_error_protection
         original_error = error.original_error
@@ -86,8 +97,9 @@ class ErrorProtectionExecutionContext(ExecutionContext):
         if not error_protection:
             raise error.original_error if error.original_error is not None else error
 
-        # Otherwise, call the default error handler
-        return super().handle_field_error(error=error, return_type=return_type)
+        # Otherwise, call the default error handler. Positionally, because the
+        # trailing arguments differ by version and only the caller knows them.
+        return super().handle_field_error(error, return_type, *args, **kwargs)
 
 
 class NoErrorProtectionExecutionContext(ErrorProtectionExecutionContext):
