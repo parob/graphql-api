@@ -22,7 +22,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "graphql-core",
+    "graphql-core<3.3",
     "requests",
     "typing-inspect",
     "aiohttp",

@@ -546,7 +546,7 @@ dev = [
 requires-dist = [
     { name = "aiohttp" },
     { name = "docstring-parser" },
-    { name = "graphql-core" },
+    { name = "graphql-core", specifier = "<3.3" },
     { name = "pydantic" },
     { name = "requests" },
     { name = "typing-inspect" },
