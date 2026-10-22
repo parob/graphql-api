@@ -1098,3 +1098,15 @@ class TestGraphQLRemote:
         roll.fetch()  # type: ignore[reportIncompatibleMethodOverride]
 
         assert roll.students() == ["alice", "bob"]
+
+    def test_remote_executor_construction(self) -> None:
+        # graphql-core >= 3.2.7 routes the first constructor argument to
+        # GraphQLNamedType.__new__ as the type name; the URL must not end up
+        # there, and keyword-only construction must work. Fields are resolved
+        # lazily, so no request is made here.
+        by_keyword = GraphQLRemoteExecutor(url="http://localhost:1/graphql")
+        positional = GraphQLRemoteExecutor("http://localhost:1/graphql", "Upstream")
+
+        assert by_keyword.name == "Remote"
+        assert positional.name == "Upstream"
+        assert positional.url == "http://localhost:1/graphql"
