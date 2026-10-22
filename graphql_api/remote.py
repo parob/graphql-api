@@ -157,6 +157,14 @@ class GraphQLRemoteExecutor(GraphQLBaseExecutor, GraphQLObjectType):
     A GraphQL executor that forwards all operations to a remote GraphQL service.
     """
 
+    def __new__(cls, url, name="Remote", *args, **kwargs):
+        # graphql-core >= 3.2.7 gives GraphQLNamedType a __new__(cls, name, ...)
+        # that checks for reserved type names. Our first argument is the URL, so
+        # pass the type name explicitly (older versions have no such __new__).
+        if GraphQLNamedType.__new__ is object.__new__:
+            return super().__new__(cls)
+        return super().__new__(cls, name)
+
     def __init__(
         self,
         url,
