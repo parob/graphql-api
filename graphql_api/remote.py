@@ -602,9 +602,15 @@ class GraphQLRemoteObject:
                 ast_val = to_ast_value(val, unwrapped_field_type)
                 if isinstance(
                     unwrapped_field_type, (GraphQLScalarType, GraphQLEnumType)
-                ) and hasattr(unwrapped_field_type, "parse_literal"):
-                    parsed_val = unwrapped_field_type.parse_literal(
-                        ast_val, None)  # type: ignore
+                ):
+                    # Scalars defined with the pre-3.3 hooks have no
+                    # coerce_input_literal; they still provide parse_literal.
+                    coerce_literal = unwrapped_field_type.coerce_input_literal
+                    if coerce_literal is not None:
+                        parsed_val = coerce_literal(ast_val)  # type: ignore
+                    else:
+                        parsed_val = unwrapped_field_type.parse_literal(
+                            ast_val, None)  # type: ignore
                     # If the field is an enum, convert to the Python enum if available
                     if isinstance(unwrapped_field_type, GraphQLEnumType) and hasattr(
                         unwrapped_field_type, "enum_type"

@@ -1,4 +1,6 @@
 from asyncio import create_task, sleep, wait
+from collections.abc import AsyncIterator
+from inspect import isawaitable
 from dataclasses import dataclass
 from typing import Any, AsyncGenerator
 import enum
@@ -9,7 +11,6 @@ from graphql import (
     GraphQLInt,
     GraphQLObjectType,
     GraphQLSchema,
-    MapAsyncIterator,
     graphql,
     parse,
     subscribe,
@@ -69,8 +70,10 @@ class TestSubscriptions:
 
         query = "subscription {count}"
 
-        subscription = await subscribe(schema, parse(query))
-        assert isinstance(subscription, MapAsyncIterator)
+        subscription = subscribe(schema, parse(query))
+        if isawaitable(subscription):
+            subscription = await subscription
+        assert isinstance(subscription, AsyncIterator)
 
         assert a and b and c
 
@@ -86,7 +89,9 @@ class TestSubscriptions:
             await sleep(0.1)
             await graphql(schema, "mutation {increaseCount}")
 
-        subscription = await subscribe(schema, parse(query))  # type: ignore
+        subscription = subscribe(schema, parse(query))
+        if isawaitable(subscription):
+            subscription = await subscription
 
         async def receive_count():
             async for result in subscription:  # type: ignore

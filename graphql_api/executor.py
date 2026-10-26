@@ -3,7 +3,6 @@ from inspect import isawaitable
 from typing import Any, Dict, Optional, List, Callable, AsyncIterator, Tuple
 
 from graphql import (
-    ExecutionContext,
     GraphQLError,
     GraphQLOutputType,
     execute,
@@ -14,7 +13,9 @@ from graphql import (
     validate_schema,
 )
 from graphql.execution import ExecutionResult
+from graphql.execution.executor import Executor
 from graphql.execution.middleware import MiddlewareManager
+from graphql.pyutils import Path
 from graphql.language import DocumentNode
 from graphql.type.schema import GraphQLSchema
 
@@ -54,10 +55,10 @@ class GraphQLBaseExecutor:
         raise NotImplementedError
 
 
-class ErrorProtectionExecutionContext(ExecutionContext):
+class ErrorProtectionExecutionContext(Executor):
     """
-    A custom GraphQL ExecutionContext that can selectively suppress or raise errors
-    based on an 'error_protection' attribute in the GraphQLError or its original error.
+    A custom graphql-core Executor that can selectively suppress or raise errors
+    based on an 'error_protection' attribute in the error or its original error.
     """
 
     # Default to True, meaning errors are protected by default (not raised directly).
@@ -66,40 +67,38 @@ class ErrorProtectionExecutionContext(ExecutionContext):
 
     def handle_field_error(
         self,
-        error: GraphQLError,
+        raw_error: Exception,
         return_type: GraphQLOutputType,
-        *args: Any,
-        **kwargs: Any,
+        field_details_list: Any,
+        path: Path,
     ) -> None:
         """
         Intercept field errors to decide whether to raise or suppress them based on the
         'error_protection' attribute, either on the error or its original error.
 
-        Anything after ``return_type`` is forwarded to graphql-core untouched.
-        graphql-core added a ``path`` argument to this method in 3.2.8, and an
-        override with a fixed arity turns every field error into a TypeError
-        raised from inside the executor — so the resolver's real error never
-        reaches the caller and a validation failure reads as a crash. Since
-        this class exists precisely to sit in the error path, it must not be
-        the thing that breaks it: accepting whatever the installed version
-        passes keeps it working across both signatures.
+        graphql-core passes the error as raised. That is usually the resolver's own
+        exception, but it can be a GraphQLError that wraps one (e.g. from a nested
+        executor), so the flag is looked up on both.
         """
         error_protection = self.default_error_protection
-        original_error = error.original_error
+        original_error = (
+            raw_error.original_error if isinstance(raw_error, GraphQLError) else None
+        )
 
         # Check if this error or its original error has a custom error_protection flag
-        if hasattr(error, self.error_protection):
-            error_protection = getattr(error, self.error_protection)
+        if hasattr(raw_error, self.error_protection):
+            error_protection = getattr(raw_error, self.error_protection)
         elif hasattr(original_error, self.error_protection):
             error_protection = getattr(original_error, self.error_protection)
 
         # If error protection is disabled, re-raise the original error
         if not error_protection:
-            raise error.original_error if error.original_error is not None else error
+            raise original_error if original_error is not None else raw_error
 
-        # Otherwise, call the default error handler. Positionally, because the
-        # trailing arguments differ by version and only the caller knows them.
-        return super().handle_field_error(error, return_type, *args, **kwargs)
+        # Otherwise, let graphql-core locate and collect the error.
+        return super().handle_field_error(
+            raw_error, return_type, field_details_list, path
+        )
 
 
 class NoErrorProtectionExecutionContext(ErrorProtectionExecutionContext):
@@ -153,8 +152,8 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         # can serve every execution.
         self._middleware_manager = MiddlewareManager(*self.middleware)
 
-        # Set the custom ExecutionContext class to handle error protection
-        self.execution_context_class = (
+        # Set the custom Executor class to handle error protection
+        self.executor_class = (
             ErrorProtectionExecutionContext
             if error_protection
             else NoErrorProtectionExecutionContext
@@ -221,7 +220,7 @@ class GraphQLExecutor(GraphQLBaseExecutor):
             operation_name=operation_name,
             middleware=self._middleware_manager,
             root_value=root_value,
-            execution_context_class=self.execution_context_class,
+            executor_class=self.executor_class,
         )
         return result
 
@@ -248,7 +247,7 @@ class GraphQLExecutor(GraphQLBaseExecutor):
             operation_name=operation_name,
             middleware=self._middleware_manager,
             root_value=root_value,
-            execution_context_class=self.execution_context_class,
+            executor_class=self.executor_class,
         )
         if isawaitable(result):
             result = await result
@@ -267,13 +266,15 @@ class GraphQLExecutor(GraphQLBaseExecutor):
         # graphql-core subscribe expects a parsed document
         document = parse(query)
         # Use the same middleware and execution context where applicable
-        async_iter = await subscribe(
+        async_iter = subscribe(
             schema=self.schema,
             document=document,
             variable_values=variables,
             operation_name=operation_name,
             context_value=context,
             root_value=root_value,
-            # execution_context_class is not a parameter for subscribe in graphql-core v3
         )
+        # graphql-core >= 3.3 returns the result directly when it can.
+        if isawaitable(async_iter):
+            async_iter = await async_iter
         return async_iter  # type: ignore

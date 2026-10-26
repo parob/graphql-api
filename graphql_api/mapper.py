@@ -1,7 +1,5 @@
-import collections.abc
 import enum
 import inspect
-import types
 import typing
 from datetime import date, datetime
 from typing import Any, Annotated, Callable, List, Optional, Set, Tuple, Type, Union, cast, get_origin, get_args
@@ -21,7 +19,7 @@ from graphql import (
     is_union_type,
     GraphQLWrappingType,
 )
-from graphql.pyutils import Undefined, UndefinedType
+from graphql.pyutils import Undefined
 from graphql.type.definition import (
     GraphQLArgument,
     GraphQLEnumType,
@@ -659,27 +657,6 @@ class GraphQLTypeMapper:
 
         enum_type.enum_type = type_
 
-        def serialize(_self, value) -> Union[str, None, UndefinedType]:
-            if value and isinstance(value, collections.abc.Hashable):
-                # For enums, always return the enum name (which matches the GraphQL enum value)
-                if isinstance(value, enum.Enum):
-                    return value.name
-                else:
-                    # For non-enum values, try to look them up in the value lookup
-                    # This handles cases where the value might be a string representation
-                    lookup_key = value
-                    # noinspection PyProtectedMember
-                    lookup_value = _self._value_lookup.get(lookup_key)
-                    if lookup_value:
-                        return lookup_value
-                    else:
-                        # If lookup fails, the value might be invalid
-                        return Undefined
-
-            return None
-
-        enum_type.serialize = types.MethodType(serialize, enum_type)
-
         self.add_applied_directives(enum_type, name, type_)
 
         return enum_type
@@ -831,7 +808,7 @@ class GraphQLTypeMapper:
 
                     # Use the raw Python default for input coercion.
                     # Do not convert to GraphQL query literals here.
-                    default_value = local_default_args.get(key, None)
+                    default_value = local_default_args.get(key, Undefined)
 
                     arguments[to_camel_case(key)] = GraphQLInputField(
                         type_=input_arg_type, default_value=default_value  # type: ignore

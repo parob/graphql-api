@@ -371,19 +371,20 @@ class TestCustomTypes:
     def test_custom_scalar_type(self) -> None:
         api = GraphQLAPI()
 
-        def parse_value(value):
+        def coerce_input_value(value):
             return str(value) + "_parsed_value"
 
-        def parse_literal(node):
+        def coerce_input_literal(node):
             if isinstance(node, StringValueNode):
-                return parse_value(node.value)
+                return coerce_input_value(node.value)
+            raise TypeError("A Key literal must be a string")
 
         GraphQLKey = GraphQLScalarType(
             name="Key",
             description="The `Key` scalar type represents a key.",
-            serialize=lambda value: str(value) + "_serialized",
-            parse_value=parse_value,
-            parse_literal=parse_literal,  # type: ignore[reportIncompatibleMethodOverride]
+            coerce_output_value=lambda value: str(value) + "_serialized",
+            coerce_input_value=coerce_input_value,
+            coerce_input_literal=coerce_input_literal,
         )
 
         @api.type(is_root_type=True)
