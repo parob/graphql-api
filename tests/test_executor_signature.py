@@ -12,7 +12,8 @@ It went unnoticed because this library's own environment resolves an older
 graphql-core than its consumers do, so the existing error tests all pass here
 and fail there. Asserting against a pinned signature would repeat that mistake,
 so these tests ask the *installed* graphql-core what it expects and check the
-override against that.
+override against that. (graphql-core 3.3 renamed `ExecutionContext` to
+`Executor`; the hook kept its name and now receives the raw error.)
 """
 
 from __future__ import annotations
@@ -20,7 +21,7 @@ from __future__ import annotations
 import inspect
 
 from graphql import GraphQLError, GraphQLInt
-from graphql.execution.execute import ExecutionContext
+from graphql.execution.executor import CollectedErrors, Executor
 from graphql.pyutils import Path
 
 from graphql_api.api import GraphQLAPI
@@ -45,7 +46,7 @@ def _accepted_arity(func) -> int:
 class TestHandleFieldErrorSignature:
     def test_override_accepts_everything_graphql_core_passes(self) -> None:
         """The override must be callable however the installed version calls it."""
-        expected = _accepted_arity(ExecutionContext.handle_field_error)
+        expected = _accepted_arity(Executor.handle_field_error)
         override = inspect.signature(
             ErrorProtectionExecutionContext.handle_field_error
         )
@@ -65,27 +66,45 @@ class TestHandleFieldErrorSignature:
 
         This is the exact call that was raising TypeError in production.
         """
-        context = ErrorProtectionExecutionContext.__new__(
+        executor = ErrorProtectionExecutionContext.__new__(
             ErrorProtectionExecutionContext
         )
-        error = GraphQLError("boom", original_error=ValueError("boom"))
-        args = [error, GraphQLInt]
-        if _accepted_arity(ExecutionContext.handle_field_error) > 2:
-            # graphql-core >= 3.2.8 also passes the field's path.
-            args.append(Path(None, "field", None))
+        executor.collected_errors = CollectedErrors()
+        executor.error_propagation = True
+        # raw error, return type, field details, path: as many as the
+        # installed graphql-core passes.
+        args = [ValueError("boom"), GraphQLInt, [], Path(None, "field", None)]
+        args = args[:_accepted_arity(Executor.handle_field_error)]
 
-        # Nullable return type, so the error is collected rather than re-raised;
-        # the point is only that the call itself is well-formed.
-        context.errors = []
+        # Nullable return type, so the error is collected rather than re-raised.
         try:
-            context.handle_field_error(*args)
+            executor.handle_field_error(*args)
         except TypeError as exc:  # pragma: no cover - this is the regression
             raise AssertionError(
                 f"handle_field_error rejected graphql-core's own call: {exc}"
             ) from exc
-        except Exception:
-            # Any GraphQL-level outcome is fine; a TypeError is not.
-            pass
+
+        assert [e.message for e in executor.collected_errors.errors] == ["boom"]
+
+    def test_a_wrapped_error_keeps_its_protection_flag(self) -> None:
+        """A GraphQLError wrapping the resolver's error (e.g. from a nested
+        executor) still honours the flag set on the original error."""
+        executor = NoErrorProtectionExecutionContext.__new__(
+            NoErrorProtectionExecutionContext
+        )
+        executor.collected_errors = CollectedErrors()
+        executor.error_propagation = True
+        original = ValueError("boom")
+        wrapped = GraphQLError("boom", original_error=original)
+
+        try:
+            executor.handle_field_error(
+                wrapped, GraphQLInt, [], Path(None, "field", None)
+            )
+        except ValueError as exc:
+            assert exc is original
+        else:  # pragma: no cover
+            raise AssertionError("the unprotected error was swallowed")
 
     def test_the_no_protection_variant_inherits_the_same_shape(self) -> None:
         assert (

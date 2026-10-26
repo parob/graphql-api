@@ -189,22 +189,23 @@ class TestFieldTypesExamples:
         api = GraphQLAPI()
 
         # Define a custom scalar
-        def parse_value(value):
+        def coerce_input_value(value):
             return str(value) + "_parsed"
 
-        def parse_literal(node):
+        def coerce_input_literal(node):
             if isinstance(node, StringValueNode):
-                return parse_value(node.value)
+                return coerce_input_value(node.value)
+            raise TypeError("A Key literal must be a string")
 
-        def serialize(value):
+        def coerce_output_value(value):
             return str(value) + "_serialized"
 
         GraphQLKey = GraphQLScalarType(
             name="Key",
             description="The `Key` scalar type represents a unique key.",
-            serialize=serialize,
-            parse_value=parse_value,
-            parse_literal=parse_literal,
+            coerce_output_value=coerce_output_value,
+            coerce_input_value=coerce_input_value,
+            coerce_input_literal=coerce_input_literal,
         )
 
         @api.type(is_root_type=True)

@@ -1,10 +1,11 @@
 import binascii
+import collections.abc
 import datetime
 import json
 import uuid
 import enum
 
-from typing import Any, Dict, List, Optional, Type, Union, cast
+from typing import Any, Dict, List, Optional, Type, Union
 
 from graphql import (
     GraphQLEnumType,
@@ -13,45 +14,54 @@ from graphql import (
     Undefined,
     ValueNode,
 )
+from graphql.pyutils import UndefinedType
 from graphql.language import ast
 
 
 class GraphQLMappedEnumType(GraphQLEnumType):
+    """A GraphQL enum backed by a Python Enum.
+
+    Inputs (inline literals and variables) are coerced to the Python Enum member,
+    and outputs accept either the member or its value.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.enum_type: Optional[Type[enum.Enum]] = None
 
-    def parse_literal(self, *args, **kwargs):
-        result = super().parse_literal(*args, **kwargs)
-        if result is not Undefined and result is not None and getattr(self, "enum_type", None):
+    def _to_enum_member(self, result):
+        if result is not Undefined and result is not None and self.enum_type is not None:
             try:
-                enum_type: Optional[Type[enum.Enum]] = self.enum_type
-                if enum_type is None:
-                    return result
-                return cast(Type[enum.Enum], enum_type)(result)
+                return self.enum_type(result)
             except (ValueError, KeyError, TypeError):
                 # Invalid enum value or type casting error
                 return Undefined
         return result
 
-    def parse_value(self, value):
-        """Coerce incoming variable values to the mapped Python Enum instance.
+    def coerce_input_literal(self, value_node, hide_suggestions=False):
+        return self._to_enum_member(
+            super().coerce_input_literal(value_node, hide_suggestions)
+        )
 
-        GraphQL variables use `parse_value`, while inline literals use
-        `parse_literal`. Ensure both paths produce the Python Enum.
-        """
-        result = super().parse_value(value)
-        if result is not Undefined and result is not None and getattr(self, "enum_type", None):
-            try:
-                enum_type: Optional[Type[enum.Enum]] = self.enum_type
-                if enum_type is None:
-                    return result
-                return cast(Type[enum.Enum], enum_type)(result)
-            except (ValueError, KeyError, TypeError):
-                # Invalid enum value or type casting error
-                return Undefined
-        return result
+    def coerce_input_value(self, input_value, hide_suggestions=False):
+        return self._to_enum_member(
+            super().coerce_input_value(input_value, hide_suggestions)
+        )
+
+    def coerce_output_value(self, output_value) -> Union[str, None, UndefinedType]:
+        if output_value and isinstance(output_value, collections.abc.Hashable):
+            # For enums, always return the enum name (which matches the GraphQL enum value)
+            if isinstance(output_value, enum.Enum):
+                return output_value.name
+            # For non-enum values, try to look them up in the value lookup.
+            # This handles cases where the value might be a string representation.
+            lookup_value = self._value_lookup.get(output_value)
+            if lookup_value:
+                return lookup_value
+            # If lookup fails, the value is invalid
+            return Undefined
+
+        return None
 
 
 def parse_uuid_literal(
@@ -85,9 +95,9 @@ def parse_uuid_value(value: Any) -> uuid.UUID:
 GraphQLUUID = GraphQLScalarType(
     name="UUID",
     description="The `UUID` scalar type represents a unique identifer.",
-    serialize=str,
-    parse_value=parse_uuid_value,
-    parse_literal=parse_uuid_literal,
+    coerce_output_value=str,
+    coerce_input_value=parse_uuid_value,
+    coerce_input_literal=parse_uuid_literal,
 )
 
 
@@ -134,9 +144,9 @@ GraphQLDateTime = GraphQLScalarType(
     name="DateTime",
     description="The `DateTime` scalar type represents a datetime, "
     "the datetime should be in the format `2018-01-22 17:46:32`",
-    serialize=serialize_datetime,
-    parse_value=parse_datetime_value,
-    parse_literal=parse_datetime_literal,
+    coerce_output_value=serialize_datetime,
+    coerce_input_value=parse_datetime_value,
+    coerce_input_literal=parse_datetime_literal,
 )
 
 
@@ -166,9 +176,9 @@ GraphQLDate = GraphQLScalarType(
     name="Date",
     description="The `Date` scalar type represents a datetime, "
     "the datetime should be in the format `2018-01-22`",
-    serialize=serialize_date,
-    parse_value=parse_date_value,
-    parse_literal=parse_date_literal,
+    coerce_output_value=serialize_date,
+    coerce_input_value=parse_date_value,
+    coerce_input_literal=parse_date_literal,
 )
 
 
@@ -204,9 +214,9 @@ GraphQLJSON = GraphQLScalarType(
     description="The `JSON` scalar type represents JSON values as specified by"
     " [ECMA-404](http://www.ecma-international.org/"
     "publications/files/ECMA-ST/ECMA-404.pdf).",
-    serialize=serialize_json,
-    parse_value=parse_json_value,
-    parse_literal=parse_json_literal,
+    coerce_output_value=serialize_json,
+    coerce_input_value=parse_json_value,
+    coerce_input_literal=parse_json_literal,
 )
 
 
@@ -234,7 +244,7 @@ GraphQLBytes = GraphQLScalarType(
     description="The `Bytes` scalar type expects and returns a "
     "Byte array in UTF-8 string format that represents the Bytes. "
     "If the data is not UTF-encodable the errors will be ignored",
-    serialize=serialize_bytes,
-    parse_value=parse_bytes_value,
-    parse_literal=parse_bytes_literal,
+    coerce_output_value=serialize_bytes,
+    coerce_input_value=parse_bytes_value,
+    coerce_input_literal=parse_bytes_literal,
 )

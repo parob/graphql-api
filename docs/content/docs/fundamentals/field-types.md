@@ -180,22 +180,23 @@ You can define custom GraphQL scalar types for specialized data handling:
 from graphql import GraphQLScalarType, StringValueNode
 
 # Define a custom scalar
-def parse_value(value):
+def coerce_input_value(value):
     return str(value) + "_parsed"
 
-def parse_literal(node):
+def coerce_input_literal(node):
     if isinstance(node, StringValueNode):
-        return parse_value(node.value)
+        return coerce_input_value(node.value)
+    raise TypeError("A Key literal must be a string")
 
-def serialize(value):
+def coerce_output_value(value):
     return str(value) + "_serialized"
 
 GraphQLKey = GraphQLScalarType(
     name="Key",
     description="The `Key` scalar type represents a unique key.",
-    serialize=serialize,
-    parse_value=parse_value,
-    parse_literal=parse_literal,
+    coerce_output_value=coerce_output_value,
+    coerce_input_value=coerce_input_value,
+    coerce_input_literal=coerce_input_literal,
 )
 
 @api.type(is_root_type=True)
@@ -206,9 +207,11 @@ class Root:
 ```
 
 **Key functions:**
-- `serialize`: Converts Python value to GraphQL response format
-- `parse_value`: Parses variable values from GraphQL requests
-- `parse_literal`: Parses literal values from GraphQL queries
+- `coerce_output_value`: Converts a Python value to the GraphQL response format
+- `coerce_input_value`: Parses variable values from GraphQL requests
+- `coerce_input_literal`: Parses literal values written in GraphQL queries
+
+These are the graphql-core 3.3 names. The older `serialize`, `parse_value` and `parse_literal` still work until graphql-core 3.4, but `parse_literal` is now always called with two arguments, `(node, variables)`.
 
 ## GraphQL ID Type
 
