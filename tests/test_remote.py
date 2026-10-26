@@ -1,6 +1,6 @@
 import asyncio
 import enum
-import random
+import itertools
 import time
 import uuid
 from dataclasses import dataclass
@@ -491,6 +491,10 @@ class TestGraphQLRemote:
 
     def test_remote_return_object_cache(self) -> None:
         api = GraphQLAPI()
+        # Every real resolver call returns a new number, so getting the same
+        # number back means the cache answered. (random.randint here made
+        # the "not cached" assertions fail whenever two draws collided.)
+        calls = itertools.count()
 
         @dataclass
         class Door:
@@ -498,7 +502,7 @@ class TestGraphQLRemote:
 
             @api.field
             def rand(self, max: int = 100) -> int:
-                return random.randint(0, max)
+                return next(calls)
 
         @api.type(is_root_type=True)
         class House:
