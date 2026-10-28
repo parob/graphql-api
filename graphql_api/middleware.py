@@ -7,6 +7,7 @@ import traceback
 from graphql import GraphQLNonNull, GraphQLObjectType, TypeKind
 
 from graphql_api.error import GraphQLError
+from graphql_api.context import GraphQLFieldContext, GraphQLRequestContext
 from graphql_api.mapper import GraphQLMetaKey
 from graphql_api.utils import to_snake_case
 
@@ -96,8 +97,6 @@ def middleware_request_context(next_, root, info, **args):
     """
     GraphQL middleware, add the GraphQLRequestContext
     """
-    from graphql_api.api import GraphQLRequestContext
-
     if info.context.request:
         return next_(root, info, **args)
 
@@ -119,8 +118,6 @@ def middleware_field_context(next_, root, info, **args):
     """
     GraphQL middleware, add the GraphQLFieldContext
     """
-    from graphql_api.api import GraphQLFieldContext
-
     field_meta = info.context.meta.get(
         (info.parent_type.name, to_snake_case(info.field_name)), {}
     )
@@ -132,12 +129,12 @@ def middleware_field_context(next_, root, info, **args):
     if return_type and isinstance(return_type, GraphQLNonNull):
         return_type = return_type.of_type
 
-    kwargs = {}
+    query = None
     if return_type and isinstance(return_type, GraphQLObjectType):
         sub_loc = info.field_nodes[0].selection_set.loc
-        kwargs["query"] = sub_loc.source.body[sub_loc.start: sub_loc.end]
+        query = sub_loc.source.body[sub_loc.start: sub_loc.end]
 
-    info.context.field = GraphQLFieldContext(meta=field_meta, **kwargs)
+    info.context.field = GraphQLFieldContext(meta=field_meta, query=query)
 
     try:
         value = next_(root, info, **args)
@@ -158,8 +155,6 @@ def middleware_combined(next_, root, info, **args):
     catch_exception) in a single frame. The individual functions above remain
     exported and behaviourally identical.
     """
-    from graphql_api.api import GraphQLFieldContext, GraphQLRequestContext
-
     context = info.context
 
     # -- field_context (set up) --
@@ -174,11 +169,11 @@ def middleware_combined(next_, root, info, **args):
         if return_type and isinstance(return_type, GraphQLNonNull)
         else return_type
     )
-    kwargs = {}
+    query = None
     if unwrapped_type and isinstance(unwrapped_type, GraphQLObjectType):
         sub_loc = info.field_nodes[0].selection_set.loc
-        kwargs["query"] = sub_loc.source.body[sub_loc.start: sub_loc.end]
-    context.field = GraphQLFieldContext(meta=field_meta, **kwargs)
+        query = sub_loc.source.body[sub_loc.start: sub_loc.end]
+    context.field = GraphQLFieldContext(meta=field_meta, query=query)
 
     # -- request_context (set up) --
     request_created = False

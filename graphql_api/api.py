@@ -15,29 +15,13 @@ from graphql import (
 )
 
 from graphql_api.error import GraphQLError
+# Re-export these names for callers importing them from graphql_api.api.
+from graphql_api.context import GraphQLFieldContext, GraphQLRequestContext  # noqa: F401
 from graphql_api.directives import SchemaDirective
 from graphql_api.executor import GraphQLBaseExecutor, GraphQLExecutor
 from graphql_api.mapper import GraphQLTypeMapper
 from graphql_api.reduce import GraphQLFilter, GraphQLSchemaReducer
 from graphql_api.schema import add_applied_directives, get_applied_directives
-
-
-class GraphQLFieldContext:
-    def __init__(self, meta, query=None):
-        self.meta = meta
-        self.query = query
-
-    def __str__(self):
-        query_str = ""
-        if self.query:
-            query_str = f", query: {query_str}" if self.query else ""
-        return f"<Node meta: {self.meta}{query_str}>"
-
-
-class GraphQLRequestContext:
-    def __init__(self, args, info):
-        self.args = args
-        self.info = info
 
 
 # Workaround to allow GraphQLScalarType to be used in typehints in Python 3.10
